@@ -7,86 +7,53 @@
 <title>Marion & Lucas</title>
 <style>
 :root{--cream:#fff7eb;--gold:#d6aa62;--gold2:#f0cf8d;--wine:#8f2635;--ink:#21130f}
-*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;background:#160d0a;color:var(--cream);overflow:hidden}
-body{display:grid;place-items:center;font-family:Inter,Arial,sans-serif}
-.stage{position:relative;width:min(100vw,calc(100vh * 16 / 9));aspect-ratio:16/9;overflow:hidden;background:#2a1711;box-shadow:0 0 90px rgba(0,0,0,.45)}
-.bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
-.vignette{position:absolute;inset:0;background:linear-gradient(90deg,rgba(20,10,7,.08) 0%,rgba(20,10,7,.03) 52%,rgba(20,10,7,.2) 66%,rgba(20,10,7,.72) 100%);pointer-events:none}
-.menu{position:absolute;right:3.4%;top:7%;width:31%;min-width:360px;padding:3.1% 3% 2.2%;border-radius:30px;background:linear-gradient(180deg,rgba(37,21,16,.86),rgba(30,17,13,.91));border:1px solid rgba(240,207,141,.5);backdrop-filter:blur(18px);box-shadow:0 24px 70px rgba(0,0,0,.35)}
-.title{font:500 clamp(48px,5.5vw,92px)/.82 Georgia,serif;letter-spacing:-.045em;margin:0;color:#fffaf2}.amp{color:var(--gold2)}
-.sub{font:italic 500 clamp(13px,1.1vw,20px) Georgia,serif;color:#f3d8a3;margin:18px 0 24px;white-space:nowrap}
-.rule{height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin-bottom:20px}
-.btn{width:100%;height:62px;border-radius:999px;border:1px solid rgba(240,207,141,.62);background:rgba(35,26,24,.58);color:#fffaf2;font:600 clamp(14px,1.1vw,20px) Georgia,serif;cursor:pointer;margin:7px 0;transition:.2s ease;box-shadow:inset 0 0 0 1px rgba(255,255,255,.025)}
-.btn:hover,.btn:focus-visible{transform:translateY(-1px);border-color:#f0cf8d;background:rgba(78,47,38,.82);box-shadow:0 0 0 2px rgba(240,207,141,.16),0 10px 28px rgba(0,0,0,.18);outline:none}
-.btn.primary{background:linear-gradient(180deg,#bd5c43,#a64238);border-color:#f1c690;box-shadow:0 8px 26px rgba(145,42,38,.28)}
-.btn:disabled{opacity:.42;cursor:not-allowed;transform:none;box-shadow:none}
-.status{font-size:12px;color:rgba(255,247,235,.72);text-align:center;margin-top:17px}
-.brand{position:absolute;left:4.2%;bottom:4.4%;font:500 clamp(11px,.9vw,16px) Georgia,serif;letter-spacing:.18em;color:#f1d39b;text-shadow:0 2px 10px rgba(0,0,0,.5)}
-.toast{position:absolute;left:50%;bottom:3%;transform:translate(-50%,16px);background:rgba(24,14,11,.91);border:1px solid rgba(240,207,141,.45);padding:10px 18px;border-radius:999px;font-size:13px;opacity:0;pointer-events:none;transition:.25s;white-space:nowrap}.toast.show{opacity:1;transform:translate(-50%,0)}
-.modalBack{position:absolute;inset:0;background:rgba(15,9,7,.5);backdrop-filter:blur(9px);display:none;place-items:center}.modalBack.open{display:grid}.modal{width:min(440px,88%);background:rgba(39,24,19,.96);border:1px solid rgba(240,207,141,.52);border-radius:26px;padding:26px;box-shadow:0 22px 70px rgba(0,0,0,.46)}.modal h2{font:500 34px Georgia,serif;margin:0 0 18px}.row{display:flex;align-items:center;justify-content:space-between;padding:13px 0;border-bottom:1px solid rgba(255,255,255,.1)}.close{width:100%;margin-top:18px;border:1px solid rgba(240,207,141,.55);background:#8b2635;color:#fff;padding:13px;border-radius:999px;font-weight:700;cursor:pointer}
-.start{position:absolute;inset:0;display:none;background:linear-gradient(135deg,#f5dfc7,#d99d74);color:#3b2118;place-items:center;text-align:center;padding:30px}.start.open{display:grid}.startInner{max-width:720px}.eyebrow{letter-spacing:.22em;text-transform:uppercase;font-size:12px}.start h1{font:500 clamp(44px,6vw,88px)/.96 Georgia,serif;margin:16px 0}.start p{font-size:17px;line-height:1.6}.back{margin-top:18px;padding:12px 22px;border-radius:999px;border:1px solid #704635;background:#8b2635;color:#fff;font-weight:700;cursor:pointer}
-@media(max-width:900px){.stage{width:100vw;height:100vh;aspect-ratio:auto}.bg{object-position:58% center}.menu{right:4%;left:4%;top:auto;bottom:4%;width:auto;min-width:0;padding:22px;border-radius:24px}.title{font-size:48px;line-height:.86}.sub{font-size:13px;margin:12px 0 14px}.rule{margin-bottom:10px}.btn{height:48px;font-size:15px;margin:5px 0}.status{margin-top:10px}.brand{display:none}.vignette{background:linear-gradient(180deg,rgba(15,9,7,.05) 30%,rgba(15,9,7,.2) 60%,rgba(15,9,7,.74) 100%)}}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;background:#160d0a;color:var(--cream);overflow:hidden}body{display:grid;place-items:center;font-family:Inter,Arial,sans-serif}.stage{position:relative;width:min(100vw,calc(100vh * 16 / 9));aspect-ratio:16/9;overflow:hidden;background:#2a1711;box-shadow:0 0 90px rgba(0,0,0,.45)}.bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}.vignette{position:absolute;inset:0;background:linear-gradient(90deg,rgba(20,10,7,.08) 0%,rgba(20,10,7,.03) 52%,rgba(20,10,7,.2) 66%,rgba(20,10,7,.72) 100%);pointer-events:none}.menu{position:absolute;right:3.4%;top:7%;width:31%;min-width:360px;padding:3.1% 3% 2.2%;border-radius:30px;background:linear-gradient(180deg,rgba(37,21,16,.86),rgba(30,17,13,.91));border:1px solid rgba(240,207,141,.5);backdrop-filter:blur(18px);box-shadow:0 24px 70px rgba(0,0,0,.35)}.title{font:500 clamp(48px,5.5vw,92px)/.82 Georgia,serif;letter-spacing:-.045em;margin:0;color:#fffaf2}.amp{color:var(--gold2)}.sub{font:italic 500 clamp(13px,1.1vw,20px) Georgia,serif;color:#f3d8a3;margin:18px 0 24px;white-space:nowrap}.rule{height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin-bottom:20px}.btn{width:100%;height:62px;border-radius:999px;border:1px solid rgba(240,207,141,.62);background:rgba(35,26,24,.58);color:#fffaf2;font:600 clamp(14px,1.1vw,20px) Georgia,serif;cursor:pointer;margin:7px 0;transition:.2s ease}.btn:hover,.btn:focus-visible{transform:translateY(-1px);border-color:#f0cf8d;background:rgba(78,47,38,.82);outline:none}.btn.primary{background:linear-gradient(180deg,#bd5c43,#a64238);border-color:#f1c690}.btn:disabled{opacity:.42;cursor:not-allowed;transform:none}.status{font-size:12px;color:rgba(255,247,235,.72);text-align:center;margin-top:17px}.brand{position:absolute;left:4.2%;bottom:4.4%;font:500 clamp(11px,.9vw,16px) Georgia,serif;letter-spacing:.18em;color:#f1d39b;text-shadow:0 2px 10px rgba(0,0,0,.5)}.toast{position:absolute;left:50%;bottom:3%;transform:translate(-50%,16px);background:rgba(24,14,11,.91);border:1px solid rgba(240,207,141,.45);padding:10px 18px;border-radius:999px;font-size:13px;opacity:0;pointer-events:none;transition:.25s;white-space:nowrap;z-index:30}.toast.show{opacity:1;transform:translate(-50%,0)}
+.modalBack{position:absolute;inset:0;background:rgba(15,9,7,.5);backdrop-filter:blur(9px);display:none;place-items:center;z-index:25}.modalBack.open{display:grid}.modal{width:min(440px,88%);background:rgba(39,24,19,.96);border:1px solid rgba(240,207,141,.52);border-radius:26px;padding:26px;box-shadow:0 22px 70px rgba(0,0,0,.46)}.modal h2{font:500 34px Georgia,serif;margin:0 0 18px}.row{display:flex;align-items:center;justify-content:space-between;padding:13px 0;border-bottom:1px solid rgba(255,255,255,.1)}.close{width:100%;margin-top:18px;border:1px solid rgba(240,207,141,.55);background:#8b2635;color:#fff;padding:13px;border-radius:999px;font-weight:700;cursor:pointer}
+/* OUVERTURE */
+.game{position:absolute;inset:0;display:none;z-index:20;background:#000}.game.open{display:block}.cinematic{position:absolute;inset:0;background:radial-gradient(circle at 65% 30%,#f7c87b 0,#d98948 28%,#74452f 62%,#1b1110 100%);display:grid;place-items:center;overflow:hidden}.cinematic:before{content:"";position:absolute;inset:-10%;background:linear-gradient(125deg,transparent 15%,rgba(255,255,255,.08) 42%,transparent 58%);animation:glow 5s linear infinite}.cinematic.hide{display:none}@keyframes glow{from{transform:translateX(-12%)}to{transform:translateX(12%)}}.cinText{position:relative;text-align:center;text-shadow:0 4px 26px rgba(0,0,0,.45);transition:.45s}.cinText .kicker{letter-spacing:.3em;text-transform:uppercase;font-size:12px;color:#ffe2ae}.cinText h2{font:500 clamp(48px,8vw,120px)/.9 Georgia,serif;margin:12px 0}.cinText p{font:italic 500 clamp(15px,1.5vw,24px) Georgia,serif;color:#ffe9c4;margin:0}.skip{position:absolute;right:3%;bottom:3%;border:1px solid rgba(255,255,255,.35);background:rgba(20,12,10,.35);color:#fff;padding:10px 16px;border-radius:999px;cursor:pointer;backdrop-filter:blur(8px)}
+/* PREMIÈRE SCÈNE */
+.room{position:absolute;inset:0;display:none;background:linear-gradient(135deg,#f5dfc5 0%,#edc59c 38%,#c88f68 100%);color:#44271e;overflow:hidden}.room.open{display:block}.room:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 72% 18%,rgba(255,255,255,.75),transparent 28%),linear-gradient(90deg,rgba(255,255,255,.06),transparent 35%)}.window{position:absolute;right:8%;top:10%;width:34%;height:58%;border:14px solid rgba(255,249,238,.82);background:linear-gradient(#a8d5ef 0 45%,#ead6aa 45% 50%,#c5844a 50% 100%);box-shadow:0 15px 55px rgba(96,52,30,.18)}.curtain{position:absolute;right:42%;top:6%;width:10%;height:68%;background:linear-gradient(90deg,rgba(255,244,228,.7),rgba(255,255,255,.25));filter:blur(.2px)}.bed{position:absolute;left:5%;bottom:8%;width:53%;height:30%;border-radius:34px 34px 10px 10px;background:linear-gradient(#fff8ef,#e9cbb0);box-shadow:0 30px 50px rgba(81,44,31,.2)}.bed:before{content:"";position:absolute;left:5%;top:-24%;width:36%;height:42%;border-radius:28px;background:#fffaf4;box-shadow:90px 5px 0 #f5e8dd}.lamp{position:absolute;right:8%;bottom:8%;width:11%;height:26%;background:linear-gradient(90deg,transparent 45%,#7b4c37 45% 55%,transparent 55%)}.lamp:before{content:"";position:absolute;left:10%;top:0;width:80%;height:45%;background:#fff3dd;clip-path:polygon(20% 0,80% 0,100% 100%,0 100%)}.hud{position:absolute;top:3%;left:3%;right:3%;display:flex;justify-content:space-between;align-items:center;z-index:3}.place{font:600 13px Georgia,serif;letter-spacing:.12em;text-transform:uppercase}.clock{font:500 18px Georgia,serif}.sceneText{position:absolute;left:5%;top:12%;max-width:39%;z-index:3}.sceneText .small{font-size:13px;letter-spacing:.22em;text-transform:uppercase;color:#8a5842}.sceneText h2{font:500 clamp(42px,5vw,76px)/.95 Georgia,serif;margin:10px 0 14px}.sceneText p{font:500 17px/1.55 Georgia,serif;margin:0;color:#6a4030}.actions{position:absolute;left:50%;bottom:4%;transform:translateX(-50%);display:flex;gap:12px;z-index:4}.action{border:1px solid rgba(92,53,37,.28);background:rgba(255,250,242,.78);backdrop-filter:blur(10px);color:#4b2c22;padding:14px 20px;border-radius:999px;font:600 15px Georgia,serif;cursor:pointer;box-shadow:0 10px 28px rgba(80,40,25,.12);transition:.18s}.action:hover{transform:translateY(-2px);background:#fff9f1}.panel{position:absolute;right:3%;top:10%;width:min(380px,36%);max-height:75%;overflow:auto;background:rgba(255,248,239,.94);border:1px solid rgba(91,53,37,.22);border-radius:24px;padding:22px;box-shadow:0 25px 70px rgba(71,37,25,.22);display:none;z-index:8}.panel.open{display:block}.panel h3{font:500 32px Georgia,serif;margin:0 0 14px}.panel p{line-height:1.55}.msg{padding:14px;border-radius:18px;background:#f2ddc8;margin:10px 0}.choice{display:block;width:100%;margin:9px 0;padding:12px;border:1px solid #c89c7a;border-radius:16px;background:#fffaf4;color:#4c2d22;text-align:left;cursor:pointer}.panelClose{border:0;background:none;position:absolute;right:16px;top:14px;font-size:22px;cursor:pointer;color:#6b4436}.city{position:absolute;inset:0;display:none;background:linear-gradient(180deg,#9ed3ef 0 42%,#e7c99c 42% 47%,#c77d48 47% 100%);color:#fff}.city.open{display:block}.city:after{content:"NÎMES";position:absolute;left:5%;bottom:10%;font:500 clamp(64px,10vw,150px) Georgia,serif;color:rgba(255,255,255,.9);text-shadow:0 4px 30px rgba(0,0,0,.2)}
+@media(max-width:900px){.stage{width:100vw;height:100vh;aspect-ratio:auto}.bg{object-position:58% center}.menu{right:4%;left:4%;top:auto;bottom:4%;width:auto;min-width:0;padding:22px;border-radius:24px}.title{font-size:48px;line-height:.86}.sub{font-size:13px;margin:12px 0 14px}.rule{margin-bottom:10px}.btn{height:48px;font-size:15px;margin:5px 0}.status{margin-top:10px}.brand{display:none}.vignette{background:linear-gradient(180deg,rgba(15,9,7,.05) 30%,rgba(15,9,7,.2) 60%,rgba(15,9,7,.74) 100%)}.sceneText{max-width:72%;top:9%}.window{right:-10%;width:58%}.actions{width:92%;gap:7px}.action{flex:1;padding:12px 8px;font-size:13px}.panel{left:4%;right:4%;top:auto;bottom:4%;width:auto;max-height:60%}}
 </style>
 </head>
 <body>
-<main class="stage" aria-label="Écran d'accueil Marion et Lucas">
+<main class="stage" aria-label="Marion et Lucas">
   <img class="bg" src="assets/cover_home.jpg?v=20" alt="Marion et Lucas devant les arènes de Nîmes" />
   <div class="vignette"></div>
-
   <section class="menu" aria-label="Menu principal">
     <h1 class="title">Marion<br><span class="amp">&</span> Lucas</h1>
-    <div class="sub">Nîmes · Madrid · amour · vie · tauromachie</div>
-    <div class="rule"></div>
-    <button class="btn primary" id="newBtn">Nouvelle partie</button>
-    <button class="btn" id="continueBtn">Continuer</button>
-    <button class="btn" id="loadBtn">Charger une sauvegarde</button>
-    <button class="btn" id="settingsBtn">Paramètres</button>
-    <div class="status" id="saveStatus"></div>
+    <div class="sub">Nîmes · Madrid · amour · vie · tauromachie</div><div class="rule"></div>
+    <button class="btn primary" id="newBtn">Nouvelle partie</button><button class="btn" id="continueBtn">Continuer</button><button class="btn" id="loadBtn">Charger une sauvegarde</button><button class="btn" id="settingsBtn">Paramètres</button><div class="status" id="saveStatus"></div>
   </section>
+  <div class="brand">MARION &amp; LUCAS — UNE VIE À CONSTRUIRE</div><div class="toast" id="toast"></div>
+  <div class="modalBack" id="settingsPanel"><section class="modal"><h2>Paramètres</h2><div class="row"><span>Musique</span><input type="checkbox" checked></div><div class="row"><span>Effets sonores</span><input type="checkbox" checked></div><div class="row"><span>Mode cinématique</span><input type="checkbox" checked></div><button class="close" id="closeSettings">Fermer</button></section></div>
 
-  <div class="brand">MARION &amp; LUCAS — UNE VIE À CONSTRUIRE</div>
-  <div class="toast" id="toast"></div>
-
-  <div class="modalBack" id="settingsPanel" role="dialog" aria-modal="true" aria-label="Paramètres">
-    <section class="modal">
-      <h2>Paramètres</h2>
-      <div class="row"><span>Musique</span><input id="music" type="checkbox" checked></div>
-      <div class="row"><span>Effets sonores</span><input id="sfx" type="checkbox" checked></div>
-      <div class="row"><span>Mode cinématique</span><input id="cinematic" type="checkbox" checked></div>
-      <button class="close" id="closeSettings">Fermer</button>
-    </section>
-  </div>
-
-  <section class="start" id="startScreen">
-    <div class="startInner">
-      <div class="eyebrow">Nîmes • Jour 1</div>
-      <h1>La vie de Marion commence.</h1>
-      <p>La prochaine étape sera la première vraie scène jouable : Marion chez elle, la feria qui s'éveille et une journée qui peut prendre une direction inattendue.</p>
-      <button class="back" id="backBtn">Retour à l'accueil</button>
+  <section class="game" id="game">
+    <div class="cinematic" id="cinematic"><div class="cinText" id="cinText"><div class="kicker">Une nouvelle partie</div><h2>Nîmes</h2><p>Le matin où tout commence.</p></div><button class="skip" id="skipIntro">Passer</button></div>
+    <div class="room" id="room">
+      <div class="window"></div><div class="curtain"></div><div class="bed"></div><div class="lamp"></div>
+      <div class="hud"><div class="place">Chez Marion · Nîmes</div><div class="clock" id="clock">09:00</div></div>
+      <div class="sceneText"><div class="small">Jour 1</div><h2>Un matin ordinaire.</h2><p>La ville se prépare à la feria. Marion, elle, ne sait pas encore que sa journée ne ressemblera à aucune autre.</p></div>
+      <div class="actions"><button class="action" data-panel="phone">Téléphone</button><button class="action" data-panel="dress">Dressing</button><button class="action" id="goOut">Sortir</button></div>
+      <aside class="panel" id="phone"><button class="panelClose">×</button><h3>Téléphone</h3><div class="msg"><b>Chloé</b><br>Tu viens en ville aujourd’hui ? Ça commence à bouger pour la feria 👀</div><button class="choice" data-reply="yes">« Oui, on se retrouve plus tard. »</button><button class="choice" data-reply="maybe">« Je te redis, je sais pas encore. »</button></aside>
+      <aside class="panel" id="dress"><button class="panelClose">×</button><h3>Dressing</h3><p>Choisis l’allure de Marion pour commencer la journée.</p><button class="choice" data-look="casual">Jean clair + top blanc</button><button class="choice" data-look="feria">Robe rouge légère</button><button class="choice" data-look="chic">Pantalon fluide + chemisier</button></aside>
     </div>
+    <div class="city" id="city"><div class="hud"><div class="place">Centre-ville · Nîmes</div><div class="clock" id="cityClock">10:00</div></div></div>
   </section>
 </main>
 <script>
-const SAVE_KEY='marion-lucas-save-v1';
-const toast=document.getElementById('toast');
-const settings=document.getElementById('settingsPanel');
-const startScreen=document.getElementById('startScreen');
-const continueBtn=document.getElementById('continueBtn');
-const loadBtn=document.getElementById('loadBtn');
-const saveStatus=document.getElementById('saveStatus');
-let toastTimer;
-function say(msg){toast.textContent=msg;toast.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.classList.remove('show'),2200)}
+const SAVE_KEY='marion-lucas-save-v2';const toast=document.getElementById('toast'),settings=document.getElementById('settingsPanel'),continueBtn=document.getElementById('continueBtn'),loadBtn=document.getElementById('loadBtn'),saveStatus=document.getElementById('saveStatus'),game=document.getElementById('game'),cinematic=document.getElementById('cinematic'),room=document.getElementById('room'),city=document.getElementById('city'),clock=document.getElementById('clock'),cityClock=document.getElementById('cityClock');let toastTimer,introTimer;
+function say(m){toast.textContent=m;toast.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.classList.remove('show'),2200)}
 function getSave(){try{return JSON.parse(localStorage.getItem(SAVE_KEY)||'null')}catch{return null}}
+function saveGame(patch={}){const old=getSave()||{};const s={...old,...patch,updatedAt:Date.now()};localStorage.setItem(SAVE_KEY,JSON.stringify(s));refreshSaveUI();return s}
 function refreshSaveUI(){const s=getSave();continueBtn.disabled=!s;loadBtn.disabled=!s;saveStatus.textContent=s?`Dernière sauvegarde · Jour ${s.day||1} · ${s.place||'Nîmes'} · ${s.time||'09:00'}`:'Aucune partie sauvegardée sur cet appareil.'}
-function openGame(isNew){let save=getSave();if(isNew){save={day:1,place:'Nîmes',time:'09:00',marionAge:20,lucasAge:22,createdAt:Date.now(),updatedAt:Date.now()};localStorage.setItem(SAVE_KEY,JSON.stringify(save));refreshSaveUI()}else if(!save){say('Aucune partie sauvegardée sur cet appareil.');return}startScreen.classList.add('open')}
-document.getElementById('newBtn').addEventListener('click',()=>openGame(true));
-continueBtn.addEventListener('click',()=>openGame(false));
-loadBtn.addEventListener('click',()=>{const s=getSave();if(!s){say('Aucune sauvegarde disponible.');return}say(`Sauvegarde : Jour ${s.day||1} · ${s.place||'Nîmes'} · ${s.time||'09:00'}`);setTimeout(()=>openGame(false),650)});
-document.getElementById('settingsBtn').addEventListener('click',()=>settings.classList.add('open'));
-document.getElementById('closeSettings').addEventListener('click',()=>settings.classList.remove('open'));
-settings.addEventListener('click',e=>{if(e.target===settings)settings.classList.remove('open')});
-document.getElementById('backBtn').addEventListener('click',()=>startScreen.classList.remove('open'));
-refreshSaveUI();
+function newGame(){localStorage.setItem(SAVE_KEY,JSON.stringify({version:2,day:1,place:'Nîmes',time:'09:00',marionAge:20,lucasAge:22,scene:'intro',look:null,friendReply:null,meetingDue:true,lucasHiddenLocation:'Nîmes',createdAt:Date.now(),updatedAt:Date.now()}));refreshSaveUI();openFromSave(true)}
+function openFromSave(playIntro=false){const s=getSave();if(!s){say('Aucune partie sauvegardée.');return}game.classList.add('open');document.querySelector('.menu').style.display='none';document.querySelector('.brand').style.display='none';if(playIntro||s.scene==='intro'){startIntro()}else if(s.scene==='city'){showCity()}else{showRoom()}}
+function startIntro(){cinematic.classList.remove('hide');room.classList.remove('open');city.classList.remove('open');const beats=[['Nîmes','Le matin où tout commence.'],['La feria approche','La ville s’éveille. Les rues se remplissent peu à peu.'],['Marion','20 ans. Sa vie, ses habitudes… pour encore quelques heures.']];let i=0;function beat(){const box=document.getElementById('cinText');box.style.opacity=0;setTimeout(()=>{box.innerHTML=`<div class="kicker">Jour 1</div><h2>${beats[i][0]}</h2><p>${beats[i][1]}</p>`;box.style.opacity=1;i++;if(i<beats.length)introTimer=setTimeout(beat,1700);else introTimer=setTimeout(()=>{saveGame({scene:'room'});showRoom()},1900)},350)}beat()}
+function showRoom(){clearTimeout(introTimer);cinematic.classList.add('hide');city.classList.remove('open');room.classList.add('open');const s=getSave();clock.textContent=s?.time||'09:00';saveGame({scene:'room',place:'Nîmes'})}
+function showCity(){clearTimeout(introTimer);cinematic.classList.add('hide');room.classList.remove('open');city.classList.add('open');const s=saveGame({scene:'city',place:'Centre-ville de Nîmes',time:'10:00'});cityClock.textContent=s.time;say('La journée commence vraiment…')}
+function closePanels(){document.querySelectorAll('.panel').forEach(p=>p.classList.remove('open'))}
+document.getElementById('newBtn').onclick=newGame;continueBtn.onclick=()=>openFromSave(false);loadBtn.onclick=()=>openFromSave(false);document.getElementById('settingsBtn').onclick=()=>settings.classList.add('open');document.getElementById('closeSettings').onclick=()=>settings.classList.remove('open');settings.onclick=e=>{if(e.target===settings)settings.classList.remove('open')};document.getElementById('skipIntro').onclick=()=>{saveGame({scene:'room'});showRoom()};document.querySelectorAll('[data-panel]').forEach(b=>b.onclick=()=>{closePanels();document.getElementById(b.dataset.panel).classList.add('open')});document.querySelectorAll('.panelClose').forEach(b=>b.onclick=closePanels);document.querySelectorAll('[data-reply]').forEach(b=>b.onclick=()=>{saveGame({friendReply:b.dataset.reply,time:'09:08'});clock.textContent='09:08';say('Réponse envoyée.');closePanels()});document.querySelectorAll('[data-look]').forEach(b=>b.onclick=()=>{saveGame({look:b.dataset.look,time:'09:25'});clock.textContent='09:25';say('Tenue choisie.');closePanels()});document.getElementById('goOut').onclick=showCity;refreshSaveUI();
 </script>
 </body>
 </html>
