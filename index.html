@@ -3,20 +3,50 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<meta name="theme-color" content="#1d120e" />
+<meta name="theme-color" content="#21130f" />
 <title>Marion & Lucas</title>
 <style>
-*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;background:#1d120e;color:#fff;overflow:hidden}body{display:grid;place-items:center;font-family:Inter,Arial,sans-serif}.stage{position:relative;width:min(100vw,calc(100vh * 1.5));aspect-ratio:3/2;overflow:hidden;background:#2a1711;box-shadow:0 0 80px rgba(0,0,0,.35)}#cover{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block}.hotspot{position:absolute;left:67.4%;width:27.4%;height:8.5%;border:0;border-radius:999px;background:transparent;cursor:pointer;outline:none;transition:.18s}.hotspot:hover,.hotspot:focus-visible{background:rgba(255,255,255,.06);box-shadow:0 0 0 2px rgba(255,215,139,.82),0 0 26px rgba(255,205,120,.26);transform:scale(1.006)}#newBtn{top:44.9%}#continueBtn{top:55.0%}#loadBtn{top:65.2%}#settingsBtn{top:75.4%}.toast{position:absolute;left:50%;bottom:2.4%;transform:translate(-50%,18px);background:rgba(28,18,15,.88);backdrop-filter:blur(12px);border:1px solid rgba(255,224,176,.42);padding:10px 18px;border-radius:999px;font-size:13px;opacity:0;pointer-events:none;transition:.25s;white-space:nowrap}.toast.show{opacity:1;transform:translate(-50%,0)}.modalBack{position:absolute;inset:0;background:rgba(15,9,7,.48);backdrop-filter:blur(8px);display:none;place-items:center}.modalBack.open{display:grid}.modal{width:min(430px,86%);background:rgba(41,26,21,.94);border:1px solid rgba(255,218,157,.55);border-radius:24px;padding:24px;box-shadow:0 20px 70px rgba(0,0,0,.45)}.modal h2{font:500 32px Georgia,serif;margin:0 0 18px}.row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.1)}.close{width:100%;margin-top:18px;border:1px solid rgba(255,218,157,.55);background:#8b2635;color:#fff;padding:13px;border-radius:999px;font-weight:700;cursor:pointer}.start{position:absolute;inset:0;display:none;background:linear-gradient(135deg,#f5dfc7,#d99d74);color:#3b2118;place-items:center;text-align:center;padding:30px}.start.open{display:grid}.startInner{max-width:700px}.start .eyebrow{letter-spacing:.22em;text-transform:uppercase;font-size:12px}.start h1{font:500 clamp(44px,6vw,90px)/.95 Georgia,serif;margin:16px 0}.start p{font-size:17px;line-height:1.6}.back{margin-top:18px;padding:12px 22px;border-radius:999px;border:1px solid #704635;background:#8b2635;color:#fff;font-weight:700;cursor:pointer}@media(max-width:800px){body{background:#1d120e}.stage{width:100vw;height:auto}.toast{font-size:11px}}
+:root{--cream:#fff7eb;--gold:#d6aa62;--gold2:#f0cf8d;--wine:#8f2635;--ink:#21130f}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;background:#160d0a;color:var(--cream);overflow:hidden}
+body{display:grid;place-items:center;font-family:Inter,Arial,sans-serif}
+.stage{position:relative;width:min(100vw,calc(100vh * 16 / 9));aspect-ratio:16/9;overflow:hidden;background:#2a1711;box-shadow:0 0 90px rgba(0,0,0,.45)}
+.bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.vignette{position:absolute;inset:0;background:linear-gradient(90deg,rgba(20,10,7,.08) 0%,rgba(20,10,7,.03) 52%,rgba(20,10,7,.2) 66%,rgba(20,10,7,.72) 100%);pointer-events:none}
+.menu{position:absolute;right:3.4%;top:7%;width:31%;min-width:360px;padding:3.1% 3% 2.2%;border-radius:30px;background:linear-gradient(180deg,rgba(37,21,16,.86),rgba(30,17,13,.91));border:1px solid rgba(240,207,141,.5);backdrop-filter:blur(18px);box-shadow:0 24px 70px rgba(0,0,0,.35)}
+.title{font:500 clamp(48px,5.5vw,92px)/.82 Georgia,serif;letter-spacing:-.045em;margin:0;color:#fffaf2}.amp{color:var(--gold2)}
+.sub{font:italic 500 clamp(13px,1.1vw,20px) Georgia,serif;color:#f3d8a3;margin:18px 0 24px;white-space:nowrap}
+.rule{height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin-bottom:20px}
+.btn{width:100%;height:62px;border-radius:999px;border:1px solid rgba(240,207,141,.62);background:rgba(35,26,24,.58);color:#fffaf2;font:600 clamp(14px,1.1vw,20px) Georgia,serif;cursor:pointer;margin:7px 0;transition:.2s ease;box-shadow:inset 0 0 0 1px rgba(255,255,255,.025)}
+.btn:hover,.btn:focus-visible{transform:translateY(-1px);border-color:#f0cf8d;background:rgba(78,47,38,.82);box-shadow:0 0 0 2px rgba(240,207,141,.16),0 10px 28px rgba(0,0,0,.18);outline:none}
+.btn.primary{background:linear-gradient(180deg,#bd5c43,#a64238);border-color:#f1c690;box-shadow:0 8px 26px rgba(145,42,38,.28)}
+.btn:disabled{opacity:.42;cursor:not-allowed;transform:none;box-shadow:none}
+.status{font-size:12px;color:rgba(255,247,235,.72);text-align:center;margin-top:17px}
+.brand{position:absolute;left:4.2%;bottom:4.4%;font:500 clamp(11px,.9vw,16px) Georgia,serif;letter-spacing:.18em;color:#f1d39b;text-shadow:0 2px 10px rgba(0,0,0,.5)}
+.toast{position:absolute;left:50%;bottom:3%;transform:translate(-50%,16px);background:rgba(24,14,11,.91);border:1px solid rgba(240,207,141,.45);padding:10px 18px;border-radius:999px;font-size:13px;opacity:0;pointer-events:none;transition:.25s;white-space:nowrap}.toast.show{opacity:1;transform:translate(-50%,0)}
+.modalBack{position:absolute;inset:0;background:rgba(15,9,7,.5);backdrop-filter:blur(9px);display:none;place-items:center}.modalBack.open{display:grid}.modal{width:min(440px,88%);background:rgba(39,24,19,.96);border:1px solid rgba(240,207,141,.52);border-radius:26px;padding:26px;box-shadow:0 22px 70px rgba(0,0,0,.46)}.modal h2{font:500 34px Georgia,serif;margin:0 0 18px}.row{display:flex;align-items:center;justify-content:space-between;padding:13px 0;border-bottom:1px solid rgba(255,255,255,.1)}.close{width:100%;margin-top:18px;border:1px solid rgba(240,207,141,.55);background:#8b2635;color:#fff;padding:13px;border-radius:999px;font-weight:700;cursor:pointer}
+.start{position:absolute;inset:0;display:none;background:linear-gradient(135deg,#f5dfc7,#d99d74);color:#3b2118;place-items:center;text-align:center;padding:30px}.start.open{display:grid}.startInner{max-width:720px}.eyebrow{letter-spacing:.22em;text-transform:uppercase;font-size:12px}.start h1{font:500 clamp(44px,6vw,88px)/.96 Georgia,serif;margin:16px 0}.start p{font-size:17px;line-height:1.6}.back{margin-top:18px;padding:12px 22px;border-radius:999px;border:1px solid #704635;background:#8b2635;color:#fff;font-weight:700;cursor:pointer}
+@media(max-width:900px){.stage{width:100vw;height:100vh;aspect-ratio:auto}.bg{object-position:58% center}.menu{right:4%;left:4%;top:auto;bottom:4%;width:auto;min-width:0;padding:22px;border-radius:24px}.title{font-size:48px;line-height:.86}.sub{font-size:13px;margin:12px 0 14px}.rule{margin-bottom:10px}.btn{height:48px;font-size:15px;margin:5px 0}.status{margin-top:10px}.brand{display:none}.vignette{background:linear-gradient(180deg,rgba(15,9,7,.05) 30%,rgba(15,9,7,.2) 60%,rgba(15,9,7,.74) 100%)}}
 </style>
 </head>
 <body>
 <main class="stage" aria-label="Écran d'accueil Marion et Lucas">
-  <img id="cover" src="assets/cover_home.jpg?v=12" alt="Marion et Lucas devant les arènes de Nîmes, écran d'accueil du jeu" />
-  <button class="hotspot" id="newBtn" aria-label="Nouvelle partie"></button>
-  <button class="hotspot" id="continueBtn" aria-label="Continuer"></button>
-  <button class="hotspot" id="loadBtn" aria-label="Charger une sauvegarde"></button>
-  <button class="hotspot" id="settingsBtn" aria-label="Paramètres"></button>
+  <img class="bg" src="assets/cover_home.jpg?v=20" alt="Marion et Lucas devant les arènes de Nîmes" />
+  <div class="vignette"></div>
+
+  <section class="menu" aria-label="Menu principal">
+    <h1 class="title">Marion<br><span class="amp">&</span> Lucas</h1>
+    <div class="sub">Nîmes · Madrid · amour · vie · tauromachie</div>
+    <div class="rule"></div>
+    <button class="btn primary" id="newBtn">Nouvelle partie</button>
+    <button class="btn" id="continueBtn">Continuer</button>
+    <button class="btn" id="loadBtn">Charger une sauvegarde</button>
+    <button class="btn" id="settingsBtn">Paramètres</button>
+    <div class="status" id="saveStatus"></div>
+  </section>
+
+  <div class="brand">MARION &amp; LUCAS — UNE VIE À CONSTRUIRE</div>
   <div class="toast" id="toast"></div>
+
   <div class="modalBack" id="settingsPanel" role="dialog" aria-modal="true" aria-label="Paramètres">
     <section class="modal">
       <h2>Paramètres</h2>
@@ -26,6 +56,7 @@
       <button class="close" id="closeSettings">Fermer</button>
     </section>
   </div>
+
   <section class="start" id="startScreen">
     <div class="startInner">
       <div class="eyebrow">Nîmes • Jour 1</div>
@@ -40,17 +71,22 @@ const SAVE_KEY='marion-lucas-save-v1';
 const toast=document.getElementById('toast');
 const settings=document.getElementById('settingsPanel');
 const startScreen=document.getElementById('startScreen');
+const continueBtn=document.getElementById('continueBtn');
+const loadBtn=document.getElementById('loadBtn');
+const saveStatus=document.getElementById('saveStatus');
 let toastTimer;
 function say(msg){toast.textContent=msg;toast.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.classList.remove('show'),2200)}
 function getSave(){try{return JSON.parse(localStorage.getItem(SAVE_KEY)||'null')}catch{return null}}
-function openGame(isNew){let save=getSave();if(isNew){save={day:1,place:'Nîmes',time:'09:00',marionAge:20,lucasAge:22,createdAt:Date.now(),updatedAt:Date.now()};localStorage.setItem(SAVE_KEY,JSON.stringify(save))}else if(!save){say('Aucune partie sauvegardée sur cet appareil.');return}startScreen.classList.add('open')}
+function refreshSaveUI(){const s=getSave();continueBtn.disabled=!s;loadBtn.disabled=!s;saveStatus.textContent=s?`Dernière sauvegarde · Jour ${s.day||1} · ${s.place||'Nîmes'} · ${s.time||'09:00'}`:'Aucune partie sauvegardée sur cet appareil.'}
+function openGame(isNew){let save=getSave();if(isNew){save={day:1,place:'Nîmes',time:'09:00',marionAge:20,lucasAge:22,createdAt:Date.now(),updatedAt:Date.now()};localStorage.setItem(SAVE_KEY,JSON.stringify(save));refreshSaveUI()}else if(!save){say('Aucune partie sauvegardée sur cet appareil.');return}startScreen.classList.add('open')}
 document.getElementById('newBtn').addEventListener('click',()=>openGame(true));
-document.getElementById('continueBtn').addEventListener('click',()=>openGame(false));
-document.getElementById('loadBtn').addEventListener('click',()=>{const s=getSave();if(!s){say('Aucune sauvegarde disponible.');return}say(`Sauvegarde : Jour ${s.day||1} • ${s.place||'Nîmes'} • ${s.time||'09:00'}`);setTimeout(()=>openGame(false),700)});
+continueBtn.addEventListener('click',()=>openGame(false));
+loadBtn.addEventListener('click',()=>{const s=getSave();if(!s){say('Aucune sauvegarde disponible.');return}say(`Sauvegarde : Jour ${s.day||1} · ${s.place||'Nîmes'} · ${s.time||'09:00'}`);setTimeout(()=>openGame(false),650)});
 document.getElementById('settingsBtn').addEventListener('click',()=>settings.classList.add('open'));
 document.getElementById('closeSettings').addEventListener('click',()=>settings.classList.remove('open'));
 settings.addEventListener('click',e=>{if(e.target===settings)settings.classList.remove('open')});
 document.getElementById('backBtn').addEventListener('click',()=>startScreen.classList.remove('open'));
+refreshSaveUI();
 </script>
 </body>
 </html>
