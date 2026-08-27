@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Marion & Lucas</title>
+<style>
+:root{--cream:#f6efe5;--ink:#2e211c;--rose:#bd6f52;--glass:rgba(35,24,20,.48)}
+*{box-sizing:border-box} html,body{margin:0;min-height:100%;font-family:Georgia,'Times New Roman',serif;background:#1d1512;color:#fff}
+body{min-height:100vh;overflow:hidden}.screen{position:relative;min-height:100vh;background-image:linear-gradient(90deg,rgba(18,12,10,.18),rgba(18,12,10,.08) 50%,rgba(18,12,10,.55)),url('assets/cover.jpg');background-size:cover;background-position:center}
+.menu{position:absolute;right:6vw;top:50%;transform:translateY(-50%);width:min(430px,38vw);padding:28px;border-radius:28px;background:var(--glass);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.22);box-shadow:0 20px 60px rgba(0,0,0,.28)}
+.brand{font-size:clamp(42px,5vw,78px);line-height:.9;margin:0 0 10px;font-weight:500;letter-spacing:-2px}.sub{font-size:16px;opacity:.85;margin:0 0 24px}.btn{width:100%;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.12);color:white;padding:16px 20px;border-radius:999px;margin:8px 0;font:600 18px/1.1 Georgia;cursor:pointer;transition:.2s}.btn:hover{transform:translateY(-1px);background:rgba(255,255,255,.2)}.btn.primary{background:var(--rose);border-color:#f1c8b7}.btn:disabled{opacity:.42;cursor:not-allowed;transform:none}.status{font-family:Arial,sans-serif;font-size:12px;opacity:.78;margin-top:14px;text-align:center}.settings{display:none;margin-top:14px;padding:14px;border-radius:18px;background:rgba(255,255,255,.1);font-family:Arial,sans-serif}.settings.open{display:block}.row{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:8px 0}.tagline{position:absolute;left:5vw;bottom:5vh;font-size:clamp(20px,2.4vw,38px);max-width:420px;text-shadow:0 3px 18px rgba(0,0,0,.4)}
+@media(max-width:800px){body{overflow:auto}.screen{min-height:100svh;background-position:42% center}.menu{position:relative;right:auto;top:auto;transform:none;width:auto;margin:0 16px 16px;padding:20px;top:56vh}.tagline{top:18px;bottom:auto;font-size:22px;max-width:260px}.brand{font-size:48px}}
+</style>
+</head>
+<body>
+<main class="screen">
+  <div class="tagline">Une histoire à vivre.<br>Pas seulement à regarder.</div>
+  <section class="menu" aria-label="Menu principal">
+    <h1 class="brand">Marion<br>& Lucas</h1>
+    <p class="sub">Nîmes • Madrid • amour • vie • tauromachie</p>
+    <button class="btn primary" id="newBtn">Nouvelle partie</button>
+    <button class="btn" id="continueBtn" disabled>Continuer</button>
+    <button class="btn" id="loadBtn" disabled>Charger une sauvegarde</button>
+    <button class="btn" id="settingsBtn">Paramètres</button>
+    <div class="settings" id="settingsPanel">
+      <div class="row"><span>Musique</span><input id="music" type="checkbox" checked></div>
+      <div class="row"><span>Effets sonores</span><input id="sfx" type="checkbox" checked></div>
+      <div class="row"><span>Mode cinématique</span><input id="cinematic" type="checkbox" checked></div>
+    </div>
+    <div class="status" id="status">Aucune partie sauvegardée sur cet appareil.</div>
+  </section>
+</main>
+<script>
+const SAVE_KEY='marion-lucas-save-v1';
+const continueBtn=document.getElementById('continueBtn'),loadBtn=document.getElementById('loadBtn'),status=document.getElementById('status');
+function refreshSave(){const raw=localStorage.getItem(SAVE_KEY);const has=!!raw;continueBtn.disabled=!has;loadBtn.disabled=!has;if(has){try{const s=JSON.parse(raw);status.textContent=`Sauvegarde : Jour ${s.day||1} • ${s.place||'Nîmes'} • ${s.time||'09:00'}`;}catch{status.textContent='Une sauvegarde est disponible.'}}else status.textContent='Aucune partie sauvegardée sur cet appareil.'}
+function startGame(newGame){const save=newGame?{day:1,place:'Nîmes',time:'09:00',marionAge:20,lucasAge:22,createdAt:Date.now()}:JSON.parse(localStorage.getItem(SAVE_KEY)||'{}');if(newGame)localStorage.setItem(SAVE_KEY,JSON.stringify(save));document.body.innerHTML=`<main style="min-height:100vh;background:#f6efe5;color:#2e211c;display:grid;place-items:center;padding:24px;text-align:center"><div><p style="letter-spacing:.2em;text-transform:uppercase;font:12px Arial">Nîmes • Jour ${save.day||1}</p><h1 style="font-size:clamp(44px,7vw,88px);margin:.2em 0">La vie de Marion commence.</h1><p style="font:18px Arial;max-width:620px;line-height:1.6">La première scène jouable arrive ici ensuite : Marion chez elle, la feria qui s'éveille, puis une journée libre où la rencontre avec Lucas peut surgir sans prévenir.</p><button onclick="location.reload()" style="margin-top:20px;padding:14px 22px;border-radius:999px;border:1px solid #9b6c59;background:#bd6f52;color:white;font-weight:700">Retour à l'accueil</button></div></main>`;}
+document.getElementById('newBtn').addEventListener('click',()=>startGame(true));continueBtn.addEventListener('click',()=>startGame(false));loadBtn.addEventListener('click',()=>startGame(false));document.getElementById('settingsBtn').addEventListener('click',()=>document.getElementById('settingsPanel').classList.toggle('open'));refreshSave();
+</script>
+</body>
+</html>
