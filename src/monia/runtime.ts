@@ -221,6 +221,10 @@ class MonIARuntime {
     return moniaStorage.recent(limit);
   }
 
+  async relevantMemories(text: string, day: number, actors: string[] = ['Marion', 'Lucas'], limit = 10) {
+    return moniaStorage.relevant({ text, day, actors, limit });
+  }
+
   release() {
     this.worker?.postMessage({ type: 'release' });
     this.worker?.terminate();
