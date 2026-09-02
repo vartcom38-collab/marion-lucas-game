@@ -123,7 +123,8 @@ async function run(channel: MonIAChannel) {
 }
 
 monia.observe(status => {
-  diagnostics.textContent = `Moteur : ${status.status} · ${status.label}${status.progress ? ` · ${Math.round(status.progress * 100)}%` : ''}`;
+  const progress = status.progress ? ` · ${Math.round(Math.max(0, Math.min(100, status.progress)))}%` : '';
+  diagnostics.textContent = `Moteur : ${status.status} · ${status.label}${progress}`;
 });
 
 document.querySelectorAll<HTMLButtonElement>('[data-channel]').forEach(button => {
