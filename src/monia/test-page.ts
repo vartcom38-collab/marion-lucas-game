@@ -4,6 +4,7 @@ import { planDrama } from './drama-planner';
 import type { MonIADramaPlan } from './drama';
 import { composeDramaStudio, type DramaStudioComposition } from './drama-studio';
 import { moniaDramaPlayer } from './drama-player';
+import { auditDramaPack } from './drama-pack';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const msg = $('msg') as HTMLTextAreaElement;
@@ -117,21 +118,27 @@ async function runDrama(text: string) {
     context: testContext(text), availableMedia: ['lucas-intro.mp4','marion-nimes.mp4','appartement-nimes.png'],
   }, true);
   const composition = composeDramaStudio(plan);
+  const pack = auditDramaPack();
   lastDramaPlan = plan;
   lastComposition = composition;
   playDrama.disabled = !composition.playable;
   engine.textContent = `MonIA Drama Studio · ${plan.source}`;
   engine.dataset.state = composition.playable ? 'ready' : 'fallback';
-  answer.textContent = `${plan.shots.length} plans · ${plan.targetDuration}s · couverture visuelle ${composition.coverage}%`;
-  raw.textContent = JSON.stringify({ storyboard: plan, studio: composition }, null, 2);
+  answer.textContent = `${plan.shots.length} plans · ${plan.targetDuration}s · scène ${composition.coverage}% · pack V1 ${pack.coverage}%`;
+  raw.textContent = JSON.stringify({ storyboard: plan, studio: composition, packAudit: pack }, null, 2);
   audioZone.innerHTML = '';
   studioStatus.textContent = composition.playable ? 'Studio interne : scène jouable' : 'Studio interne : bibliothèque encore incomplète';
-  studioProgress.textContent = composition.missingShotIds.length
+  const priorityMissing = pack.missingPriority1.slice(0, 6).map(slot => `${slot.actor}/${slot.shot}/${slot.mood} ×${slot.missing}`);
+  const sceneLine = composition.missingShotIds.length
     ? `Plans sans brique adaptée : ${composition.missingShotIds.join(', ')}`
-    : 'Tous les plans ont une brique visuelle serveur.';
+    : 'Tous les plans de cette scène ont une brique visuelle serveur.';
+  const packLine = priorityMissing.length
+    ? `Pack V1 prioritaire manquant : ${priorityMissing.join(' · ')}`
+    : 'Pack V1 prioritaire complet.';
+  studioProgress.textContent = `${sceneLine}\n${packLine}`;
   diagnostics.textContent = composition.playable
-    ? `✓ Storyboard composé avec la bibliothèque MonIA interne. Couverture ${composition.coverage}%.`
-    : `⚠ Storyboard prêt, mais couverture ${composition.coverage}% : il faut enrichir la bibliothèque visuelle avant une lecture complète.`;
+    ? `✓ Storyboard composé avec la bibliothèque MonIA interne. Scène ${composition.coverage}% · pack V1 ${pack.coverage}%.`
+    : `⚠ Storyboard prêt, mais scène ${composition.coverage}% · pack V1 ${pack.coverage}%. La bibliothèque doit encore être enrichie.`;
 }
 
 async function playStudioDrama() {
