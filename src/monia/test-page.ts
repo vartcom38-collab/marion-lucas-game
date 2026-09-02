@@ -1,6 +1,8 @@
 import { monia } from './runtime';
 import { inferMessageTone, type MonIAChannel, type MonIADirectorResult, type MonIAMessageTone } from './director';
 import { planDrama } from './drama-planner';
+import type { MonIADramaPlan } from './drama';
+import { moniaVideo, type MonIAVideoRender } from './video-engine';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const msg = $('msg') as HTMLTextAreaElement;
@@ -12,8 +14,13 @@ const raw = $('raw');
 const engine = $('engine');
 const diagnostics = $('diagnostics');
 const audioZone = $('audioZone');
+const videoZone = $('videoZone');
+const renderDrama = $('renderDrama') as HTMLButtonElement;
+const runnerStatus = $('runnerStatus');
+const renderProgress = $('renderProgress');
 
 let lastResult: MonIADirectorResult | null = null;
+let lastDramaPlan: MonIADramaPlan | null = null;
 let currentTone: MonIAMessageTone = 'neutral';
 
 const toneLabels: Record<MonIAMessageTone, string> = {
@@ -34,6 +41,12 @@ function setBusy(channel: string, text: string) {
   answer.textContent = channel === 'scene' ? 'MonIA prépare le storyboard drama…' : 'Réflexion locale en cours…';
   raw.textContent = channel === 'scene' ? 'Création des plans, dialogues, réactions et prompts vidéo…' : 'Chargement du modèle / génération…';
   audioZone.innerHTML = '';
+  if (channel === 'scene') {
+    lastDramaPlan = null;
+    renderDrama.disabled = true;
+    renderProgress.textContent = '';
+    videoZone.innerHTML = '';
+  }
   diagnostics.textContent = engineStatusText();
 }
 
@@ -101,12 +114,54 @@ async function runDrama(text: string) {
     title: 'Test drama MonIA', premise: text, actors: ['Marion','Lucas'], targetDuration: 28, format: '9:16',
     context: testContext(text), availableMedia: ['lucas-intro.mp4','appartement-nimes.png'],
   }, true);
+  lastDramaPlan = plan;
+  renderDrama.disabled = false;
   engine.textContent = `MonIA Drama · ${plan.source}`;
   engine.dataset.state = plan.source;
   answer.textContent = `${plan.shots.length} plans · ${plan.targetDuration}s · ${plan.rhythm} · ${plan.location}`;
   raw.textContent = JSON.stringify(plan, null, 2);
   audioZone.innerHTML = '';
   diagnostics.textContent = plan.source === 'fallback' ? `⚠ Storyboard de secours. ${engineStatusText('État moteur')}` : `✓ Storyboard drama généré par MonIA. ${plan.shots.length} prompts vidéo prêts.`;
+}
+
+function renderVideoState(render: MonIAVideoRender) {
+  engine.textContent = `MonIA Video · ${render.state}`;
+  engine.dataset.state = render.state;
+  const lines = render.jobs.map(job => `${job.shotId} · ${job.state} · ${Math.round(job.progress)}%`);
+  renderProgress.textContent = lines.join('\n');
+  if (render.error) diagnostics.textContent = `⚠ ${render.error}`;
+  if (render.state === 'runner-offline') runnerStatus.textContent = 'Runner vidéo : hors ligne';
+  if (render.state === 'rendering') runnerStatus.textContent = 'Runner vidéo : rendu en cours';
+  if (render.state === 'ready') {
+    runnerStatus.textContent = 'Runner vidéo : vidéo prête';
+    renderDrama.disabled = false;
+    if (render.finalUrl) {
+      const src = render.finalUrl.startsWith('http') ? render.finalUrl : `${moniaVideo.getRunner()}${render.finalUrl}`;
+      videoZone.innerHTML = '';
+      const video = document.createElement('video');
+      video.controls = true; video.playsInline = true; video.src = src;
+      videoZone.appendChild(video);
+    }
+  }
+  if (render.state === 'error') renderDrama.disabled = false;
+}
+
+async function startVideoRender() {
+  if (!lastDramaPlan) return;
+  renderDrama.disabled = true;
+  videoZone.innerHTML = '';
+  renderProgress.textContent = 'Connexion au MonIA Video Runner…';
+  const render = await moniaVideo.render(lastDramaPlan);
+  renderVideoState(render);
+}
+
+async function refreshRunner() {
+  const health = await moniaVideo.health();
+  if (!health) {
+    runnerStatus.textContent = 'Runner vidéo : hors ligne';
+    return;
+  }
+  runnerStatus.textContent = health.backendConfigured ? 'Runner vidéo : prêt' : 'Runner vidéo : connecté, backend à configurer';
 }
 
 async function run(channel: MonIAChannel) {
@@ -124,7 +179,10 @@ async function run(channel: MonIAChannel) {
 }
 
 monia.observe(() => { diagnostics.textContent = engineStatusText(); });
+moniaVideo.observe(renderVideoState);
+renderDrama.addEventListener('click', () => void startVideoRender());
 document.querySelectorAll<HTMLButtonElement>('[data-channel]').forEach(button => { button.addEventListener('click', () => void run(button.dataset.channel as MonIAChannel)); });
 msg.addEventListener('keydown', event => { if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) void run('text'); });
 if ('speechSynthesis' in window) { window.speechSynthesis.getVoices(); window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices(); }
+void refreshRunner();
 void lastResult;
