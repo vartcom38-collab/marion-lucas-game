@@ -1,4 +1,4 @@
-import {pipeline} from '@huggingface/transformers';
+import {pipeline, env} from '@huggingface/transformers';
 
 let generator:any=null;
 let loading:Promise<void>|null=null;
@@ -6,19 +6,33 @@ let currentMode='auto';
 let currentBackend='webgpu';
 
 function post(type:string,payload:Record<string,unknown>={}){self.postMessage({type,...payload})}
+function errorText(error:unknown){
+  const value=error instanceof Error?error.message:String(error);
+  return value.replace(/\s+/g,' ').trim().slice(0,220);
+}
 
 async function createGenerator(device:'webgpu'|'wasm'){
   currentBackend=device;
-  post('status',{status:'loading',progress:1,label:device==='webgpu'?'Préparation de MonIA · WebGPU':'Préparation de MonIA · CPU/WASM'});
+  if(device==='wasm'){
+    try{
+      const wasm=(env.backends as any)?.onnx?.wasm;
+      if(wasm){
+        wasm.numThreads=1;
+        wasm.proxy=false;
+      }
+    }catch{}
+  }
+  const dtype=device==='webgpu'?'q4':'q8';
+  post('status',{status:'loading',progress:1,label:device==='webgpu'?'Préparation de MonIA · WebGPU':'Préparation de MonIA · CPU/WASM mono-thread'});
   return pipeline('text-generation','onnx-community/Qwen2.5-0.5B-Instruct',{
     device,
-    dtype:'q4',
+    dtype,
     progress_callback:(p:any)=>{
       const raw=typeof p?.progress==='number'?p.progress:0;
       post('status',{
         status:'loading',
         progress:Math.max(1,Math.min(99,Math.round(raw))),
-        label:`${device==='webgpu'?'WebGPU':'CPU/WASM'} · ${p?.file?`Chargement · ${String(p.file).split('/').at(-1)}`:'Chargement du modèle'}`
+        label:`${device==='webgpu'?'WebGPU q4':'CPU/WASM q8'} · ${p?.file?`Chargement · ${String(p.file).split('/').at(-1)}`:'Chargement du modèle'}`
       })
     }
   } as any);
@@ -34,7 +48,7 @@ async function load(mode:string){
       try{
         generator=await createGenerator('webgpu');
       }catch(error){
-        post('status',{status:'loading',progress:1,label:'WebGPU indisponible · bascule CPU/WASM'});
+        post('status',{status:'loading',progress:1,label:`WebGPU échec (${errorText(error)}) · bascule CPU/WASM`});
         generator=await createGenerator('wasm');
       }
     }else{
@@ -75,8 +89,9 @@ self.onmessage=async(e:MessageEvent)=>{
         : row?.generated_text?.at?.(-1)?.content||'';
       post('result',{id:msg.id,text:String(text)});
     }catch(error){
-      post('error',{id:msg.id,error:error instanceof Error?error.message:String(error)});
-      post('status',{status:'error',progress:0,label:`IA locale indisponible · ${currentBackend==='webgpu'?'WebGPU':'CPU/WASM'}`});
+      const detail=errorText(error);
+      post('error',{id:msg.id,error:detail});
+      post('status',{status:'error',progress:0,label:`IA locale indisponible · ${currentBackend==='webgpu'?'WebGPU':'CPU/WASM'} · ${detail}`});
     }
   }
 };
