@@ -51,9 +51,9 @@ jobs:
           import os
           from pathlib import Path
 
-          host = os.environ['INFOMANIAK_FTP_HOST'].replace('ftpes://', '').replace('ftps://', '').replace('ftp://', '').rstrip('/')
-          user = os.environ['INFOMANIAK_FTP_USER']
-          password = os.environ['INFOMANIAK_FTP_PASSWORD']
+          host = os.environ['INFOMANIAK_FTP_HOST'].strip().replace('ftpes://', '').replace('ftps://', '').replace('ftp://', '').rstrip('/')
+          user = os.environ['INFOMANIAK_FTP_USER'].strip()
+          password = os.environ['INFOMANIAK_FTP_PASSWORD'].rstrip('\r\n')
           local_root = Path('dist')
           remote_root = '/sites/marion-lucas.marionbolomey.fr'
 
