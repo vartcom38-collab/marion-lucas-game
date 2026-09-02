@@ -1,5 +1,5 @@
 import { monia } from './runtime';
-import type { MonIAChannel, MonIADirectorResult } from './director';
+import { inferMessageTone, type MonIAChannel, type MonIADirectorResult, type MonIAMessageTone } from './director';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const msg = $('msg') as HTMLTextAreaElement;
@@ -13,13 +13,34 @@ const diagnostics = $('diagnostics');
 const audioZone = $('audioZone');
 
 let lastResult: MonIADirectorResult | null = null;
+let currentTone: MonIAMessageTone = 'neutral';
 
-function setBusy(channel: string) {
+const toneLabels: Record<MonIAMessageTone, string> = {
+  neutral: 'neutre',
+  tender: 'tendre',
+  playful: 'taquin',
+  worried: 'inquiet',
+  jealous: 'jaloux / inquiet',
+  hurt: 'blessé / vexé',
+  angry: 'énervé',
+  distant: 'distant',
+  urgent: 'urgent',
+};
+
+function engineStatusText(prefix = 'Moteur') {
+  const status = monia.getStatus();
+  const progress = status.progress ? ` · ${Math.round(Math.max(0, Math.min(100, status.progress)))}%` : '';
+  return `${prefix} : ${status.status} · ${status.label}${progress} · Sous-texte : ${toneLabels[currentTone]}`;
+}
+
+function setBusy(channel: string, text: string) {
+  currentTone = inferMessageTone(text);
   engine.textContent = `MonIA locale · ${channel}`;
   engine.dataset.state = 'loading';
   answer.textContent = 'Réflexion locale en cours…';
   raw.textContent = 'Chargement du modèle / génération…';
   audioZone.innerHTML = '';
+  diagnostics.textContent = engineStatusText();
 }
 
 function chooseLocalVoice() {
@@ -32,7 +53,7 @@ function chooseLocalVoice() {
 
 function playVoice(text: string, button?: HTMLButtonElement | null) {
   if (!('speechSynthesis' in window) || typeof SpeechSynthesisUtterance === 'undefined') {
-    diagnostics.textContent = 'Audio navigateur indisponible sur cet appareil.';
+    diagnostics.textContent = `Audio navigateur indisponible sur cet appareil. · Sous-texte : ${toneLabels[currentTone]}`;
     return;
   }
   const clean = text.trim();
@@ -63,7 +84,7 @@ function renderAudio(result: MonIADirectorResult) {
 
   const note = document.createElement('small');
   note.className = 'status';
-  note.textContent = 'Sur iPhone, touche ce bouton pour autoriser la lecture audio.';
+  note.textContent = 'Touche ce bouton pour écouter le vocal généré.';
   audioZone.appendChild(note);
 }
 
@@ -72,20 +93,19 @@ function renderResult(result: MonIADirectorResult) {
   engine.textContent = `MonIA locale · ${result.source}`;
   engine.dataset.state = result.source;
   answer.textContent = result.spokenText || result.text;
-  raw.textContent = JSON.stringify(result, null, 2);
+  raw.textContent = JSON.stringify({ detectedTone: currentTone, ...result }, null, 2);
   renderAudio(result);
 
   if (result.source === 'fallback') {
-    const status = monia.getStatus();
-    diagnostics.textContent = `⚠ Réponse de secours. État moteur : ${status.status} · ${status.label}`;
+    diagnostics.textContent = `⚠ Réponse de secours. ${engineStatusText('État moteur')}`;
   } else {
-    diagnostics.textContent = '✓ Réponse générée par le modèle local.';
+    diagnostics.textContent = `✓ Réponse générée par le modèle local. · Sous-texte : ${toneLabels[currentTone]}`;
   }
 }
 
 async function run(channel: MonIAChannel) {
   const text = msg.value.trim() || 'Tu fais quoi là ?';
-  setBusy(channel);
+  setBusy(channel, text);
   try {
     const result = await monia.direct({
       actor: 'Lucas',
@@ -118,13 +138,12 @@ async function run(channel: MonIAChannel) {
     engine.dataset.state = 'error';
     answer.textContent = 'Le test a échoué.';
     raw.textContent = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
-    diagnostics.textContent = 'Une erreur JavaScript a interrompu le test.';
+    diagnostics.textContent = `Une erreur JavaScript a interrompu le test. · Sous-texte : ${toneLabels[currentTone]}`;
   }
 }
 
-monia.observe(status => {
-  const progress = status.progress ? ` · ${Math.round(Math.max(0, Math.min(100, status.progress)))}%` : '';
-  diagnostics.textContent = `Moteur : ${status.status} · ${status.label}${progress}`;
+monia.observe(() => {
+  diagnostics.textContent = engineStatusText();
 });
 
 document.querySelectorAll<HTMLButtonElement>('[data-channel]').forEach(button => {
