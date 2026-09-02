@@ -35,6 +35,7 @@ jobs:
         run: |
           set -euo pipefail
           test -f dist/index.html
+          test -f dist/monia-test.html
           test -d dist/assets
           test -d dist/resources
 
@@ -87,21 +88,24 @@ jobs:
 
           ftp.cwd('/')
           root_index = read_remote_text('/index.html').lower()
-          placeholder_markers = (
+          root_markers = (
               'site est actuellement en construction',
               'bienvenue sur marion-lucas.marionbolomey.fr',
               'hébergé chez infomaniak',
+              '<title>marion & lucas</title>',
+              'marion-nimes.mp4',
+              'lucas-intro.mp4',
           )
 
-          if any(marker in root_index for marker in placeholder_markers):
+          if any(marker in root_index for marker in root_markers):
               remote_root = '/'
-              print('Detected Infomaniak placeholder at FTP root; deploying directly to /.')
-          elif dir_exists(configured_root):
+              print('Detected the live Marion & Lucas document root at FTP /; deploying directly to /.')
+          elif not root_index and dir_exists(configured_root):
               remote_root = configured_root
-              print(f'Deploying to configured site directory: {remote_root}')
+              print(f'No index visible at FTP root; deploying to configured site directory: {remote_root}')
           else:
               remote_root = '/'
-              print('Configured site directory is not visible from this FTP account; deploying to /.')
+              print('Using FTP root as the public document root.')
 
           def ensure_remote_dir(path: str):
               parts = [p for p in path.split('/') if p]
