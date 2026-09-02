@@ -13,9 +13,11 @@ type LooseSave = {
 function clearLegacySmsPending() {
   try {
     const raw = localStorage.getItem(SAVE_KEY);
-    if (!raw) return;
+    if (!raw) return false;
     const save = JSON.parse(raw) as LooseSave;
     const flags = save.flags || (save.flags = {});
+    const hasLegacyPending = Boolean(flags.smsPending || flags.smsPendingText || flags.smsReplyAt || flags.smsTypingAt || flags.smsTyping);
+    if (!hasLegacyPending) return false;
     delete flags.smsPending;
     delete flags.smsPendingText;
     delete flags.smsReplyAt;
@@ -24,8 +26,9 @@ function clearLegacySmsPending() {
     flags.moniaSmsPending = true;
     flags.moniaSmsPendingAt = `${save.day || 0}:${save.time || ''}`;
     localStorage.setItem(SAVE_KEY, JSON.stringify(save));
+    return true;
   } catch {
-    // optional safety bridge: never block the game
+    return false;
   }
 }
 
@@ -35,6 +38,7 @@ function clearMoniaPending() {
     if (!raw) return;
     const save = JSON.parse(raw) as LooseSave;
     const flags = save.flags || (save.flags = {});
+    if (!flags.moniaSmsPending && !flags.moniaSmsPendingAt) return;
     delete flags.moniaSmsPending;
     delete flags.moniaSmsPendingAt;
     localStorage.setItem(SAVE_KEY, JSON.stringify(save));
@@ -61,6 +65,12 @@ function explicitPromise(text: string) {
   return /\b(je te promets|promets-moi|promis|je promets|on se promet)\b/i.test(text);
 }
 
+function meaningfulPersonalFact(text: string) {
+  const value = text.trim();
+  if (value.length < 12) return false;
+  return /\b(j['’]aime|j['’]adore|je déteste|je deteste|j['’]ai peur|ça me fait peur|ca me fait peur|je rêve|je reve|j['’]aimerais|je voudrais|je veux vraiment|tu me manques|je tiens à toi|je tiens a toi|je suis inquiète|je suis inquiete|je suis heureuse|je suis triste|je préfère|je prefere)\b/i.test(value);
+}
+
 function significantChannel(channel: string) {
   return channel === 'scene' || channel === 'visio' || channel === 'call' || channel === 'video';
 }
@@ -68,7 +78,7 @@ function significantChannel(channel: string) {
 const originalDirect = monia.direct.bind(monia);
 
 monia.direct = async (request: MonIADirectorRequest, mode = 'auto', enabled = true) => {
-  clearLegacySmsPending();
+  const managesGameSmsPending = clearLegacySmsPending();
 
   const query = request.playerText || request.context.recentAction || '';
   const relevant = await monia.relevantMemories(query, request.context.day, ['Marion', request.actor], 8).catch(() => []);
@@ -85,6 +95,7 @@ monia.direct = async (request: MonIADirectorRequest, mode = 'auto', enabled = tr
       rules: uniqueMemories([
         ...(request.context.rules || []),
         'Les souvenirs marqués PROMESSE sont des engagements à respecter tant qu’un événement plus récent ne les contredit pas.',
+        'Les souvenirs personnels peuvent guider le ton ou rappeler une préférence, mais seulement s’ils sont pertinents.',
         'Utiliser un souvenir uniquement s’il est pertinent pour la situation actuelle; ne pas forcer une référence ancienne.',
         'En cas de contradiction, le contexte le plus récent de la partie est prioritaire.',
       ], 16),
@@ -96,6 +107,16 @@ monia.direct = async (request: MonIADirectorRequest, mode = 'auto', enabled = tr
       id: `promise-in-${Date.now()}-${Math.random().toString(36).slice(2)}`,
       kind: 'promise',
       text: `Marion à ${request.actor}: ${request.playerText.slice(0, 180)}`,
+      day: request.context.day,
+      time: request.context.time,
+      actors: ['Marion', request.actor],
+      createdAt: Date.now(),
+    }).catch(() => undefined);
+  } else if (request.playerText && meaningfulPersonalFact(request.playerText)) {
+    void moniaStorage.put({
+      id: `personal-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      kind: 'event',
+      text: `Marion a confié à ${request.actor}: ${request.playerText.slice(0, 180)}`,
       day: request.context.day,
       time: request.context.time,
       actors: ['Marion', request.actor],
@@ -129,7 +150,7 @@ monia.direct = async (request: MonIADirectorRequest, mode = 'auto', enabled = tr
     }
     return result;
   } finally {
-    clearMoniaPending();
+    if (managesGameSmsPending) clearMoniaPending();
   }
 };
 
