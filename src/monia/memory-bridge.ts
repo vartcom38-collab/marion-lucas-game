@@ -123,6 +123,31 @@ function conversationContext(turns: ThreadTurn[]) {
   ];
 }
 
+function temporalRules(request: MonIADirectorRequest) {
+  const rules = [
+    `Heure actuelle de la partie: ${request.context.time}. Jour: ${request.context.day}.`,
+    'L’heure influence seulement le ton et la plausibilité; elle ne permet pas d’inventer un emploi du temps précis.',
+    'Ne jamais inventer une heure de rendez-vous, un trajet, une arrivée ou une disponibilité future non présente dans le contexte.',
+    'Si Lucas ne sait pas encore quand il sera libre, il peut le dire naturellement au lieu de fabriquer une heure.',
+  ];
+  const match = /^(\d{1,2}):(\d{2})/.exec(request.context.time || '');
+  const hour = match ? Number(match[1]) : null;
+  if (hour !== null) {
+    if (hour >= 0 && hour < 6) rules.push('C’est la nuit: privilégier un ton plus calme ou fatigué si le contexte ne dit pas le contraire.');
+    else if (hour < 11) rules.push('C’est le matin: éviter de parler comme si la journée était déjà terminée.');
+    else if (hour < 18) rules.push('C’est la journée: garder les réactions compatibles avec une activité normale en cours.');
+    else if (hour < 23) rules.push('C’est le soir: les échanges peuvent être plus posés ou intimes selon la relation, sans supposer que Lucas est libre.');
+    else rules.push('Il est tard: éviter une énergie artificiellement élevée sauf si le contexte la justifie.');
+  }
+  if (request.requestedChannel === 'call' || request.requestedChannel === 'visio') {
+    rules.push('Pour un appel ou une visio, ne prétendre que Lucas décroche immédiatement que si le contexte autorise clairement cette disponibilité. Sinon répondre qu’il peut essayer, rappeler ou qu’il dira quand il peut, sans promesse inventée.');
+  }
+  if (request.requestedChannel === 'scene' || request.requestedChannel === 'video') {
+    rules.push('Une scène ou vidéo décrit un micro-moment compatible avec le présent; elle ne doit pas créer un déplacement, rendez-vous ou événement futur majeur.');
+  }
+  return rules;
+}
+
 const originalDirect = monia.direct.bind(monia);
 
 monia.direct = async (request: MonIADirectorRequest, mode = 'auto', enabled = true) => {
@@ -145,6 +170,7 @@ monia.direct = async (request: MonIADirectorRequest, mode = 'auto', enabled = tr
       recentEvents: [...continuity, ...(request.context.recentEvents || [])].slice(-14),
       rules: uniqueMemories([
         ...(request.context.rules || []),
+        ...temporalRules(request),
         'Les souvenirs marqués PROMESSE sont des engagements à respecter tant qu’un événement plus récent ne les contredit pas.',
         'Les souvenirs personnels peuvent guider le ton ou rappeler une préférence, mais seulement s’ils sont pertinents.',
         'Utiliser un souvenir uniquement s’il est pertinent pour la situation actuelle; ne pas forcer une référence ancienne.',
@@ -152,7 +178,7 @@ monia.direct = async (request: MonIADirectorRequest, mode = 'auto', enabled = tr
         'Si Marion dit seulement pourquoi, sérieux, et demain, quoi, comment ça ou une réponse courte similaire, répondre à ce qu’elle vient réellement de reprendre dans la conversation.',
         'Ne jamais contredire sans raison une information que Lucas vient de donner quelques messages plus tôt.',
         'En cas de contradiction, le contexte le plus récent de la partie est prioritaire.',
-      ], 20),
+      ], 28),
     },
   };
 
@@ -213,4 +239,4 @@ monia.direct = async (request: MonIADirectorRequest, mode = 'auto', enabled = tr
   }
 };
 
-console.info('[MonIA] Long-term memory + short-term conversation continuity active');
+console.info('[MonIA] Long-term memory + conversation continuity + temporal coherence active');
