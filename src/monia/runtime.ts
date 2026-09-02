@@ -81,7 +81,7 @@ class MonIARuntime {
   private state: MonIAStatus = { status: 'idle', progress: 0, label: 'Prête à charger à la première utilisation' };
 
   isSupported() {
-    return typeof Worker !== 'undefined' && typeof indexedDB !== 'undefined' && 'gpu' in navigator;
+    return typeof Worker !== 'undefined' && typeof indexedDB !== 'undefined' && typeof WebAssembly !== 'undefined';
   }
 
   observe(fn: (s: MonIAStatus) => void) {
@@ -102,7 +102,7 @@ class MonIARuntime {
   private ensureWorker() {
     if (this.worker) return this.worker;
     if (!this.isSupported()) {
-      this.setState({ status: 'unsupported', progress: 0, label: 'WebGPU indisponible · secours actif' });
+      this.setState({ status: 'unsupported', progress: 0, label: 'Moteur local incompatible sur cet appareil · secours actif' });
       return null;
     }
 
