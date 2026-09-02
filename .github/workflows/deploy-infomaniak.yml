@@ -52,14 +52,12 @@ jobs:
           : "${INFOMANIAK_FTP_HOST:?Missing INFOMANIAK_FTP_HOST}"
           : "${INFOMANIAK_FTP_USER:?Missing INFOMANIAK_FTP_USER}"
           : "${INFOMANIAK_FTP_PASSWORD:?Missing INFOMANIAK_FTP_PASSWORD}"
-          lftp <<LFTP
-          set cmd:fail-exit yes
-          set ftp:ssl-force true
-          set ftp:ssl-protect-data true
-          set ftp:passive-mode true
-          set ssl:verify-certificate yes
-          open -p 21 "${INFOMANIAK_FTP_HOST}"
-          user "${INFOMANIAK_FTP_USER}" "${INFOMANIAK_FTP_PASSWORD}"
-          mirror --reverse --delete --verbose --parallel=4 dist/ /sites/marion-lucas.marionbolomey.fr/
-          bye
-          LFTP
+
+          HOST="${INFOMANIAK_FTP_HOST#ftp://}"
+          HOST="${HOST#ftps://}"
+          HOST="${HOST%/}"
+
+          lftp \
+            -u "${INFOMANIAK_FTP_USER},${INFOMANIAK_FTP_PASSWORD}" \
+            "ftp://${HOST}:21" \
+            -e "set cmd:fail-exit yes; set ftp:ssl-force true; set ftp:ssl-protect-data true; set ftp:passive-mode true; set ssl:verify-certificate yes; mirror --reverse --delete --verbose --parallel=4 dist/ /sites/marion-lucas.marionbolomey.fr/; bye"
