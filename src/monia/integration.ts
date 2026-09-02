@@ -87,16 +87,61 @@ function clearLegacyPending(flags: Record<string, string | number | boolean>) {
   delete flags.smsTyping;
 }
 
+function safeHTML(value: string) {
+  return value.replace(/[&<>\"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c] || c));
+}
+
+function voiceMarkup(text: string) {
+  const duration = String(Math.max(6, Math.min(29, Math.round(text.length / 10)))).padStart(2, '0');
+  return `<div class="voiceNote moniaVoiceNote"><button type="button" data-monia-voice aria-label="Lire la note vocale">▶</button><div><i></i><i></i><i></i><i></i><i></i><i></i></div><span>0:${duration}</span></div><small class="voiceTranscript">${safeHTML(text)}</small>`;
+}
+
 function renderLiveReply(result: MonIADirectorResult) {
   const thread = document.querySelector('.smsThread');
   if (!thread) return;
   const article = document.createElement('article');
   article.className = 'msg moniaDirectorReply';
   const label = result.channel === 'voice' ? 'VOCAL IA LOCAL' : result.channel === 'visio' ? 'VISIO PROPOSÉE' : result.channel === 'video' ? 'VIDÉO PROPOSÉE' : 'MONIA LOCAL';
-  const safe = (value: string) => value.replace(/[&<>\"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c] || c));
-  article.innerHTML = `<b>Lucas</b><p>${safe(result.text)}</p><small>${label} · ${safe(result.emotion)}</small>`;
+  const body = result.channel === 'voice' ? voiceMarkup(result.spokenText || result.text) : `<p>${safeHTML(result.text)}</p>`;
+  article.innerHTML = `<b>Lucas</b>${body}<small>${label} · ${safeHTML(result.emotion)}</small>`;
   thread.prepend(article);
   document.querySelector('.smsPending')?.remove();
+}
+
+function chooseLocalVoice() {
+  if (!('speechSynthesis' in window)) return null;
+  const voices = window.speechSynthesis.getVoices();
+  if (!voices.length) return null;
+  const score = (voice: SpeechSynthesisVoice) => {
+    const lang = voice.lang.toLowerCase();
+    const name = voice.name.toLowerCase();
+    let points = 0;
+    if (lang === 'fr-fr') points += 100;
+    else if (lang.startsWith('fr')) points += 80;
+    else if (lang === 'es-es') points += 35;
+    if (voice.localService) points += 20;
+    if (/natural|premium|enhanced/.test(name)) points += 15;
+    return points;
+  };
+  return [...voices].sort((a, b) => score(b) - score(a))[0] || null;
+}
+
+function speakLocal(text: string, button?: HTMLButtonElement | null) {
+  if (!('speechSynthesis' in window) || typeof SpeechSynthesisUtterance === 'undefined') return;
+  const clean = text.trim();
+  if (!clean) return;
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(clean);
+  utterance.lang = 'fr-FR';
+  utterance.rate = 0.96;
+  utterance.pitch = 0.9;
+  const voice = chooseLocalVoice();
+  if (voice) utterance.voice = voice;
+  if (button) button.textContent = '■';
+  const restore = () => { if (button) button.textContent = '▶'; };
+  utterance.onend = restore;
+  utterance.onerror = restore;
+  window.speechSynthesis.speak(utterance);
 }
 
 async function directLatestSms(text: string) {
@@ -167,6 +212,21 @@ function scheduleFromComposer(text: string) {
 
 document.addEventListener('click', event => {
   const target = event.target as HTMLElement | null;
+  const voiceButton = target?.closest('.voiceNote button') as HTMLButtonElement | null;
+  if (voiceButton) {
+    event.preventDefault();
+    event.stopPropagation();
+    const article = voiceButton.closest('.msg');
+    const transcript = article?.querySelector('.voiceTranscript')?.textContent || '';
+    if (window.speechSynthesis?.speaking) {
+      window.speechSynthesis.cancel();
+      voiceButton.textContent = '▶';
+    } else {
+      speakLocal(transcript, voiceButton);
+    }
+    return;
+  }
+
   if (!target?.closest('#sendSms')) return;
   const input = document.getElementById('smsComposer') as HTMLTextAreaElement | null;
   if (input) scheduleFromComposer(input.value);
@@ -178,4 +238,9 @@ document.addEventListener('keydown', event => {
   if (event.key === 'Enter' && !event.shiftKey) scheduleFromComposer(target.value);
 }, true);
 
-console.info('[MonIA] Director SMS integration active');
+if ('speechSynthesis' in window) {
+  window.speechSynthesis.getVoices();
+  window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+}
+
+console.info('[MonIA] Director SMS + local voice integration active');
