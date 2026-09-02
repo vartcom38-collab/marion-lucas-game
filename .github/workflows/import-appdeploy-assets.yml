@@ -1,0 +1,56 @@
+name: Import AppDeploy binary assets
+
+on:
+  push:
+    branches: ["migration-vite-appdeploy"]
+    paths:
+      - ".github/workflows/import-appdeploy-assets.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  import-assets:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout migration branch
+        uses: actions/checkout@v4
+        with:
+          ref: migration-vite-appdeploy
+
+      - name: Download current binary assets from AppDeploy (read-only)
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public/resources
+          BASE="https://marion-lucas-ksy2t2.v2.appdeploy.ai/resources"
+          files=(
+            "appartement-360.jpg"
+            "appartement-nimes.png"
+            "interface-exacte.webp"
+            "interface-reference.jpg"
+            "lucas-intro.mp4"
+            "marion-nimes.mp4"
+            "photo-adoree.webp"
+            "photo-appartement"
+            "photo.png"
+            "public"
+          )
+          for file in "${files[@]}"; do
+            echo "Importing ${file}"
+            curl --fail --location --retry 3 --retry-delay 2 "${BASE}/${file}" -o "public/resources/${file}"
+          done
+
+      - name: Commit imported assets to GitHub
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/resources
+          if git diff --cached --quiet; then
+            echo "Assets already match the AppDeploy snapshot."
+            exit 0
+          fi
+          git commit -m "Import AppDeploy binary assets [assets-imported]"
+          git push origin HEAD:migration-vite-appdeploy
