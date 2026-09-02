@@ -3,11 +3,18 @@ import { moniaStorage } from './storage';
 import type { MonIADirectorRequest } from './director';
 
 const SAVE_KEY = 'marion-lucas-save-v4';
+const THREAD_PREFIX = 'monia-thread-v1';
 
 type LooseSave = {
   day?: number;
   time?: string;
   flags?: Record<string, string | number | boolean>;
+};
+
+type ThreadTurn = {
+  speaker: string;
+  text: string;
+  at: number;
 };
 
 function clearLegacySmsPending() {
@@ -75,6 +82,47 @@ function significantChannel(channel: string) {
   return channel === 'scene' || channel === 'visio' || channel === 'call' || channel === 'video';
 }
 
+function isTestRequest(request: MonIADirectorRequest) {
+  const objective = request.context.activeObjective || '';
+  const action = request.context.recentAction || '';
+  return /environnement de test|bac à sable|test libre monia/i.test(`${objective} ${action}`);
+}
+
+function threadKey(request: MonIADirectorRequest) {
+  return `${THREAD_PREFIX}:${isTestRequest(request) ? 'test' : 'game'}:${request.actor || 'actor'}`;
+}
+
+function loadThread(request: MonIADirectorRequest): ThreadTurn[] {
+  try {
+    const raw = sessionStorage.getItem(threadKey(request));
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .filter(turn => turn && typeof turn.speaker === 'string' && typeof turn.text === 'string')
+      .slice(-8)
+      .map(turn => ({ speaker: turn.speaker.slice(0, 40), text: turn.text.slice(0, 260), at: Number(turn.at || 0) }));
+  } catch {
+    return [];
+  }
+}
+
+function saveThread(request: MonIADirectorRequest, turns: ThreadTurn[]) {
+  try {
+    sessionStorage.setItem(threadKey(request), JSON.stringify(turns.slice(-8)));
+  } catch {
+    // short-term continuity is optional
+  }
+}
+
+function conversationContext(turns: ThreadTurn[]) {
+  if (!turns.length) return [] as string[];
+  return [
+    'CONVERSATION RÉCENTE (ordre chronologique):',
+    ...turns.map(turn => `${turn.speaker}: ${turn.text}`),
+  ];
+}
+
 const originalDirect = monia.direct.bind(monia);
 
 monia.direct = async (request: MonIADirectorRequest, mode = 'auto', enabled = true) => {
@@ -86,19 +134,25 @@ monia.direct = async (request: MonIADirectorRequest, mode = 'auto', enabled = tr
     const tag = memory.kind === 'promise' ? 'PROMESSE' : memory.kind === 'event' ? 'ÉVÉNEMENT' : 'SOUVENIR';
     return `${tag} J${memory.day} ${memory.time} · ${memory.text}`;
   });
+  const thread = loadThread(request);
+  const continuity = conversationContext(thread);
 
   const enriched: MonIADirectorRequest = {
     ...request,
     context: {
       ...request.context,
       memories: uniqueMemories([...longTerm, ...(request.context.memories || [])], 12),
+      recentEvents: [...continuity, ...(request.context.recentEvents || [])].slice(-14),
       rules: uniqueMemories([
         ...(request.context.rules || []),
         'Les souvenirs marqués PROMESSE sont des engagements à respecter tant qu’un événement plus récent ne les contredit pas.',
         'Les souvenirs personnels peuvent guider le ton ou rappeler une préférence, mais seulement s’ils sont pertinents.',
         'Utiliser un souvenir uniquement s’il est pertinent pour la situation actuelle; ne pas forcer une référence ancienne.',
+        'CONVERSATION RÉCENTE représente le fil immédiat: résoudre les pronoms, ellipses et réponses courtes à partir de ce fil.',
+        'Si Marion dit seulement pourquoi, sérieux, et demain, quoi, comment ça ou une réponse courte similaire, répondre à ce qu’elle vient réellement de reprendre dans la conversation.',
+        'Ne jamais contredire sans raison une information que Lucas vient de donner quelques messages plus tôt.',
         'En cas de contradiction, le contexte le plus récent de la partie est prioritaire.',
-      ], 16),
+      ], 20),
     },
   };
 
@@ -126,6 +180,11 @@ monia.direct = async (request: MonIADirectorRequest, mode = 'auto', enabled = tr
 
   try {
     const result = await originalDirect(enriched, mode, enabled);
+    const nextThread = [...thread];
+    if (request.playerText?.trim()) nextThread.push({ speaker: 'Marion', text: request.playerText.trim().slice(0, 260), at: Date.now() });
+    if (result.text?.trim()) nextThread.push({ speaker: request.actor || result.actor || 'Lucas', text: result.text.trim().slice(0, 260), at: Date.now() });
+    saveThread(request, nextThread);
+
     if (result.memory && explicitPromise(`${result.text} ${result.memory}`)) {
       void moniaStorage.put({
         id: `promise-out-${Date.now()}-${Math.random().toString(36).slice(2)}`,
@@ -154,4 +213,4 @@ monia.direct = async (request: MonIADirectorRequest, mode = 'auto', enabled = tr
   }
 };
 
-console.info('[MonIA] Long-term contextual memory bridge active');
+console.info('[MonIA] Long-term memory + short-term conversation continuity active');
