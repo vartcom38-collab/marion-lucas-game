@@ -2,7 +2,7 @@ import { monia } from './runtime';
 import type { MonIAChannel } from './director';
 
 const SAVE_KEY = 'marion-lucas-save-v4';
-const STATE_KEY = 'monia-initiative-state-v1';
+const STATE_KEY = 'monia-initiative-state-v2';
 
 type Message = { from: string; text: string; day: number; read: boolean };
 type LooseSave = {
@@ -20,7 +20,9 @@ type LooseSave = {
 type InitiativeState = {
   lastDay: number;
   lastMinute: number;
-  lastSignature: string;
+  lastObservedContent: string;
+  lastChangeDay: number;
+  lastChangeMinute: number;
 };
 
 function readSave(): LooseSave | null {
@@ -41,7 +43,7 @@ function readState(): InitiativeState {
     const raw = localStorage.getItem(STATE_KEY);
     if (raw) return JSON.parse(raw) as InitiativeState;
   } catch { /* optional */ }
-  return { lastDay: -1, lastMinute: -9999, lastSignature: '' };
+  return { lastDay: -1, lastMinute: -9999, lastObservedContent: '', lastChangeDay: -1, lastChangeMinute: 0 };
 }
 
 function writeState(state: InitiativeState) {
@@ -65,46 +67,67 @@ function relationLabel(value = 0) {
   return 'ils se connaissent encore peu';
 }
 
+function latestMessages(save: LooseSave) {
+  return (save.messages || []).slice(0, 8);
+}
+
 function latestLucasMessage(save: LooseSave) {
-  return (save.messages || []).find(m => m.from === 'Lucas');
+  return latestMessages(save).find(m => m.from === 'Lucas');
 }
 
 function latestMarionMessage(save: LooseSave) {
-  return (save.messages || []).find(m => m.from === 'Toi' || m.from === 'Marion');
+  return latestMessages(save).find(m => m.from === 'Toi' || m.from === 'Marion');
 }
 
-function signature(save: LooseSave) {
-  const lucas = latestLucasMessage(save);
-  const marion = latestMarionMessage(save);
-  return `${save.day || 0}|${save.time || ''}|${save.relationship || 0}|${lucas?.text || ''}|${marion?.text || ''}`.slice(0, 700);
+function contentSignature(save: LooseSave) {
+  const messages = latestMessages(save).slice(0, 4).map(m => `${m.from}:${m.text}`).join('|');
+  const event = (save.eventHistory || []).slice(-2).join('|');
+  return `${save.day || 0}|${save.relationship || 0}|${messages}|${event}`.slice(0, 1200);
 }
 
 function hasPendingInteraction(save: LooseSave) {
   const f = save.flags || {};
-  return Boolean(f.smsPending || f.smsPendingText || f.smsReplyAt || f.smsTyping || f.moniaSmsPending || f.moniaLastDirector);
+  return Boolean(f.smsPending || f.smsPendingText || f.smsReplyAt || f.smsTyping || f.moniaSmsPending);
 }
 
-function chooseChannel(save: LooseSave): MonIAChannel {
+function latestSpeaker(save: LooseSave) {
+  const latest = latestMessages(save)[0];
+  return latest?.from || '';
+}
+
+function chooseChannel(save: LooseSave, silenceMinutes: number): MonIAChannel {
   const hour = Math.floor(minuteOfDay(save.time) / 60);
   const relation = Number(save.relationship || 0);
-  if (relation >= 35 && hour >= 18 && hour <= 22) return 'voice';
+  const emotionalContext = (save.memories || []).slice(0, 6).some(e => /manque|promesse|peur|inquiet|envie|tendre|important/i.test(e));
+  if (relation >= 40 && silenceMinutes >= 240 && emotionalContext && hour >= 18 && hour <= 22) return 'voice';
   return 'text';
+}
+
+function silenceSinceChange(save: LooseSave, state: InitiativeState) {
+  if (state.lastChangeDay < 0) return 0;
+  return absoluteMinute(save) - (state.lastChangeDay * 1440 + state.lastChangeMinute);
 }
 
 function initiativeScore(save: LooseSave, state: InitiativeState) {
   let score = 0;
   const now = absoluteMinute(save);
   const last = state.lastDay * 1440 + state.lastMinute;
-  const since = state.lastDay >= 0 ? now - last : 9999;
+  const sinceInitiative = state.lastDay >= 0 ? now - last : 9999;
+  const silence = silenceSinceChange(save, state);
   const relation = Number(save.relationship || 0);
-  const marion = latestMarionMessage(save);
-  const lucas = latestLucasMessage(save);
+  const latest = latestSpeaker(save);
 
-  if (since < 360) return -999; // never more than about once per 6 in-game hours
-  if (relation >= 20) score += 2;
+  if (sinceInitiative < 360) return -999; // jamais plus d'environ une initiative par 6 h de jeu
+  if (silence < 90) return -999; // laisser respirer une conversation récente
+  if (latest === 'Lucas' && silence < 300) return -999; // ne pas se répondre à lui-même trop vite
+
+  if (silence >= 120) score += 2;
+  if (silence >= 240) score += 2;
+  if (silence >= 480) score += 1;
+  if (relation >= 20) score += 1;
   if (relation >= 45) score += 2;
   if (relation >= 70) score += 1;
-  if (marion && (!lucas || marion.day >= lucas.day)) score += 2;
+  if (latest === 'Toi' || latest === 'Marion') score += 1;
   if ((save.eventHistory || []).slice(-3).some(e => /important|manque|promesse|famille|corrida|peur|inquiet|rencontr|ensemble/i.test(e))) score += 2;
   if ((save.memories || []).slice(0, 6).some(e => /manque|promesse|aime|peur|inquiet|voudrais|envie/i.test(e))) score += 1;
 
@@ -116,20 +139,19 @@ function mayRun(save: LooseSave, state: InitiativeState) {
   if (document.hidden) return false;
   if (hasPendingInteraction(save)) return false;
   if (document.getElementById('moniaDramaScene') || document.getElementById('moniaSceneOffer')) return false;
-  const sig = signature(save);
-  if (!sig || sig === state.lastSignature) return false;
-  return initiativeScore(save, state) >= 6;
+  return initiativeScore(save, state) >= 7;
 }
 
-function safeContext(save: LooseSave) {
-  const recentMessages = (save.messages || []).slice(0, 6).map(m => `${m.from}: ${String(m.text || '').slice(0, 180)}`);
+function safeContext(save: LooseSave, silenceMinutes: number) {
+  const recentMessages = latestMessages(save).slice(0, 6).map(m => `${m.from}: ${String(m.text || '').slice(0, 180)}`);
+  const latest = latestSpeaker(save);
   return {
     speaker: 'Marion',
     place: save.place || 'Lieu actuel',
     time: save.time || '00:00',
     day: Number(save.day || 0),
-    recentAction: 'Lucas envisage une petite initiative naturelle sans événement de scénario.',
-    activeObjective: 'Choisir une micro-initiative crédible ou rester discret; jamais créer un tournant de l’histoire.',
+    recentAction: `Silence naturel d'environ ${Math.max(0, Math.round(silenceMinutes))} minutes de jeu depuis le dernier changement de conversation.`,
+    activeObjective: 'Décider d’une micro-initiative crédible de Lucas sans créer de nouvel événement de scénario.',
     relationship: relationLabel(save.relationship),
     memories: (save.memories || []).slice(0, 8),
     recentEvents: [...recentMessages, ...(save.eventHistory || []).slice(-5)].slice(-12),
@@ -138,7 +160,8 @@ function safeContext(save: LooseSave) {
       'Ne jamais inventer de rendez-vous, voyage, visite, dispute, rupture, déclaration majeure ou événement canon.',
       'Lucas reste absolument fidèle.',
       'Une initiative doit être légère: prendre des nouvelles, rebondir sur un échange récent, partager une pensée courte ou proposer de reparler.',
-      'Si le contexte ne justifie rien, rester très sobre.',
+      latest === 'Lucas' ? 'Lucas a parlé en dernier: s’il reprend contact, son message doit être particulièrement bref et justifié par le temps écoulé.' : 'Marion a parlé récemment: Lucas peut relancer seulement si le silence rend cette relance naturelle.',
+      'Le silence est une option normale. Ne pas transformer chaque pause en événement ou en déclaration affective.',
       'Ne jamais décider à la place de Marion.',
       'Ne pas spammer ni multiplier les messages.',
     ],
@@ -151,17 +174,27 @@ async function evaluate() {
   const save = readSave();
   if (!save) return;
   const state = readState();
-  state.lastSignature = signature(save);
-  writeState(state);
+  const currentContent = contentSignature(save);
+
+  // Un vrai changement de conversation remet le compteur de silence à zéro.
+  if (currentContent !== state.lastObservedContent) {
+    state.lastObservedContent = currentContent;
+    state.lastChangeDay = Number(save.day || 0);
+    state.lastChangeMinute = minuteOfDay(save.time);
+    writeState(state);
+    return;
+  }
+
   if (!mayRun(save, state)) return;
 
   running = true;
   try {
-    const channel = chooseChannel(save);
+    const silence = silenceSinceChange(save, state);
+    const channel = chooseChannel(save, silence);
     const result = await monia.direct({
       actor: 'Lucas',
       requestedChannel: channel,
-      context: safeContext(save),
+      context: safeContext(save, silence),
       availableMedia: ['lucas-intro.mp4'],
     }, 'auto', true);
 
@@ -186,7 +219,9 @@ async function evaluate() {
     const done = readState();
     done.lastDay = Number(fresh.day || 0);
     done.lastMinute = minuteOfDay(fresh.time);
-    done.lastSignature = signature(fresh);
+    done.lastObservedContent = contentSignature(fresh);
+    done.lastChangeDay = Number(fresh.day || 0);
+    done.lastChangeMinute = minuteOfDay(fresh.time);
     writeState(done);
   } finally {
     running = false;
@@ -197,4 +232,4 @@ window.setInterval(() => { void evaluate(); }, 3500);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) void evaluate(); });
 window.setTimeout(() => { void evaluate(); }, 2600);
 
-console.info('[MonIA] Safe spontaneous Lucas initiative layer active');
+console.info('[MonIA] Contextual Lucas initiative + conversational silence layer active');
