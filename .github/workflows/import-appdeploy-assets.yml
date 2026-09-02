@@ -54,3 +54,5 @@ jobs:
           fi
           git commit -m "Import AppDeploy binary assets [assets-imported]"
           git push origin HEAD:migration-vite-appdeploy
+
+# Triggered intentionally to migrate the binary assets off AppDeploy.
