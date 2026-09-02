@@ -3,6 +3,7 @@ import type { MonIAChannel, MonIADirectorResult } from './director';
 
 const SAVE_KEY = 'marion-lucas-save-v4';
 const SETTINGS_KEY = 'marion-lucas-settings-v2';
+const VISIO_KEY = 'monia-last-visio-v1';
 
 type LooseSave = {
   day: number;
@@ -96,13 +97,23 @@ function voiceMarkup(text: string) {
   return `<div class="voiceNote moniaVoiceNote"><button type="button" data-monia-voice aria-label="Lire la note vocale">▶</button><div><i></i><i></i><i></i><i></i><i></i><i></i></div><span>0:${duration}</span></div><small class="voiceTranscript">${safeHTML(text)}</small>`;
 }
 
+function visioMarkup(result: MonIADirectorResult) {
+  const scene = result.scene;
+  const detail = scene ? `${scene.location} · ${scene.action}` : 'Visio proposée par MonIA';
+  return `<p>${safeHTML(result.text)}</p><button type="button" data-monia-visio class="moniaVisioLaunch">◇ Ouvrir la visio</button><small>${safeHTML(detail)}</small>`;
+}
+
 function renderLiveReply(result: MonIADirectorResult) {
   const thread = document.querySelector('.smsThread');
   if (!thread) return;
   const article = document.createElement('article');
   article.className = 'msg moniaDirectorReply';
-  const label = result.channel === 'voice' ? 'VOCAL IA LOCAL' : result.channel === 'visio' ? 'VISIO PROPOSÉE' : result.channel === 'video' ? 'VIDÉO PROPOSÉE' : 'MONIA LOCAL';
-  const body = result.channel === 'voice' ? voiceMarkup(result.spokenText || result.text) : `<p>${safeHTML(result.text)}</p>`;
+  const label = result.channel === 'voice' ? 'VOCAL IA LOCAL' : result.channel === 'visio' ? 'VISIO IA LOCALE' : result.channel === 'video' ? 'VIDÉO PROPOSÉE' : 'MONIA LOCAL';
+  const body = result.channel === 'voice'
+    ? voiceMarkup(result.spokenText || result.text)
+    : result.channel === 'visio'
+      ? visioMarkup(result)
+      : `<p>${safeHTML(result.text)}</p>`;
   article.innerHTML = `<b>Lucas</b>${body}<small>${label} · ${safeHTML(result.emotion)}</small>`;
   thread.prepend(article);
   document.querySelector('.smsPending')?.remove();
@@ -144,6 +155,39 @@ function speakLocal(text: string, button?: HTMLButtonElement | null) {
   window.speechSynthesis.speak(utterance);
 }
 
+function closeVisio() {
+  window.speechSynthesis?.cancel();
+  document.getElementById('moniaVisioOverlay')?.remove();
+}
+
+function openVisio(result: MonIADirectorResult) {
+  closeVisio();
+  const scene = result.scene;
+  const overlay = document.createElement('div');
+  overlay.id = 'moniaVisioOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#090807;display:flex;align-items:center;justify-content:center;overflow:hidden;font-family:inherit;color:white';
+  const framing = safeHTML(scene?.framing || 'caméra téléphone, plan poitrine naturel');
+  const location = safeHTML(scene?.location || 'Visio avec Lucas');
+  const action = safeHTML(scene?.action || 'Lucas réagit naturellement');
+  const duration = Math.max(4, Math.min(30, scene?.duration || 8));
+  overlay.innerHTML = `<div style="position:absolute;inset:0;overflow:hidden"><video id="moniaVisioVideo" src="./resources/lucas-intro.mp4" autoplay muted loop playsinline style="width:100%;height:100%;object-fit:cover;transform:scale(1.035);animation:moniaVisioFloat 8s ease-in-out infinite alternate"></video><div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.42),transparent 35%,rgba(0,0,0,.68))"></div></div><style>@keyframes moniaVisioFloat{from{transform:scale(1.035) translate3d(-.3%,0,0)}to{transform:scale(1.065) translate3d(.3%,-.3%,0)}}</style><div style="position:absolute;top:22px;left:24px;right:24px;display:flex;justify-content:space-between;align-items:flex-start;text-shadow:0 2px 12px #000"><div><small style="letter-spacing:.18em">VISIO · MONIA LOCAL</small><h2 style="margin:.35rem 0 0;font-size:1.35rem">Lucas</h2><span style="opacity:.75;font-size:.82rem">${location}</span></div><button id="closeMoniaVisio" style="border:0;border-radius:999px;width:44px;height:44px;background:rgba(0,0,0,.52);color:#fff;font-size:24px;cursor:pointer">×</button></div><div style="position:absolute;left:24px;right:24px;bottom:24px;max-width:720px;margin:auto;background:rgba(12,10,9,.62);backdrop-filter:blur(12px);padding:18px 20px;border-radius:20px;border:1px solid rgba(255,255,255,.14)"><small style="opacity:.68">${framing} · ${duration}s · ${safeHTML(result.emotion)}</small><p style="font-size:1.08rem;line-height:1.45;margin:.55rem 0">${safeHTML(result.spokenText || result.text)}</p><span style="opacity:.65;font-size:.8rem">${action}</span><div style="display:flex;gap:10px;margin-top:14px"><button id="replayMoniaVoice" style="border:0;border-radius:999px;padding:10px 16px;cursor:pointer">▶ Réécouter</button><button id="endMoniaVisio" style="border:0;border-radius:999px;padding:10px 16px;background:#a33131;color:white;cursor:pointer">Raccrocher</button></div></div>`;
+  document.body.appendChild(overlay);
+  const close = () => closeVisio();
+  document.getElementById('closeMoniaVisio')?.addEventListener('click', close);
+  document.getElementById('endMoniaVisio')?.addEventListener('click', close);
+  document.getElementById('replayMoniaVoice')?.addEventListener('click', () => speakLocal(result.spokenText || result.text));
+  window.setTimeout(() => speakLocal(result.spokenText || result.text), 350);
+}
+
+function loadLastVisio() {
+  try {
+    const raw = sessionStorage.getItem(VISIO_KEY);
+    return raw ? JSON.parse(raw) as MonIADirectorResult : null;
+  } catch {
+    return null;
+  }
+}
+
 async function directLatestSms(text: string) {
   const save = readSave();
   if (!save?.metLucas) return;
@@ -177,6 +221,10 @@ async function directLatestSms(text: string) {
     context,
     availableMedia: ['lucas-intro.mp4'],
   }, prefs.aiMode, prefs.localAI !== false);
+
+  if (result.channel === 'visio') {
+    try { sessionStorage.setItem(VISIO_KEY, JSON.stringify(result)); } catch { /* storage optional */ }
+  }
 
   const fresh = readSave();
   if (!fresh) return;
@@ -212,6 +260,15 @@ function scheduleFromComposer(text: string) {
 
 document.addEventListener('click', event => {
   const target = event.target as HTMLElement | null;
+  const visioButton = target?.closest('[data-monia-visio]') as HTMLButtonElement | null;
+  if (visioButton) {
+    event.preventDefault();
+    event.stopPropagation();
+    const result = loadLastVisio();
+    if (result) openVisio(result);
+    return;
+  }
+
   const voiceButton = target?.closest('.voiceNote button') as HTMLButtonElement | null;
   if (voiceButton) {
     event.preventDefault();
@@ -243,4 +300,4 @@ if ('speechSynthesis' in window) {
   window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
 }
 
-console.info('[MonIA] Director SMS + local voice integration active');
+console.info('[MonIA] Director SMS + local voice + animated visio integration active');
