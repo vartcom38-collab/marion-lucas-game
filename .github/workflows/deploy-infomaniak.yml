@@ -58,6 +58,6 @@ jobs:
           HOST="${HOST%/}"
 
           lftp \
-            -u "${INFOMANIAK_FTP_USER},${INFOMANIAK_FTP_PASSWORD}" \
             -e "set cmd:fail-exit yes; set ftp:ssl-force true; set ftp:ssl-protect-data true; set ftp:passive-mode true; set ssl:verify-certificate yes; mirror --reverse --delete --verbose --parallel=4 dist/ /sites/marion-lucas.marionbolomey.fr/; bye" \
+            -u "${INFOMANIAK_FTP_USER},${INFOMANIAK_FTP_PASSWORD}" \
             "ftp://${HOST}:21"
