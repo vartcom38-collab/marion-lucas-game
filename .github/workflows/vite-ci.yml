@@ -35,3 +35,5 @@ jobs:
           test -d dist/assets
           test -d dist/resources
           echo "Vite build is deployable."
+
+# Validation rerun after migrating AppDeploy binary assets.
