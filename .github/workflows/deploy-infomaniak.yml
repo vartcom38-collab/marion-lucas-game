@@ -38,9 +38,6 @@ jobs:
           test -d dist/assets
           test -d dist/resources
 
-      - name: Install FTPES client
-        run: sudo apt-get update && sudo apt-get install -y lftp
-
       - name: Deploy dist to Infomaniak via FTPES
         env:
           INFOMANIAK_FTP_HOST: ${{ secrets.INFOMANIAK_FTP_HOST }}
@@ -49,15 +46,44 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          : "${INFOMANIAK_FTP_HOST:?Missing INFOMANIAK_FTP_HOST}"
-          : "${INFOMANIAK_FTP_USER:?Missing INFOMANIAK_FTP_USER}"
-          : "${INFOMANIAK_FTP_PASSWORD:?Missing INFOMANIAK_FTP_PASSWORD}"
+          python3 <<'PY'
+          import ftplib
+          import os
+          from pathlib import Path
 
-          HOST="${INFOMANIAK_FTP_HOST#ftp://}"
-          HOST="${HOST#ftps://}"
-          HOST="${HOST%/}"
+          host = os.environ['INFOMANIAK_FTP_HOST'].replace('ftpes://', '').replace('ftps://', '').replace('ftp://', '').rstrip('/')
+          user = os.environ['INFOMANIAK_FTP_USER']
+          password = os.environ['INFOMANIAK_FTP_PASSWORD']
+          local_root = Path('dist')
+          remote_root = '/sites/marion-lucas.marionbolomey.fr'
 
-          lftp \
-            -e "set cmd:fail-exit yes; set ftp:ssl-force true; set ftp:ssl-protect-data true; set ftp:passive-mode true; set ssl:verify-certificate yes; mirror --reverse --delete --verbose --parallel=4 dist/ /sites/marion-lucas.marionbolomey.fr/; bye" \
-            -u "${INFOMANIAK_FTP_USER},${INFOMANIAK_FTP_PASSWORD}" \
-            "ftp://${HOST}:21"
+          ftp = ftplib.FTP_TLS(timeout=30)
+          ftp.connect(host, 21)
+          ftp.login(user, password)
+          ftp.prot_p()
+          ftp.set_pasv(True)
+
+          def ensure_remote_dir(path: str):
+              parts = [p for p in path.split('/') if p]
+              ftp.cwd('/')
+              for part in parts:
+                  try:
+                      ftp.cwd(part)
+                  except ftplib.error_perm:
+                      ftp.mkd(part)
+                      ftp.cwd(part)
+
+          ensure_remote_dir(remote_root)
+
+          for root, dirs, files in os.walk(local_root):
+              rel = Path(root).relative_to(local_root)
+              remote_dir = remote_root if str(rel) == '.' else remote_root + '/' + rel.as_posix()
+              ensure_remote_dir(remote_dir)
+              for filename in files:
+                  local_path = Path(root) / filename
+                  with local_path.open('rb') as fh:
+                      ftp.storbinary(f'STOR {filename}', fh, blocksize=1024 * 1024)
+                  print(f'uploaded {local_path} -> {remote_dir}/{filename}')
+
+          ftp.quit()
+          PY
