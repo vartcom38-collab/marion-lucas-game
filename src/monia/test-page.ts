@@ -1,5 +1,5 @@
 import { monia } from './runtime';
-import type { MonIAChannel } from './director';
+import type { MonIAChannel, MonIADirectorResult } from './director';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const msg = $('msg') as HTMLTextAreaElement;
@@ -9,11 +9,78 @@ const relationship = $('relationship') as HTMLSelectElement;
 const answer = $('answer');
 const raw = $('raw');
 const engine = $('engine');
+const diagnostics = $('diagnostics');
+const audioZone = $('audioZone');
+
+let lastResult: MonIADirectorResult | null = null;
 
 function setBusy(channel: string) {
   engine.textContent = `MonIA locale · ${channel}`;
+  engine.dataset.state = 'loading';
   answer.textContent = 'Réflexion locale en cours…';
   raw.textContent = 'Chargement du modèle / génération…';
+  audioZone.innerHTML = '';
+}
+
+function chooseLocalVoice() {
+  if (!('speechSynthesis' in window)) return null;
+  const voices = window.speechSynthesis.getVoices();
+  const french = voices.filter(v => v.lang.toLowerCase().startsWith('fr'));
+  const localFrench = french.filter(v => v.localService);
+  return localFrench[0] || french[0] || voices[0] || null;
+}
+
+function playVoice(text: string, button?: HTMLButtonElement | null) {
+  if (!('speechSynthesis' in window) || typeof SpeechSynthesisUtterance === 'undefined') {
+    diagnostics.textContent = 'Audio navigateur indisponible sur cet appareil.';
+    return;
+  }
+  const clean = text.trim();
+  if (!clean) return;
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(clean);
+  utterance.lang = 'fr-FR';
+  utterance.rate = 0.96;
+  utterance.pitch = 0.9;
+  const voice = chooseLocalVoice();
+  if (voice) utterance.voice = voice;
+  if (button) button.textContent = '■ Lecture…';
+  const restore = () => { if (button) button.textContent = '▶ Écouter le vocal'; };
+  utterance.onend = restore;
+  utterance.onerror = restore;
+  window.speechSynthesis.speak(utterance);
+}
+
+function renderAudio(result: MonIADirectorResult) {
+  audioZone.innerHTML = '';
+  if (result.channel !== 'voice') return;
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'primary audioPlay';
+  button.textContent = '▶ Écouter le vocal';
+  button.addEventListener('click', () => playVoice(result.spokenText || result.text, button));
+  audioZone.appendChild(button);
+
+  const note = document.createElement('small');
+  note.className = 'status';
+  note.textContent = 'Sur iPhone, touche ce bouton pour autoriser la lecture audio.';
+  audioZone.appendChild(note);
+}
+
+function renderResult(result: MonIADirectorResult) {
+  lastResult = result;
+  engine.textContent = `MonIA locale · ${result.source}`;
+  engine.dataset.state = result.source;
+  answer.textContent = result.spokenText || result.text;
+  raw.textContent = JSON.stringify(result, null, 2);
+  renderAudio(result);
+
+  if (result.source === 'fallback') {
+    const status = monia.getStatus();
+    diagnostics.textContent = `⚠ Réponse de secours. État moteur : ${status.status} · ${status.label}`;
+  } else {
+    diagnostics.textContent = '✓ Réponse générée par le modèle local.';
+  }
 }
 
 async function run(channel: MonIAChannel) {
@@ -45,24 +112,19 @@ async function run(channel: MonIAChannel) {
       availableMedia: ['lucas-intro.mp4'],
     }, 'auto', true);
 
-    engine.textContent = `MonIA locale · ${result.source}`;
-    answer.textContent = result.spokenText || result.text;
-    raw.textContent = JSON.stringify(result, null, 2);
-
-    if (channel === 'voice' && 'speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(result.spokenText || result.text);
-      utterance.lang = 'fr-FR';
-      utterance.rate = 0.96;
-      utterance.pitch = 0.9;
-      window.speechSynthesis.speak(utterance);
-    }
+    renderResult(result);
   } catch (error) {
     engine.textContent = 'Erreur';
+    engine.dataset.state = 'error';
     answer.textContent = 'Le test a échoué.';
     raw.textContent = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+    diagnostics.textContent = 'Une erreur JavaScript a interrompu le test.';
   }
 }
+
+monia.observe(status => {
+  diagnostics.textContent = `Moteur : ${status.status} · ${status.label}${status.progress ? ` · ${Math.round(status.progress * 100)}%` : ''}`;
+});
 
 document.querySelectorAll<HTMLButtonElement>('[data-channel]').forEach(button => {
   button.addEventListener('click', () => void run(button.dataset.channel as MonIAChannel));
@@ -71,3 +133,10 @@ document.querySelectorAll<HTMLButtonElement>('[data-channel]').forEach(button =>
 msg.addEventListener('keydown', event => {
   if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) void run('text');
 });
+
+if ('speechSynthesis' in window) {
+  window.speechSynthesis.getVoices();
+  window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+}
+
+void lastResult;
