@@ -1,0 +1,47 @@
+name: MonIA Intro Worker
+
+on:
+  workflow_dispatch:
+    inputs:
+      force:
+        description: Regenerate even if the server manifest is complete
+        required: false
+        default: "false"
+  push:
+    branches: ["main"]
+    paths:
+      - "scripts/monia_intro_worker.py"
+      - ".github/workflows/monia-intro-worker.yml"
+  schedule:
+    - cron: "17 * * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: monia-intro-generation
+  cancel-in-progress: false
+
+jobs:
+  generate-and-persist:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      INFOMANIAK_FTP_HOST: ${{ secrets.INFOMANIAK_FTP_HOST }}
+      INFOMANIAK_FTP_USER: ${{ secrets.INFOMANIAK_FTP_USER }}
+      INFOMANIAK_FTP_PASSWORD: ${{ secrets.INFOMANIAK_FTP_PASSWORD }}
+      MONIA_FORCE: ${{ github.event.inputs.force || 'false' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install MonIA worker dependencies
+        run: python -m pip install --disable-pip-version-check gradio_client pillow requests
+
+      - name: Generate true-video intro and persist to Infomaniak
+        run: python scripts/monia_intro_worker.py
