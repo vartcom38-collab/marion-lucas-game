@@ -47,8 +47,8 @@ function setBusy(channel: string, text: string) {
   currentTone = inferMessageTone(text);
   engine.textContent = `MonIA locale · ${channel}`;
   engine.dataset.state = 'loading';
-  answer.textContent = channel === 'scene' ? 'MonIA prépare le storyboard drama…' : 'Réflexion locale en cours…';
-  raw.textContent = channel === 'scene' ? 'Création des plans puis composition avec la bibliothèque interne…' : 'Chargement du modèle / génération…';
+  answer.textContent = channel === 'scene' ? 'MonIA prépare une vraie scène vidéo…' : 'Réflexion locale en cours…';
+  raw.textContent = channel === 'scene' ? 'Mode true_video_required : aucune image fixe ne sera utilisée comme rendu final.' : 'Chargement du modèle / génération…';
   audioZone.innerHTML = '';
   if (channel === 'scene') {
     moniaDramaPlayer.stop();
@@ -121,7 +121,7 @@ function testContext(text: string) {
 async function runDrama(text: string) {
   const plan = await planDrama({
     title: 'Test drama MonIA', premise: text, actors: ['Marion','Lucas'], targetDuration: 28, format: '9:16',
-    context: testContext(text), availableMedia: ['lucas-intro.mp4','marion-nimes.mp4','appartement-nimes.png'],
+    context: testContext(text), availableMedia: ['lucas-intro.mp4','marion-nimes.mp4','appartement-nimes.png'], renderMode:'true_video_required',
   }, true);
   renderDramaPlan(plan);
 }
@@ -135,30 +135,28 @@ function renderDramaPlan(plan: MonIADramaPlan) {
   engine.textContent = `MonIA Drama Studio · ${plan.source}`;
   engine.dataset.state = composition.playable ? 'ready' : 'fallback';
   const chosenPacks = composition.preferredPackIds.map(packTitle);
-  answer.textContent = `${plan.shots.length} plans · ${plan.targetDuration}s · scène ${composition.coverage}% · ${chosenPacks.join(' + ') || 'pack environnement'}`;
+  answer.textContent = composition.playable
+    ? `${plan.shots.length} plans · ${plan.targetDuration}s · vraie vidéo ${composition.trueVideoCoverage}%`
+    : `Vraie vidéo requise. Aucun animatique image ne sera joué. Couverture vidéo réelle : ${composition.trueVideoCoverage}%.`;
   raw.textContent = JSON.stringify({ storyboard: plan, studio: composition, validatedPacks: VALIDATED_DRAMA_PACKS, packAudit: pack }, null, 2);
   audioZone.innerHTML = '';
-  studioStatus.textContent = composition.playable ? 'Studio interne : scène jouable' : 'Studio interne : bibliothèque encore incomplète';
-  const priorityMissing = pack.missingPriority1.slice(0, 6).map(slot => `${slot.actor}/${slot.shot}/${slot.mood} ×${slot.missing}`);
+  studioStatus.textContent = composition.playable ? 'Studio interne : vraie scène vidéo jouable' : 'Studio interne : vraie vidéo indisponible';
   const sceneLine = composition.missingShotIds.length
-    ? `Plans sans brique adaptée : ${composition.missingShotIds.join(', ')}`
-    : 'Tous les plans de cette scène ont une brique visuelle serveur.';
+    ? `Plans vidéo réels manquants : ${composition.missingShotIds.join(', ')}`
+    : 'Tous les plans disposent d’une vraie vidéo.';
   const selectionLine = chosenPacks.length
-    ? `Packs canoniques sélectionnés : ${chosenPacks.join(' · ')}`
+    ? `Packs canoniques de référence : ${chosenPacks.join(' · ')}`
     : 'Aucun pack personnage requis pour ces plans.';
-  const packLine = priorityMissing.length
-    ? `Pack V1 prioritaire manquant : ${priorityMissing.join(' · ')}`
-    : 'Pack V1 prioritaire complet.';
-  studioProgress.textContent = `${selectionLine}\n${sceneLine}\n${packLine}`;
+  studioProgress.textContent = `${selectionLine}\n${sceneLine}\nRègle active : images/atlas interdits comme fallback final.`;
   diagnostics.textContent = composition.playable
-    ? `✓ Storyboard composé avec les packs canoniques validés. Scène ${composition.coverage}% · pack V1 ${pack.coverage}%.`
-    : `⚠ Storyboard prêt et packs canoniques choisis, mais scène ${composition.coverage}% · pack V1 ${pack.coverage}%.`;
+    ? `✓ Mode true_video_required respecté. Vidéo réelle ${composition.trueVideoCoverage}%.`
+    : `⚠ Mode true_video_required : aucune fausse vidéo n’est jouée. Il faut générer ou fournir les clips vidéo réels manquants.`;
 }
 
 async function playStudioDrama() {
   if (!lastComposition?.playable) return;
   playDrama.disabled = true;
-  studioStatus.textContent = 'Studio interne : lecture en cours';
+  studioStatus.textContent = 'Studio interne : lecture vraie vidéo en cours';
   await moniaDramaPlayer.play(lastComposition, videoZone);
   playDrama.disabled = false;
   studioStatus.textContent = 'Studio interne : lecture terminée';
@@ -174,7 +172,7 @@ function demoShot(input: Partial<MonIADramaShot> & Pick<MonIADramaShot,'id'|'act
     lighting: 'lumière intérieure douce, cinématographique et réaliste',
     continuity: 'Même intérieur neutre, mêmes visages canoniques, même tenue et même coiffure.',
     transition: 'reaction-cut',
-    generationPrompt: 'Canonical photorealistic drama reference, identity preserved, natural micro-expression, cinematic interior light, no text, no watermark.',
+    generationPrompt: 'Canonical photorealistic drama video, identity preserved, real breathing, blinking, subtle head and eye movement, cinematic interior light, no text, no watermark, true video only.',
     ...input,
   };
 }
@@ -198,6 +196,7 @@ function instantDemoPlan(): MonIADramaPlan {
     shots,
     voiceLines:shots.filter(shot=>shot.dialogue).map(shot=>({actor:shot.focusActor,text:shot.dialogue,emotion:shot.emotion,shotId:shot.id})),
     source:'fallback',
+    renderMode:'true_video_required',
   };
 }
 
@@ -208,7 +207,7 @@ async function runDemoDrama() {
   time.value = '20:30';
   relationship.value = 'relation affectueuse en construction';
   demoDrama.disabled = true;
-  demoDrama.textContent = '⏳ Composition…';
+  demoDrama.textContent = '⏳ Vérification vidéo…';
   setBusy('scene', premise);
   try {
     const plan = instantDemoPlan();
@@ -233,14 +232,14 @@ async function runFreeVideo() {
   engine.textContent = 'MonIA Video · Wan 2.2 ZeroGPU';
   engine.dataset.state = 'loading';
   answer.textContent = 'Préparation d’un vrai plan vidéo de Lucas à partir de la référence canon…';
-  raw.textContent = 'Provider: Hugging Face ZeroGPU public · Wan2.2-TI2V-5B';
+  raw.textContent = 'Mode true_video_required · aucune image animée artificiellement ne sera acceptée.';
   try {
     const result = await generateFreeCanonVideo({
       cellId:'lucas-1',
-      prompt:'Photorealistic cinematic close-up of the exact same man from the reference image. He breathes naturally, blinks once, subtly shifts his gaze toward someone just off camera, then gives a very slight restrained smile. Realistic skin, natural hair movement, soft indoor evening light, shallow depth of field, subtle handheld camera, preserve identity and facial proportions, no tattoos, no text, no subtitles, no watermark.',
+      prompt:'Photorealistic cinematic close-up of the exact same man from the reference image. He breathes naturally, blinks once, subtly shifts his gaze toward someone just off camera, then gives a very slight restrained smile. Realistic skin, natural hair movement, soft indoor evening light, shallow depth of field, subtle handheld camera, preserve identity and facial proportions, no tattoos, no text, no subtitles, no watermark, true video motion only.',
       onState:(state,detail)=>{
         studioStatus.textContent = `Vidéo gratuite : ${detail || state}`;
-        diagnostics.textContent = `Wan 2.2 ZeroGPU · ${detail || state}. La file publique peut prendre plusieurs minutes.`;
+        diagnostics.textContent = `Moteur vidéo gratuit · ${detail || state}. Si le service est indisponible, aucun faux zoom ne le remplacera.`;
       },
     });
     raw.textContent = JSON.stringify(result,null,2);
@@ -251,17 +250,17 @@ async function runFreeVideo() {
       video.playsInline=true;
       video.autoplay=true;
       videoZone.appendChild(video);
-      answer.textContent='Vraie vidéo reçue du GPU gratuit. Regarde surtout le mouvement, la conservation du visage et la qualité.';
+      answer.textContent='Vraie vidéo reçue. Regarde surtout le mouvement, la conservation du visage et la qualité.';
       engine.dataset.state='ready';
       studioStatus.textContent='Vidéo gratuite : prête';
     }else{
-      answer.textContent=`Le GPU gratuit n’a pas produit de vidéo : ${result.error || 'service indisponible'}`;
+      answer.textContent=`Vraie vidéo indisponible : ${result.error || 'service gratuit indisponible'}. Aucun animatique ne sera utilisé à la place.`;
       engine.dataset.state='error';
       studioStatus.textContent='Vidéo gratuite : indisponible pour le moment';
     }
   } catch(error){
     const message=error instanceof Error?error.message:String(error);
-    answer.textContent=`Test vidéo gratuit impossible : ${message}`;
+    answer.textContent=`Vraie vidéo indisponible : ${message}. Aucun faux rendu ne sera utilisé.`;
     raw.textContent=message;
     engine.dataset.state='error';
   } finally {
