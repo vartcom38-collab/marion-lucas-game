@@ -1,7 +1,7 @@
 import { monia } from './runtime';
 import { inferMessageTone, type MonIAChannel, type MonIADirectorResult, type MonIAMessageTone } from './director';
 import { planDrama } from './drama-planner';
-import type { MonIADramaPlan } from './drama';
+import type { MonIADramaPlan, MonIADramaShot } from './drama';
 import { composeDramaStudio, type DramaStudioComposition } from './drama-studio';
 import { moniaDramaPlayer } from './drama-player';
 import { auditDramaPack } from './drama-pack';
@@ -121,6 +121,10 @@ async function runDrama(text: string) {
     title: 'Test drama MonIA', premise: text, actors: ['Marion','Lucas'], targetDuration: 28, format: '9:16',
     context: testContext(text), availableMedia: ['lucas-intro.mp4','marion-nimes.mp4','appartement-nimes.png'],
   }, true);
+  renderDramaPlan(plan);
+}
+
+function renderDramaPlan(plan: MonIADramaPlan) {
   const composition = composeDramaStudio(plan);
   const pack = auditDramaPack();
   lastDramaPlan = plan;
@@ -158,6 +162,43 @@ async function playStudioDrama() {
   studioStatus.textContent = 'Studio interne : lecture terminée';
 }
 
+function demoShot(input: Partial<MonIADramaShot> & Pick<MonIADramaShot,'id'|'actors'|'focusActor'|'emotion'|'action'>): MonIADramaShot {
+  return {
+    duration: 3.2,
+    shotSize: input.actors.length === 2 ? 'two-shot' : 'close',
+    cameraMove: 'slow-push',
+    dialogue: '',
+    reaction: 'micro-expression naturelle et regard lisible',
+    lighting: 'lumière intérieure douce, cinématographique et réaliste',
+    continuity: 'Même intérieur neutre, mêmes visages canoniques, même tenue et même coiffure.',
+    transition: 'reaction-cut',
+    generationPrompt: 'Canonical photorealistic drama reference, identity preserved, natural micro-expression, cinematic interior light, no text, no watermark.',
+    ...input,
+  };
+}
+
+function instantDemoPlan(): MonIADramaPlan {
+  const shots: MonIADramaShot[] = [
+    demoShot({id:'demo-1',actors:['Marion'],focusActor:'Marion',emotion:'quiet',action:'Marion observe Lucas un instant, calme et attentive',shotSize:'close',cameraMove:'slow-push',transition:'cut'}),
+    demoShot({id:'demo-2',actors:['Lucas'],focusActor:'Lucas',emotion:'neutral',action:'Lucas soutient son regard avec une expression calme',shotSize:'close',cameraMove:'locked'}),
+    demoShot({id:'demo-3',actors:['Marion','Lucas'],focusActor:'Marion',emotion:'neutral',action:'Marion et Lucas échangent quelques mots simples face à face',dialogue:'Ça va ?',shotSize:'two-shot',cameraMove:'handheld-soft'}),
+    demoShot({id:'demo-4',actors:['Lucas'],focusActor:'Lucas',emotion:'tender',action:'Lucas réagit avec un léger sourire et un regard tendre',dialogue:'Oui.',shotSize:'extreme-close',cameraMove:'slow-push'}),
+    demoShot({id:'demo-5',actors:['Marion','Lucas'],focusActor:'Lucas',emotion:'tender',action:'Un bref silence complice les rapproche légèrement, sans décision importante',shotSize:'medium-close',cameraMove:'slow-push',transition:'hold'}),
+    demoShot({id:'demo-6',actors:['Marion'],focusActor:'Marion',emotion:'playful',action:'Marion laisse apparaître un sourire léger qui clôt le moment',shotSize:'close',cameraMove:'slow-pull',transition:'hold'}),
+  ];
+  return {
+    title:'Démo canon MonIA — hors histoire',
+    format:'9:16',
+    targetDuration:shots.reduce((sum,shot)=>sum+shot.duration,0),
+    rhythm:'intimate',
+    location:'Intérieur neutre',
+    continuityAnchor:'Bac à sable visuel hors histoire · aucun événement canon',
+    shots,
+    voiceLines:shots.filter(shot=>shot.dialogue).map(shot=>({actor:shot.focusActor,text:shot.dialogue,emotion:shot.emotion,shotId:shot.id})),
+    source:'fallback',
+  };
+}
+
 async function runDemoDrama() {
   const premise = 'Bac à sable visuel : Marion et Lucas sont dans la même pièce. Ils échangent quelques mots simples, un regard complice, un bref silence puis un sourire. Aucun événement de l’histoire, aucune révélation, aucune décision importante.';
   msg.value = premise;
@@ -165,10 +206,11 @@ async function runDemoDrama() {
   time.value = '20:30';
   relationship.value = 'relation affectueuse en construction';
   demoDrama.disabled = true;
-  demoDrama.textContent = '⏳ Préparation…';
+  demoDrama.textContent = '⏳ Composition…';
   setBusy('scene', premise);
   try {
-    await runDrama(premise);
+    const plan = instantDemoPlan();
+    renderDramaPlan(plan);
     if (lastComposition?.playable) await playStudioDrama();
   } catch (error) {
     engine.textContent = 'Erreur';
