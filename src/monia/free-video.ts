@@ -5,6 +5,7 @@ export type FreeVideoResult = { state:FreeVideoState; videoUrl?:string; error?:s
 
 const SPACE='https://openking-wan2-video-generation.hf.space';
 const API='generate_video';
+const QUEUE_TIMEOUT_MS=180_000;
 
 function fileUrl(value:any){
   const candidate=value?.video?.url || value?.url || value?.path || value?.video?.path || (typeof value==='string'?value:'');
@@ -58,23 +59,34 @@ async function submit(prompt:string,image:any){
 }
 
 async function waitForResult(eventId:string,onState?:(state:FreeVideoState,detail?:string)=>void){
-  const r=await fetch(`${SPACE}/gradio_api/call/${API}/${encodeURIComponent(eventId)}`,{headers:{accept:'text/event-stream'}});
-  if(!r.ok)throw new Error(`Résultat ZeroGPU HTTP ${r.status}`);
-  const text=await r.text();
-  const blocks=text.split(/\n\n+/);
-  for(const block of blocks){
-    const event=block.match(/^event:\s*(.+)$/m)?.[1]?.trim();
-    const raw=block.match(/^data:\s*(.+)$/m)?.[1];
-    if(event==='generating')onState?.('generating','GPU en cours de génération');
-    if(event==='error')throw new Error(raw || 'Erreur ZeroGPU');
-    if(event==='complete' && raw){
-      const data=JSON.parse(raw);
-      const url=fileUrl(Array.isArray(data)?data[0]:data);
-      if(!url)throw new Error('Vidéo générée mais URL introuvable.');
-      return url;
+  const controller=new AbortController();
+  const timer=window.setTimeout(()=>controller.abort(),QUEUE_TIMEOUT_MS);
+  try{
+    const r=await fetch(`${SPACE}/gradio_api/call/${API}/${encodeURIComponent(eventId)}`,{headers:{accept:'text/event-stream'},signal:controller.signal});
+    if(!r.ok)throw new Error(`Résultat ZeroGPU HTTP ${r.status}`);
+    const text=await r.text();
+    const blocks=text.split(/\n\n+/);
+    for(const block of blocks){
+      const event=block.match(/^event:\s*(.+)$/m)?.[1]?.trim();
+      const raw=block.match(/^data:\s*(.+)$/m)?.[1];
+      if(event==='generating')onState?.('generating','GPU en cours de génération');
+      if(event==='error')throw new Error(raw || 'Erreur ZeroGPU');
+      if(event==='complete' && raw){
+        const data=JSON.parse(raw);
+        const url=fileUrl(Array.isArray(data)?data[0]:data);
+        if(!url)throw new Error('Vidéo générée mais URL introuvable.');
+        return url;
+      }
     }
+    throw new Error('Réponse ZeroGPU incomplète ou file expirée.');
+  }catch(error){
+    if(error instanceof DOMException && error.name==='AbortError'){
+      throw new Error('Aucun GPU gratuit disponible après 3 minutes. Réessaie plus tard.');
+    }
+    throw error;
+  }finally{
+    window.clearTimeout(timer);
   }
-  throw new Error('Réponse ZeroGPU incomplète ou file expirée.');
 }
 
 export async function generateFreeCanonVideo(input:{cellId?:string;prompt:string;onState?:(state:FreeVideoState,detail?:string)=>void}):Promise<FreeVideoResult>{
@@ -84,7 +96,7 @@ export async function generateFreeCanonVideo(input:{cellId?:string;prompt:string
     const file=await cropCell(cell);
     input.onState?.('uploading-reference','Envoi de la référence canon au GPU gratuit');
     const uploaded=await uploadReference(file);
-    input.onState?.('queued','En attente d’un GPU gratuit');
+    input.onState?.('queued','En attente d’un GPU gratuit · maximum 3 min');
     const eventId=await submit(input.prompt,uploaded);
     const videoUrl=await waitForResult(eventId,input.onState);
     input.onState?.('ready','Vidéo prête');
