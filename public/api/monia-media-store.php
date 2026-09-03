@@ -70,13 +70,14 @@ if ($token === '' || $sessionToken === '' || !hash_equals($sessionToken, $token)
 
 $now = time();
 $hits = array_values(array_filter((array)($_SESSION['monia_hits'] ?? []), fn($t) => is_int($t) && $t > $now - 600));
-if (count($hits) >= 12) reply(429, ['ok' => false, 'error' => 'trop de sauvegardes média']);
+if (count($hits) >= 18) reply(429, ['ok' => false, 'error' => 'trop de sauvegardes média']);
 $hits[] = $now;
 $_SESSION['monia_hits'] = $hits;
 
 $sourceUrl = trim((string)($payload['sourceUrl'] ?? ''));
 $key = trim((string)($payload['key'] ?? ''));
-$kind = (($payload['kind'] ?? '') === 'image') ? 'image' : 'video';
+$requestedKind = (string)($payload['kind'] ?? '');
+$kind = in_array($requestedKind, ['image', 'video', 'audio'], true) ? $requestedKind : 'video';
 if ($sourceUrl === '' || $key === '' || !allowed_remote($sourceUrl)) reply(400, ['ok' => false, 'error' => 'source refusée']);
 
 $root = dirname(__DIR__) . '/resources/monia/generated';
@@ -87,7 +88,7 @@ if ($tmp === false) reply(500, ['ok' => false, 'error' => 'fichier temporaire in
 $fp = fopen($tmp, 'wb');
 if ($fp === false) { @unlink($tmp); reply(500, ['ok' => false, 'error' => 'écriture temporaire impossible']); }
 
-$maxBytes = $kind === 'video' ? 80 * 1024 * 1024 : 16 * 1024 * 1024;
+$maxBytes = $kind === 'video' ? 80 * 1024 * 1024 : ($kind === 'audio' ? 24 * 1024 * 1024 : 16 * 1024 * 1024);
 $bytes = 0;
 $contentType = '';
 $currentUrl = $sourceUrl;
@@ -112,7 +113,7 @@ for ($redirect = 0; $redirect <= 4; $redirect++) {
         CURLOPT_FOLLOWLOCATION => false,
         CURLOPT_CONNECTTIMEOUT => 12,
         CURLOPT_TIMEOUT => 90,
-        CURLOPT_USERAGENT => 'MonIA-MediaStore/1.1',
+        CURLOPT_USERAGENT => 'MonIA-MediaStore/1.2',
         CURLOPT_PROTOCOLS => CURLPROTO_HTTPS,
         CURLOPT_HEADERFUNCTION => function($ch, $header) use (&$contentType, &$location) {
             if (stripos($header, 'Content-Type:') === 0) $contentType = trim(substr($header, 13));
@@ -153,10 +154,15 @@ if (!$downloaded || $bytes < 256) {
 $mime = strtolower(trim(explode(';', $contentType)[0] ?? ''));
 $extensions = [
     'video/mp4' => 'mp4', 'video/webm' => 'webm', 'video/quicktime' => 'mov',
-    'image/png' => 'png', 'image/jpeg' => 'jpg', 'image/webp' => 'webp'
+    'image/png' => 'png', 'image/jpeg' => 'jpg', 'image/webp' => 'webp',
+    'audio/wav' => 'wav', 'audio/x-wav' => 'wav', 'audio/mpeg' => 'mp3', 'audio/mp4' => 'm4a',
+    'audio/aac' => 'aac', 'audio/ogg' => 'ogg', 'audio/flac' => 'flac', 'audio/x-flac' => 'flac'
 ];
 $ext = $extensions[$mime] ?? '';
-if ($ext === '' || ($kind === 'video' && !str_starts_with($mime, 'video/')) || ($kind === 'image' && !str_starts_with($mime, 'image/'))) {
+$validKind = ($kind === 'video' && str_starts_with($mime, 'video/'))
+    || ($kind === 'image' && str_starts_with($mime, 'image/'))
+    || ($kind === 'audio' && str_starts_with($mime, 'audio/'));
+if ($ext === '' || !$validKind) {
     @unlink($tmp);
     reply(415, ['ok' => false, 'error' => 'type média refusé']);
 }
