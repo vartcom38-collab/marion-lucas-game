@@ -1,17 +1,19 @@
+import { Client, handle_file } from '@gradio/client';
 import { CANON_DRAMA_ATLAS_CELLS, type DramaAtlasCell } from './drama-atlas';
 
 export type FreeVideoState = 'idle'|'preparing-reference'|'uploading-reference'|'queued'|'generating'|'ready'|'error';
 export type FreeVideoResult = { state:FreeVideoState; videoUrl?:string; error?:string; provider:string; detail?:string; attempts?:string[] };
 
-type Provider={id:string;label:string;space:string;api:string;payload:(prompt:string,image:any)=>unknown[]};
+type Provider={id:string;label:string;space:string;spaceId?:string;api?:string;discover?:boolean;payload:(prompt:string,image:any)=>unknown[]};
 
 const PROVIDERS:Provider[]=[
   {
     id:'hf-openking-wan22',
     label:'Wan 2.2 ZeroGPU A',
     space:'https://openking-wan2-video-generation.hf.space',
-    api:'generate_video',
-    payload:(prompt,image)=>[prompt,image,704,1024,49,25,5,-1],
+    spaceId:'OpenKing/wan2-video-generation',
+    discover:true,
+    payload:(prompt,image)=>[prompt,image,576,1024,49,25,5,-1],
   },
   {
     id:'hf-rioshiina-ltx25',
@@ -40,12 +42,13 @@ const PROVIDERS:Provider[]=[
     id:'hf-kpkp21-wan22',
     label:'Wan 2.2 ZeroGPU C',
     space:'https://kpkp21-wan2-video-generation.hf.space',
-    api:'generate_video',
-    payload:(prompt,image)=>[prompt,image,704,1024,49,25,5,-1],
+    spaceId:'Kpkp21/wan2-video-generation',
+    discover:true,
+    payload:(prompt,image)=>[prompt,image,576,1024,49,25,5,-1],
   },
 ];
 
-const PROVIDER_TIMEOUT_MS=150_000;
+const PROVIDER_TIMEOUT_MS=180_000;
 
 function cleanProviderError(value:unknown,fallback='erreur ZeroGPU sans détail'){
   const raw=value instanceof Error?value.message:String(value??'');
@@ -102,15 +105,12 @@ async function cropCell(cell:DramaAtlasCell){
   const baseY=cell.crop.y*img.naturalHeight;
   const baseW=cell.crop.width*img.naturalWidth;
   const baseH=cell.crop.height*img.naturalHeight;
-
-  // The atlas is identity reference only. Strip the card label/header before any video provider sees it.
   const trimTop=baseH*0.18;
   const trimSide=baseW*0.025;
   const sx=Math.round(baseX+trimSide);
   const sy=Math.round(baseY+trimTop);
   const sw=Math.max(1,Math.round(baseW-trimSide*2));
   const sh=Math.max(1,Math.round(baseH-trimTop-baseH*0.015));
-
   const canvas=document.createElement('canvas');
   canvas.width=768; canvas.height=1024;
   const ctx=canvas.getContext('2d');
@@ -133,7 +133,44 @@ async function uploadReference(provider:Provider,file:File){
   return {path,orig_name:file.name,size:file.size,mime_type:file.type,meta:{_type:'gradio.FileData'}};
 }
 
+function findVideoEndpoint(info:any){
+  const unnamed=info?.unnamed_endpoints||{};
+  const named=info?.named_endpoints||{};
+  for(const [key,value] of Object.entries<any>(unnamed)){
+    const params=value?.parameters||[];
+    const returns=value?.returns||[];
+    const hasVideo=returns.some((r:any)=>String(r?.component||r?.type||'').toLowerCase().includes('video'));
+    const labels=params.map((p:any)=>String(p?.label||p?.parameter_name||'').toLowerCase()).join('|');
+    if(params.length>=7 && params.length<=9 && hasVideo && labels.includes('prompt'))return Number(key);
+  }
+  for(const [key,value] of Object.entries<any>(named)){
+    const params=value?.parameters||[];
+    const returns=value?.returns||[];
+    const hasVideo=returns.some((r:any)=>String(r?.component||r?.type||'').toLowerCase().includes('video'));
+    if(hasVideo && params.length>=1)return key;
+  }
+  throw new Error(`endpoint vidéo Gradio introuvable (unnamed=${Object.keys(unnamed).join(',')||'aucun'})`);
+}
+
+async function runDiscoveredProvider(provider:Provider,file:File,prompt:string,onState?:(state:FreeVideoState,detail?:string)=>void){
+  if(!provider.spaceId)throw new Error('Space ID manquant');
+  onState?.('queued',`${provider.label} · lecture API réelle`);
+  const app=await Client.connect(provider.spaceId,{events:['status','data']});
+  const info:any=await app.view_api();
+  const endpoint=findVideoEndpoint(info);
+  onState?.('uploading-reference',`${provider.label} · référence canon via client Gradio`);
+  const payload=provider.payload(prompt,handle_file(file));
+  onState?.('generating',`${provider.label} · génération GPU · endpoint ${String(endpoint)}`);
+  const prediction=app.predict(endpoint as any,payload as any);
+  const timeout=new Promise<never>((_,reject)=>window.setTimeout(()=>reject(new Error('timeout GPU gratuit')),PROVIDER_TIMEOUT_MS));
+  const result:any=await Promise.race([prediction,timeout]);
+  const url=fileUrl(provider,result?.data??result);
+  if(!url)throw new Error(`job terminé sans URL vidéo · endpoint ${String(endpoint)}`);
+  return url;
+}
+
 async function submit(provider:Provider,prompt:string,image:any){
+  if(!provider.api)throw new Error('endpoint API manquant');
   const r=await fetch(`${provider.space}/gradio_api/call/${provider.api}`,{
     method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({data:provider.payload(prompt,image)}),
   });
@@ -144,6 +181,7 @@ async function submit(provider:Provider,prompt:string,image:any){
 }
 
 async function waitForResult(provider:Provider,eventId:string,onState?:(state:FreeVideoState,detail?:string)=>void){
+  if(!provider.api)throw new Error('endpoint API manquant');
   const controller=new AbortController();
   const timer=window.setTimeout(()=>controller.abort(),PROVIDER_TIMEOUT_MS);
   try{
@@ -174,9 +212,10 @@ async function waitForResult(provider:Provider,eventId:string,onState?:(state:Fr
 }
 
 async function runProvider(provider:Provider,file:File,prompt:string,onState?:(state:FreeVideoState,detail?:string)=>void){
+  if(provider.discover)return runDiscoveredProvider(provider,file,prompt,onState);
   onState?.('uploading-reference',`${provider.label} · envoi référence canon`);
   const uploaded=await uploadReference(provider,file);
-  onState?.('queued',`${provider.label} · attente GPU gratuit (max 2 min 30)`);
+  onState?.('queued',`${provider.label} · attente GPU gratuit`);
   const eventId=await submit(provider,prompt,uploaded);
   return waitForResult(provider,eventId,onState);
 }
@@ -192,14 +231,12 @@ export async function generateFreeCanonVideo(input:{cellId?:string;referenceFile
       try{
         input.onState?.('queued',`${provider.label} · tentative ${index+1}/${PROVIDERS.length}`);
         const videoUrl=await runProvider(provider,file,input.prompt,input.onState);
-        input.onState?.('ready',`${provider.label} · vidéo prête`);
+        input.onState?.('ready',`${provider.label} · vraie vidéo prête`);
         return {state:'ready',videoUrl,provider:provider.id,attempts};
       }catch(error){
         const message=cleanProviderError(error);
         attempts.push(`${provider.label}: ${message}`);
-        if(index<PROVIDERS.length-1){
-          input.onState?.('queued',`${provider.label} indisponible (${message}) · essai du provider suivant`);
-        }
+        if(index<PROVIDERS.length-1)input.onState?.('queued',`${provider.label} indisponible (${message}) · provider suivant`);
       }
     }
     const message=`Aucun GPU gratuit n’a répondu. ${attempts.join(' | ')}`;
