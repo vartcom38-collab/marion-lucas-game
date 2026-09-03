@@ -1,5 +1,6 @@
 import type { MonIADramaPlan, MonIADramaShot } from './drama';
 import { findDramaBricks, type MonIADramaBrick } from './drama-library';
+import { preferredValidatedPacks, type ValidatedDramaPackId } from './validated-drama-packs';
 
 export type DramaStudioClip = {
   shotId: string;
@@ -14,6 +15,8 @@ export type DramaStudioClip = {
   dialogue: string;
   focusActor: string;
   emotion: string;
+  preferredPackIds: ValidatedDramaPackId[];
+  selectedPackId?: ValidatedDramaPackId;
   missingReason?: string;
 };
 
@@ -25,6 +28,7 @@ export type DramaStudioComposition = {
   coverage: number;
   clips: DramaStudioClip[];
   missingShotIds: string[];
+  preferredPackIds: ValidatedDramaPackId[];
 };
 
 function transformForShot(shot: MonIADramaShot) {
@@ -45,19 +49,28 @@ function motionForShot(shot: MonIADramaShot): DramaStudioClip['motion'] {
 }
 
 function chooseMedia(plan: MonIADramaPlan, shot: MonIADramaShot) {
+  const preferredPackIds = preferredValidatedPacks({
+    actors: shot.actors,
+    emotion: shot.emotion,
+    action: shot.action,
+    reaction: shot.reaction,
+    dialogue: shot.dialogue,
+  });
   const ranked = findDramaBricks({
     actors: shot.actors,
     location: plan.location,
     emotion: shot.emotion,
     shotSize: shot.shotSize,
     dialogue: Boolean(shot.dialogue),
+    action: shot.action,
+    reaction: shot.reaction,
   });
-  return ranked[0]?.brick || null;
+  return { media: ranked[0]?.brick || null, preferredPackIds };
 }
 
 export function composeDramaStudio(plan: MonIADramaPlan): DramaStudioComposition {
   const clips = plan.shots.map(shot => {
-    const media = chooseMedia(plan, shot);
+    const { media, preferredPackIds } = chooseMedia(plan, shot);
     const t = transformForShot(shot);
     const clip: DramaStudioClip = {
       shotId: shot.id,
@@ -72,13 +85,19 @@ export function composeDramaStudio(plan: MonIADramaPlan): DramaStudioComposition
       dialogue: shot.dialogue,
       focusActor: shot.focusActor,
       emotion: shot.emotion,
+      preferredPackIds,
+      selectedPackId: media?.packId,
     };
-    if (!media) clip.missingReason = `Aucune brique serveur compatible pour ${shot.focusActor} · ${shot.shotSize} · ${shot.emotion}`;
+    if (!media) {
+      const pack = preferredPackIds.length ? ` · pack attendu ${preferredPackIds.join(' / ')}` : '';
+      clip.missingReason = `Aucune brique serveur compatible pour ${shot.focusActor} · ${shot.shotSize} · ${shot.emotion}${pack}`;
+    }
     return clip;
   });
 
   const missingShotIds = clips.filter(clip => !clip.media).map(clip => clip.shotId);
   const coverage = clips.length ? Math.round(((clips.length - missingShotIds.length) / clips.length) * 100) : 0;
+  const preferredPackIds = [...new Set(clips.flatMap(clip => clip.preferredPackIds))];
   return {
     title: plan.title,
     format: plan.format,
@@ -87,6 +106,7 @@ export function composeDramaStudio(plan: MonIADramaPlan): DramaStudioComposition
     coverage,
     clips,
     missingShotIds,
+    preferredPackIds,
   };
 }
 
@@ -98,6 +118,7 @@ export function studioNeeds(plan: MonIADramaPlan) {
       shotId: clip.shotId,
       actor: clip.focusActor,
       emotion: clip.emotion,
+      preferredPackIds: clip.preferredPackIds,
       reason: clip.missingReason || 'Brique manquante',
     }));
 }
