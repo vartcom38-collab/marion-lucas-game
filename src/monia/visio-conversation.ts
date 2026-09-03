@@ -1,6 +1,6 @@
 import { moniaExperience } from './experience-runtime';
 import type { MonIADirectorResult } from './director';
-import { cancelMonIAVoice, inferVoiceMood, speakMonIA } from './voice-engine';
+import { cancelMonIAVoice, inferVoiceMood, speakMonIAPremium } from './voice-engine';
 
 const SAVE_KEY='marion-lucas-save-v4';
 const SETTINGS_KEY='marion-lucas-settings-v2';
@@ -25,10 +25,12 @@ function responsePanel(){
 }
 function setDialogue(actor:string,text:string){const panel=responsePanel();if(!panel)return;panel.style.display='block';panel.innerHTML=`<strong>${actor}</strong><br>${text.replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]||c))}`}
 
-function speak(text:string){
-  speakMonIA(text,{
+async function speak(text:string){
+  status('Lucas prépare sa voix…');
+  await speakMonIAPremium(text,{
     actor:'Lucas',
     mood:inferVoiceMood(text),
+    onProvider:provider=>{if(provider==='browser')status('Lucas parle')},
     onStart:()=>{status('Lucas parle');speechEvent('start',{length:text.length})},
     onBoundary:e=>speechEvent('boundary',e),
     onEnd:()=>{status('Lucas écoute');speechEvent('end')},
@@ -48,7 +50,7 @@ async function answerTurn(transcript:string){
   try{
     const experience=await moniaExperience.respond({actor:'Lucas',playerText:transcript,requestedChannel:'visio',context,availableMedia:[]},prefs.aiMode as any,prefs.localAI!==false);
     const result=experience.response;try{sessionStorage.setItem(VISIO_KEY,JSON.stringify(result))}catch{}
-    setDialogue('Lucas',result.spokenText||result.text);speak(result.spokenText||result.text);
+    setDialogue('Lucas',result.spokenText||result.text);void speak(result.spokenText||result.text);
   }catch(error){console.warn('[MonIA visio turn]',error);status('Lucas écoute')}
 }
 
@@ -62,4 +64,4 @@ function installMic(){
   overlay.appendChild(button);
 }
 window.setInterval(()=>{if(document.getElementById('moniaVisioOverlay'))installMic()},700);
-console.info('[MonIA] Conversational visio uses persistent actor voice profile + speech timing events');
+console.info('[MonIA] Conversational visio uses Chatterbox premium voice with browser fallback');
