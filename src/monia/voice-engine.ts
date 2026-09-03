@@ -4,15 +4,29 @@ export type MonIAVoiceMood='neutral'|'warm'|'tired'|'intense'|'soft';
 type SpeakOptions={
   actor:MonIAVoiceActor;
   mood?:MonIAVoiceMood;
+  referenceAudioUrl?:string;
   onStart?:()=>void;
   onBoundary?:(detail:{charIndex:number;name?:string;elapsedTime?:number;textLength:number})=>void;
   onEnd?:()=>void;
   onError?:(error:string)=>void;
+  onProvider?:(provider:'chatterbox'|'browser')=>void;
 };
 
+export type MonIAPremiumVoiceResult={provider:'chatterbox'|'browser';audioUrl?:string;fallback:boolean;error?:string};
+
 const PREF_KEY='monia-voice-profile-v1';
+const CHATTERBOX_SPACE='https://resembleai-chatterbox-multilingual-tts.hf.space';
+const CHATTERBOX_API='generate_tts_audio';
+const CHATTERBOX_TIMEOUT=100_000;
+const CANON_REFERENCE:Partial<Record<MonIAVoiceActor,string>>={
+  // Once a canonical actor voice sample exists on Infomaniak, MonIA uses it automatically.
+  Lucas:'/resources/monia/voices/lucas-reference.wav',
+  Marion:'/resources/monia/voices/marion-reference.wav',
+};
 
 type StoredProfile={actor:MonIAVoiceActor;voiceName?:string;lang:string;rate:number;pitch:number};
+let currentAudio:HTMLAudioElement|null=null;
+let boundaryTimer:number|undefined;
 
 function voices(){return 'speechSynthesis'in window?window.speechSynthesis.getVoices():[]}
 
@@ -36,6 +50,14 @@ function moodAdjust(mood:MonIAVoiceMood='neutral'){
   return {rate:0,pitch:0};
 }
 
+function chatterboxStyle(mood:MonIAVoiceMood='neutral'){
+  if(mood==='tired')return {exaggeration:.34,temperature:.64,cfg:.58};
+  if(mood==='soft')return {exaggeration:.43,temperature:.67,cfg:.54};
+  if(mood==='warm')return {exaggeration:.56,temperature:.72,cfg:.50};
+  if(mood==='intense')return {exaggeration:.72,temperature:.70,cfg:.57};
+  return {exaggeration:.48,temperature:.68,cfg:.52};
+}
+
 function choose(actor:MonIAVoiceActor){
   const available=voices();
   const stored=load(actor);
@@ -47,11 +69,93 @@ function choose(actor:MonIAVoiceActor){
   return fallback;
 }
 
-export function cancelMonIAVoice(){if('speechSynthesis'in window)window.speechSynthesis.cancel()}
+function cleanError(value:unknown){
+  const raw=value instanceof Error?value.message:String(value??'');
+  const text=raw.trim();
+  if(!text||text==='null'||text==='undefined')return 'service vocal indisponible';
+  try{const parsed=JSON.parse(text);const nested=parsed?.message||parsed?.error||parsed?.detail;if(typeof nested==='string'&&nested.trim())return nested.trim()}catch{}
+  return text;
+}
+
+function deepAudioCandidate(value:any):string{
+  if(!value)return '';
+  if(typeof value==='string')return /\.(wav|mp3|flac|ogg|m4a|aac)(?:$|\?)/i.test(value)||/^https?:\/\//.test(value)?value:'';
+  if(Array.isArray(value)){for(const item of value){const found=deepAudioCandidate(item);if(found)return found}return ''}
+  const direct=value?.audio?.url||value?.url||value?.path||value?.audio?.path;
+  if(typeof direct==='string'&&direct)return direct;
+  for(const key of ['audio','files','result','results','output','outputs','data']){const found=deepAudioCandidate(value?.[key]);if(found)return found}
+  return '';
+}
+
+function gradioAudioUrl(value:any){
+  const candidate=deepAudioCandidate(value);
+  if(!candidate)return '';
+  return /^https?:\/\//.test(candidate)?candidate:`${CHATTERBOX_SPACE}/gradio_api/file=${encodeURIComponent(candidate)}`;
+}
+
+async function referenceIfExists(actor:MonIAVoiceActor,override?:string){
+  const url=override||CANON_REFERENCE[actor];
+  if(!url)return null;
+  try{const response=await fetch(url,{method:'HEAD',cache:'no-store'});return response.ok?new URL(url,location.href).href:null}catch{return null}
+}
+
+async function chatterboxGenerate(text:string,options:SpeakOptions){
+  const style=chatterboxStyle(options.mood);
+  const reference=await referenceIfExists(options.actor,options.referenceAudioUrl);
+  const payload=[text.slice(0,300),'fr',reference,style.exaggeration,style.temperature,options.actor==='Lucas'?7319:4217,style.cfg];
+  const controller=new AbortController();
+  const timer=window.setTimeout(()=>controller.abort(),CHATTERBOX_TIMEOUT);
+  try{
+    const submit=await fetch(`${CHATTERBOX_SPACE}/gradio_api/call/${CHATTERBOX_API}`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({data:payload}),signal:controller.signal});
+    if(!submit.ok)throw new Error(`Chatterbox HTTP ${submit.status}`);
+    const created=await submit.json();
+    if(!created?.event_id)throw new Error('Chatterbox n’a pas créé de job audio');
+    const result=await fetch(`${CHATTERBOX_SPACE}/gradio_api/call/${CHATTERBOX_API}/${encodeURIComponent(created.event_id)}`,{headers:{accept:'text/event-stream'},signal:controller.signal});
+    if(!result.ok)throw new Error(`Chatterbox résultat HTTP ${result.status}`);
+    const blocks=(await result.text()).split(/\n\n+/);
+    for(const block of blocks){
+      const event=block.match(/^event:\s*(.+)$/m)?.[1]?.trim();
+      const raw=block.match(/^data:\s*(.*)$/m)?.[1];
+      if(event==='error')throw new Error(cleanError(raw));
+      if(event==='complete'&&raw){let data:any;try{data=JSON.parse(raw)}catch{throw new Error('réponse audio Chatterbox illisible')};const url=gradioAudioUrl(data);if(!url)throw new Error('Chatterbox terminé sans URL audio');return url}
+    }
+    throw new Error('réponse Chatterbox incomplète');
+  }catch(error){
+    if(error instanceof DOMException&&error.name==='AbortError')throw new Error('timeout voix ZeroGPU');
+    throw new Error(cleanError(error));
+  }finally{window.clearTimeout(timer)}
+}
+
+function simulatedBoundaries(audio:HTMLAudioElement,text:string,callback?:SpeakOptions['onBoundary']){
+  if(!callback)return;
+  if(boundaryTimer)window.clearInterval(boundaryTimer);
+  const words=[...text.matchAll(/\S+/g)].map(match=>({index:match.index||0}));let cursor=0;
+  boundaryTimer=window.setInterval(()=>{
+    if(audio.paused||audio.ended)return;
+    const duration=Number.isFinite(audio.duration)&&audio.duration>0?audio.duration:Math.max(1,text.length/13);
+    const target=Math.floor((audio.currentTime/duration)*words.length);
+    while(cursor<=target&&cursor<words.length){callback({charIndex:words[cursor].index,name:'word',elapsedTime:audio.currentTime,textLength:text.length});cursor++}
+  },90);
+}
+
+async function playRemoteAudio(url:string,text:string,options:SpeakOptions){
+  cancelMonIAVoice();
+  const audio=new Audio(url);currentAudio=audio;audio.preload='auto';
+  audio.onplay=()=>{options.onProvider?.('chatterbox');options.onStart?.();simulatedBoundaries(audio,text,options.onBoundary)};
+  audio.onended=()=>{if(boundaryTimer)window.clearInterval(boundaryTimer);boundaryTimer=undefined;currentAudio=null;options.onEnd?.()};
+  audio.onerror=()=>{if(boundaryTimer)window.clearInterval(boundaryTimer);boundaryTimer=undefined;currentAudio=null;options.onError?.('lecture voix Chatterbox impossible')};
+  await audio.play();
+}
+
+export function cancelMonIAVoice(){
+  if('speechSynthesis'in window)window.speechSynthesis.cancel();
+  if(currentAudio){currentAudio.pause();currentAudio.src='';currentAudio=null}
+  if(boundaryTimer)window.clearInterval(boundaryTimer);boundaryTimer=undefined;
+}
 
 export function speakMonIA(text:string,options:SpeakOptions){
   if(!('speechSynthesis'in window)){options.onError?.('synthèse vocale indisponible');return false}
-  cancelMonIAVoice();
+  cancelMonIAVoice();options.onProvider?.('browser');
   const utterance=new SpeechSynthesisUtterance(text);
   const base=actorBase(options.actor),adjust=moodAdjust(options.mood);
   utterance.lang='fr-FR';utterance.rate=Math.max(.72,Math.min(1.08,base.rate+adjust.rate));utterance.pitch=Math.max(.72,Math.min(1.12,base.pitch+adjust.pitch));
@@ -62,6 +166,20 @@ export function speakMonIA(text:string,options:SpeakOptions){
   utterance.onerror=e=>options.onError?.(e.error||'erreur vocale');
   window.speechSynthesis.speak(utterance);
   return true;
+}
+
+export async function speakMonIAPremium(text:string,options:SpeakOptions):Promise<MonIAPremiumVoiceResult>{
+  try{
+    const audioUrl=await chatterboxGenerate(text,options);
+    await playRemoteAudio(audioUrl,text,options);
+    return {provider:'chatterbox',audioUrl,fallback:false};
+  }catch(error){
+    const message=cleanError(error);
+    const started=speakMonIA(text,options);
+    if(started)return {provider:'browser',fallback:true,error:message};
+    options.onError?.(message);
+    return {provider:'browser',fallback:true,error:message};
+  }
 }
 
 export function inferVoiceMood(text:string):MonIAVoiceMood{
