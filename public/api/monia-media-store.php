@@ -5,6 +5,12 @@ header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
 
 session_name('monia_media');
+session_set_cookie_params([
+    'httponly' => true,
+    'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+    'samesite' => 'Strict',
+    'path' => '/',
+]);
 session_start();
 
 function reply(int $status, array $data): never {
@@ -23,12 +29,25 @@ function same_origin(): bool {
 
 function allowed_remote(string $url): bool {
     $parts = parse_url($url);
-    if (!is_array($parts) || ($parts['scheme'] ?? '') !== 'https') return false;
+    if (!is_array($parts) || strtolower((string)($parts['scheme'] ?? '')) !== 'https') return false;
     $host = strtolower((string)($parts['host'] ?? ''));
     if ($host === '') return false;
     $allowedExact = ['huggingface.co', 'hf.co', 'cdn-lfs.huggingface.co'];
     if (in_array($host, $allowedExact, true)) return true;
     return str_ends_with($host, '.hf.space') || str_ends_with($host, '.huggingface.co');
+}
+
+function redirected_url(string $current, string $location): string {
+    $location = trim($location);
+    if ($location === '') return '';
+    if (preg_match('#^https://#i', $location)) return $location;
+    $base = parse_url($current);
+    if (!is_array($base) || empty($base['host'])) return '';
+    $origin = 'https://' . $base['host'] . (isset($base['port']) ? ':' . $base['port'] : '');
+    if (str_starts_with($location, '/')) return $origin . $location;
+    $path = (string)($base['path'] ?? '/');
+    $dir = preg_replace('#/[^/]*$#', '/', $path) ?: '/';
+    return $origin . $dir . $location;
 }
 
 if (!same_origin()) reply(403, ['ok' => false, 'error' => 'origin refusée']);
@@ -71,30 +90,62 @@ if ($fp === false) { @unlink($tmp); reply(500, ['ok' => false, 'error' => 'écri
 $maxBytes = $kind === 'video' ? 80 * 1024 * 1024 : 16 * 1024 * 1024;
 $bytes = 0;
 $contentType = '';
-$ch = curl_init($sourceUrl);
-curl_setopt_array($ch, [
-    CURLOPT_FOLLOWLOCATION => true,
-    CURLOPT_MAXREDIRS => 4,
-    CURLOPT_CONNECTTIMEOUT => 12,
-    CURLOPT_TIMEOUT => 90,
-    CURLOPT_USERAGENT => 'MonIA-MediaStore/1.0',
-    CURLOPT_HEADERFUNCTION => function($ch, $header) use (&$contentType) {
-        if (stripos($header, 'Content-Type:') === 0) $contentType = trim(substr($header, 13));
-        return strlen($header);
-    },
-    CURLOPT_WRITEFUNCTION => function($ch, $chunk) use ($fp, &$bytes, $maxBytes) {
-        $bytes += strlen($chunk);
-        if ($bytes > $maxBytes) return 0;
-        return fwrite($fp, $chunk);
-    },
-]);
-$ok = curl_exec($ch);
-$http = (int)curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
-$error = curl_error($ch);
-curl_close($ch);
+$currentUrl = $sourceUrl;
+$http = 0;
+$error = '';
+$downloaded = false;
+
+for ($redirect = 0; $redirect <= 4; $redirect++) {
+    if (!allowed_remote($currentUrl)) {
+        fclose($fp); @unlink($tmp);
+        reply(400, ['ok' => false, 'error' => 'redirection distante refusée']);
+    }
+
+    ftruncate($fp, 0);
+    rewind($fp);
+    $bytes = 0;
+    $contentType = '';
+    $location = '';
+
+    $ch = curl_init($currentUrl);
+    curl_setopt_array($ch, [
+        CURLOPT_FOLLOWLOCATION => false,
+        CURLOPT_CONNECTTIMEOUT => 12,
+        CURLOPT_TIMEOUT => 90,
+        CURLOPT_USERAGENT => 'MonIA-MediaStore/1.1',
+        CURLOPT_PROTOCOLS => CURLPROTO_HTTPS,
+        CURLOPT_HEADERFUNCTION => function($ch, $header) use (&$contentType, &$location) {
+            if (stripos($header, 'Content-Type:') === 0) $contentType = trim(substr($header, 13));
+            if (stripos($header, 'Location:') === 0) $location = trim(substr($header, 9));
+            return strlen($header);
+        },
+        CURLOPT_WRITEFUNCTION => function($ch, $chunk) use ($fp, &$bytes, $maxBytes) {
+            $bytes += strlen($chunk);
+            if ($bytes > $maxBytes) return 0;
+            return fwrite($fp, $chunk);
+        },
+    ]);
+    $ok = curl_exec($ch);
+    $http = (int)curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+    $error = curl_error($ch);
+    curl_close($ch);
+
+    if ($ok === false) break;
+    if ($http >= 300 && $http < 400 && $location !== '') {
+        $next = redirected_url($currentUrl, $location);
+        if ($next === '' || !allowed_remote($next)) {
+            fclose($fp); @unlink($tmp);
+            reply(400, ['ok' => false, 'error' => 'redirection distante refusée']);
+        }
+        $currentUrl = $next;
+        continue;
+    }
+    if ($http >= 200 && $http < 300) $downloaded = true;
+    break;
+}
 fclose($fp);
 
-if ($ok === false || $http < 200 || $http >= 300 || $bytes < 256) {
+if (!$downloaded || $bytes < 256) {
     @unlink($tmp);
     reply(502, ['ok' => false, 'error' => $bytes > $maxBytes ? 'média trop volumineux' : ('téléchargement distant impossible' . ($error ? ' · ' . $error : ''))]);
 }
