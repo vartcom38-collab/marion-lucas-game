@@ -23,7 +23,7 @@ async function createGenerator(device:'webgpu'|'wasm'){
     }catch{}
   }
   const dtype=device==='webgpu'?'q4':'q8';
-  post('status',{status:'loading',progress:1,label:device==='webgpu'?'Préparation de MonIA · WebGPU':'Préparation de MonIA · CPU/WASM mono-thread'});
+  post('status',{status:'loading',progress:1,label:device==='webgpu'?'IA texte locale en chargement · WebGPU':'IA texte locale en chargement · CPU/WASM'});
   return pipeline('text-generation','onnx-community/Qwen2.5-0.5B-Instruct',{
     device,
     dtype,
@@ -32,7 +32,7 @@ async function createGenerator(device:'webgpu'|'wasm'){
       post('status',{
         status:'loading',
         progress:Math.max(1,Math.min(99,Math.round(raw))),
-        label:`${device==='webgpu'?'WebGPU q4':'CPU/WASM q8'} · ${p?.file?`Chargement · ${String(p.file).split('/').at(-1)}`:'Chargement du modèle'}`
+        label:`IA texte locale · ${device==='webgpu'?'WebGPU q4':'CPU/WASM q8'} · ${p?.file?`chargement ${String(p.file).split('/').at(-1)}`:'chargement du modèle'}`
       })
     }
   } as any);
@@ -48,13 +48,13 @@ async function load(mode:string){
       try{
         generator=await createGenerator('webgpu');
       }catch(error){
-        post('status',{status:'loading',progress:1,label:`WebGPU échec (${errorText(error)}) · bascule CPU/WASM`});
+        post('status',{status:'loading',progress:1,label:`IA texte locale · WebGPU indisponible (${errorText(error)}) · bascule CPU/WASM`});
         generator=await createGenerator('wasm');
       }
     }else{
       generator=await createGenerator('wasm');
     }
-    post('status',{status:'ready',progress:100,label:`MonIA prête · ${currentBackend==='webgpu'?'WebGPU':'CPU/WASM'}`});
+    post('status',{status:'ready',progress:100,label:`IA texte MonIA prête · ${currentBackend==='webgpu'?'WebGPU':'CPU/WASM'}`});
   })();
   try{await loading}finally{loading=null}
 }
@@ -63,7 +63,7 @@ self.onmessage=async(e:MessageEvent)=>{
   const msg=e.data||{};
   if(msg.type==='release'){
     generator=null;
-    post('status',{status:'idle',progress:0,label:'Modèle libéré'});
+    post('status',{status:'idle',progress:0,label:'IA texte locale libérée'});
     return;
   }
   if(msg.type==='generate'){
@@ -91,7 +91,7 @@ self.onmessage=async(e:MessageEvent)=>{
     }catch(error){
       const detail=errorText(error);
       post('error',{id:msg.id,error:detail});
-      post('status',{status:'error',progress:0,label:`IA locale indisponible · ${currentBackend==='webgpu'?'WebGPU':'CPU/WASM'} · ${detail}`});
+      post('status',{status:'error',progress:0,label:`IA texte locale indisponible · ${currentBackend==='webgpu'?'WebGPU':'CPU/WASM'} · ${detail}`});
     }
   }
 };
