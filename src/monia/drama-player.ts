@@ -29,6 +29,50 @@ function motionTransform(clip: DramaStudioClip, progress: number) {
   return `translate(${x}%,${y}%) scale(${scale})`;
 }
 
+function createVisual(clip: DramaStudioClip) {
+  if (!clip.media) return null;
+
+  const wrapper = document.createElement('div');
+  Object.assign(wrapper.style, {
+    position:'absolute', inset:'0', overflow:'hidden', transformOrigin:'center center', willChange:'transform',
+  });
+
+  if (clip.media.atlasCrop) {
+    const { x, y, width, height } = clip.media.atlasCrop;
+    const img = document.createElement('img');
+    img.src = clip.media.src;
+    img.alt = clip.media.atlasLabel || '';
+    Object.assign(img.style, {
+      position:'absolute',
+      width:`${100 / width}%`,
+      height:`${100 / height}%`,
+      maxWidth:'none',
+      maxHeight:'none',
+      left:`${-(x / width) * 100}%`,
+      top:`${-(y / height) * 100}%`,
+      objectFit:'fill',
+      userSelect:'none',
+      pointerEvents:'none',
+    });
+    wrapper.appendChild(img);
+    return { wrapper, video:null as HTMLVideoElement | null };
+  }
+
+  const media = clip.media.kind === 'video' ? document.createElement('video') : document.createElement('img');
+  media.src = clip.media.src;
+  if (media instanceof HTMLVideoElement) {
+    media.muted = true;
+    media.playsInline = true;
+    media.preload = 'auto';
+  }
+  Object.assign(media.style, {
+    width:'100%', height:'100%', objectFit:clip.fit, position:'absolute', inset:'0',
+    userSelect:'none', pointerEvents:'none',
+  });
+  wrapper.appendChild(media);
+  return { wrapper, video: media instanceof HTMLVideoElement ? media : null };
+}
+
 export class MonIADramaPlayer {
   private cancelled = false;
   private raf = 0;
@@ -47,9 +91,9 @@ export class MonIADramaPlayer {
     const stage = document.createElement('div');
     stage.className = 'moniaDramaStage';
     Object.assign(stage.style, {
-      position: 'relative', overflow: 'hidden', background: '#000', borderRadius: '16px',
-      width: '100%', aspectRatio: composition.format === '9:16' ? '9 / 16' : '16 / 9',
-      maxHeight: '560px', margin: '0 auto',
+      position:'relative', overflow:'hidden', background:'#000', borderRadius:'16px',
+      width:'100%', aspectRatio: composition.format === '9:16' ? '9 / 16' : '16 / 9',
+      maxHeight:'560px', margin:'0 auto',
     });
     mount.appendChild(stage);
 
@@ -65,35 +109,26 @@ export class MonIADramaPlayer {
         continue;
       }
 
-      const media = clip.media.kind === 'video' ? document.createElement('video') : document.createElement('img');
-      media.src = clip.media.src;
-      if (media instanceof HTMLVideoElement) {
-        media.muted = true;
-        media.playsInline = true;
-        media.preload = 'auto';
-      }
-      Object.assign(media.style, {
-        width: '100%', height: '100%', objectFit: clip.fit, position: 'absolute', inset: '0',
-        transformOrigin: 'center center', willChange: 'transform',
-      });
-      stage.appendChild(media);
+      const visual = createVisual(clip);
+      if (!visual) continue;
+      stage.appendChild(visual.wrapper);
 
       const start = performance.now();
       const durationMs = clip.duration * 1000;
       const animate = (now: number) => {
         if (this.cancelled) return;
         const p = Math.max(0, Math.min(1, (now - start) / durationMs));
-        media.style.transform = motionTransform(clip, p);
+        visual.wrapper.style.transform = motionTransform(clip, p);
         if (p < 1) this.raf = requestAnimationFrame(animate);
       };
       this.raf = requestAnimationFrame(animate);
 
-      if (media instanceof HTMLVideoElement) {
-        try { await media.play(); } catch { /* visual still works if autoplay is restricted */ }
+      if (visual.video) {
+        try { await visual.video.play(); } catch { /* image/first frame remains usable */ }
       }
       if (clip.dialogue) speak(clip.dialogue);
       await sleep(durationMs);
-      if (media instanceof HTMLVideoElement) media.pause();
+      visual.video?.pause();
     }
   }
 }
