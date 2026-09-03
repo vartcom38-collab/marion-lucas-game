@@ -24,24 +24,30 @@ export type MonIADramaBrick = {
   atlasLabel?: string;
 };
 
-const atlasBricks: MonIADramaBrick[] = CANON_DRAMA_ATLAS_CELLS.map(cell => ({
-  id: `atlas-${cell.id}`,
-  src: cell.src,
-  kind: 'image',
-  actors: [...cell.actors],
-  locationTags: ['generic','home','interior','night','day'],
-  moods: [cell.mood as DramaBrickMood],
-  shotTags: cell.actors.length === 2 ? ['two-shot','medium-close','close'] : ['close','medium-close','extreme-close'],
-  loopable: true,
-  dialogueSafe: cell.interaction === 'conversation' || cell.actors.length === 1,
-  reactionSafe: true,
-  weight: 34,
-  packId: cell.packId,
-  interactionTags: cell.interaction ? [cell.interaction as DramaInteractionTag] : ['reaction'],
-  canonValidated: true,
-  atlasCrop: cell.crop,
-  atlasLabel: cell.label,
-}));
+// Packs whose atlas binary is physically complete in the repository/build.
+// Add the next pack here only after all of its chunks pass checksum validation.
+export const ACTIVE_CANON_ATLAS_PACKS = new Set<ValidatedDramaPackId>(['lucas-solo']);
+
+const atlasBricks: MonIADramaBrick[] = CANON_DRAMA_ATLAS_CELLS
+  .filter(cell => ACTIVE_CANON_ATLAS_PACKS.has(cell.packId))
+  .map(cell => ({
+    id: `atlas-${cell.id}`,
+    src: cell.src,
+    kind: 'image',
+    actors: [...cell.actors],
+    locationTags: ['generic','home','interior','night','day'],
+    moods: [cell.mood as DramaBrickMood],
+    shotTags: cell.actors.length === 2 ? ['two-shot','medium-close','close'] : ['close','medium-close','extreme-close'],
+    loopable: true,
+    dialogueSafe: cell.interaction === 'conversation' || cell.actors.length === 1,
+    reactionSafe: true,
+    weight: 34,
+    packId: cell.packId,
+    interactionTags: cell.interaction ? [cell.interaction as DramaInteractionTag] : ['reaction'],
+    canonValidated: true,
+    atlasCrop: cell.crop,
+    atlasLabel: cell.label,
+  }));
 
 export const MONIA_DRAMA_LIBRARY: MonIADramaBrick[] = [
   ...atlasBricks,
