@@ -1,8 +1,9 @@
 import type { MonIAMediaPlan } from './media-orchestrator';
 
 const CACHE_KEY='monia-remote-media-index-v1';
-const MAX_ENTRIES=48;
-const TTL_MS=6*60*60*1000;
+const MAX_ENTRIES=96;
+const TEMP_TTL_MS=6*60*60*1000;
+const PERSISTED_TTL_MS=30*24*60*60*1000;
 
 export type MonIARemoteMediaCacheEntry={
   key:string;
@@ -12,6 +13,7 @@ export type MonIARemoteMediaCacheEntry={
   createdAt:number;
   lastUsedAt:number;
   hits:number;
+  persisted?:boolean;
 };
 
 function norm(value:string|undefined){
@@ -23,13 +25,22 @@ export function mediaCacheKey(plan:MonIAMediaPlan){
   return [plan.actor,v.location,v.wardrobe,v.framing,v.emotion,v.action].map(norm).join('|');
 }
 
+function sameOrigin(url:string){
+  try{return new URL(url,location.href).origin===location.origin}catch{return false}
+}
+
 function read():MonIARemoteMediaCacheEntry[]{
   try{
     const raw=localStorage.getItem(CACHE_KEY);
     const parsed=raw?JSON.parse(raw):[];
     if(!Array.isArray(parsed))return [];
     const now=Date.now();
-    return parsed.filter((entry:MonIARemoteMediaCacheEntry)=>entry?.videoUrl&&entry?.imageUrl&&now-Number(entry.createdAt||0)<TTL_MS);
+    return parsed.filter((entry:MonIARemoteMediaCacheEntry)=>{
+      if(!entry?.videoUrl||!entry?.imageUrl)return false;
+      const persisted=entry.persisted===true||(sameOrigin(entry.videoUrl)&&sameOrigin(entry.imageUrl));
+      const ttl=persisted?PERSISTED_TTL_MS:TEMP_TTL_MS;
+      return now-Number(entry.createdAt||0)<ttl;
+    });
   }catch{return []}
 }
 
@@ -50,7 +61,8 @@ export function findCachedRemoteMedia(plan:MonIAMediaPlan){
 export function rememberRemoteMedia(plan:MonIAMediaPlan,imageUrl:string,videoUrl:string){
   const key=mediaCacheKey(plan),now=Date.now();
   const entries=read().filter(item=>item.key!==key);
-  const entry:MonIARemoteMediaCacheEntry={key,actor:plan.actor,imageUrl,videoUrl,createdAt:now,lastUsedAt:now,hits:0};
+  const persisted=sameOrigin(imageUrl)&&sameOrigin(videoUrl);
+  const entry:MonIARemoteMediaCacheEntry={key,actor:plan.actor,imageUrl,videoUrl,createdAt:now,lastUsedAt:now,hits:0,persisted};
   write([entry,...entries.sort((a,b)=>b.lastUsedAt-a.lastUsedAt)]);
   return entry;
 }
