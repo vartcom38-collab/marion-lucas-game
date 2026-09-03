@@ -3,6 +3,7 @@ import { buildAutonomousMediaPlan, type MonIAMediaPlan } from './media-orchestra
 import { generateAutonomousSourceImage, type MonIAImageResult } from './autonomous-image';
 import { generateFreeCanonVideo, type FreeVideoResult } from './free-video';
 import { findCachedRemoteMedia, mediaCacheKey, rememberRemoteMedia } from './media-cache';
+import { persistGeneratedMedia } from './server-media-store';
 
 export type MonIAExperienceResult = {
   response: MonIADirectorResult;
@@ -16,6 +17,7 @@ export type MonIAMaterializedMedia={
   videoUrl?:string;
   cacheHit?:boolean;
   sharedGeneration?:boolean;
+  persisted?:boolean;
   state:'not-needed'|'image-failed'|'video-failed'|'ready';
 };
 
@@ -48,8 +50,12 @@ async function generateFresh(input:MonIAExperienceResult,hooks?:Hooks):Promise<M
 
   const video=await generateFreeCanonVideo({referenceFile:file,prompt:videoPrompt(input.response,input.mediaPlan),onState:(state,detail)=>hooks?.onVideoState?.(state,detail)});
   if(video.state!=='ready'||!video.videoUrl)return {image,video,imageUrl:image.imageUrl,state:'video-failed'};
-  rememberRemoteMedia(input.mediaPlan,image.imageUrl,video.videoUrl);
-  return {image,video,imageUrl:image.imageUrl,videoUrl:video.videoUrl,cacheHit:false,state:'ready'};
+
+  hooks?.onVideoState?.('persisting','sauvegarde sur Infomaniak');
+  const stored=await persistGeneratedMedia(input.mediaPlan,image.imageUrl,video.videoUrl);
+  rememberRemoteMedia(input.mediaPlan,stored.imageUrl,stored.videoUrl);
+  hooks?.onVideoState?.(stored.persisted?'persisted':'ready',stored.persisted?'média conservé sur Infomaniak':'média distant prêt');
+  return {image,video,imageUrl:stored.imageUrl,videoUrl:stored.videoUrl,cacheHit:false,persisted:stored.persisted,state:'ready'};
 }
 
 export class MonIAExperienceRuntime {
