@@ -4,8 +4,9 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "materialize:drama": "node tools/materialize-drama-atlases.mjs",
+    "dev": "npm run materialize:drama && vite",
+    "build": "npm run materialize:drama && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
