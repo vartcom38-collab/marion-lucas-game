@@ -19,6 +19,7 @@ const diagnostics = $('diagnostics');
 const audioZone = $('audioZone');
 const videoZone = $('videoZone');
 const playDrama = $('playDrama') as HTMLButtonElement;
+const demoDrama = $('demoDrama') as HTMLButtonElement;
 const studioStatus = $('studioStatus');
 const studioProgress = $('studioProgress');
 
@@ -145,7 +146,7 @@ async function runDrama(text: string) {
   studioProgress.textContent = `${selectionLine}\n${sceneLine}\n${packLine}`;
   diagnostics.textContent = composition.playable
     ? `✓ Storyboard composé avec les packs canoniques validés. Scène ${composition.coverage}% · pack V1 ${pack.coverage}%.`
-    : `⚠ Storyboard prêt et packs canoniques choisis, mais scène ${composition.coverage}% · pack V1 ${pack.coverage}%. Il manque encore les fichiers de briques séparés sur le serveur.`;
+    : `⚠ Storyboard prêt et packs canoniques choisis, mais scène ${composition.coverage}% · pack V1 ${pack.coverage}%.`;
 }
 
 async function playStudioDrama() {
@@ -155,6 +156,29 @@ async function playStudioDrama() {
   await moniaDramaPlayer.play(lastComposition, videoZone);
   playDrama.disabled = false;
   studioStatus.textContent = 'Studio interne : lecture terminée';
+}
+
+async function runDemoDrama() {
+  const premise = 'Bac à sable visuel : Marion et Lucas sont dans la même pièce. Ils échangent quelques mots simples, un regard complice, un bref silence puis un sourire. Aucun événement de l’histoire, aucune révélation, aucune décision importante.';
+  msg.value = premise;
+  place.value = 'Intérieur neutre';
+  time.value = '20:30';
+  relationship.value = 'relation affectueuse en construction';
+  demoDrama.disabled = true;
+  demoDrama.textContent = '⏳ Préparation…';
+  setBusy('scene', premise);
+  try {
+    await runDrama(premise);
+    if (lastComposition?.playable) await playStudioDrama();
+  } catch (error) {
+    engine.textContent = 'Erreur';
+    engine.dataset.state = 'error';
+    answer.textContent = 'La démo drama a échoué.';
+    raw.textContent = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+  } finally {
+    demoDrama.disabled = false;
+    demoDrama.textContent = '🎞 Démo drama canon';
+  }
 }
 
 async function run(channel: MonIAChannel) {
@@ -173,6 +197,7 @@ async function run(channel: MonIAChannel) {
 
 monia.observe(() => { diagnostics.textContent = engineStatusText(); });
 playDrama.addEventListener('click', () => void playStudioDrama());
+demoDrama.addEventListener('click', () => void runDemoDrama());
 document.querySelectorAll<HTMLButtonElement>('[data-channel]').forEach(button => { button.addEventListener('click', () => void run(button.dataset.channel as MonIAChannel)); });
 msg.addEventListener('keydown', event => { if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) void run('text'); });
 if ('speechSynthesis' in window) { window.speechSynthesis.getVoices(); window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices(); }
