@@ -22,7 +22,7 @@ const PROVIDERS:Provider[]=[
       task_type:'i2v',
       prompt,
       start_image:image?.path || image,
-      negative_prompt:'cartoon, illustration, static image, low quality, distorted face, deformed face, watermark, text, subtitles, jitter, identity drift',
+      negative_prompt:'cartoon, illustration, static image, low quality, distorted face, deformed face, watermark, text, subtitles, title, label, number, jitter, identity drift',
       resolution:'544p',
       aspect_ratio:'9:16 (Portrait)',
       width:544,
@@ -98,17 +98,28 @@ async function loadImage(src:string){
 
 async function cropCell(cell:DramaAtlasCell){
   const img=await loadImage(cell.src);
-  const sx=Math.round(cell.crop.x*img.naturalWidth);
-  const sy=Math.round(cell.crop.y*img.naturalHeight);
-  const sw=Math.max(1,Math.round(cell.crop.width*img.naturalWidth));
-  const sh=Math.max(1,Math.round(cell.crop.height*img.naturalHeight));
+  const baseX=cell.crop.x*img.naturalWidth;
+  const baseY=cell.crop.y*img.naturalHeight;
+  const baseW=cell.crop.width*img.naturalWidth;
+  const baseH=cell.crop.height*img.naturalHeight;
+
+  // The atlas is identity reference only. Strip the card label/header before any video provider sees it.
+  const trimTop=baseH*0.18;
+  const trimSide=baseW*0.025;
+  const sx=Math.round(baseX+trimSide);
+  const sy=Math.round(baseY+trimTop);
+  const sw=Math.max(1,Math.round(baseW-trimSide*2));
+  const sh=Math.max(1,Math.round(baseH-trimTop-baseH*0.015));
+
   const canvas=document.createElement('canvas');
   canvas.width=768; canvas.height=1024;
   const ctx=canvas.getContext('2d');
   if(!ctx)throw new Error('Canvas indisponible');
+  ctx.imageSmoothingEnabled=true;
+  ctx.imageSmoothingQuality='high';
   ctx.drawImage(img,sx,sy,sw,sh,0,0,canvas.width,canvas.height);
-  const blob=await new Promise<Blob>((resolve,reject)=>canvas.toBlob(v=>v?resolve(v):reject(new Error('Impossible de préparer la référence')),'image/png',0.96));
-  return new File([blob],`${cell.id}.png`,{type:'image/png'});
+  const blob=await new Promise<Blob>((resolve,reject)=>canvas.toBlob(v=>v?resolve(v):reject(new Error('Impossible de préparer la référence')),'image/png',1));
+  return new File([blob],`${cell.id}-clean.png`,{type:'image/png'});
 }
 
 async function uploadReference(provider:Provider,file:File){
@@ -170,12 +181,12 @@ async function runProvider(provider:Provider,file:File,prompt:string,onState?:(s
   return waitForResult(provider,eventId,onState);
 }
 
-export async function generateFreeCanonVideo(input:{cellId?:string;prompt:string;onState?:(state:FreeVideoState,detail?:string)=>void}):Promise<FreeVideoResult>{
+export async function generateFreeCanonVideo(input:{cellId?:string;referenceFile?:File;prompt:string;onState?:(state:FreeVideoState,detail?:string)=>void}):Promise<FreeVideoResult>{
   const cell=CANON_DRAMA_ATLAS_CELLS.find(c=>c.id===(input.cellId||'lucas-1')) || CANON_DRAMA_ATLAS_CELLS[0];
   const attempts:string[]=[];
   try{
-    input.onState?.('preparing-reference',`Préparation ${cell.label}`);
-    const file=await cropCell(cell);
+    input.onState?.('preparing-reference',input.referenceFile?'Préparation source propre générée par MonIA':`Préparation référence canon ${cell.label}`);
+    const file=input.referenceFile || await cropCell(cell);
     for(let index=0;index<PROVIDERS.length;index++){
       const provider=PROVIDERS[index];
       try{
