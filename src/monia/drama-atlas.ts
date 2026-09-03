@@ -49,10 +49,10 @@ const duoIILabels=[
 ] as const;
 
 export const CANON_DRAMA_ATLAS_CELLS:DramaAtlasCell[]=[
-  ...lucasLabels.map((row,index)=>({id:`lucas-${index+1}`,label:row[1],packId:'lucas-solo' as const,src:'/resources/monia/atlas-lucas.jpg',actors:['Lucas'] as ['Lucas'],mood:row[0],crop:gridCrop(4,3,index,.13,.025,.012,.008)})),
-  ...marionLabels.map((row,index)=>({id:`marion-${index+1}`,label:row[1],packId:'marion-solo' as const,src:'/resources/monia/atlas-marion.jpg',actors:['Marion'] as ['Marion'],mood:row[0],crop:gridCrop(4,3,index,.13,.025,.012,.008)})),
-  ...duoILabels.map((row,index)=>({id:`duo-i-${index+1}`,label:row[1],packId:'duo-i' as const,src:'/resources/monia/atlas-duo-i.jpg',actors:['Marion','Lucas'] as ['Marion','Lucas'],mood:row[0],interaction:row[2],crop:gridCrop(3,4,index,.12,.025,.015,.008)})),
-  ...duoIILabels.map((row,index)=>({id:`duo-ii-${index+1}`,label:row[1],packId:'duo-ii' as const,src:'/resources/monia/atlas-duo-ii.jpg',actors:['Marion','Lucas'] as ['Marion','Lucas'],mood:row[0],interaction:row[2],crop:gridCrop(3,4,index,.115,.025,.006,.006)})),
+  ...lucasLabels.map((row,index)=>({id:`lucas-${index+1}`,label:row[1],packId:'lucas-solo' as const,src:'/resources/monia/atlas-lucas.webp',actors:['Lucas'] as ['Lucas'],mood:row[0],crop:gridCrop(4,3,index,.13,.025,.012,.008)})),
+  ...marionLabels.map((row,index)=>({id:`marion-${index+1}`,label:row[1],packId:'marion-solo' as const,src:'/resources/monia/atlas-marion.webp',actors:['Marion'] as ['Marion'],mood:row[0],crop:gridCrop(4,3,index,.13,.025,.012,.008)})),
+  ...duoILabels.map((row,index)=>({id:`duo-i-${index+1}`,label:row[1],packId:'duo-i' as const,src:'/resources/monia/atlas-duo-i.webp',actors:['Marion','Lucas'] as ['Marion','Lucas'],mood:row[0],interaction:row[2],crop:gridCrop(3,4,index,.12,.025,.015,.008)})),
+  ...duoIILabels.map((row,index)=>({id:`duo-ii-${index+1}`,label:row[1],packId:'duo-ii' as const,src:'/resources/monia/atlas-duo-ii.webp',actors:['Marion','Lucas'] as ['Marion','Lucas'],mood:row[0],interaction:row[2],crop:gridCrop(3,4,index,.115,.025,.006,.006)})),
 ];
 
 export function atlasCellsForPack(packId:ValidatedDramaPackId){
