@@ -7,11 +7,12 @@ const HEALTH_KEY='monia-server-media-health-v1';
 let tokenPromise:Promise<string|null>|null=null;
 let flushing=false;
 
-type Pending={sourceUrl:string;key:string;kind:'image'|'video';attempts:number;nextAt:number};
+type MediaKind='image'|'video'|'audio';
+type Pending={sourceUrl:string;key:string;kind:MediaKind;attempts:number;nextAt:number};
 export type MediaStoreHealth={ok:boolean;checkedAt:number;detail:string};
 
-function readQueue():Pending[]{try{const raw=localStorage.getItem(QUEUE_KEY);const data=raw?JSON.parse(raw):[];return Array.isArray(data)?data.slice(0,24):[]}catch{return []}}
-function writeQueue(items:Pending[]){try{localStorage.setItem(QUEUE_KEY,JSON.stringify(items.slice(0,24)))}catch{}}
+function readQueue():Pending[]{try{const raw=localStorage.getItem(QUEUE_KEY);const data=raw?JSON.parse(raw):[];return Array.isArray(data)?data.slice(0,32):[]}catch{return []}}
+function writeQueue(items:Pending[]){try{localStorage.setItem(QUEUE_KEY,JSON.stringify(items.slice(0,32)))}catch{}}
 function writeHealth(value:MediaStoreHealth){try{localStorage.setItem(HEALTH_KEY,JSON.stringify(value));window.dispatchEvent(new CustomEvent('monia-media-store-health',{detail:value}))}catch{}}
 export function getMediaStoreHealth():MediaStoreHealth|null{try{const raw=localStorage.getItem(HEALTH_KEY);return raw?JSON.parse(raw) as MediaStoreHealth:null}catch{return null}}
 function enqueue(item:Omit<Pending,'attempts'|'nextAt'>){
@@ -42,7 +43,7 @@ export async function checkMediaStoreHealth(force=false):Promise<MediaStoreHealt
   return getMediaStoreHealth()||{ok:Boolean(value),checkedAt:Date.now(),detail:value?'PHP Infomaniak prêt':'stockage indisponible'};
 }
 
-async function send(sourceUrl:string,key:string,kind:'image'|'video'){
+async function send(sourceUrl:string,key:string,kind:MediaKind){
   if(!sourceUrl||sourceUrl.startsWith(location.origin)||sourceUrl.startsWith('/'))return sourceUrl;
   const csrf=await token();if(!csrf)return null;
   try{
@@ -56,7 +57,7 @@ async function send(sourceUrl:string,key:string,kind:'image'|'video'){
   }catch(error){writeHealth({ok:false,checkedAt:Date.now(),detail:error instanceof Error?error.message:String(error)});return null}
 }
 
-async function persistOne(sourceUrl:string,key:string,kind:'image'|'video'){
+async function persistOne(sourceUrl:string,key:string,kind:MediaKind){
   if(!sourceUrl||sourceUrl.startsWith(location.origin)||sourceUrl.startsWith('/'))return sourceUrl;
   const stored=await send(sourceUrl,key,kind);
   if(stored)return stored;
@@ -82,6 +83,11 @@ export async function persistGeneratedMedia(plan:MonIAMediaPlan,imageUrl:string,
   const key=mediaCacheKey(plan);
   const [storedImageUrl,storedVideoUrl]=await Promise.all([persistOne(imageUrl,`${key}|image`,'image'),persistOne(videoUrl,`${key}|video`,'video')]);
   return {imageUrl:storedImageUrl,videoUrl:storedVideoUrl,persisted:storedImageUrl!==imageUrl||storedVideoUrl!==videoUrl};
+}
+
+export async function persistGeneratedAudio(sourceUrl:string,key:string){
+  const audioUrl=await persistOne(sourceUrl,`voice|${key}`,'audio');
+  return {audioUrl,persisted:audioUrl!==sourceUrl};
 }
 
 window.setInterval(()=>{void flushQueue()},45_000);
