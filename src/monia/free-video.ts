@@ -14,8 +14,15 @@ const PROVIDERS:Provider[]=[
     payload:(prompt,image)=>[prompt,image,704,1024,49,25,5,-1],
   },
   {
+    id:'hf-yuknassty-wan22-lightning',
+    label:'Wan 2.2 Lightning ZeroGPU B',
+    space:'https://yuknassty-wan2-2-image-to-video.hf.space',
+    api:'generate_video',
+    payload:(prompt,image)=>[image,prompt,3,4,42,true],
+  },
+  {
     id:'hf-kpkp21-wan22',
-    label:'Wan 2.2 ZeroGPU B',
+    label:'Wan 2.2 ZeroGPU C',
     space:'https://kpkp21-wan2-video-generation.hf.space',
     api:'generate_video',
     payload:(prompt,image)=>[prompt,image,704,1024,49,25,5,-1],
@@ -106,7 +113,8 @@ async function waitForResult(provider:Provider,eventId:string,onState?:(state:Fr
       if(event==='complete' && raw){
         let data:any;
         try{data=JSON.parse(raw)}catch{throw new Error('vidéo annoncée prête mais réponse illisible')}
-        const url=fileUrl(provider,Array.isArray(data)?data[0]:data);
+        const first=Array.isArray(data)?data[0]:data;
+        const url=fileUrl(provider,first);
         if(!url)throw new Error('vidéo générée mais URL introuvable');
         return url;
       }
