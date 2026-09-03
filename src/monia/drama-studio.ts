@@ -29,6 +29,8 @@ export type DramaStudioComposition = {
   clips: DramaStudioClip[];
   missingShotIds: string[];
   preferredPackIds: ValidatedDramaPackId[];
+  trueVideoRequired: boolean;
+  trueVideoCoverage: number;
 };
 
 function transformForShot(shot: MonIADramaShot) {
@@ -65,10 +67,15 @@ function chooseMedia(plan: MonIADramaPlan, shot: MonIADramaShot) {
     action: shot.action,
     reaction: shot.reaction,
   });
-  return { media: ranked[0]?.brick || null, preferredPackIds };
+  const trueVideoRequired = plan.renderMode === 'true_video_required';
+  const selected = trueVideoRequired
+    ? ranked.find(row => row.brick.kind === 'video')?.brick || null
+    : ranked[0]?.brick || null;
+  return { media: selected, preferredPackIds };
 }
 
 export function composeDramaStudio(plan: MonIADramaPlan): DramaStudioComposition {
+  const trueVideoRequired = plan.renderMode === 'true_video_required';
   const clips = plan.shots.map(shot => {
     const { media, preferredPackIds } = chooseMedia(plan, shot);
     const t = transformForShot(shot);
@@ -80,7 +87,7 @@ export function composeDramaStudio(plan: MonIADramaPlan): DramaStudioComposition
       scale: t.scale,
       panX: t.panX,
       panY: t.panY,
-      motion: motionForShot(shot),
+      motion: trueVideoRequired ? 'none' : motionForShot(shot),
       transition: shot.transition,
       dialogue: shot.dialogue,
       focusActor: shot.focusActor,
@@ -90,23 +97,29 @@ export function composeDramaStudio(plan: MonIADramaPlan): DramaStudioComposition
     };
     if (!media) {
       const pack = preferredPackIds.length ? ` · pack attendu ${preferredPackIds.join(' / ')}` : '';
-      clip.missingReason = `Aucune brique serveur compatible pour ${shot.focusActor} · ${shot.shotSize} · ${shot.emotion}${pack}`;
+      clip.missingReason = trueVideoRequired
+        ? `Vraie vidéo requise pour ${shot.focusActor} · ${shot.shotSize} · ${shot.emotion}${pack}. Les images/atlas ne sont pas autorisés comme fallback.`
+        : `Aucune brique serveur compatible pour ${shot.focusActor} · ${shot.shotSize} · ${shot.emotion}${pack}`;
     }
     return clip;
   });
 
   const missingShotIds = clips.filter(clip => !clip.media).map(clip => clip.shotId);
   const coverage = clips.length ? Math.round(((clips.length - missingShotIds.length) / clips.length) * 100) : 0;
+  const videoCount = clips.filter(clip => clip.media?.kind === 'video').length;
+  const trueVideoCoverage = clips.length ? Math.round((videoCount / clips.length) * 100) : 0;
   const preferredPackIds = [...new Set(clips.flatMap(clip => clip.preferredPackIds))];
   return {
     title: plan.title,
     format: plan.format,
     duration: clips.reduce((sum, clip) => sum + clip.duration, 0),
-    playable: clips.length >= 4 && coverage >= 70,
+    playable: trueVideoRequired ? clips.length >= 1 && trueVideoCoverage === 100 : clips.length >= 4 && coverage >= 70,
     coverage,
     clips,
     missingShotIds,
     preferredPackIds,
+    trueVideoRequired,
+    trueVideoCoverage,
   };
 }
 
