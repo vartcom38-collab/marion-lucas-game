@@ -1,4 +1,4 @@
-import { cancelMonIAVoice, inferVoiceMood } from './voice-engine';
+import { cancelMonIAVoice } from './voice-engine';
 import { speakLucasExpressive } from './expressive-voice';
 
 const diagnostics=()=>document.getElementById('diagnostics');
@@ -9,17 +9,20 @@ async function playPremium(button:HTMLButtonElement){
   const text=(answer()?.textContent||'').trim();
   if(!text)return;
   if(speaking){cancelMonIAVoice();speaking=false;button.textContent='▶ Écouter le vocal';return;}
-  speaking=true;button.textContent='⏳ Voix Lucas expressive…';
-  const diag=diagnostics();if(diag)diag.textContent='Test vocal : génération expressive de Lucas en cours…';
+  speaking=true;button.textContent='⏳ CosyVoice…';
+  const diag=diagnostics();if(diag)diag.textContent='Test vocal Lucas : CosyVoice expressif strict en cours…';
   const result=await speakLucasExpressive(text,{
-    mood:inferVoiceMood(text),
-    onProvider:provider=>{if(diag)diag.textContent=`Test vocal : provider réellement utilisé = ${provider}`},
-    onStart:()=>{button.textContent='■ Lecture…'},
+    allowFallback:false,
+    onProvider:provider=>{if(diag)diag.textContent=`Test vocal Lucas : provider réellement utilisé = ${provider}`},
+    onStart:()=>{button.textContent='■ Lecture CosyVoice…'},
     onEnd:()=>{speaking=false;button.textContent='▶ Écouter le vocal'},
-    onError:error=>{speaking=false;button.textContent='▶ Écouter le vocal';if(diag)diag.textContent=`Test vocal Lucas : ${error}`},
+    onError:error=>{speaking=false;button.textContent='▶ Écouter le vocal';if(diag)diag.textContent=`❌ CosyVoice réel en échec : ${error}`},
   });
-  if(diag){const extra=result.error?` · ${result.error}`:'';diag.textContent=`Test vocal Lucas : ${result.provider}${result.fallback?' (secours)':''}${extra}`;}
-  if(result.fallback&&result.error&&!result.audioUrl){speaking=false;button.textContent='▶ Écouter le vocal';}
+  if(diag){
+    if(result.error)diag.textContent=`❌ CosyVoice réel en échec : ${result.error}`;
+    else diag.textContent='✓ Test vocal Lucas : provider = cosyvoice expressif';
+  }
+  if(result.error){speaking=false;button.textContent='▶ Écouter le vocal';}
 }
 
 document.addEventListener('click',event=>{
@@ -30,4 +33,4 @@ document.addEventListener('click',event=>{
   void playPremium(button);
 },true);
 
-console.info('[MonIA Test] Expressive Lucas voice bridge active');
+console.info('[MonIA Test] Strict expressive CosyVoice bridge active');
