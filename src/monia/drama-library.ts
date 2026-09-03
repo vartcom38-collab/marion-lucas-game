@@ -1,4 +1,5 @@
 import { preferredValidatedPacks, type DramaInteractionTag, type ValidatedDramaPackId } from './validated-drama-packs';
+import { CANON_DRAMA_ATLAS_CELLS, type DramaAtlasCrop } from './drama-atlas';
 
 export type DramaBrickKind = 'video' | 'image';
 export type DramaBrickMood = 'neutral' | 'tender' | 'playful' | 'worried' | 'hurt' | 'angry' | 'intense' | 'quiet';
@@ -19,9 +20,31 @@ export type MonIADramaBrick = {
   packId?: ValidatedDramaPackId;
   interactionTags?: DramaInteractionTag[];
   canonValidated?: boolean;
+  atlasCrop?: DramaAtlasCrop;
+  atlasLabel?: string;
 };
 
+const atlasBricks: MonIADramaBrick[] = CANON_DRAMA_ATLAS_CELLS.map(cell => ({
+  id: `atlas-${cell.id}`,
+  src: cell.src,
+  kind: 'image',
+  actors: [...cell.actors],
+  locationTags: ['generic','home','interior','night','day'],
+  moods: [cell.mood as DramaBrickMood],
+  shotTags: cell.actors.length === 2 ? ['two-shot','medium-close','close'] : ['close','medium-close','extreme-close'],
+  loopable: true,
+  dialogueSafe: cell.interaction === 'conversation' || cell.actors.length === 1,
+  reactionSafe: true,
+  weight: 34,
+  packId: cell.packId,
+  interactionTags: cell.interaction ? [cell.interaction as DramaInteractionTag] : ['reaction'],
+  canonValidated: true,
+  atlasCrop: cell.crop,
+  atlasLabel: cell.label,
+}));
+
 export const MONIA_DRAMA_LIBRARY: MonIADramaBrick[] = [
+  ...atlasBricks,
   {
     id: 'lucas-intro-canon', src: '/resources/lucas-intro.mp4', kind: 'video', actors: ['Lucas'],
     locationTags: ['generic','spain','madrid'], moods: ['neutral','tender','quiet','intense'], shotTags: ['close','medium-close'],
@@ -75,6 +98,7 @@ export function findDramaBricks(input: {
     action: input.action,
     reaction: input.reaction,
   });
+  const wantedInteractions = `${input.action || ''} ${input.reaction || ''}`.toLowerCase();
 
   return MONIA_DRAMA_LIBRARY
     .map(brick => {
@@ -82,15 +106,17 @@ export function findDramaBricks(input: {
       const actors = brick.actors.map(normalize);
       if (brick.canonValidated) score += 8;
       if (brick.packId && preferredPacks.includes(brick.packId)) score += 18 - preferredPacks.indexOf(brick.packId) * 5;
+      if (brick.interactionTags?.some(tag => wantedInteractions.includes(tag.replace('-', ' ')))) score += 8;
       if (!brick.actors.length) score += input.shotSize === 'detail' || input.shotSize === 'two-shot' ? 5 : 0;
       for (const actor of wantedActors) if (actors.includes(actor)) score += 14;
       if (brick.shotTags.includes(input.shotSize)) score += 8;
-      if (brick.moods.includes(mood)) score += 5;
+      if (brick.moods.includes(mood)) score += 10;
       if (brick.locationTags.some(tag => location.includes(normalize(tag)) || normalize(tag) === 'generic')) score += 4;
       if (input.dialogue && brick.dialogueSafe) score += 6;
       if (!input.dialogue && brick.reactionSafe) score += 4;
       if (wantedActors.length && brick.actors.length && !wantedActors.some(actor => actors.includes(actor))) score -= 30;
-      if (wantedActors.length === 2 && brick.actors.length === 1) score -= 12;
+      if (wantedActors.length === 2 && brick.actors.length === 1) score -= 24;
+      if (wantedActors.length === 1 && brick.actors.length === 2) score -= 24;
       return { brick, score, preferredPacks };
     })
     .filter(row => row.score > 0)
