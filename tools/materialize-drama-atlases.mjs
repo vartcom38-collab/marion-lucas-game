@@ -12,27 +12,44 @@ const items = [
 
 await mkdir(resolve(root, 'public/resources/monia'), { recursive:true });
 
-for (const item of items) {
-  const files = Array.from({ length:item.chunks }, (_, i) =>
-    resolve(root, `assets/monia-atlas/chunks/${item.name}-${String(i).padStart(2,'0')}.b64`)
-  );
-  const availability = await Promise.all(files.map(async file => {
-    try { await access(file); return true; } catch { return false; }
-  }));
-  if (!availability.every(Boolean)) {
-    console.warn(`[MonIA] atlas ${item.name} incomplet: activation reportée (${availability.filter(Boolean).length}/${item.chunks})`);
-    continue;
-  }
+async function exists(file) {
+  try { await access(file); return true; } catch { return false; }
+}
 
-  let encoded = '';
-  for (const file of files) encoded += (await readFile(file, 'utf8')).replace(/\s+/g, '');
-  const data = Buffer.from(encoded, 'base64');
+function verify(item, encoded) {
+  const data = Buffer.from(encoded.replace(/\s+/g, ''), 'base64');
   const signature = data.subarray(0, 4).toString('ascii');
   const format = data.subarray(8, 12).toString('ascii');
   const sha256 = createHash('sha256').update(data).digest('hex');
-  if (signature !== 'RIFF' || format !== 'WEBP') throw new Error(`[MonIA] ${item.name}: invalid WebP signature`);
-  if (data.length !== item.bytes) throw new Error(`[MonIA] ${item.name}: expected ${item.bytes} bytes, got ${data.length}`);
-  if (sha256 !== item.sha256) throw new Error(`[MonIA] ${item.name}: checksum mismatch`);
+  if (signature !== 'RIFF' || format !== 'WEBP') return null;
+  if (data.length !== item.bytes || sha256 !== item.sha256) return null;
+  return data;
+}
+
+for (const item of items) {
+  const completeFile = resolve(root, `assets/monia-atlas/${item.name}.webp.b64`);
+  let data = null;
+
+  if (await exists(completeFile)) {
+    data = verify(item, await readFile(completeFile, 'utf8'));
+  }
+
+  if (!data) {
+    const files = Array.from({ length:item.chunks }, (_, i) =>
+      resolve(root, `assets/monia-atlas/chunks/${item.name}-${String(i).padStart(2,'0')}.b64`)
+    );
+    const availability = await Promise.all(files.map(exists));
+    if (availability.every(Boolean)) {
+      let encoded = '';
+      for (const file of files) encoded += await readFile(file, 'utf8');
+      data = verify(item, encoded);
+    }
+    if (!data) {
+      console.warn(`[MonIA] atlas ${item.name} incomplet ou non vérifié: activation reportée (${availability.filter(Boolean).length}/${item.chunks})`);
+      continue;
+    }
+  }
+
   await writeFile(resolve(root, item.target), data);
   console.log(`[MonIA] canonical atlas verified: ${item.target}`);
 }
