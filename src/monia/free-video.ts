@@ -24,6 +24,20 @@ const PROVIDERS:Provider[]=[
 
 const PROVIDER_TIMEOUT_MS=150_000;
 
+function cleanProviderError(value:unknown,fallback='erreur ZeroGPU sans détail'){
+  const raw=value instanceof Error?value.message:String(value??'');
+  const clean=raw.trim();
+  if(!clean || clean==='null' || clean==='undefined' || clean==='{}' || clean==='[]')return fallback;
+  try{
+    const parsed=JSON.parse(clean);
+    if(parsed==null)return fallback;
+    if(typeof parsed==='string' && parsed.trim())return parsed.trim();
+    const nested=parsed?.message || parsed?.error || parsed?.detail;
+    if(typeof nested==='string' && nested.trim())return nested.trim();
+  }catch{}
+  return clean;
+}
+
 function fileUrl(provider:Provider,value:any){
   const candidate=value?.video?.url || value?.url || value?.path || value?.video?.path || (typeof value==='string'?value:'');
   if(!candidate)return '';
@@ -59,10 +73,10 @@ async function uploadReference(provider:Provider,file:File){
   const form=new FormData();
   form.append('files',file,file.name);
   const r=await fetch(`${provider.space}/gradio_api/upload`,{method:'POST',body:form});
-  if(!r.ok)throw new Error(`upload HTTP ${r.status}`);
+  if(!r.ok)throw new Error(`upload refusé · HTTP ${r.status}`);
   const data=await r.json();
   const path=Array.isArray(data)?data[0]:data?.files?.[0] || data?.path;
-  if(!path)throw new Error('référence uploadée introuvable');
+  if(!path)throw new Error('upload accepté mais référence introuvable');
   return {path,orig_name:file.name,size:file.size,mime_type:file.type,meta:{_type:'gradio.FileData'}};
 }
 
@@ -70,9 +84,9 @@ async function submit(provider:Provider,prompt:string,image:any){
   const r=await fetch(`${provider.space}/gradio_api/call/${provider.api}`,{
     method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({data:provider.payload(prompt,image)}),
   });
-  if(!r.ok)throw new Error(`queue HTTP ${r.status}`);
+  if(!r.ok)throw new Error(`file GPU refusée · HTTP ${r.status}`);
   const data=await r.json();
-  if(!data?.event_id)throw new Error('job non créé');
+  if(!data?.event_id)throw new Error('service joignable mais job GPU non créé');
   return String(data.event_id);
 }
 
@@ -81,25 +95,26 @@ async function waitForResult(provider:Provider,eventId:string,onState?:(state:Fr
   const timer=window.setTimeout(()=>controller.abort(),PROVIDER_TIMEOUT_MS);
   try{
     const r=await fetch(`${provider.space}/gradio_api/call/${provider.api}/${encodeURIComponent(eventId)}`,{headers:{accept:'text/event-stream'},signal:controller.signal});
-    if(!r.ok)throw new Error(`résultat HTTP ${r.status}`);
+    if(!r.ok)throw new Error(`lecture résultat refusée · HTTP ${r.status}`);
     const text=await r.text();
     const blocks=text.split(/\n\n+/);
     for(const block of blocks){
       const event=block.match(/^event:\s*(.+)$/m)?.[1]?.trim();
-      const raw=block.match(/^data:\s*(.+)$/m)?.[1];
+      const raw=block.match(/^data:\s*(.*)$/m)?.[1];
       if(event==='generating')onState?.('generating',`${provider.label} · GPU en génération`);
-      if(event==='error')throw new Error(raw || 'erreur de génération');
+      if(event==='error')throw new Error(cleanProviderError(raw,'le GPU a rejeté la génération sans fournir de détail'));
       if(event==='complete' && raw){
-        const data=JSON.parse(raw);
+        let data:any;
+        try{data=JSON.parse(raw)}catch{throw new Error('vidéo annoncée prête mais réponse illisible')}
         const url=fileUrl(provider,Array.isArray(data)?data[0]:data);
         if(!url)throw new Error('vidéo générée mais URL introuvable');
         return url;
       }
     }
-    throw new Error('réponse incomplète ou file expirée');
+    throw new Error('réponse incomplète ou file GPU expirée');
   }catch(error){
     if(error instanceof DOMException && error.name==='AbortError')throw new Error('timeout GPU gratuit');
-    throw error;
+    throw new Error(cleanProviderError(error));
   }finally{
     window.clearTimeout(timer);
   }
@@ -127,10 +142,10 @@ export async function generateFreeCanonVideo(input:{cellId?:string;prompt:string
         input.onState?.('ready',`${provider.label} · vidéo prête`);
         return {state:'ready',videoUrl,provider:provider.id,attempts};
       }catch(error){
-        const message=error instanceof Error?error.message:String(error);
+        const message=cleanProviderError(error);
         attempts.push(`${provider.label}: ${message}`);
         if(index<PROVIDERS.length-1){
-          input.onState?.('queued',`${provider.label} indisponible · passage automatique au suivant`);
+          input.onState?.('queued',`${provider.label} indisponible (${message}) · essai du provider suivant`);
         }
       }
     }
@@ -138,7 +153,7 @@ export async function generateFreeCanonVideo(input:{cellId?:string;prompt:string
     input.onState?.('error',message);
     return {state:'error',error:message,provider:'hf-zerogpu-pool',attempts};
   }catch(error){
-    const message=error instanceof Error?error.message:String(error);
+    const message=cleanProviderError(error);
     input.onState?.('error',message);
     return {state:'error',error:message,provider:'hf-zerogpu-pool',attempts};
   }
