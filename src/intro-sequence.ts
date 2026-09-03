@@ -1,4 +1,5 @@
 import './intro-sequence.css';
+import { getPreparedMonIAIntroShots, prepareMonIAIntroShots } from './monia/intro-ai';
 
 type Shot={src:string;label:string};
 
@@ -8,6 +9,16 @@ function sourceOf(id:string){return(document.getElementById(id) as HTMLVideoElem
 
 function muteFromSettings(){
   try{const raw=localStorage.getItem('marion-lucas-settings-v2');if(!raw)return false;const p=JSON.parse(raw);return p?.sound===false}catch{return false}
+}
+
+function introShots():Shot[]{
+  const prepared=getPreparedMonIAIntroShots();
+  const marion=prepared.find(s=>s.id==='marion-morning');
+  const lucas=prepared.find(s=>s.id==='lucas-presence');
+  return [
+    {src:marion?.videoUrl||sourceOf('introVideo'),label:'NÎMES'},
+    {src:lucas?.videoUrl||sourceOf('lucasVideo'),label:'AILLEURS, AU MÊME MOMENT'},
+  ].filter(s=>Boolean(s.src));
 }
 
 async function playSafe(video:HTMLVideoElement){
@@ -22,10 +33,7 @@ async function mountSequence(stage:HTMLElement){
   stage.dataset.sequenceMounted='1';
   legacy.pause();legacy.onended=null;legacy.ontimeupdate=null;legacy.classList.remove('active');legacy.style.display='none';
 
-  const shots:Shot[]=[
-    {src:sourceOf('introVideo'),label:'NÎMES'},
-    {src:sourceOf('lucasVideo'),label:'AILLEURS, AU MÊME MOMENT'},
-  ].filter(s=>Boolean(s.src));
+  const shots=introShots();
   if(!shots.length){skip.click();return}
 
   stage.classList.add('multiShotIntro');
@@ -62,6 +70,10 @@ async function mountSequence(stage:HTMLElement){
   }
   if(!stopped){stage.classList.add('introSequenceEnding');await sleep(520);skip.click()}
 }
+
+// MonIA prépare les nouveaux plans en arrière-plan. Les clips existants restent un secours vrai-vidéo
+// jusqu'à ce que les versions générées soient prêtes et persistées sur Infomaniak.
+window.setTimeout(()=>{void prepareMonIAIntroShots()},1800);
 
 const observer=new MutationObserver(()=>{const stage=document.querySelector<HTMLElement>('.teaserCine');if(stage)void mountSequence(stage)});
 observer.observe(document.documentElement,{childList:true,subtree:true});
