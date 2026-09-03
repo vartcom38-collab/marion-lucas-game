@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { access, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
 
@@ -13,11 +13,19 @@ const items = [
 await mkdir(resolve(root, 'public/resources/monia'), { recursive:true });
 
 for (const item of items) {
-  let encoded = '';
-  for (let i = 0; i < item.chunks; i += 1) {
-    const filename = `assets/monia-atlas/chunks/${item.name}-${String(i).padStart(2,'0')}.b64`;
-    encoded += (await readFile(resolve(root, filename), 'utf8')).replace(/\s+/g, '');
+  const files = Array.from({ length:item.chunks }, (_, i) =>
+    resolve(root, `assets/monia-atlas/chunks/${item.name}-${String(i).padStart(2,'0')}.b64`)
+  );
+  const availability = await Promise.all(files.map(async file => {
+    try { await access(file); return true; } catch { return false; }
+  }));
+  if (!availability.every(Boolean)) {
+    console.warn(`[MonIA] atlas ${item.name} incomplet: activation reportée (${availability.filter(Boolean).length}/${item.chunks})`);
+    continue;
   }
+
+  let encoded = '';
+  for (const file of files) encoded += (await readFile(file, 'utf8')).replace(/\s+/g, '');
   const data = Buffer.from(encoded, 'base64');
   const signature = data.subarray(0, 4).toString('ascii');
   const format = data.subarray(8, 12).toString('ascii');
