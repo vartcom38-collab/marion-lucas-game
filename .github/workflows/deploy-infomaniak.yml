@@ -38,6 +38,7 @@ jobs:
           test -f dist/monia-test.html
           test -d dist/assets
           test -d dist/resources
+          test -f dist/api/monia-media-store.php
 
       - name: Deploy dist to Infomaniak via FTPES
         env:
