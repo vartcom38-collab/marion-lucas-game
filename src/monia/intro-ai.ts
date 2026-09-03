@@ -1,13 +1,14 @@
 import { generateAutonomousSourceImage } from './autonomous-image';
 import { generateFreeCanonVideo } from './free-video';
 import { persistGeneratedMedia } from './server-media-store';
+import { CANON_DRAMA_ATLAS_CELLS } from './drama-atlas';
 import type { MonIAMediaPlan } from './media-orchestrator';
 
 export type MonIAIntroShot={id:string;label:string;videoUrl:string;imageUrl?:string;preparedAt:number};
 export type MonIAIntroStatus={shotId:string;stage:string;detail?:string;updatedAt:number;ok?:boolean};
 
 const CACHE_KEY='monia-intro-shots-v1';
-const RETRY_KEY='monia-intro-prep-retry-v2';
+const RETRY_KEY='monia-intro-prep-retry-v3';
 const STATUS_KEY='monia-intro-prep-status-v2';
 const STATUS_ENDPOINT='./api/monia-intro-status.php';
 const RETRY_COOLDOWN=10*60*1000;
@@ -49,18 +50,53 @@ async function remoteImageToFile(url:string,id:string){
   const response=await fetch(url,{mode:'cors'});if(!response.ok)throw new Error(`source image ${id} inaccessible · HTTP ${response.status}`);
   const blob=await response.blob();const type=blob.type||'image/png';return new File([blob],`${id}.${type.includes('jpeg')?'jpg':type.includes('webp')?'webp':'png'}`,{type});
 }
+
+function loadImage(src:string){
+  return new Promise<HTMLImageElement>((resolve,reject)=>{
+    const img=new Image();img.decoding='async';img.onload=()=>resolve(img);img.onerror=()=>reject(new Error(`atlas canonique inaccessible · ${src}`));img.src=src;
+  });
+}
+
+async function canonicalAtlasSource(actor:'Marion'|'Lucas',id:string){
+  const cell=CANON_DRAMA_ATLAS_CELLS.find(c=>c.actors.length===1&&c.actors[0]===actor&&c.mood==='neutral')
+    || CANON_DRAMA_ATLAS_CELLS.find(c=>c.actors.length===1&&c.actors[0]===actor);
+  if(!cell)throw new Error(`aucune référence canonique atlas pour ${actor}`);
+  setStatus({shotId:id,stage:'image:fallback-atlas',detail:`référence canonique locale ${cell.id}`,updatedAt:Date.now()});
+  const img=await loadImage(cell.src);
+  const sx=cell.crop.x*img.naturalWidth,sy=cell.crop.y*img.naturalHeight;
+  let sw=cell.crop.width*img.naturalWidth,sh=cell.crop.height*img.naturalHeight;
+  const targetRatio=576/1024,sourceRatio=sw/sh;
+  let cropX=sx,cropY=sy;
+  if(sourceRatio>targetRatio){const nextW=sh*targetRatio;cropX+=Math.max(0,(sw-nextW)/2);sw=nextW}
+  else if(sourceRatio<targetRatio){const nextH=sw/targetRatio;cropY+=Math.max(0,(sh-nextH)/2);sh=nextH}
+  const canvas=document.createElement('canvas');canvas.width=576;canvas.height=1024;
+  const ctx=canvas.getContext('2d',{alpha:false});if(!ctx)throw new Error('canvas canonique indisponible');
+  ctx.drawImage(img,cropX,cropY,sw,sh,0,0,canvas.width,canvas.height);
+  const blob=await new Promise<Blob>((resolve,reject)=>canvas.toBlob(v=>v?resolve(v):reject(new Error('export atlas impossible')),'image/webp',.94));
+  return {file:new File([blob],`${id}-canon.webp`,{type:'image/webp'}),imageUrl:cell.src};
+}
+
 function videoPrompt(plan:MonIAMediaPlan){const v=plan.visual;return `Photorealistic live-action cinematic intro shot. Exact same identity and facial proportions as the supplied clean source frame. ${plan.actor}. Location: ${v.location}. Framing: ${v.framing}. Wardrobe: ${v.wardrobe}. Lighting: ${v.lighting}. Action: ${v.action}. Natural breathing, realistic blinking, subtle eye and head motion, believable body and clothing motion, restrained camera movement, premium short-drama realism. No dialogue, no text, no subtitles, no title, no watermark, no UI, no morphing, no identity drift.`}
 
 async function prepareOne(id:string,label:string,plan:MonIAMediaPlan):Promise<MonIAIntroShot|null>{
-  setStatus({shotId:id,stage:'image',detail:'génération de la source canonique',updatedAt:Date.now()});
-  const image=await generateAutonomousSourceImage({plan,onState:(stage,detail)=>setStatus({shotId:id,stage:`image:${stage}`,detail,updatedAt:Date.now()})});
-  if(image.state!=='ready'||!image.imageUrl){setStatus({shotId:id,stage:'image-error',detail:image.error||'image non produite',updatedAt:Date.now(),ok:false});return null}
-  let file:File;try{file=await remoteImageToFile(image.imageUrl,id)}catch(error){setStatus({shotId:id,stage:'image-download-error',detail:error instanceof Error?error.message:String(error),updatedAt:Date.now(),ok:false});return null}
-  setStatus({shotId:id,stage:'video',detail:'lancement du moteur vidéo',updatedAt:Date.now()});
+  let file:File|null=null;
+  let imageUrl='';
+  setStatus({shotId:id,stage:'image',detail:'préparation de la source canonique',updatedAt:Date.now()});
+  try{
+    const image=await generateAutonomousSourceImage({plan,onState:(stage,detail)=>setStatus({shotId:id,stage:`image:${stage}`,detail,updatedAt:Date.now()})});
+    if(image.state==='ready'&&image.imageUrl){
+      try{file=await remoteImageToFile(image.imageUrl,id);imageUrl=image.imageUrl}catch{}
+    }
+  }catch{}
+  if(!file){
+    try{const fallback=await canonicalAtlasSource(plan.actor as 'Marion'|'Lucas',id);file=fallback.file;imageUrl=fallback.imageUrl}
+    catch(error){setStatus({shotId:id,stage:'image-error',detail:error instanceof Error?error.message:String(error),updatedAt:Date.now(),ok:false});return null}
+  }
+  setStatus({shotId:id,stage:'video',detail:'lancement du moteur vidéo avec identité canonique',updatedAt:Date.now()});
   const video=await generateFreeCanonVideo({referenceFile:file,prompt:videoPrompt(plan),onState:(stage,detail)=>setStatus({shotId:id,stage:`video:${stage}`,detail,updatedAt:Date.now()})});
   if(video.state!=='ready'||!video.videoUrl){setStatus({shotId:id,stage:'video-error',detail:video.error||'vidéo non produite',updatedAt:Date.now(),ok:false});return null}
   setStatus({shotId:id,stage:'persisting',detail:'stockage Infomaniak',updatedAt:Date.now()});
-  const stored=await persistGeneratedMedia(plan,image.imageUrl,video.videoUrl);
+  const stored=await persistGeneratedMedia(plan,imageUrl,video.videoUrl);
   const shot={id,label,videoUrl:stored.videoUrl,imageUrl:stored.imageUrl,preparedAt:Date.now()};
   setStatus({shotId:id,stage:'ready',detail:stored.persisted?'vidéo stockée sur Infomaniak':'vidéo prête',updatedAt:Date.now(),ok:true});
   return shot;
