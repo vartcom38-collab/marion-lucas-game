@@ -1,0 +1,37 @@
+.immersivePlayable.introArrivalActive{overflow:hidden}
+.immersivePlayable.introArrivalActive .approvedTopLeft,
+.immersivePlayable.introArrivalActive .approvedObjective,
+.immersivePlayable.introArrivalActive .approvedTopActions,
+.immersivePlayable.introArrivalActive .approvedStats,
+.immersivePlayable.introArrivalActive .approvedSceneNav,
+.immersivePlayable.introArrivalActive .approvedExplore,
+.immersivePlayable.introArrivalActive .premiumNav,
+.immersivePlayable.introArrivalActive .approvedAction,
+.immersivePlayable.introArrivalActive .gameHotspot,
+.immersivePlayable.introArrivalActive .exactControls,
+.immersivePlayable.introArrivalActive .calendarNudge,
+.immersivePlayable.introArrivalActive .agendaPulse{opacity:0!important;pointer-events:none!important;transform:translateY(8px);transition:opacity .8s ease,transform .8s ease}
+.immersivePlayable.introArrivalActive.introArrivalHud .approvedTopLeft,
+.immersivePlayable.introArrivalActive.introArrivalHud .approvedObjective,
+.immersivePlayable.introArrivalActive.introArrivalHud .approvedTopActions{opacity:1!important;transform:none}
+.immersivePlayable.introArrivalActive.introArrivalControls .premiumNav,
+.immersivePlayable.introArrivalActive.introArrivalControls .approvedSceneNav,
+.immersivePlayable.introArrivalActive.introArrivalControls .approvedExplore,
+.immersivePlayable.introArrivalActive.introArrivalControls .approvedAction,
+.immersivePlayable.introArrivalActive.introArrivalControls .gameHotspot,
+.immersivePlayable.introArrivalActive.introArrivalControls .exactControls{opacity:1!important;pointer-events:auto!important;transform:none}
+.introArrivalVeil{position:absolute;inset:0;z-index:120;pointer-events:none;background:linear-gradient(180deg,rgba(15,12,10,.48),rgba(17,14,11,.12) 45%,rgba(15,12,10,.34));opacity:1;transition:opacity 2.2s cubic-bezier(.2,.7,.2,1)}
+.introArrivalVeil::after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 63% 34%,rgba(255,224,180,.12),transparent 42%);mix-blend-mode:screen;animation:introLightBreath 6s ease-in-out infinite alternate}
+.introArrivalCaption{position:absolute;left:50%;bottom:10%;z-index:125;transform:translate(-50%,12px);text-align:center;color:#fff;text-shadow:0 2px 16px rgba(0,0,0,.55);opacity:0;letter-spacing:.12em;transition:opacity 1s ease,transform 1.2s ease;font-size:clamp(11px,1.2vw,14px);text-transform:uppercase;pointer-events:none}
+.introArrivalCaption strong{display:block;margin-top:7px;font-family:Georgia,serif;font-size:clamp(22px,3vw,38px);font-weight:400;letter-spacing:.02em;text-transform:none}
+.introArrivalActive.introArrivalBreathe .introArrivalCaption{opacity:.88;transform:translate(-50%,0)}
+.introArrivalActive.introArrivalHud .introArrivalCaption{opacity:0;transform:translate(-50%,-8px)}
+.introArrivalActive.introArrivalHud .introArrivalVeil{opacity:.12}
+.introArrivalActive.introArrivalControls .introArrivalVeil{opacity:0}
+.introArrivalActive .homePhotoStage>img{transform:scale(1.035);transition:transform 5.5s cubic-bezier(.18,.72,.2,1),filter 2.8s ease;filter:brightness(.9) saturate(.94)}
+.introArrivalActive.introArrivalBreathe .homePhotoStage>img{transform:scale(1.018);filter:brightness(.97) saturate(.98)}
+.introArrivalActive.introArrivalHud .homePhotoStage>img{transform:scale(1.006);filter:brightness(1) saturate(1)}
+.teaserCine.cineLanding .cineLayer{filter:brightness(.86) saturate(.94);transform:scale(1.008);transition:filter 1.15s ease,transform 1.4s ease}
+.teaserCine.cineLanding .teaserTitle,.teaserCine.cineLanding .teaserProgress,.teaserCine.cineLanding #skip{opacity:0;transition:opacity .7s ease}
+@keyframes introLightBreath{from{opacity:.48;transform:translate3d(-1%,0,0)}to{opacity:.82;transform:translate3d(1%,.5%,0)}}
+@media (prefers-reduced-motion:reduce){.introArrivalVeil,.introArrivalCaption,.introArrivalActive .homePhotoStage>img{transition-duration:.25s!important;animation:none!important}}
