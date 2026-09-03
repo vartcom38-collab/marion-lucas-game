@@ -5,6 +5,7 @@ import type { MonIADramaPlan } from './drama';
 import { composeDramaStudio, type DramaStudioComposition } from './drama-studio';
 import { moniaDramaPlayer } from './drama-player';
 import { auditDramaPack } from './drama-pack';
+import { VALIDATED_DRAMA_PACKS } from './validated-drama-packs';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const msg = $('msg') as HTMLTextAreaElement;
@@ -30,6 +31,8 @@ const toneLabels: Record<MonIAMessageTone, string> = {
   neutral: 'neutre', tender: 'tendre', playful: 'taquin', worried: 'inquiet', jealous: 'jaloux / inquiet',
   hurt: 'blessé / vexé', angry: 'énervé', distant: 'distant', urgent: 'urgent',
 };
+
+const packTitle = (id:string) => VALIDATED_DRAMA_PACKS.find(pack => pack.id === id)?.title || id;
 
 function engineStatusText(prefix = 'Moteur') {
   const status = monia.getStatus();
@@ -124,21 +127,25 @@ async function runDrama(text: string) {
   playDrama.disabled = !composition.playable;
   engine.textContent = `MonIA Drama Studio · ${plan.source}`;
   engine.dataset.state = composition.playable ? 'ready' : 'fallback';
-  answer.textContent = `${plan.shots.length} plans · ${plan.targetDuration}s · scène ${composition.coverage}% · pack V1 ${pack.coverage}%`;
-  raw.textContent = JSON.stringify({ storyboard: plan, studio: composition, packAudit: pack }, null, 2);
+  const chosenPacks = composition.preferredPackIds.map(packTitle);
+  answer.textContent = `${plan.shots.length} plans · ${plan.targetDuration}s · scène ${composition.coverage}% · ${chosenPacks.join(' + ') || 'pack environnement'}`;
+  raw.textContent = JSON.stringify({ storyboard: plan, studio: composition, validatedPacks: VALIDATED_DRAMA_PACKS, packAudit: pack }, null, 2);
   audioZone.innerHTML = '';
   studioStatus.textContent = composition.playable ? 'Studio interne : scène jouable' : 'Studio interne : bibliothèque encore incomplète';
   const priorityMissing = pack.missingPriority1.slice(0, 6).map(slot => `${slot.actor}/${slot.shot}/${slot.mood} ×${slot.missing}`);
   const sceneLine = composition.missingShotIds.length
     ? `Plans sans brique adaptée : ${composition.missingShotIds.join(', ')}`
     : 'Tous les plans de cette scène ont une brique visuelle serveur.';
+  const selectionLine = chosenPacks.length
+    ? `Packs canoniques sélectionnés : ${chosenPacks.join(' · ')}`
+    : 'Aucun pack personnage requis pour ces plans.';
   const packLine = priorityMissing.length
     ? `Pack V1 prioritaire manquant : ${priorityMissing.join(' · ')}`
     : 'Pack V1 prioritaire complet.';
-  studioProgress.textContent = `${sceneLine}\n${packLine}`;
+  studioProgress.textContent = `${selectionLine}\n${sceneLine}\n${packLine}`;
   diagnostics.textContent = composition.playable
-    ? `✓ Storyboard composé avec la bibliothèque MonIA interne. Scène ${composition.coverage}% · pack V1 ${pack.coverage}%.`
-    : `⚠ Storyboard prêt, mais scène ${composition.coverage}% · pack V1 ${pack.coverage}%. La bibliothèque doit encore être enrichie.`;
+    ? `✓ Storyboard composé avec les packs canoniques validés. Scène ${composition.coverage}% · pack V1 ${pack.coverage}%.`
+    : `⚠ Storyboard prêt et packs canoniques choisis, mais scène ${composition.coverage}% · pack V1 ${pack.coverage}%. Il manque encore les fichiers de briques séparés sur le serveur.`;
 }
 
 async function playStudioDrama() {
