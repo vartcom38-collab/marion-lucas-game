@@ -41,6 +41,7 @@ PROVIDERS = [
     ("OpenKing/wan2-video-generation", "Wan 2.2 ZeroGPU A"),
     ("Kpkp21/wan2-video-generation", "Wan 2.2 ZeroGPU C"),
 ]
+WAN_API_NAME = "/generate_video"
 
 
 def fit_portrait(img: Image.Image, target: Path) -> None:
@@ -115,33 +116,6 @@ def prepare_source(shot: dict[str, Any], target: Path) -> None:
     frame_from_existing_video(fallback, target)
 
 
-def has_video_return(endpoint: dict[str, Any]) -> bool:
-    for item in endpoint.get("returns", []) or []:
-        if "video" in json.dumps(item, ensure_ascii=False).lower():
-            return True
-    return False
-
-
-def parse_fn_index(key: Any) -> int | None:
-    text = str(key)
-    if text.isdigit():
-        return int(text)
-    digits = "".join(ch for ch in text if ch.isdigit())
-    return int(digits) if digits else None
-
-
-def find_wan_fn_index(client: Client) -> int:
-    info = client.view_api(return_format="dict") or {}
-    unnamed = info.get("unnamed_endpoints", {}) or {}
-    for key, endpoint in unnamed.items():
-        params = endpoint.get("parameters", []) or []
-        labels = "|".join(str(p.get("label") or p.get("parameter_name") or "").lower() for p in params)
-        fn_index = parse_fn_index(key)
-        if fn_index is not None and 7 <= len(params) <= 9 and "prompt" in labels and has_video_return(endpoint):
-            return fn_index
-    raise RuntimeError(f"endpoint Wan vidéo introuvable; fn={list(unnamed)}")
-
-
 def deep_candidate(value: Any) -> str | None:
     if value is None:
         return None
@@ -190,15 +164,25 @@ def generate(source: Path, prompt: str, target: Path) -> tuple[str, list[str]]:
         try:
             print(f"MONIA provider={label} connect", flush=True)
             client = Client(space, verbose=False)
-            fn_index = find_wan_fn_index(client)
-            print(f"MONIA provider={label} fn_index={fn_index} generate", flush=True)
-            result = client.predict(prompt, handle_file(str(source)), 576, 1024, 49, 25, 5, -1, fn_index=fn_index)
+            print(f"MONIA provider={label} api={WAN_API_NAME} generate", flush=True)
+            result = client.predict(
+                prompt,
+                handle_file(str(source)),
+                576,
+                1024,
+                49,
+                25,
+                5,
+                -1,
+                api_name=WAN_API_NAME,
+            )
             candidate = deep_candidate(result)
             if not candidate:
                 raise RuntimeError(f"job terminé sans fichier vidéo: {type(result).__name__}")
             materialize(candidate, target)
             if target.stat().st_size < 1024:
                 raise RuntimeError("fichier vidéo anormalement petit")
+            print(f"MONIA provider={label} true-video ready bytes={target.stat().st_size}", flush=True)
             return label, attempts
         except Exception as exc:
             msg = f"{label}: {exc}"
