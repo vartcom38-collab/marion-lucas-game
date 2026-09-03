@@ -5,8 +5,8 @@ import io
 import json
 import os
 import shutil
+import subprocess
 import sys
-import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -23,6 +23,7 @@ SHOTS = [
         "id": "marion-morning",
         "label": "NÎMES",
         "atlas": Path("public/resources/monia/atlas-marion.webp"),
+        "fallback_video": Path("public/resources/marion-nimes.mp4"),
         "output": "intro-marion-generated.mp4",
         "prompt": "Photorealistic live-action cinematic portrait video of Marion, exact same identity and facial proportions as the reference image. Quiet morning at home in Nîmes near a window, soft Mediterranean daylight, simple natural daily clothes. Natural breathing, realistic blinking, subtle eye and head movement, a few restrained body movements, slight hair and clothing motion, elegant short-drama realism, restrained camera movement. No dialogue, no text, no subtitles, no title, no watermark, no UI, no morphing, no identity drift.",
     },
@@ -30,6 +31,7 @@ SHOTS = [
         "id": "lucas-presence",
         "label": "AILLEURS, AU MÊME MOMENT",
         "atlas": Path("public/resources/monia/atlas-lucas.webp"),
+        "fallback_video": Path("public/resources/lucas-intro.mp4"),
         "output": "intro-lucas-generated.mp4",
         "prompt": "Photorealistic live-action cinematic portrait video of Lucas, exact same identity and facial proportions as the reference image. Neutral realistic interior in soft morning daylight with no narrative clue. Natural breathing, realistic blinking, subtle eye and head movement, quiet believable body motion, premium short-drama realism, restrained camera movement. No tattoos, no dialogue, no text, no subtitles, no title, no watermark, no UI, no morphing, no identity drift.",
     },
@@ -39,6 +41,38 @@ PROVIDERS = [
     ("OpenKing/wan2-video-generation", "Wan 2.2 ZeroGPU A"),
     ("Kpkp21/wan2-video-generation", "Wan 2.2 ZeroGPU C"),
 ]
+
+
+def fit_portrait(img: Image.Image, target: Path) -> None:
+    img = img.convert("RGB")
+    target_ratio = 768 / 1024
+    source_ratio = img.width / img.height
+    if source_ratio > target_ratio:
+        new_w = round(img.height * target_ratio)
+        left = max(0, (img.width - new_w) // 2)
+        img = img.crop((left, 0, left + new_w, img.height))
+    elif source_ratio < target_ratio:
+        new_h = round(img.width / target_ratio)
+        top = max(0, (img.height - new_h) // 2)
+        img = img.crop((0, top, img.width, top + new_h))
+    img.resize((768, 1024), Image.Resampling.LANCZOS).save(target, "PNG", optimize=True)
+
+
+def try_download_atlas(atlas: Path) -> bool:
+    if atlas.exists():
+        return True
+    atlas.parent.mkdir(parents=True, exist_ok=True)
+    url = f"{SITE}/resources/monia/{atlas.name}"
+    try:
+        response = requests.get(url, timeout=30, headers={"Cache-Control": "no-cache"})
+        if response.ok and len(response.content) > 1024:
+            atlas.write_bytes(response.content)
+            print(f"MONIA source atlas downloaded {url}", flush=True)
+            return True
+        print(f"MONIA source atlas unavailable {url} HTTP {response.status_code}", flush=True)
+    except Exception as exc:
+        print(f"MONIA source atlas download failed {url}: {exc}", flush=True)
+    return False
 
 
 def crop_first_atlas_cell(atlas: Path, target: Path) -> None:
@@ -59,16 +93,41 @@ def crop_first_atlas_cell(atlas: Path, target: Path) -> None:
         round(x + cw - trim_side),
         round(y + ch - ch * 0.015),
     )
-    cropped = img.crop(box).resize((768, 1024), Image.Resampling.LANCZOS)
-    cropped.save(target, "PNG", optimize=True)
+    fit_portrait(img.crop(box), target)
+
+
+def frame_from_existing_video(video: Path, target: Path) -> None:
+    frame = OUT_DIR / f"{target.stem}-fallback-frame.png"
+    command = ["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-ss", "0.6", "-i", str(video), "-frames:v", "1", str(frame)]
+    subprocess.run(command, check=True, timeout=45)
+    fit_portrait(Image.open(frame), target)
+    print(f"MONIA source fallback from existing true-video {video}", flush=True)
+
+
+def prepare_source(shot: dict[str, Any], target: Path) -> None:
+    atlas: Path = shot["atlas"]
+    if try_download_atlas(atlas):
+        crop_first_atlas_cell(atlas, target)
+        return
+    fallback: Path = shot["fallback_video"]
+    if not fallback.exists():
+        raise FileNotFoundError(f"aucune référence canonique disponible pour {shot['id']}")
+    frame_from_existing_video(fallback, target)
 
 
 def has_video_return(endpoint: dict[str, Any]) -> bool:
     for item in endpoint.get("returns", []) or []:
-        text = json.dumps(item, ensure_ascii=False).lower()
-        if "video" in text:
+        if "video" in json.dumps(item, ensure_ascii=False).lower():
             return True
     return False
+
+
+def parse_fn_index(key: Any) -> int | None:
+    text = str(key)
+    if text.isdigit():
+        return int(text)
+    digits = "".join(ch for ch in text if ch.isdigit())
+    return int(digits) if digits else None
 
 
 def find_wan_fn_index(client: Client) -> int:
@@ -77,8 +136,9 @@ def find_wan_fn_index(client: Client) -> int:
     for key, endpoint in unnamed.items():
         params = endpoint.get("parameters", []) or []
         labels = "|".join(str(p.get("label") or p.get("parameter_name") or "").lower() for p in params)
-        if 7 <= len(params) <= 9 and "prompt" in labels and has_video_return(endpoint):
-            return int(key)
+        fn_index = parse_fn_index(key)
+        if fn_index is not None and 7 <= len(params) <= 9 and "prompt" in labels and has_video_return(endpoint):
+            return fn_index
     raise RuntimeError(f"endpoint Wan vidéo introuvable; fn={list(unnamed)}")
 
 
@@ -224,7 +284,7 @@ def main() -> int:
     for shot in SHOTS:
         source = OUT_DIR / f"{shot['id']}.png"
         target = OUT_DIR / shot["output"]
-        crop_first_atlas_cell(shot["atlas"], source)
+        prepare_source(shot, source)
         provider, attempts = generate(source, shot["prompt"], target)
         generated.append({"id": shot["id"], "label": shot["label"], "file": target, "provider": provider, "attempts": attempts})
 
