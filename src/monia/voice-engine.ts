@@ -17,13 +17,18 @@ type SpeakOptions={
 export type MonIAPremiumVoiceResult={provider:'chatterbox'|'browser';audioUrl?:string;fallback:boolean;error?:string;cacheHit?:boolean;persisted?:boolean};
 
 const PREF_KEY='monia-voice-profile-v1';
-const AUDIO_CACHE_KEY='monia-premium-voice-cache-v1';
+const AUDIO_CACHE_KEY='monia-premium-voice-cache-v2';
 const CHATTERBOX_SPACE='https://resembleai-chatterbox-multilingual-tts.hf.space';
 const CHATTERBOX_API='generate_tts_audio';
 const CHATTERBOX_TIMEOUT=100_000;
 const CANON_REFERENCE:Partial<Record<MonIAVoiceActor,string>>={
   Lucas:'/resources/monia/voices/lucas-reference.wav',
   Marion:'/resources/monia/voices/marion-reference.wav',
+};
+// Chatterbox's bundled French default is female. Until Lucas has his own canon sample,
+// force an explicit male reference instead of ever falling back to the French female default.
+const TEMP_MALE_REFERENCE:Partial<Record<MonIAVoiceActor,string>>={
+  Lucas:'https://storage.googleapis.com/chatterbox-demo-samples/mtl_prompts/it_m1.flac',
 };
 
 type StoredProfile={actor:MonIAVoiceActor;voiceName?:string;lang:string;rate:number;pitch:number};
@@ -35,27 +40,30 @@ function voices(){return 'speechSynthesis'in window?window.speechSynthesis.getVo
 function load(actor:MonIAVoiceActor):StoredProfile|null{try{const raw=localStorage.getItem(PREF_KEY);const all=raw?JSON.parse(raw):{};return all?.[actor]||null}catch{return null}}
 function save(profile:StoredProfile){try{const raw=localStorage.getItem(PREF_KEY);const all=raw?JSON.parse(raw):{};all[profile.actor]=profile;localStorage.setItem(PREF_KEY,JSON.stringify(all))}catch{}}
 
-function actorBase(actor:MonIAVoiceActor){return actor==='Lucas'?{rate:.94,pitch:.86}:{rate:.98,pitch:1.02}}
+function actorBase(actor:MonIAVoiceActor){return actor==='Lucas'?{rate:.92,pitch:.96}:{rate:.98,pitch:1.02}}
 function moodAdjust(mood:MonIAVoiceMood='neutral'){
-  if(mood==='tired')return {rate:-.08,pitch:-.03};
-  if(mood==='warm')return {rate:-.02,pitch:.01};
-  if(mood==='soft')return {rate:-.05,pitch:.02};
-  if(mood==='intense')return {rate:.01,pitch:-.02};
+  if(mood==='tired')return {rate:-.06,pitch:-.01};
+  if(mood==='warm')return {rate:-.01,pitch:0};
+  if(mood==='soft')return {rate:-.04,pitch:.01};
+  if(mood==='intense')return {rate:.01,pitch:-.01};
   return {rate:0,pitch:0};
 }
 function chatterboxStyle(mood:MonIAVoiceMood='neutral'){
-  if(mood==='tired')return {exaggeration:.34,temperature:.64,cfg:.58};
-  if(mood==='soft')return {exaggeration:.43,temperature:.67,cfg:.54};
-  if(mood==='warm')return {exaggeration:.56,temperature:.72,cfg:.50};
-  if(mood==='intense')return {exaggeration:.72,temperature:.70,cfg:.57};
-  return {exaggeration:.48,temperature:.68,cfg:.52};
+  // Conservative settings = smoother pacing, fewer stutters/runaway syllables.
+  if(mood==='tired')return {exaggeration:.28,temperature:.50,cfg:.22};
+  if(mood==='soft')return {exaggeration:.34,temperature:.52,cfg:.22};
+  if(mood==='warm')return {exaggeration:.40,temperature:.56,cfg:.24};
+  if(mood==='intense')return {exaggeration:.52,temperature:.56,cfg:.24};
+  return {exaggeration:.34,temperature:.52,cfg:.22};
 }
 
+const MALE_VOICE_NAMES=/\b(thomas|nicolas|henri|daniel|alex|arthur|louis|paul|hugo|george|lewis|michael|liam|eric|adam|onyx|fenrir|fable|santa|nicola)\b/i;
 function choose(actor:MonIAVoiceActor){
   const available=voices(),stored=load(actor);
-  if(stored?.voiceName){const existing=available.find(v=>v.name===stored.voiceName);if(existing)return existing}
-  const french=available.filter(v=>v.lang.toLowerCase()==='fr-fr');
-  const fallback=french.find(v=>v.localService)||french[0]||available.find(v=>v.lang.toLowerCase().startsWith('fr'))||available[0]||null;
+  if(stored?.voiceName){const existing=available.find(v=>v.name===stored.voiceName);if(existing&&actor!=='Lucas'||existing&&MALE_VOICE_NAMES.test(existing.name))return existing}
+  const french=available.filter(v=>v.lang.toLowerCase().startsWith('fr'));
+  const candidates=actor==='Lucas'?french.filter(v=>MALE_VOICE_NAMES.test(v.name)):french;
+  const fallback=candidates.find(v=>v.localService)||candidates[0]||null;
   if(fallback){const base=actorBase(actor);save({actor,voiceName:fallback.name,lang:fallback.lang||'fr-FR',rate:base.rate,pitch:base.pitch})}
   return fallback;
 }
@@ -78,19 +86,23 @@ function deepAudioCandidate(value:any):string{
 function gradioAudioUrl(value:any){const candidate=deepAudioCandidate(value);if(!candidate)return '';return /^https?:\/\//.test(candidate)?candidate:`${CHATTERBOX_SPACE}/gradio_api/file=${encodeURIComponent(candidate)}`}
 
 function hash(value:string){let h=2166136261;for(let i=0;i<value.length;i++){h^=value.charCodeAt(i);h=Math.imul(h,16777619)}return (h>>>0).toString(36)}
-function voiceKey(text:string,options:SpeakOptions,reference:string|null){return hash([options.actor,options.mood||'neutral',text.trim().toLowerCase(),reference||'default'].join('|'))}
+function voiceKey(text:string,options:SpeakOptions,reference:string|null){return hash(['v2',options.actor,options.mood||'neutral',text.trim().toLowerCase(),reference||'default'].join('|'))}
 function readAudioCache():CachedAudio[]{try{const raw=localStorage.getItem(AUDIO_CACHE_KEY),data=raw?JSON.parse(raw):[];return Array.isArray(data)?data.filter((x:CachedAudio)=>x?.url&&Date.now()-x.createdAt<30*24*60*60*1000):[]}catch{return []}}
 function writeAudioCache(items:CachedAudio[]){try{localStorage.setItem(AUDIO_CACHE_KEY,JSON.stringify(items.slice(0,80)))}catch{}}
 function cachedAudio(key:string){const items=readAudioCache(),found=items.find(x=>x.key===key);if(!found)return null;found.lastUsedAt=Date.now();writeAudioCache([found,...items.filter(x=>x!==found)]);return found.url}
 function rememberAudio(key:string,url:string){if(!(url.startsWith('/')||url.startsWith(location.origin)))return;const now=Date.now(),items=readAudioCache().filter(x=>x.key!==key);writeAudioCache([{key,url,createdAt:now,lastUsedAt:now},...items])}
 
 async function referenceIfExists(actor:MonIAVoiceActor,override?:string){
-  const url=override||CANON_REFERENCE[actor];if(!url)return null;
-  try{const response=await fetch(url,{method:'HEAD',cache:'no-store'});return response.ok?new URL(url,location.href).href:null}catch{return null}
+  const requested=override||CANON_REFERENCE[actor];
+  if(requested){
+    try{const response=await fetch(requested,{method:'HEAD',cache:'no-store'});if(response.ok)return new URL(requested,location.href).href}catch{}
+  }
+  return TEMP_MALE_REFERENCE[actor]||null;
 }
 
 async function chatterboxGenerate(text:string,options:SpeakOptions,reference:string|null){
   const style=chatterboxStyle(options.mood);
+  if(options.actor==='Lucas'&&!reference)throw new Error('référence masculine Lucas indisponible');
   const payload=[text.slice(0,300),'fr',reference,style.exaggeration,style.temperature,options.actor==='Lucas'?7319:4217,style.cfg];
   const controller=new AbortController(),timer=window.setTimeout(()=>controller.abort(),CHATTERBOX_TIMEOUT);
   try{
@@ -112,7 +124,7 @@ async function chatterboxGenerate(text:string,options:SpeakOptions,reference:str
 function simulatedBoundaries(audio:HTMLAudioElement,text:string,callback?:SpeakOptions['onBoundary']){
   if(!callback)return;if(boundaryTimer)window.clearInterval(boundaryTimer);
   const words=[...text.matchAll(/\S+/g)].map(match=>({index:match.index||0}));let cursor=0;
-  boundaryTimer=window.setInterval(()=>{if(audio.paused||audio.ended)return;const duration=Number.isFinite(audio.duration)&&audio.duration>0?audio.duration:Math.max(1,text.length/13);const target=Math.floor((audio.currentTime/duration)*words.length);while(cursor<=target&&cursor<words.length){callback({charIndex:words[cursor].index,name:'word',elapsedTime:audio.currentTime,textLength:text.length});cursor++}},90);
+  boundaryTimer=window.setInterval(()=>{if(audio.paused||audio.ended)return;const duration=Number.isFinite(audio.duration)&&audio.duration>0?audio.duration:Math.max(1,text.length/13);const target=Math.floor((audio.currentTime/duration)*words.length);while(cursor<=target&&cursor<words.length){callback({charIndex:words[cursor].index,name:'word',elapsedTime:audio.currentTime,textLength:text.length});cursor++}},120);
 }
 
 async function playRemoteAudio(url:string,text:string,options:SpeakOptions){
@@ -127,10 +139,12 @@ export function cancelMonIAVoice(){if('speechSynthesis'in window)window.speechSy
 
 export function speakMonIA(text:string,options:SpeakOptions){
   if(!('speechSynthesis'in window)){options.onError?.('synthèse vocale indisponible');return false}
+  const voice=choose(options.actor);
+  if(options.actor==='Lucas'&&!voice){options.onError?.('aucune voix masculine de secours disponible');return false}
   cancelMonIAVoice();options.onProvider?.('browser');
   const utterance=new SpeechSynthesisUtterance(text),base=actorBase(options.actor),adjust=moodAdjust(options.mood);
-  utterance.lang='fr-FR';utterance.rate=Math.max(.72,Math.min(1.08,base.rate+adjust.rate));utterance.pitch=Math.max(.72,Math.min(1.12,base.pitch+adjust.pitch));
-  const voice=choose(options.actor);if(voice)utterance.voice=voice;
+  utterance.lang='fr-FR';utterance.rate=Math.max(.78,Math.min(1.04,base.rate+adjust.rate));utterance.pitch=Math.max(.88,Math.min(1.06,base.pitch+adjust.pitch));
+  if(voice)utterance.voice=voice;
   utterance.onstart=()=>options.onStart?.();utterance.onboundary=e=>options.onBoundary?.({charIndex:e.charIndex,name:e.name,elapsedTime:e.elapsedTime,textLength:text.length});utterance.onend=()=>options.onEnd?.();utterance.onerror=e=>options.onError?.(e.error||'erreur vocale');window.speechSynthesis.speak(utterance);return true;
 }
 
@@ -146,7 +160,7 @@ export async function speakMonIAPremium(text:string,options:SpeakOptions):Promis
   }catch(error){
     const message=cleanError(error),started=speakMonIA(text,options);
     if(started)return {provider:'browser',fallback:true,error:message};
-    options.onError?.(message);return {provider:'browser',fallback:true,error:message};
+    return {provider:'browser',fallback:true,error:message};
   }
 }
 
