@@ -26,7 +26,7 @@ export type MonIADramaBrick = {
 
 // Packs whose atlas binary is physically complete in the repository/build.
 // Add the next pack here only after all of its chunks pass checksum validation.
-export const ACTIVE_CANON_ATLAS_PACKS = new Set<ValidatedDramaPackId>(['lucas-solo']);
+export const ACTIVE_CANON_ATLAS_PACKS = new Set<ValidatedDramaPackId>(['lucas-solo','marion-solo']);
 
 const atlasBricks: MonIADramaBrick[] = CANON_DRAMA_ATLAS_CELLS
   .filter(cell => ACTIVE_CANON_ATLAS_PACKS.has(cell.packId))
