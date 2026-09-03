@@ -10,9 +10,10 @@ async function playPremium(button:HTMLButtonElement){
   if(!text)return;
   if(speaking){cancelMonIAVoice();speaking=false;button.textContent='▶ Écouter le vocal';return;}
   speaking=true;button.textContent='⏳ CosyVoice…';
-  const diag=diagnostics();if(diag)diag.textContent='Test vocal Lucas : CosyVoice expressif strict en cours…';
+  const diag=diagnostics();if(diag)diag.textContent='Test vocal Lucas : initialisation CosyVoice strict…';
   const result=await speakLucasExpressive(text,{
     allowFallback:false,
+    onStage:stage=>{if(diag)diag.textContent=`CosyVoice Lucas · ${stage}`},
     onProvider:provider=>{if(diag)diag.textContent=`Test vocal Lucas : provider réellement utilisé = ${provider}`},
     onStart:()=>{button.textContent='■ Lecture CosyVoice…'},
     onEnd:()=>{speaking=false;button.textContent='▶ Écouter le vocal'},
@@ -33,4 +34,4 @@ document.addEventListener('click',event=>{
   void playPremium(button);
 },true);
 
-console.info('[MonIA Test] Strict expressive CosyVoice bridge active');
+console.info('[MonIA Test] Strict expressive CosyVoice diagnostics active');
