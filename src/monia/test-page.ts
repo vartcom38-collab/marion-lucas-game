@@ -6,6 +6,7 @@ import { composeDramaStudio, type DramaStudioComposition } from './drama-studio'
 import { moniaDramaPlayer } from './drama-player';
 import { auditDramaPack } from './drama-pack';
 import { VALIDATED_DRAMA_PACKS } from './validated-drama-packs';
+import { generateFreeCanonVideo } from './free-video';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const msg = $('msg') as HTMLTextAreaElement;
@@ -20,6 +21,7 @@ const audioZone = $('audioZone');
 const videoZone = $('videoZone');
 const playDrama = $('playDrama') as HTMLButtonElement;
 const demoDrama = $('demoDrama') as HTMLButtonElement;
+const freeVideo = $('freeVideo') as HTMLButtonElement;
 const studioStatus = $('studioStatus');
 const studioProgress = $('studioProgress');
 
@@ -223,6 +225,51 @@ async function runDemoDrama() {
   }
 }
 
+async function runFreeVideo() {
+  freeVideo.disabled = true;
+  freeVideo.textContent = '⏳ GPU gratuit…';
+  moniaDramaPlayer.stop();
+  videoZone.innerHTML = '';
+  engine.textContent = 'MonIA Video · Wan 2.2 ZeroGPU';
+  engine.dataset.state = 'loading';
+  answer.textContent = 'Préparation d’un vrai plan vidéo de Lucas à partir de la référence canon…';
+  raw.textContent = 'Provider: Hugging Face ZeroGPU public · Wan2.2-TI2V-5B';
+  try {
+    const result = await generateFreeCanonVideo({
+      cellId:'lucas-1',
+      prompt:'Photorealistic cinematic close-up of the exact same man from the reference image. He breathes naturally, blinks once, subtly shifts his gaze toward someone just off camera, then gives a very slight restrained smile. Realistic skin, natural hair movement, soft indoor evening light, shallow depth of field, subtle handheld camera, preserve identity and facial proportions, no tattoos, no text, no subtitles, no watermark.',
+      onState:(state,detail)=>{
+        studioStatus.textContent = `Vidéo gratuite : ${detail || state}`;
+        diagnostics.textContent = `Wan 2.2 ZeroGPU · ${detail || state}. La file publique peut prendre plusieurs minutes.`;
+      },
+    });
+    raw.textContent = JSON.stringify(result,null,2);
+    if(result.state==='ready' && result.videoUrl){
+      const video=document.createElement('video');
+      video.src=result.videoUrl;
+      video.controls=true;
+      video.playsInline=true;
+      video.autoplay=true;
+      videoZone.appendChild(video);
+      answer.textContent='Vraie vidéo reçue du GPU gratuit. Regarde surtout le mouvement, la conservation du visage et la qualité.';
+      engine.dataset.state='ready';
+      studioStatus.textContent='Vidéo gratuite : prête';
+    }else{
+      answer.textContent=`Le GPU gratuit n’a pas produit de vidéo : ${result.error || 'service indisponible'}`;
+      engine.dataset.state='error';
+      studioStatus.textContent='Vidéo gratuite : indisponible pour le moment';
+    }
+  } catch(error){
+    const message=error instanceof Error?error.message:String(error);
+    answer.textContent=`Test vidéo gratuit impossible : ${message}`;
+    raw.textContent=message;
+    engine.dataset.state='error';
+  } finally {
+    freeVideo.disabled=false;
+    freeVideo.textContent='🎥 Tester vraie vidéo gratuite';
+  }
+}
+
 async function run(channel: MonIAChannel) {
   const text = msg.value.trim() || 'Tu fais quoi là ?';
   setBusy(channel, text);
@@ -240,6 +287,7 @@ async function run(channel: MonIAChannel) {
 monia.observe(() => { diagnostics.textContent = engineStatusText(); });
 playDrama.addEventListener('click', () => void playStudioDrama());
 demoDrama.addEventListener('click', () => void runDemoDrama());
+freeVideo.addEventListener('click', () => void runFreeVideo());
 document.querySelectorAll<HTMLButtonElement>('[data-channel]').forEach(button => { button.addEventListener('click', () => void run(button.dataset.channel as MonIAChannel)); });
 msg.addEventListener('keydown', event => { if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) void run('text'); });
 if ('speechSynthesis' in window) { window.speechSynthesis.getVoices(); window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices(); }
