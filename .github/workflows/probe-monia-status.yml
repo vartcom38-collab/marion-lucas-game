@@ -1,0 +1,20 @@
+name: Probe MonIA status
+
+on:
+  push:
+    paths:
+      - '.github/workflows/probe-monia-status.yml'
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Read MonIA intro diagnostic
+        run: |
+          set -euxo pipefail
+          curl -fsS --retry 4 --retry-delay 3 --connect-timeout 12 --max-time 30 \
+            https://marion-lucas.marionbolomey.fr/api/monia-intro-status.php \
+            | tee monia-status.json
+          echo
+          cat monia-status.json
