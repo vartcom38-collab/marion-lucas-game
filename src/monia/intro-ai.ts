@@ -4,10 +4,12 @@ import { persistGeneratedMedia } from './server-media-store';
 import type { MonIAMediaPlan } from './media-orchestrator';
 
 export type MonIAIntroShot={id:string;label:string;videoUrl:string;imageUrl?:string;preparedAt:number};
+export type MonIAIntroStatus={shotId:string;stage:string;detail?:string;updatedAt:number;ok?:boolean};
 
 const CACHE_KEY='monia-intro-shots-v1';
-const RETRY_KEY='monia-intro-prep-retry-v1';
-const RETRY_COOLDOWN=6*60*60*1000;
+const RETRY_KEY='monia-intro-prep-retry-v2';
+const STATUS_KEY='monia-intro-prep-status-v2';
+const RETRY_COOLDOWN=10*60*1000;
 let active:Promise<MonIAIntroShot[]>|null=null;
 
 const SHOTS:[string,string,MonIAMediaPlan][]=[
@@ -29,24 +31,32 @@ const SHOTS:[string,string,MonIAMediaPlan][]=[
   }]
 ];
 
-function readCache():MonIAIntroShot[]{
-  try{const raw=localStorage.getItem(CACHE_KEY);const value=raw?JSON.parse(raw):[];return Array.isArray(value)?value.filter(v=>v&&typeof v.videoUrl==='string'):[]}catch{return []}
-}
+function setStatus(value:MonIAIntroStatus){try{localStorage.setItem(STATUS_KEY,JSON.stringify(value));window.dispatchEvent(new CustomEvent('monia-intro-status',{detail:value}))}catch{}}
+export function getMonIAIntroStatus():MonIAIntroStatus|null{try{const raw=localStorage.getItem(STATUS_KEY);return raw?JSON.parse(raw) as MonIAIntroStatus:null}catch{return null}}
+function readCache():MonIAIntroShot[]{try{const raw=localStorage.getItem(CACHE_KEY);const value=raw?JSON.parse(raw):[];return Array.isArray(value)?value.filter(v=>v&&typeof v.videoUrl==='string'):[]}catch{return []}}
 function writeCache(items:MonIAIntroShot[]){try{localStorage.setItem(CACHE_KEY,JSON.stringify(items))}catch{}}
 export function getPreparedMonIAIntroShots(){return readCache()}
 
 async function remoteImageToFile(url:string,id:string){
+  setStatus({shotId:id,stage:'image-download',detail:'récupération de la source image',updatedAt:Date.now()});
   const response=await fetch(url,{mode:'cors'});if(!response.ok)throw new Error(`source image ${id} inaccessible · HTTP ${response.status}`);
   const blob=await response.blob();const type=blob.type||'image/png';return new File([blob],`${id}.${type.includes('jpeg')?'jpg':type.includes('webp')?'webp':'png'}`,{type});
 }
 function videoPrompt(plan:MonIAMediaPlan){const v=plan.visual;return `Photorealistic live-action cinematic intro shot. Exact same identity and facial proportions as the supplied clean source frame. ${plan.actor}. Location: ${v.location}. Framing: ${v.framing}. Wardrobe: ${v.wardrobe}. Lighting: ${v.lighting}. Action: ${v.action}. Natural breathing, realistic blinking, subtle eye and head motion, believable body and clothing motion, restrained camera movement, premium short-drama realism. No dialogue, no text, no subtitles, no title, no watermark, no UI, no morphing, no identity drift.`}
 
 async function prepareOne(id:string,label:string,plan:MonIAMediaPlan):Promise<MonIAIntroShot|null>{
-  const image=await generateAutonomousSourceImage({plan});if(image.state!=='ready'||!image.imageUrl)return null;
-  let file:File;try{file=await remoteImageToFile(image.imageUrl,id)}catch{return null}
-  const video=await generateFreeCanonVideo({referenceFile:file,prompt:videoPrompt(plan)});if(video.state!=='ready'||!video.videoUrl)return null;
+  setStatus({shotId:id,stage:'image',detail:'génération de la source canonique',updatedAt:Date.now()});
+  const image=await generateAutonomousSourceImage({plan,onState:(stage,detail)=>setStatus({shotId:id,stage:`image:${stage}`,detail,updatedAt:Date.now()})});
+  if(image.state!=='ready'||!image.imageUrl){setStatus({shotId:id,stage:'image-error',detail:image.error||'image non produite',updatedAt:Date.now(),ok:false});return null}
+  let file:File;try{file=await remoteImageToFile(image.imageUrl,id)}catch(error){setStatus({shotId:id,stage:'image-download-error',detail:error instanceof Error?error.message:String(error),updatedAt:Date.now(),ok:false});return null}
+  setStatus({shotId:id,stage:'video',detail:'lancement du moteur vidéo',updatedAt:Date.now()});
+  const video=await generateFreeCanonVideo({referenceFile:file,prompt:videoPrompt(plan),onState:(stage,detail)=>setStatus({shotId:id,stage:`video:${stage}`,detail,updatedAt:Date.now()})});
+  if(video.state!=='ready'||!video.videoUrl){setStatus({shotId:id,stage:'video-error',detail:video.error||'vidéo non produite',updatedAt:Date.now(),ok:false});return null}
+  setStatus({shotId:id,stage:'persisting',detail:'stockage Infomaniak',updatedAt:Date.now()});
   const stored=await persistGeneratedMedia(plan,image.imageUrl,video.videoUrl);
-  return {id,label,videoUrl:stored.videoUrl,imageUrl:stored.imageUrl,preparedAt:Date.now()};
+  const shot={id,label,videoUrl:stored.videoUrl,imageUrl:stored.imageUrl,preparedAt:Date.now()};
+  setStatus({shotId:id,stage:'ready',detail:stored.persisted?'vidéo stockée sur Infomaniak':'vidéo prête',updatedAt:Date.now(),ok:true});
+  return shot;
 }
 
 export async function prepareMonIAIntroShots(force=false):Promise<MonIAIntroShot[]>{
