@@ -1,17 +1,34 @@
 import { CANON_DRAMA_ATLAS_CELLS, type DramaAtlasCell } from './drama-atlas';
 
 export type FreeVideoState = 'idle'|'preparing-reference'|'uploading-reference'|'queued'|'generating'|'ready'|'error';
-export type FreeVideoResult = { state:FreeVideoState; videoUrl?:string; error?:string; provider:'hf-zerogpu-wan22'; detail?:string };
+export type FreeVideoResult = { state:FreeVideoState; videoUrl?:string; error?:string; provider:string; detail?:string; attempts?:string[] };
 
-const SPACE='https://openking-wan2-video-generation.hf.space';
-const API='generate_video';
-const QUEUE_TIMEOUT_MS=180_000;
+type Provider={id:string;label:string;space:string;api:string;payload:(prompt:string,image:any)=>unknown[]};
 
-function fileUrl(value:any){
+const PROVIDERS:Provider[]=[
+  {
+    id:'hf-openking-wan22',
+    label:'Wan 2.2 ZeroGPU A',
+    space:'https://openking-wan2-video-generation.hf.space',
+    api:'generate_video',
+    payload:(prompt,image)=>[prompt,image,704,1024,49,25,5,-1],
+  },
+  {
+    id:'hf-kpkp21-wan22',
+    label:'Wan 2.2 ZeroGPU B',
+    space:'https://kpkp21-wan2-video-generation.hf.space',
+    api:'generate_video',
+    payload:(prompt,image)=>[prompt,image,704,1024,49,25,5,-1],
+  },
+];
+
+const PROVIDER_TIMEOUT_MS=150_000;
+
+function fileUrl(provider:Provider,value:any){
   const candidate=value?.video?.url || value?.url || value?.path || value?.video?.path || (typeof value==='string'?value:'');
   if(!candidate)return '';
   if(/^https?:\/\//.test(candidate))return candidate;
-  return `${SPACE}/gradio_api/file=${encodeURIComponent(candidate)}`;
+  return `${provider.space}/gradio_api/file=${encodeURIComponent(candidate)}`;
 }
 
 async function loadImage(src:string){
@@ -38,72 +55,91 @@ async function cropCell(cell:DramaAtlasCell){
   return new File([blob],`${cell.id}.png`,{type:'image/png'});
 }
 
-async function uploadReference(file:File){
+async function uploadReference(provider:Provider,file:File){
   const form=new FormData();
   form.append('files',file,file.name);
-  const r=await fetch(`${SPACE}/gradio_api/upload`,{method:'POST',body:form});
-  if(!r.ok)throw new Error(`Upload ZeroGPU HTTP ${r.status}`);
+  const r=await fetch(`${provider.space}/gradio_api/upload`,{method:'POST',body:form});
+  if(!r.ok)throw new Error(`upload HTTP ${r.status}`);
   const data=await r.json();
   const path=Array.isArray(data)?data[0]:data?.files?.[0] || data?.path;
-  if(!path)throw new Error('Le service ZeroGPU n’a pas renvoyé la référence uploadée.');
+  if(!path)throw new Error('référence uploadée introuvable');
   return {path,orig_name:file.name,size:file.size,mime_type:file.type,meta:{_type:'gradio.FileData'}};
 }
 
-async function submit(prompt:string,image:any){
-  const payload={data:[prompt,image,704,1024,49,25,5,-1]};
-  const r=await fetch(`${SPACE}/gradio_api/call/${API}`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)});
-  if(!r.ok)throw new Error(`Queue ZeroGPU HTTP ${r.status}`);
+async function submit(provider:Provider,prompt:string,image:any){
+  const r=await fetch(`${provider.space}/gradio_api/call/${provider.api}`,{
+    method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({data:provider.payload(prompt,image)}),
+  });
+  if(!r.ok)throw new Error(`queue HTTP ${r.status}`);
   const data=await r.json();
-  if(!data?.event_id)throw new Error('Le service ZeroGPU n’a pas créé de job.');
+  if(!data?.event_id)throw new Error('job non créé');
   return String(data.event_id);
 }
 
-async function waitForResult(eventId:string,onState?:(state:FreeVideoState,detail?:string)=>void){
+async function waitForResult(provider:Provider,eventId:string,onState?:(state:FreeVideoState,detail?:string)=>void){
   const controller=new AbortController();
-  const timer=window.setTimeout(()=>controller.abort(),QUEUE_TIMEOUT_MS);
+  const timer=window.setTimeout(()=>controller.abort(),PROVIDER_TIMEOUT_MS);
   try{
-    const r=await fetch(`${SPACE}/gradio_api/call/${API}/${encodeURIComponent(eventId)}`,{headers:{accept:'text/event-stream'},signal:controller.signal});
-    if(!r.ok)throw new Error(`Résultat ZeroGPU HTTP ${r.status}`);
+    const r=await fetch(`${provider.space}/gradio_api/call/${provider.api}/${encodeURIComponent(eventId)}`,{headers:{accept:'text/event-stream'},signal:controller.signal});
+    if(!r.ok)throw new Error(`résultat HTTP ${r.status}`);
     const text=await r.text();
     const blocks=text.split(/\n\n+/);
     for(const block of blocks){
       const event=block.match(/^event:\s*(.+)$/m)?.[1]?.trim();
       const raw=block.match(/^data:\s*(.+)$/m)?.[1];
-      if(event==='generating')onState?.('generating','GPU en cours de génération');
-      if(event==='error')throw new Error(raw || 'Erreur ZeroGPU');
+      if(event==='generating')onState?.('generating',`${provider.label} · GPU en génération`);
+      if(event==='error')throw new Error(raw || 'erreur de génération');
       if(event==='complete' && raw){
         const data=JSON.parse(raw);
-        const url=fileUrl(Array.isArray(data)?data[0]:data);
-        if(!url)throw new Error('Vidéo générée mais URL introuvable.');
+        const url=fileUrl(provider,Array.isArray(data)?data[0]:data);
+        if(!url)throw new Error('vidéo générée mais URL introuvable');
         return url;
       }
     }
-    throw new Error('Réponse ZeroGPU incomplète ou file expirée.');
+    throw new Error('réponse incomplète ou file expirée');
   }catch(error){
-    if(error instanceof DOMException && error.name==='AbortError'){
-      throw new Error('Aucun GPU gratuit disponible après 3 minutes. Réessaie plus tard.');
-    }
+    if(error instanceof DOMException && error.name==='AbortError')throw new Error('timeout GPU gratuit');
     throw error;
   }finally{
     window.clearTimeout(timer);
   }
 }
 
+async function runProvider(provider:Provider,file:File,prompt:string,onState?:(state:FreeVideoState,detail?:string)=>void){
+  onState?.('uploading-reference',`${provider.label} · envoi référence canon`);
+  const uploaded=await uploadReference(provider,file);
+  onState?.('queued',`${provider.label} · attente GPU gratuit (max 2 min 30)`);
+  const eventId=await submit(provider,prompt,uploaded);
+  return waitForResult(provider,eventId,onState);
+}
+
 export async function generateFreeCanonVideo(input:{cellId?:string;prompt:string;onState?:(state:FreeVideoState,detail?:string)=>void}):Promise<FreeVideoResult>{
   const cell=CANON_DRAMA_ATLAS_CELLS.find(c=>c.id===(input.cellId||'lucas-1')) || CANON_DRAMA_ATLAS_CELLS[0];
+  const attempts:string[]=[];
   try{
     input.onState?.('preparing-reference',`Préparation ${cell.label}`);
     const file=await cropCell(cell);
-    input.onState?.('uploading-reference','Envoi de la référence canon au GPU gratuit');
-    const uploaded=await uploadReference(file);
-    input.onState?.('queued','En attente d’un GPU gratuit · maximum 3 min');
-    const eventId=await submit(input.prompt,uploaded);
-    const videoUrl=await waitForResult(eventId,input.onState);
-    input.onState?.('ready','Vidéo prête');
-    return {state:'ready',videoUrl,provider:'hf-zerogpu-wan22'};
+    for(let index=0;index<PROVIDERS.length;index++){
+      const provider=PROVIDERS[index];
+      try{
+        input.onState?.('queued',`${provider.label} · tentative ${index+1}/${PROVIDERS.length}`);
+        const videoUrl=await runProvider(provider,file,input.prompt,input.onState);
+        input.onState?.('ready',`${provider.label} · vidéo prête`);
+        return {state:'ready',videoUrl,provider:provider.id,attempts};
+      }catch(error){
+        const message=error instanceof Error?error.message:String(error);
+        attempts.push(`${provider.label}: ${message}`);
+        if(index<PROVIDERS.length-1){
+          input.onState?.('queued',`${provider.label} indisponible · passage automatique au suivant`);
+        }
+      }
+    }
+    const message=`Aucun GPU gratuit n’a répondu. ${attempts.join(' | ')}`;
+    input.onState?.('error',message);
+    return {state:'error',error:message,provider:'hf-zerogpu-pool',attempts};
   }catch(error){
     const message=error instanceof Error?error.message:String(error);
     input.onState?.('error',message);
-    return {state:'error',error:message,provider:'hf-zerogpu-wan22'};
+    return {state:'error',error:message,provider:'hf-zerogpu-pool',attempts};
   }
 }
