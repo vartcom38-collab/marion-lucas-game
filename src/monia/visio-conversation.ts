@@ -1,5 +1,6 @@
 import { moniaExperience } from './experience-runtime';
 import type { MonIADirectorResult } from './director';
+import { cancelMonIAVoice, inferVoiceMood, speakMonIA } from './voice-engine';
 
 const SAVE_KEY='marion-lucas-save-v4';
 const SETTINGS_KEY='marion-lucas-settings-v2';
@@ -23,18 +24,16 @@ function responsePanel(){
   overlay.appendChild(panel);return panel;
 }
 function setDialogue(actor:string,text:string){const panel=responsePanel();if(!panel)return;panel.style.display='block';panel.innerHTML=`<strong>${actor}</strong><br>${text.replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]||c))}`}
-function chooseVoice(){if(!('speechSynthesis'in window))return null;const voices=window.speechSynthesis.getVoices();return voices.find(v=>v.lang.toLowerCase()==='fr-fr'&&v.localService)||voices.find(v=>v.lang.toLowerCase().startsWith('fr'))||voices[0]||null}
 
 function speak(text:string){
-  if(!('speechSynthesis'in window))return;
-  window.speechSynthesis.cancel();
-  const u=new SpeechSynthesisUtterance(text);u.lang='fr-FR';u.rate=.96;u.pitch=.9;
-  const voice=chooseVoice();if(voice)u.voice=voice;
-  u.onstart=()=>{status('Lucas parle');speechEvent('start',{length:text.length})};
-  u.onboundary=e=>speechEvent('boundary',{charIndex:e.charIndex,name:e.name,elapsedTime:e.elapsedTime,textLength:text.length});
-  u.onend=()=>{status('Lucas écoute');speechEvent('end')};
-  u.onerror=e=>{status('Lucas écoute');speechEvent('error',{error:e.error})};
-  window.speechSynthesis.speak(u);
+  speakMonIA(text,{
+    actor:'Lucas',
+    mood:inferVoiceMood(text),
+    onStart:()=>{status('Lucas parle');speechEvent('start',{length:text.length})},
+    onBoundary:e=>speechEvent('boundary',e),
+    onEnd:()=>{status('Lucas écoute');speechEvent('end')},
+    onError:error=>{status('Lucas écoute');speechEvent('error',{error})},
+  });
 }
 
 function contextFor(text:string){
@@ -59,8 +58,8 @@ function installMic(){
   const button=document.createElement('button');button.type='button';button.dataset.moniaVisioMic='true';button.textContent='🎙 Parler';
   button.style.cssText='position:absolute;z-index:8;bottom:28px;left:50%;transform:translateX(-50%);border:0;border-radius:999px;padding:12px 18px;background:rgba(255,255,255,.92);color:#111;font:700 14px system-ui;box-shadow:0 8px 30px rgba(0,0,0,.3)';
   let recognition:any=null;
-  button.onclick=()=>{try{window.speechSynthesis?.cancel();speechEvent('end');recognition?.abort?.();recognition=new Recognition();recognition.lang='fr-FR';recognition.interimResults=false;recognition.continuous=false;status('Marion parle…');button.textContent='● Écoute…';recognition.onresult=(e:any)=>{const value=String(e.results?.[0]?.[0]?.transcript||'').trim();if(value)void answerTurn(value)};recognition.onerror=()=>status('Lucas écoute');recognition.onend=()=>{button.textContent='🎙 Parler'};recognition.start()}catch{button.textContent='🎙 Parler';status('Lucas écoute')}};
+  button.onclick=()=>{try{cancelMonIAVoice();speechEvent('end');recognition?.abort?.();recognition=new Recognition();recognition.lang='fr-FR';recognition.interimResults=false;recognition.continuous=false;status('Marion parle…');button.textContent='● Écoute…';recognition.onresult=(e:any)=>{const value=String(e.results?.[0]?.[0]?.transcript||'').trim();if(value)void answerTurn(value)};recognition.onerror=()=>status('Lucas écoute');recognition.onend=()=>{button.textContent='🎙 Parler'};recognition.start()}catch{button.textContent='🎙 Parler';status('Lucas écoute')}};
   overlay.appendChild(button);
 }
 window.setInterval(()=>{if(document.getElementById('moniaVisioOverlay'))installMic()},700);
-console.info('[MonIA] Conversational visio voice turns + speech timing events active');
+console.info('[MonIA] Conversational visio uses persistent actor voice profile + speech timing events');
