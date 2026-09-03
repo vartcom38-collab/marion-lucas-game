@@ -2,8 +2,9 @@ import { generateAutonomousSourceImage } from './autonomous-image';
 import { generateFreeCanonVideo } from './free-video';
 import type { MonIAExperienceResult } from './experience-runtime';
 import type { MonIAMediaPlan, MonIAFraming } from './media-orchestrator';
+import { cancelMonIAVoice, inferVoiceMood, speakMonIAPremium } from './voice-engine';
 
-export type MonIALongDramaClip={id:string;index:number;framing:MonIAFraming;imageUrl?:string;videoUrl?:string;state:'queued'|'image'|'video'|'ready'|'error';error?:string};
+export type MonIALongDramaClip={id:string;index:number;framing:MonIAFraming;imageUrl?:string;videoUrl?:string;voiceText?:string;voiceActor?:'Lucas'|'Marion';state:'queued'|'image'|'video'|'ready'|'error';error?:string};
 export type MonIALongDrama={id:string;title:string;state:'queued'|'generating'|'ready'|'partial'|'error';targetDuration:number;clips:MonIALongDramaClip[];errors:string[]};
 
 const STORE_KEY='monia-long-drama-v1';
@@ -28,6 +29,7 @@ function shotPlan(base:MonIAMediaPlan,index:number,count:number,framing:MonIAFra
 
 async function urlToFile(url:string,index:number){const r=await fetch(url,{mode:'cors'});if(!r.ok)throw new Error(`source plan ${index+1} inaccessible · HTTP ${r.status}`);const blob=await r.blob();return new File([blob],`monia-drama-shot-${index+1}.png`,{type:blob.type||'image/png'})}
 function videoPrompt(plan:MonIAMediaPlan,index:number,count:number){return `Photorealistic live-action vertical mini-drama shot ${index+1}/${count}. Exact same identity as source image. ${plan.actor}. ${plan.visual.action}. Location: ${plan.visual.location}. Framing: ${plan.visual.framing}. Emotion: ${plan.visual.emotion}. Natural breathing, blinking, eye movement, head/body motion, realistic clothing motion, cinematic camera stability. Strict continuity of face, wardrobe, hair, room and lighting. No text, title, subtitles, watermark, UI, morphing or identity drift.`}
+function actorFrom(plan:MonIAMediaPlan):'Lucas'|'Marion'|null{const value=String(plan.actor||'').toLowerCase();if(value.includes('lucas'))return'Lucas';if(value.includes('marion'))return'Marion';return null}
 
 export async function materializeLongDrama(experience:MonIAExperienceResult,onProgress?:(value:MonIALongDrama)=>void):Promise<MonIALongDrama>{
   const plan=experience.mediaPlan;
@@ -35,7 +37,10 @@ export async function materializeLongDrama(experience:MonIAExperienceResult,onPr
   const estimatedClip=5;
   const count=Math.max(3,Math.min(8,Math.ceil(target/estimatedClip)));
   const framings=framingSequence(plan.visual.framing,count);
-  const drama:MonIALongDrama={id:`long-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,title:experience.response.text.slice(0,80)||'Scène MonIA',state:'queued',targetDuration:target,clips:Array.from({length:count},(_,i)=>({id:`shot-${i+1}`,index:i,framing:framings[i],state:'queued'})),errors:[]};
+  const spoken=(experience.response.spokenText||experience.response.text||'').trim();
+  const actor=actorFrom(plan);
+  const speakingIndex=spoken&&actor?Math.min(1,count-1):-1;
+  const drama:MonIALongDrama={id:`long-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,title:experience.response.text.slice(0,80)||'Scène MonIA',state:'queued',targetDuration:target,clips:Array.from({length:count},(_,i)=>({id:`shot-${i+1}`,index:i,framing:framings[i],voiceText:i===speakingIndex?spoken:undefined,voiceActor:i===speakingIndex?actor||undefined:undefined,state:'queued'})),errors:[]};
   if(active)return drama;
   active=true;write(drama);onProgress?.(drama);
   try{
@@ -60,12 +65,13 @@ export async function materializeLongDrama(experience:MonIAExperienceResult,onPr
 }
 
 export function playLongDrama(drama=readLongDrama()){
-  if(!drama)return;const urls=drama.clips.filter(c=>c.state==='ready'&&c.videoUrl).map(c=>c.videoUrl!) ;if(!urls.length)return;
-  document.getElementById('moniaLongDramaOverlay')?.remove();
+  if(!drama)return;const clips=drama.clips.filter(c=>c.state==='ready'&&c.videoUrl);if(!clips.length)return;
+  cancelMonIAVoice();document.getElementById('moniaLongDramaOverlay')?.remove();
   const overlay=document.createElement('div');overlay.id='moniaLongDramaOverlay';overlay.style.cssText='position:fixed;inset:0;z-index:99998;background:#050403;color:white;display:grid;place-items:center;font-family:system-ui,sans-serif';
-  overlay.innerHTML=`<video id="moniaLongDramaVideo" playsinline autoplay style="width:100%;height:100%;object-fit:cover;background:#000"></video><button id="moniaLongDramaClose" style="position:absolute;top:22px;right:22px;width:44px;height:44px;border:0;border-radius:50%;background:rgba(0,0,0,.55);color:white;font-size:24px">×</button><div id="moniaLongDramaCounter" style="position:absolute;left:20px;bottom:20px;padding:8px 11px;border-radius:999px;background:rgba(0,0,0,.48);font-size:12px"></div>`;
+  overlay.innerHTML=`<video id="moniaLongDramaVideo" playsinline autoplay muted style="width:100%;height:100%;object-fit:cover;background:#000"></video><button id="moniaLongDramaClose" style="position:absolute;top:22px;right:22px;width:44px;height:44px;border:0;border-radius:50%;background:rgba(0,0,0,.55);color:white;font-size:24px">×</button><div id="moniaLongDramaCounter" style="position:absolute;left:20px;bottom:20px;padding:8px 11px;border-radius:999px;background:rgba(0,0,0,.48);font-size:12px"></div>`;
   document.body.appendChild(overlay);const video=overlay.querySelector<HTMLVideoElement>('#moniaLongDramaVideo')!;const counter=overlay.querySelector<HTMLElement>('#moniaLongDramaCounter')!;let index=0;
-  const next=()=>{if(index>=urls.length){overlay.remove();return}video.src=urls[index];counter.textContent=`Plan ${index+1}/${urls.length}`;index++;void video.play().catch(()=>undefined)};video.onended=next;overlay.querySelector('#moniaLongDramaClose')?.addEventListener('click',()=>overlay.remove());next();
+  const next=()=>{if(index>=clips.length){cancelMonIAVoice();overlay.remove();return}const clip=clips[index];video.src=clip.videoUrl!;counter.textContent=`Plan ${index+1}/${clips.length}`;index++;void video.play().catch(()=>undefined);if(clip.voiceText&&clip.voiceActor){void speakMonIAPremium(clip.voiceText,{actor:clip.voiceActor,mood:inferVoiceMood(clip.voiceText)})}};
+  video.onended=next;overlay.querySelector('#moniaLongDramaClose')?.addEventListener('click',()=>{cancelMonIAVoice();overlay.remove()});next();
 }
 
-console.info('[MonIA] Autonomous multi-shot long drama runtime ready');
+console.info('[MonIA] Autonomous multi-shot long drama runtime + persistent actor voice ready');
