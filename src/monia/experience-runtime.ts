@@ -2,6 +2,7 @@ import { monia, type MonIAMode, type MonIADirectorRequest, type MonIADirectorRes
 import { buildAutonomousMediaPlan, type MonIAMediaPlan } from './media-orchestrator';
 import { generateAutonomousSourceImage, type MonIAImageResult } from './autonomous-image';
 import { generateFreeCanonVideo, type FreeVideoResult } from './free-video';
+import { findCachedRemoteMedia, rememberRemoteMedia } from './media-cache';
 
 export type MonIAExperienceResult = {
   response: MonIADirectorResult;
@@ -13,6 +14,7 @@ export type MonIAMaterializedMedia={
   video:FreeVideoResult|null;
   imageUrl?:string;
   videoUrl?:string;
+  cacheHit?:boolean;
   state:'not-needed'|'image-failed'|'video-failed'|'ready';
 };
 
@@ -43,6 +45,13 @@ export class MonIAExperienceRuntime {
   }):Promise<MonIAMaterializedMedia>{
     if(!input.mediaPlan.visual.required)return {image:null,video:null,state:'not-needed'};
 
+    const cached=findCachedRemoteMedia(input.mediaPlan);
+    if(cached){
+      hooks?.onImageState?.('cache','source distante réutilisée');
+      hooks?.onVideoState?.('cache','vraie vidéo distante réutilisée');
+      return {image:null,video:null,imageUrl:cached.imageUrl,videoUrl:cached.videoUrl,cacheHit:true,state:'ready'};
+    }
+
     const image=await generateAutonomousSourceImage({
       plan:input.mediaPlan,
       onState:(state,detail)=>hooks?.onImageState?.(state,detail),
@@ -64,7 +73,8 @@ export class MonIAExperienceRuntime {
     if(video.state!=='ready'||!video.videoUrl){
       return {image,video,imageUrl:image.imageUrl,state:'video-failed'};
     }
-    return {image,video,imageUrl:image.imageUrl,videoUrl:video.videoUrl,state:'ready'};
+    rememberRemoteMedia(input.mediaPlan,image.imageUrl,video.videoUrl);
+    return {image,video,imageUrl:image.imageUrl,videoUrl:video.videoUrl,cacheHit:false,state:'ready'};
   }
 }
 
