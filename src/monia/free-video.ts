@@ -14,11 +14,27 @@ const PROVIDERS:Provider[]=[
     payload:(prompt,image)=>[prompt,image,704,1024,49,25,5,-1],
   },
   {
-    id:'hf-yuknassty-wan22-lightning',
-    label:'Wan 2.2 Lightning ZeroGPU B',
-    space:'https://yuknassty-wan2-2-image-to-video.hf.space',
-    api:'generate_video',
-    payload:(prompt,image)=>[image,prompt,3,4,42,true],
+    id:'hf-rioshiina-ltx25',
+    label:'LTX 2.5 ZeroGPU B',
+    space:'https://rioshiina-ltx-2-5.hf.space',
+    api:'run',
+    payload:(prompt,image)=>[JSON.stringify({
+      task_type:'i2v',
+      prompt,
+      start_image:image?.path || image,
+      negative_prompt:'cartoon, illustration, static image, low quality, distorted face, deformed face, watermark, text, subtitles, jitter, identity drift',
+      resolution:'544p',
+      aspect_ratio:'9:16 (Portrait)',
+      width:544,
+      height:960,
+      duration:3,
+      fps:'24fps',
+      seed:-1,
+      zero_gpu_duration:60,
+      use_spatial_upscaler:false,
+      use_temporal_upscaler:false,
+      async_execution:false,
+    })],
   },
   {
     id:'hf-kpkp21-wan22',
@@ -45,8 +61,27 @@ function cleanProviderError(value:unknown,fallback='erreur ZeroGPU sans détail'
   return clean;
 }
 
+function deepVideoCandidate(value:any):string{
+  if(!value)return '';
+  if(typeof value==='string'){
+    if(/\.mp4(?:$|\?)/i.test(value) || /^https?:\/\//.test(value))return value;
+    return '';
+  }
+  if(Array.isArray(value)){
+    for(const item of value){const found=deepVideoCandidate(item);if(found)return found;}
+    return '';
+  }
+  const direct=value?.video?.url || value?.url || value?.path || value?.video?.path;
+  if(typeof direct==='string' && direct)return direct;
+  for(const key of ['videos','files','result','results','output','outputs','data']){
+    const found=deepVideoCandidate(value?.[key]);
+    if(found)return found;
+  }
+  return '';
+}
+
 function fileUrl(provider:Provider,value:any){
-  const candidate=value?.video?.url || value?.url || value?.path || value?.video?.path || (typeof value==='string'?value:'');
+  const candidate=deepVideoCandidate(value);
   if(!candidate)return '';
   if(/^https?:\/\//.test(candidate))return candidate;
   return `${provider.space}/gradio_api/file=${encodeURIComponent(candidate)}`;
@@ -113,9 +148,8 @@ async function waitForResult(provider:Provider,eventId:string,onState?:(state:Fr
       if(event==='complete' && raw){
         let data:any;
         try{data=JSON.parse(raw)}catch{throw new Error('vidéo annoncée prête mais réponse illisible')}
-        const first=Array.isArray(data)?data[0]:data;
-        const url=fileUrl(provider,first);
-        if(!url)throw new Error('vidéo générée mais URL introuvable');
+        const url=fileUrl(provider,data);
+        if(!url)throw new Error('job terminé mais aucune URL vidéo trouvée');
         return url;
       }
     }
