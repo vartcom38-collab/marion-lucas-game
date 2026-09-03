@@ -9,6 +9,7 @@ export type MonIAIntroStatus={shotId:string;stage:string;detail?:string;updatedA
 const CACHE_KEY='monia-intro-shots-v1';
 const RETRY_KEY='monia-intro-prep-retry-v2';
 const STATUS_KEY='monia-intro-prep-status-v2';
+const STATUS_ENDPOINT='./api/monia-intro-status.php';
 const RETRY_COOLDOWN=10*60*1000;
 let active:Promise<MonIAIntroShot[]>|null=null;
 
@@ -31,7 +32,13 @@ const SHOTS:[string,string,MonIAMediaPlan][]=[
   }]
 ];
 
-function setStatus(value:MonIAIntroStatus){try{localStorage.setItem(STATUS_KEY,JSON.stringify(value));window.dispatchEvent(new CustomEvent('monia-intro-status',{detail:value}))}catch{}}
+function reportRemote(value:MonIAIntroStatus){
+  void fetch(STATUS_ENDPOINT,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify(value),keepalive:true}).catch(()=>{});
+}
+function setStatus(value:MonIAIntroStatus){
+  try{localStorage.setItem(STATUS_KEY,JSON.stringify(value));window.dispatchEvent(new CustomEvent('monia-intro-status',{detail:value}))}catch{}
+  reportRemote(value);
+}
 export function getMonIAIntroStatus():MonIAIntroStatus|null{try{const raw=localStorage.getItem(STATUS_KEY);return raw?JSON.parse(raw) as MonIAIntroStatus:null}catch{return null}}
 function readCache():MonIAIntroShot[]{try{const raw=localStorage.getItem(CACHE_KEY);const value=raw?JSON.parse(raw):[];return Array.isArray(value)?value.filter(v=>v&&typeof v.videoUrl==='string'):[]}catch{return []}}
 function writeCache(items:MonIAIntroShot[]){try{localStorage.setItem(CACHE_KEY,JSON.stringify(items))}catch{}}
