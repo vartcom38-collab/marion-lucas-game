@@ -30,6 +30,7 @@ jobs:
       INFOMANIAK_FTP_HOST: ${{ secrets.INFOMANIAK_FTP_HOST }}
       INFOMANIAK_FTP_USER: ${{ secrets.INFOMANIAK_FTP_USER }}
       INFOMANIAK_FTP_PASSWORD: ${{ secrets.INFOMANIAK_FTP_PASSWORD }}
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
       MONIA_FORCE: ${{ github.event.inputs.force || 'false' }}
     steps:
       - name: Checkout
@@ -48,6 +49,9 @@ jobs:
 
       - name: Install MonIA worker dependencies
         run: python -m pip install --disable-pip-version-check gradio_client pillow requests
+
+      - name: Validate MonIA worker syntax
+        run: python -m py_compile scripts/monia_intro_worker.py
 
       - name: Generate true-video intro and persist to Infomaniak
         run: python scripts/monia_intro_worker.py
