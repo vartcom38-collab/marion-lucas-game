@@ -141,7 +141,7 @@ def deep_candidate(value: Any) -> str | None:
                 return found
         return None
     if isinstance(value, dict):
-        preferred = ("path", "url", "video", "video_path", "video_url", "data", "result", "output", "outputs", "files", "file")
+        preferred = ("url", "video_url", "video", "path", "video_path", "data", "result", "output", "outputs", "files", "file")
         for key in preferred:
             if key in value:
                 found = deep_candidate(value[key])
@@ -152,7 +152,7 @@ def deep_candidate(value: Any) -> str | None:
             if found:
                 return found
         return None
-    for attr in ("path", "url"):
+    for attr in ("url", "path"):
         found = getattr(value, attr, None)
         if isinstance(found, str) and found:
             return found
@@ -164,17 +164,42 @@ def materialize(candidate: str, target: Path, base_space: str | None = None) -> 
     if source.exists():
         shutil.copyfile(source, target)
         return
-    url = candidate
-    if not url.startswith(("http://", "https://")) and base_space:
-        url = f"{base_space}/gradio_api/file={quote(candidate, safe='')}"
-    if url.startswith(("http://", "https://")):
-        with requests.get(url, stream=True, timeout=90) as response:
-            response.raise_for_status()
-            with target.open("wb") as fh:
-                for chunk in response.iter_content(1024 * 1024):
-                    if chunk:
-                        fh.write(chunk)
-        return
+
+    urls: list[str] = []
+    if candidate.startswith(("http://", "https://")):
+        urls.append(candidate)
+    elif base_space:
+        raw = candidate.replace("\\", "/")
+        urls.extend([
+            f"{base_space}/gradio_api/file={raw}",
+            f"{base_space}/file={raw}",
+            f"{base_space}/gradio_api/file={quote(raw, safe='/')}",
+            f"{base_space}/gradio_api/file={quote(raw, safe='')}",
+        ])
+
+    errors: list[str] = []
+    for url in dict.fromkeys(urls):
+        try:
+            print(f"MONIA download try {url}", flush=True)
+            with requests.get(url, stream=True, timeout=90, allow_redirects=True) as response:
+                if not response.ok:
+                    errors.append(f"{response.status_code} {url}")
+                    continue
+                with target.open("wb") as fh:
+                    for chunk in response.iter_content(1024 * 1024):
+                        if chunk:
+                            fh.write(chunk)
+            if target.exists() and target.stat().st_size >= 1024:
+                return
+            errors.append(f"small-file {url}")
+        except Exception as exc:
+            errors.append(f"{type(exc).__name__}: {exc}")
+        finally:
+            if target.exists() and target.stat().st_size < 1024:
+                target.unlink(missing_ok=True)
+
+    if errors:
+        raise RuntimeError("téléchargement vidéo impossible: " + " | ".join(errors[-4:]))
     raise RuntimeError(f"résultat vidéo introuvable: {candidate}")
 
 
@@ -287,6 +312,7 @@ def run_ltx(source: Path, prompt: str, target: Path) -> None:
             if not candidate:
                 preview = data[:1200].replace("\n", " ")
                 raise RuntimeError(f"LTX terminé sans URL vidéo; payload={preview}")
+            print(f"MONIA provider={LTX_LABEL} candidate={candidate}", flush=True)
             materialize(candidate, target, LTX_SPACE)
             if target.stat().st_size < 1024:
                 raise RuntimeError("fichier vidéo LTX anormalement petit")
