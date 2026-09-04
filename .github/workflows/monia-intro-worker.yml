@@ -25,7 +25,7 @@ concurrency:
 jobs:
   generate-and-persist:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 90
     env:
       INFOMANIAK_FTP_HOST: ${{ secrets.INFOMANIAK_FTP_HOST }}
       INFOMANIAK_FTP_USER: ${{ secrets.INFOMANIAK_FTP_USER }}
