@@ -19,7 +19,9 @@ from gradio_client import Client, handle_file
 SITE = "https://marion-lucas.marionbolomey.fr"
 OUT_DIR = Path(".monia-intro-worker")
 OUT_DIR.mkdir(exist_ok=True)
-PROVIDER_TIMEOUT_SECONDS = 240
+WAN_TIMEOUT_SECONDS = 420
+LTX_TIMEOUT_SECONDS = 420
+DOWNLOAD_TIMEOUT_SECONDS = 120
 
 SHOTS = [
     {
@@ -47,6 +49,11 @@ WAN_PROVIDERS = [
 WAN_API_NAME = "/generate_video"
 LTX_SPACE = "https://rioshiina-ltx-2-5.hf.space"
 LTX_LABEL = "LTX 2.5 ZeroGPU B"
+
+
+def hf_headers() -> dict[str, str]:
+    token = os.environ.get("HF_TOKEN", "").strip()
+    return {"Authorization": f"Bearer {token}"} if token else {}
 
 
 def fit_portrait(img: Image.Image, target: Path) -> None:
@@ -121,45 +128,68 @@ def prepare_source(shot: dict[str, Any], target: Path) -> None:
     frame_from_existing_video(fallback, target)
 
 
+def deep_candidates(value: Any) -> list[str]:
+    found: list[str] = []
+
+    def walk(item: Any) -> None:
+        if item is None:
+            return
+        if isinstance(item, str):
+            text = item.strip()
+            if text.startswith(("http://", "https://")) or text.lower().endswith((".mp4", ".webm", ".mov")):
+                found.append(text)
+                return
+            if text[:1] in {"{", "["}:
+                try:
+                    walk(json.loads(text))
+                except Exception:
+                    pass
+            return
+        if isinstance(item, (list, tuple)):
+            for child in item:
+                walk(child)
+            return
+        if isinstance(item, dict):
+            preferred = ("url", "video_url", "video", "path", "video_path", "data", "result", "output", "outputs", "files", "file")
+            for key in preferred:
+                if key in item:
+                    walk(item[key])
+            for key, child in item.items():
+                if key not in preferred:
+                    walk(child)
+            return
+        for attr in ("url", "path"):
+            child = getattr(item, attr, None)
+            if isinstance(child, str) and child:
+                walk(child)
+
+    walk(value)
+    return list(dict.fromkeys(found))
+
+
 def deep_candidate(value: Any) -> str | None:
-    if value is None:
-        return None
-    if isinstance(value, str):
-        text = value.strip()
-        if text.startswith(("http://", "https://")) or text.lower().endswith((".mp4", ".webm", ".mov")):
-            return text
-        if text[:1] in {"{", "["}:
-            try:
-                return deep_candidate(json.loads(text))
-            except Exception:
-                return None
-        return None
-    if isinstance(value, (list, tuple)):
-        for item in value:
-            found = deep_candidate(item)
-            if found:
-                return found
-        return None
-    if isinstance(value, dict):
-        preferred = ("url", "video_url", "video", "path", "video_path", "data", "result", "output", "outputs", "files", "file")
-        for key in preferred:
-            if key in value:
-                found = deep_candidate(value[key])
-                if found:
-                    return found
-        for item in value.values():
-            found = deep_candidate(item)
-            if found:
-                return found
-        return None
-    for attr in ("url", "path"):
-        found = getattr(value, attr, None)
-        if isinstance(found, str) and found:
-            return found
-    return None
+    candidates = deep_candidates(value)
+    return candidates[0] if candidates else None
 
 
-def materialize(candidate: str, target: Path, base_space: str | None = None) -> None:
+def looks_like_video(path: Path, content_type: str = "") -> bool:
+    if not path.exists() or path.stat().st_size < 1024:
+        return False
+    if content_type.lower().startswith("video/"):
+        return True
+    try:
+        head = path.read_bytes()[:32]
+    except OSError:
+        return False
+    return b"ftyp" in head or head.startswith(b"\x1aE\xdf\xa3") or head.startswith(b"RIFF")
+
+
+def materialize(
+    candidate: str,
+    target: Path,
+    base_space: str | None = None,
+    session: requests.Session | None = None,
+) -> None:
     source = Path(candidate)
     if source.exists():
         shutil.copyfile(source, target)
@@ -177,11 +207,20 @@ def materialize(candidate: str, target: Path, base_space: str | None = None) -> 
             f"{base_space}/gradio_api/file={quote(raw, safe='')}",
         ])
 
+    http = session or requests.Session()
     errors: list[str] = []
     for url in dict.fromkeys(urls):
+        target.unlink(missing_ok=True)
         try:
             print(f"MONIA download try {url}", flush=True)
-            with requests.get(url, stream=True, timeout=90, allow_redirects=True) as response:
+            with http.get(
+                url,
+                stream=True,
+                timeout=DOWNLOAD_TIMEOUT_SECONDS,
+                allow_redirects=True,
+                headers={"Accept": "video/*,application/octet-stream,*/*", **hf_headers()},
+            ) as response:
+                content_type = response.headers.get("Content-Type", "")
                 if not response.ok:
                     errors.append(f"{response.status_code} {url}")
                     continue
@@ -189,24 +228,25 @@ def materialize(candidate: str, target: Path, base_space: str | None = None) -> 
                     for chunk in response.iter_content(1024 * 1024):
                         if chunk:
                             fh.write(chunk)
-            if target.exists() and target.stat().st_size >= 1024:
+            if looks_like_video(target, content_type):
                 return
-            errors.append(f"small-file {url}")
+            errors.append(f"invalid-video {content_type or 'unknown'} {url}")
         except Exception as exc:
             errors.append(f"{type(exc).__name__}: {exc}")
         finally:
-            if target.exists() and target.stat().st_size < 1024:
+            if target.exists() and not looks_like_video(target):
                 target.unlink(missing_ok=True)
 
     if errors:
-        raise RuntimeError("téléchargement vidéo impossible: " + " | ".join(errors[-4:]))
+        raise RuntimeError("téléchargement vidéo impossible: " + " | ".join(errors[-6:]))
     raise RuntimeError(f"résultat vidéo introuvable: {candidate}")
 
 
 def _wan_child(space: str, label: str, source: str, prompt: str, target: str, queue: Any) -> None:
     try:
         print(f"MONIA provider={label} connect", flush=True)
-        client = Client(space, verbose=False)
+        token = os.environ.get("HF_TOKEN", "").strip() or None
+        client = Client(space, token=token, verbose=False)
         print(f"MONIA provider={label} api={WAN_API_NAME} generate frames=33 steps=20", flush=True)
         result = client.predict(
             prompt,
@@ -219,13 +259,19 @@ def _wan_child(space: str, label: str, source: str, prompt: str, target: str, qu
             -1,
             api_name=WAN_API_NAME,
         )
-        candidate = deep_candidate(result)
-        if not candidate:
+        candidates = deep_candidates(result)
+        if not candidates:
             raise RuntimeError(f"job terminé sans fichier vidéo: {type(result).__name__}")
-        materialize(candidate, Path(target))
-        if Path(target).stat().st_size < 1024:
-            raise RuntimeError("fichier vidéo anormalement petit")
-        queue.put((True, ""))
+        errors: list[str] = []
+        for candidate in candidates:
+            try:
+                materialize(candidate, Path(target))
+                if looks_like_video(Path(target)):
+                    queue.put((True, ""))
+                    return
+            except Exception as exc:
+                errors.append(str(exc))
+        raise RuntimeError("aucune sortie vidéo Wan récupérable: " + " | ".join(errors[-3:]))
     except Exception as exc:
         queue.put((False, str(exc)))
 
@@ -235,11 +281,11 @@ def run_wan_with_timeout(space: str, label: str, source: Path, prompt: str, targ
     queue = ctx.Queue()
     process = ctx.Process(target=_wan_child, args=(space, label, str(source), prompt, str(target), queue))
     process.start()
-    process.join(PROVIDER_TIMEOUT_SECONDS)
+    process.join(WAN_TIMEOUT_SECONDS)
     if process.is_alive():
         process.terminate()
         process.join(10)
-        raise TimeoutError(f"timeout provider après {PROVIDER_TIMEOUT_SECONDS}s")
+        raise TimeoutError(f"timeout provider après {WAN_TIMEOUT_SECONDS}s")
     if queue.empty():
         raise RuntimeError(f"provider terminé sans résultat (code {process.exitcode})")
     ok, detail = queue.get()
@@ -249,8 +295,10 @@ def run_wan_with_timeout(space: str, label: str, source: Path, prompt: str, targ
 
 def run_ltx(source: Path, prompt: str, target: Path) -> None:
     print(f"MONIA provider={LTX_LABEL} upload", flush=True)
+    session = requests.Session()
+    session.headers.update(hf_headers())
     with source.open("rb") as fh:
-        upload = requests.post(
+        upload = session.post(
             f"{LTX_SPACE}/gradio_api/upload",
             files={"files": (source.name, fh, "image/png")},
             timeout=60,
@@ -279,7 +327,7 @@ def run_ltx(source: Path, prompt: str, target: Path) -> None:
         "async_execution": False,
     }
     print(f"MONIA provider={LTX_LABEL} api=/run generate", flush=True)
-    submit = requests.post(
+    submit = session.post(
         f"{LTX_SPACE}/gradio_api/call/run",
         json={"data": [json.dumps(payload)]},
         timeout=60,
@@ -289,10 +337,10 @@ def run_ltx(source: Path, prompt: str, target: Path) -> None:
     if not event_id:
         raise RuntimeError("LTX joignable mais job GPU non créé")
 
-    result_response = requests.get(
+    result_response = session.get(
         f"{LTX_SPACE}/gradio_api/call/run/{quote(str(event_id), safe='')}",
-        headers={"Accept": "text/event-stream"},
-        timeout=PROVIDER_TIMEOUT_SECONDS,
+        headers={"Accept": "text/event-stream", **hf_headers()},
+        timeout=LTX_TIMEOUT_SECONDS,
     )
     result_response.raise_for_status()
     text = result_response.text
@@ -308,26 +356,33 @@ def run_ltx(source: Path, prompt: str, target: Path) -> None:
             raise RuntimeError(data or "LTX a rejeté la génération")
         if event == "complete" and data:
             parsed = json.loads(data)
-            candidate = deep_candidate(parsed)
-            if not candidate:
+            candidates = deep_candidates(parsed)
+            if not candidates:
                 preview = data[:1200].replace("\n", " ")
                 raise RuntimeError(f"LTX terminé sans URL vidéo; payload={preview}")
-            print(f"MONIA provider={LTX_LABEL} candidate={candidate}", flush=True)
-            materialize(candidate, target, LTX_SPACE)
-            if target.stat().st_size < 1024:
-                raise RuntimeError("fichier vidéo LTX anormalement petit")
-            return
+            errors: list[str] = []
+            for candidate in candidates:
+                print(f"MONIA provider={LTX_LABEL} candidate={candidate}", flush=True)
+                try:
+                    materialize(candidate, target, LTX_SPACE, session=session)
+                    if looks_like_video(target):
+                        return
+                except Exception as exc:
+                    errors.append(str(exc))
+            raise RuntimeError("LTX terminé mais aucune sortie vidéo récupérable: " + " | ".join(errors[-4:]))
     raise RuntimeError("réponse LTX incomplète ou file GPU expirée")
 
 
 def generate(source: Path, prompt: str, target: Path) -> tuple[str, list[str]]:
     attempts: list[str] = []
+    target.unlink(missing_ok=True)
     for space, label in WAN_PROVIDERS:
         try:
             run_wan_with_timeout(space, label, source, prompt, target)
             print(f"MONIA provider={label} true-video ready bytes={target.stat().st_size}", flush=True)
             return label, attempts
         except Exception as exc:
+            target.unlink(missing_ok=True)
             msg = f"{label}: {exc}"
             attempts.append(msg)
             print(f"MONIA failed {msg}", flush=True)
@@ -337,6 +392,7 @@ def generate(source: Path, prompt: str, target: Path) -> tuple[str, list[str]]:
         print(f"MONIA provider={LTX_LABEL} true-video ready bytes={target.stat().st_size}", flush=True)
         return LTX_LABEL, attempts
     except Exception as exc:
+        target.unlink(missing_ok=True)
         msg = f"{LTX_LABEL}: {exc}"
         attempts.append(msg)
         print(f"MONIA failed {msg}", flush=True)
