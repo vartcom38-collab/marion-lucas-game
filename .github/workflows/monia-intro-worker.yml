@@ -31,7 +31,9 @@ jobs:
       INFOMANIAK_FTP_USER: ${{ secrets.INFOMANIAK_FTP_USER }}
       INFOMANIAK_FTP_PASSWORD: ${{ secrets.INFOMANIAK_FTP_PASSWORD }}
       HF_TOKEN: ${{ secrets.HF_TOKEN }}
-      MONIA_FORCE: ${{ github.event.inputs.force || 'false' }}
+      # Any worker/workflow code change must exercise the real generation path once.
+      # Scheduled runs remain cheap and only regenerate when the manifest is incomplete.
+      MONIA_FORCE: ${{ github.event_name == 'push' && 'true' || github.event.inputs.force || 'false' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
