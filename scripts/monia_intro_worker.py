@@ -3,12 +3,14 @@ from __future__ import annotations
 import ftplib
 import io
 import json
+import multiprocessing as mp
 import os
 import shutil
 import subprocess
 import sys
 from pathlib import Path
 from typing import Any
+from urllib.parse import quote
 
 import requests
 from PIL import Image
@@ -17,6 +19,7 @@ from gradio_client import Client, handle_file
 SITE = "https://marion-lucas.marionbolomey.fr"
 OUT_DIR = Path(".monia-intro-worker")
 OUT_DIR.mkdir(exist_ok=True)
+PROVIDER_TIMEOUT_SECONDS = 240
 
 SHOTS = [
     {
@@ -37,11 +40,13 @@ SHOTS = [
     },
 ]
 
-PROVIDERS = [
+WAN_PROVIDERS = [
     ("OpenKing/wan2-video-generation", "Wan 2.2 ZeroGPU A"),
     ("Kpkp21/wan2-video-generation", "Wan 2.2 ZeroGPU C"),
 ]
 WAN_API_NAME = "/generate_video"
+LTX_SPACE = "https://rioshiina-ltx-2-5.hf.space"
+LTX_LABEL = "LTX 2.5 ZeroGPU B"
 
 
 def fit_portrait(img: Image.Image, target: Path) -> None:
@@ -142,13 +147,16 @@ def deep_candidate(value: Any) -> str | None:
     return None
 
 
-def materialize(candidate: str, target: Path) -> None:
+def materialize(candidate: str, target: Path, base_space: str | None = None) -> None:
     source = Path(candidate)
     if source.exists():
         shutil.copyfile(source, target)
         return
-    if candidate.startswith(("http://", "https://")):
-        with requests.get(candidate, stream=True, timeout=90) as response:
+    url = candidate
+    if not url.startswith(("http://", "https://")) and base_space:
+        url = f"{base_space}/gradio_api/file={quote(candidate, safe='')}"
+    if url.startswith(("http://", "https://")):
+        with requests.get(url, stream=True, timeout=90) as response:
             response.raise_for_status()
             with target.open("wb") as fh:
                 for chunk in response.iter_content(1024 * 1024):
@@ -158,36 +166,142 @@ def materialize(candidate: str, target: Path) -> None:
     raise RuntimeError(f"résultat vidéo introuvable: {candidate}")
 
 
+def _wan_child(space: str, label: str, source: str, prompt: str, target: str, queue: Any) -> None:
+    try:
+        print(f"MONIA provider={label} connect", flush=True)
+        client = Client(space, verbose=False)
+        print(f"MONIA provider={label} api={WAN_API_NAME} generate", flush=True)
+        result = client.predict(
+            prompt,
+            handle_file(source),
+            576,
+            1024,
+            49,
+            25,
+            5,
+            -1,
+            api_name=WAN_API_NAME,
+        )
+        candidate = deep_candidate(result)
+        if not candidate:
+            raise RuntimeError(f"job terminé sans fichier vidéo: {type(result).__name__}")
+        materialize(candidate, Path(target))
+        if Path(target).stat().st_size < 1024:
+            raise RuntimeError("fichier vidéo anormalement petit")
+        queue.put((True, ""))
+    except Exception as exc:
+        queue.put((False, str(exc)))
+
+
+def run_wan_with_timeout(space: str, label: str, source: Path, prompt: str, target: Path) -> None:
+    ctx = mp.get_context("spawn")
+    queue = ctx.Queue()
+    process = ctx.Process(target=_wan_child, args=(space, label, str(source), prompt, str(target), queue))
+    process.start()
+    process.join(PROVIDER_TIMEOUT_SECONDS)
+    if process.is_alive():
+        process.terminate()
+        process.join(10)
+        raise TimeoutError(f"timeout provider après {PROVIDER_TIMEOUT_SECONDS}s")
+    if queue.empty():
+        raise RuntimeError(f"provider terminé sans résultat (code {process.exitcode})")
+    ok, detail = queue.get()
+    if not ok:
+        raise RuntimeError(detail)
+
+
+def run_ltx(source: Path, prompt: str, target: Path) -> None:
+    print(f"MONIA provider={LTX_LABEL} upload", flush=True)
+    with source.open("rb") as fh:
+        upload = requests.post(
+            f"{LTX_SPACE}/gradio_api/upload",
+            files={"files": (source.name, fh, "image/png")},
+            timeout=60,
+        )
+    upload.raise_for_status()
+    uploaded_data = upload.json()
+    uploaded_path = uploaded_data[0] if isinstance(uploaded_data, list) else (uploaded_data.get("files") or [uploaded_data.get("path")])[0]
+    if not uploaded_path:
+        raise RuntimeError("upload LTX accepté mais référence introuvable")
+
+    payload = {
+        "task_type": "i2v",
+        "prompt": prompt,
+        "start_image": uploaded_path,
+        "negative_prompt": "cartoon, illustration, static image, low quality, distorted face, deformed face, watermark, text, subtitles, title, label, number, jitter, identity drift",
+        "resolution": "544p",
+        "aspect_ratio": "9:16 (Portrait)",
+        "width": 544,
+        "height": 960,
+        "duration": 3,
+        "fps": "24fps",
+        "seed": -1,
+        "zero_gpu_duration": 60,
+        "use_spatial_upscaler": False,
+        "use_temporal_upscaler": False,
+        "async_execution": False,
+    }
+    print(f"MONIA provider={LTX_LABEL} api=/run generate", flush=True)
+    submit = requests.post(
+        f"{LTX_SPACE}/gradio_api/call/run",
+        json={"data": [json.dumps(payload)]},
+        timeout=60,
+    )
+    submit.raise_for_status()
+    event_id = submit.json().get("event_id")
+    if not event_id:
+        raise RuntimeError("LTX joignable mais job GPU non créé")
+
+    result_response = requests.get(
+        f"{LTX_SPACE}/gradio_api/call/run/{quote(str(event_id), safe='')}",
+        headers={"Accept": "text/event-stream"},
+        timeout=PROVIDER_TIMEOUT_SECONDS,
+    )
+    result_response.raise_for_status()
+    text = result_response.text
+    for block in text.split("\n\n"):
+        event = None
+        data = None
+        for line in block.splitlines():
+            if line.startswith("event:"):
+                event = line.split(":", 1)[1].strip()
+            elif line.startswith("data:"):
+                data = line.split(":", 1)[1].strip()
+        if event == "error":
+            raise RuntimeError(data or "LTX a rejeté la génération")
+        if event == "complete" and data:
+            parsed = json.loads(data)
+            candidate = deep_candidate(parsed)
+            if not candidate:
+                raise RuntimeError("LTX terminé sans URL vidéo")
+            materialize(candidate, target, LTX_SPACE)
+            if target.stat().st_size < 1024:
+                raise RuntimeError("fichier vidéo LTX anormalement petit")
+            return
+    raise RuntimeError("réponse LTX incomplète ou file GPU expirée")
+
+
 def generate(source: Path, prompt: str, target: Path) -> tuple[str, list[str]]:
     attempts: list[str] = []
-    for space, label in PROVIDERS:
+    for space, label in WAN_PROVIDERS:
         try:
-            print(f"MONIA provider={label} connect", flush=True)
-            client = Client(space, verbose=False)
-            print(f"MONIA provider={label} api={WAN_API_NAME} generate", flush=True)
-            result = client.predict(
-                prompt,
-                handle_file(str(source)),
-                576,
-                1024,
-                49,
-                25,
-                5,
-                -1,
-                api_name=WAN_API_NAME,
-            )
-            candidate = deep_candidate(result)
-            if not candidate:
-                raise RuntimeError(f"job terminé sans fichier vidéo: {type(result).__name__}")
-            materialize(candidate, target)
-            if target.stat().st_size < 1024:
-                raise RuntimeError("fichier vidéo anormalement petit")
+            run_wan_with_timeout(space, label, source, prompt, target)
             print(f"MONIA provider={label} true-video ready bytes={target.stat().st_size}", flush=True)
             return label, attempts
         except Exception as exc:
             msg = f"{label}: {exc}"
             attempts.append(msg)
             print(f"MONIA failed {msg}", flush=True)
+
+    try:
+        run_ltx(source, prompt, target)
+        print(f"MONIA provider={LTX_LABEL} true-video ready bytes={target.stat().st_size}", flush=True)
+        return LTX_LABEL, attempts
+    except Exception as exc:
+        msg = f"{LTX_LABEL}: {exc}"
+        attempts.append(msg)
+        print(f"MONIA failed {msg}", flush=True)
+
     raise RuntimeError(" | ".join(attempts))
 
 
