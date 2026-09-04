@@ -125,8 +125,14 @@ def deep_candidate(value: Any) -> str | None:
     if value is None:
         return None
     if isinstance(value, str):
-        if value.startswith(("http://", "https://")) or value.lower().endswith((".mp4", ".webm", ".mov")):
-            return value
+        text = value.strip()
+        if text.startswith(("http://", "https://")) or text.lower().endswith((".mp4", ".webm", ".mov")):
+            return text
+        if text[:1] in {"{", "["}:
+            try:
+                return deep_candidate(json.loads(text))
+            except Exception:
+                return None
         return None
     if isinstance(value, (list, tuple)):
         for item in value:
@@ -135,11 +141,17 @@ def deep_candidate(value: Any) -> str | None:
                 return found
         return None
     if isinstance(value, dict):
-        for key in ("path", "url", "video", "data", "result", "output", "files"):
+        preferred = ("path", "url", "video", "video_path", "video_url", "data", "result", "output", "outputs", "files", "file")
+        for key in preferred:
             if key in value:
                 found = deep_candidate(value[key])
                 if found:
                     return found
+        for item in value.values():
+            found = deep_candidate(item)
+            if found:
+                return found
+        return None
     for attr in ("path", "url"):
         found = getattr(value, attr, None)
         if isinstance(found, str) and found:
@@ -170,14 +182,14 @@ def _wan_child(space: str, label: str, source: str, prompt: str, target: str, qu
     try:
         print(f"MONIA provider={label} connect", flush=True)
         client = Client(space, verbose=False)
-        print(f"MONIA provider={label} api={WAN_API_NAME} generate", flush=True)
+        print(f"MONIA provider={label} api={WAN_API_NAME} generate frames=33 steps=20", flush=True)
         result = client.predict(
             prompt,
             handle_file(source),
             576,
             1024,
-            49,
-            25,
+            33,
+            20,
             5,
             -1,
             api_name=WAN_API_NAME,
@@ -236,7 +248,7 @@ def run_ltx(source: Path, prompt: str, target: Path) -> None:
         "duration": 3,
         "fps": "24fps",
         "seed": -1,
-        "zero_gpu_duration": 60,
+        "zero_gpu_duration": 55,
         "use_spatial_upscaler": False,
         "use_temporal_upscaler": False,
         "async_execution": False,
@@ -273,7 +285,8 @@ def run_ltx(source: Path, prompt: str, target: Path) -> None:
             parsed = json.loads(data)
             candidate = deep_candidate(parsed)
             if not candidate:
-                raise RuntimeError("LTX terminé sans URL vidéo")
+                preview = data[:1200].replace("\n", " ")
+                raise RuntimeError(f"LTX terminé sans URL vidéo; payload={preview}")
             materialize(candidate, target, LTX_SPACE)
             if target.stat().st_size < 1024:
                 raise RuntimeError("fichier vidéo LTX anormalement petit")
