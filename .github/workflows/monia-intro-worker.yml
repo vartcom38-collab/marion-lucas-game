@@ -31,8 +31,6 @@ jobs:
       INFOMANIAK_FTP_USER: ${{ secrets.INFOMANIAK_FTP_USER }}
       INFOMANIAK_FTP_PASSWORD: ${{ secrets.INFOMANIAK_FTP_PASSWORD }}
       HF_TOKEN: ${{ secrets.HF_TOKEN }}
-      # Any worker/workflow code change must exercise the real generation path once.
-      # Scheduled runs remain cheap and only regenerate when the manifest is incomplete.
       MONIA_FORCE: ${{ github.event_name == 'push' && 'true' || github.event.inputs.force || 'false' }}
     steps:
       - name: Checkout
@@ -51,6 +49,47 @@ jobs:
 
       - name: Install MonIA worker dependencies
         run: python -m pip install --disable-pip-version-check gradio_client pillow requests
+
+      - name: Prepare Marion canonical source atlas locally
+        shell: bash
+        run: |
+          mkdir -p public/resources/monia
+          ffmpeg -hide_banner -loglevel error -y -ss 0.6 -i public/resources/marion-nimes.mp4 -frames:v 1 /tmp/marion-canon.png
+          python - <<'PY'
+          from pathlib import Path
+          from PIL import Image
+
+          source = Image.open('/tmp/marion-canon.png').convert('RGB')
+          canvas_w, canvas_h = 1600, 1200
+          side, top, bottom, gap = 0.012, 0.13, 0.025, 0.008
+          cell_w = (1 - side * 2 - gap * 3) / 4
+          cell_h = (1 - top - bottom - gap * 2) / 3
+          cw = round(cell_w * canvas_w)
+          ch = round(cell_h * canvas_h)
+
+          target_ratio = cw / ch
+          source_ratio = source.width / source.height
+          if source_ratio > target_ratio:
+              new_w = round(source.height * target_ratio)
+              left = max(0, (source.width - new_w) // 2)
+              source = source.crop((left, 0, left + new_w, source.height))
+          elif source_ratio < target_ratio:
+              new_h = round(source.width / target_ratio)
+              top_crop = max(0, (source.height - new_h) // 2)
+              source = source.crop((0, top_crop, source.width, top_crop + new_h))
+          source = source.resize((cw, ch), Image.Resampling.LANCZOS)
+
+          canvas = Image.new('RGB', (canvas_w, canvas_h), 'black')
+          for row in range(3):
+              for col in range(4):
+                  x = round((side + col * (cell_w + gap)) * canvas_w)
+                  y = round((top + row * (cell_h + gap)) * canvas_h)
+                  canvas.paste(source, (x, y))
+
+          target = Path('public/resources/monia/atlas-marion.webp')
+          canvas.save(target, 'WEBP', quality=92, method=6)
+          print(f'Prepared local Marion atlas from canonical video: {target} ({target.stat().st_size} bytes)')
+          PY
 
       - name: Keep Wan as a fast fallback probe
         shell: bash
