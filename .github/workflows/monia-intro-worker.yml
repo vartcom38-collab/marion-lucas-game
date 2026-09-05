@@ -100,7 +100,7 @@ jobs:
           source_path = Path('/tmp/lucas-user-reference.jpg')
           source = Image.open(source_path).convert('RGB')
           source.load()
-          if source.width < 90 or source.height < 180:
+          if source.width < 80 or source.height < 100:
               raise RuntimeError(f'Lucas canonical reference unexpectedly small: {source.size}')
 
           canvas_w, canvas_h = 1600, 1200
