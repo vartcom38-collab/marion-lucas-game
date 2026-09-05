@@ -12,7 +12,7 @@ on:
     paths:
       - "scripts/monia_intro_worker.py"
       - ".github/workflows/monia-intro-worker.yml"
-      - "assets/lucas-reference-parts/**"
+      - "assets/lucas-reference-compact.b64"
   schedule:
     - cron: "17 * * * *"
 
@@ -67,7 +67,6 @@ jobs:
           cell_h = (1 - top - bottom - gap * 2) / 3
           cw = round(cell_w * canvas_w)
           ch = round(cell_h * canvas_h)
-
           target_ratio = cw / ch
           source_ratio = source.width / source.height
           if source_ratio > target_ratio:
@@ -79,14 +78,12 @@ jobs:
               top_crop = max(0, (source.height - new_h) // 2)
               source = source.crop((0, top_crop, source.width, top_crop + new_h))
           source = source.resize((cw, ch), Image.Resampling.LANCZOS)
-
           canvas = Image.new('RGB', (canvas_w, canvas_h), 'black')
           for row in range(3):
               for col in range(4):
                   x = round((side + col * (cell_w + gap)) * canvas_w)
                   y = round((top + row * (cell_h + gap)) * canvas_h)
                   canvas.paste(source, (x, y))
-
           target = Path('public/resources/monia/atlas-marion.webp')
           canvas.save(target, 'WEBP', quality=92, method=6)
           print(f'Prepared local Marion atlas from canonical video: {target} ({target.stat().st_size} bytes)')
@@ -95,7 +92,7 @@ jobs:
       - name: Prepare Lucas canonical source from user video
         shell: bash
         run: |
-          cat assets/lucas-reference-parts/part-*.txt | tr -d '\n\r ' | base64 --decode > /tmp/lucas-user-reference.jpg
+          tr -d '\n\r ' < assets/lucas-reference-compact.b64 | base64 --decode > /tmp/lucas-user-reference.jpg
           python - <<'PY'
           from pathlib import Path
           from PIL import Image
@@ -103,7 +100,7 @@ jobs:
           source_path = Path('/tmp/lucas-user-reference.jpg')
           source = Image.open(source_path).convert('RGB')
           source.load()
-          if source.width < 300 or source.height < 400:
+          if source.width < 90 or source.height < 180:
               raise RuntimeError(f'Lucas canonical reference unexpectedly small: {source.size}')
 
           canvas_w, canvas_h = 1600, 1200
@@ -114,7 +111,6 @@ jobs:
           ch = round(cell_h * canvas_h)
           target_ratio = cw / ch
           source_ratio = source.width / source.height
-
           if source_ratio > target_ratio:
               new_w = round(source.height * target_ratio)
               left = max(0, (source.width - new_w) // 2)
@@ -124,18 +120,16 @@ jobs:
               top_crop = max(0, (source.height - new_h) // 2)
               source = source.crop((0, top_crop, source.width, top_crop + new_h))
           source = source.resize((cw, ch), Image.Resampling.LANCZOS)
-
           canvas = Image.new('RGB', (canvas_w, canvas_h), 'black')
           for row in range(3):
               for col in range(4):
                   x = round((side + col * (cell_w + gap)) * canvas_w)
                   y = round((top + row * (cell_h + gap)) * canvas_h)
                   canvas.paste(source, (x, y))
-
           target = Path('public/resources/monia/atlas-lucas.webp')
           target.parent.mkdir(parents=True, exist_ok=True)
           canvas.save(target, 'WEBP', quality=94, method=6)
-          print(f'Prepared Lucas atlas from user video reference: source={source_path.stat().st_size} bytes atlas={target.stat().st_size} bytes')
+          print(f'Prepared Lucas atlas from compact user-video reference: source={source.size} sourceBytes={source_path.stat().st_size} atlasBytes={target.stat().st_size}')
           PY
 
       - name: Validate MonIA worker syntax
@@ -150,7 +144,6 @@ jobs:
           def generate_ltx_first(source, prompt, target):
               attempts = []
               target.unlink(missing_ok=True)
-
               try:
                   worker.run_ltx(source, prompt, target)
                   print(f"MONIA provider={worker.LTX_LABEL} true-video ready bytes={target.stat().st_size}", flush=True)
@@ -160,7 +153,6 @@ jobs:
                   msg = f"{worker.LTX_LABEL}: {exc}"
                   attempts.append(msg)
                   print(f"MONIA failed {msg}", flush=True)
-
               for space, label in worker.WAN_PROVIDERS:
                   try:
                       worker.run_wan_with_timeout(space, label, source, prompt, target)
@@ -171,13 +163,11 @@ jobs:
                       msg = f"{label}: {exc}"
                       attempts.append(msg)
                       print(f"MONIA failed {msg}", flush=True)
-
               raise RuntimeError(" | ".join(attempts))
 
           if __name__ == "__main__":
               worker.WAN_TIMEOUT_SECONDS = 20
               worker.generate = generate_ltx_first
-
               for shot in worker.SHOTS:
                   if shot.get("id") == "lucas-presence":
                       shot["prompt"] = (
@@ -187,9 +177,8 @@ jobs:
                           "Keep his elegant sensual confidence without exaggerated acting. Neutral realistic interior, soft cinematic daylight, premium short-drama realism, restrained camera movement. "
                           "Lucas must be alone in frame: no woman, no second person, no hands or body parts from another person. No dialogue, no text, no subtitles, no title, no watermark, no UI, no morphing, no identity drift, no tattoo drift."
                       )
-
               print("MonIA provider order: LTX first; Wan 20s fallback probe only.", flush=True)
-              print("Lucas source: user-provided video reference reconstructed locally and used as canonical atlas.", flush=True)
+              print("Lucas source: compact reference extracted from the user-provided video and rebuilt as canonical atlas.", flush=True)
               raise SystemExit(worker.main())
           PY
           python .monia_runner.py
@@ -212,11 +201,7 @@ jobs:
 
           for attempt in range(1, 7):
               try:
-                  manifest_response = requests.get(
-                      manifest_url,
-                      timeout=20,
-                      headers={'Cache-Control': 'no-cache', 'Pragma': 'no-cache'},
-                  )
+                  manifest_response = requests.get(manifest_url, timeout=20, headers={'Cache-Control': 'no-cache', 'Pragma': 'no-cache'})
                   manifest_response.raise_for_status()
                   manifest = manifest_response.json()
                   shots = manifest.get('shots', []) if isinstance(manifest, dict) else []
@@ -225,26 +210,15 @@ jobs:
                   missing = [shot_id for shot_id in required if not by_id.get(shot_id, {}).get('videoUrl')]
                   if missing:
                       raise RuntimeError(f'manifest missing videoUrl for: {missing}')
-
                   verified = []
                   for shot_id in required:
                       video_url = urljoin(site + '/', by_id[shot_id]['videoUrl'].lstrip('/'))
-                      response = requests.get(
-                          f'{video_url}?run=${{ github.run_id }}',
-                          timeout=30,
-                          headers={
-                              'Range': 'bytes=0-63',
-                              'Cache-Control': 'no-cache',
-                              'Pragma': 'no-cache',
-                              'Accept': 'video/*,application/octet-stream,*/*',
-                          },
-                      )
+                      response = requests.get(f'{video_url}?run=${{ github.run_id }}', timeout=30, headers={'Range': 'bytes=0-63', 'Cache-Control': 'no-cache', 'Pragma': 'no-cache', 'Accept': 'video/*,application/octet-stream,*/*'})
                       if response.status_code not in (200, 206):
                           raise RuntimeError(f'{shot_id}: HTTP {response.status_code}')
                       if len(response.content) < 16 or not video_signature_ok(response.content):
                           raise RuntimeError(f'{shot_id}: public response is not a valid video')
                       verified.append({'id': shot_id, 'url': video_url, 'provider': by_id[shot_id].get('provider')})
-
                   print(json.dumps({'publicVerification': True, 'shots': verified}, ensure_ascii=False))
                   break
               except Exception as exc:
