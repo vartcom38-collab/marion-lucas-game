@@ -91,26 +91,17 @@ jobs:
           print(f'Prepared local Marion atlas from canonical video: {target} ({target.stat().st_size} bytes)')
           PY
 
-      - name: Keep Wan as a fast fallback probe
-        shell: bash
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          path = Path('scripts/monia_intro_worker.py')
-          text = path.read_text(encoding='utf-8')
-          old = 'WAN_TIMEOUT_SECONDS = 420'
-          new = 'WAN_TIMEOUT_SECONDS = 20'
-          if old not in text:
-              raise SystemExit('Expected Wan timeout setting not found')
-          path.write_text(text.replace(old, new, 1), encoding='utf-8')
-          print('Wan probe timeout reduced to 20s; LTX remains the proven fallback.')
-          PY
-
       - name: Validate MonIA worker syntax
         run: python -m py_compile scripts/monia_intro_worker.py
 
       - name: Generate true-video intro and persist to Infomaniak
-        run: python scripts/monia_intro_worker.py
+        run: |
+          python - <<'PY'
+          import scripts.monia_intro_worker as worker
+          worker.WAN_TIMEOUT_SECONDS = 20
+          print('Wan probe timeout: 20s; LTX remains the proven fallback.', flush=True)
+          raise SystemExit(worker.main())
+          PY
 
       - name: Verify generated videos are publicly reachable
         shell: bash
