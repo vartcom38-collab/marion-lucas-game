@@ -100,9 +100,49 @@ jobs:
           cat > .monia_runner.py <<'PY'
           import scripts.monia_intro_worker as worker
 
+          def generate_ltx_first(source, prompt, target):
+              attempts = []
+              target.unlink(missing_ok=True)
+
+              try:
+                  worker.run_ltx(source, prompt, target)
+                  print(f"MONIA provider={worker.LTX_LABEL} true-video ready bytes={target.stat().st_size}", flush=True)
+                  return worker.LTX_LABEL, attempts
+              except Exception as exc:
+                  target.unlink(missing_ok=True)
+                  msg = f"{worker.LTX_LABEL}: {exc}"
+                  attempts.append(msg)
+                  print(f"MONIA failed {msg}", flush=True)
+
+              for space, label in worker.WAN_PROVIDERS:
+                  try:
+                      worker.run_wan_with_timeout(space, label, source, prompt, target)
+                      print(f"MONIA provider={label} true-video ready bytes={target.stat().st_size}", flush=True)
+                      return label, attempts
+                  except Exception as exc:
+                      target.unlink(missing_ok=True)
+                      msg = f"{label}: {exc}"
+                      attempts.append(msg)
+                      print(f"MONIA failed {msg}", flush=True)
+
+              raise RuntimeError(" | ".join(attempts))
+
           if __name__ == "__main__":
               worker.WAN_TIMEOUT_SECONDS = 20
-              print("Wan probe timeout: 20s; LTX remains the proven fallback.", flush=True)
+              worker.generate = generate_ltx_first
+
+              for shot in worker.SHOTS:
+                  if shot.get("id") == "lucas-presence":
+                      shot["prompt"] = (
+                          "Photorealistic live-action cinematic portrait video of Lucas, the exact same man as the canonical Lucas reference image, with absolutely stable identity. "
+                          "Preserve his angular masculine face, strong jaw and cheekbones, dark swept-back hair, light grey-green eyes, short dark stubble, tanned olive skin, and the black tattoos visible across his neck and upper chest whenever clothing allows. "
+                          "His presence is calm, confident and controlled: intense direct gaze, restrained half-smile, subtle brow reactions, realistic blinking, small eye shifts, natural breathing, slow precise head turns and understated body movement. "
+                          "Keep his elegant sensual confidence without exaggerated acting. Neutral realistic interior, soft cinematic daylight, premium short-drama realism, restrained camera movement. "
+                          "Lucas must be alone in frame: no woman, no second person, no hands or body parts from another person. No dialogue, no text, no subtitles, no title, no watermark, no UI, no morphing, no identity drift, no tattoo drift."
+                      )
+
+              print("MonIA provider order: LTX first; Wan 20s fallback probe only.", flush=True)
+              print("Lucas canon motion prompt updated from the user-provided video extract; Lucas alone in frame.", flush=True)
               raise SystemExit(worker.main())
           PY
           python .monia_runner.py
