@@ -1,0 +1,196 @@
+name: MonIA Intro V2
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+    paths:
+      - "scripts/monia_intro_worker.py"
+      - ".github/workflows/monia-intro-v2.yml"
+  schedule:
+    - cron: "23 * * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: monia-intro-v2
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      INFOMANIAK_FTP_HOST: ${{ secrets.INFOMANIAK_FTP_HOST }}
+      INFOMANIAK_FTP_USER: ${{ secrets.INFOMANIAK_FTP_USER }}
+      INFOMANIAK_FTP_PASSWORD: ${{ secrets.INFOMANIAK_FTP_PASSWORD }}
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      MONIA_FORCE: "true"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+          python -m pip install --disable-pip-version-check gradio_client pillow requests
+
+      - name: Prepare Marion atlas
+        shell: bash
+        run: |
+          mkdir -p public/resources/monia
+          ffmpeg -hide_banner -loglevel error -y -ss 0.6 -i public/resources/marion-nimes.mp4 -frames:v 1 /tmp/marion-canon.png
+          python - <<'PY'
+          from pathlib import Path
+          from PIL import Image
+
+          def atlas(source_path, target_path, quality):
+              source = Image.open(source_path).convert('RGB')
+              canvas = Image.new('RGB', (1600, 1200), 'black')
+              side, top, bottom, gap = 0.012, 0.13, 0.025, 0.008
+              cell_w = (1-side*2-gap*3)/4
+              cell_h = (1-top-bottom-gap*2)/3
+              cw, ch = round(cell_w*1600), round(cell_h*1200)
+              tr = cw/ch
+              sr = source.width/source.height
+              if sr > tr:
+                  nw = round(source.height*tr); left = max(0,(source.width-nw)//2); source = source.crop((left,0,left+nw,source.height))
+              elif sr < tr:
+                  nh = round(source.width/tr); tc = max(0,(source.height-nh)//2); source = source.crop((0,tc,source.width,tc+nh))
+              source = source.resize((cw,ch), Image.Resampling.LANCZOS)
+              for row in range(3):
+                  for col in range(4):
+                      x = round((side+col*(cell_w+gap))*1600); y = round((top+row*(cell_h+gap))*1200)
+                      canvas.paste(source,(x,y))
+              canvas.save(target_path,'WEBP',quality=quality,method=6)
+
+          atlas('/tmp/marion-canon.png','public/resources/monia/atlas-marion.webp',92)
+          PY
+
+      - name: Fetch Lucas canon from Infomaniak or bootstrap it once
+        shell: bash
+        run: |
+          python - <<'PY'
+          import ftplib, io, os
+          from pathlib import Path
+          import requests
+          from PIL import Image
+
+          SITE_URL = 'https://marion-lucas.marionbolomey.fr/resources/monia/canon/lucas/reference.jpg'
+          BOOTSTRAP_URL = 'https://pikaso.cdnpk.net/private/production/5364341239/3549261673.jpg?token=exp=1788998400~hmac=704a87649404f0b780d3618a1149ffd454a420ef53866062c8c76244f532e1c3'
+          target = Path('/tmp/lucas-canon.jpg')
+
+          def valid(data):
+              if len(data) < 2048: return False
+              try:
+                  im = Image.open(io.BytesIO(data)); im.load()
+                  return im.width >= 80 and im.height >= 100
+              except Exception:
+                  return False
+
+          r = requests.get(SITE_URL, timeout=30, headers={'Cache-Control':'no-cache'})
+          if r.ok and valid(r.content):
+              target.write_bytes(r.content)
+              print(f'Lucas canon loaded from Infomaniak: {len(r.content)} bytes')
+          else:
+              b = requests.get(BOOTSTRAP_URL, timeout=45)
+              b.raise_for_status()
+              if not valid(b.content):
+                  raise RuntimeError('Bootstrap Lucas image is not a valid reference')
+              target.write_bytes(b.content)
+              host = os.environ['INFOMANIAK_FTP_HOST'].strip().replace('ftpes://','').replace('ftps://','').replace('ftp://','').rstrip('/')
+              ftp = ftplib.FTP_TLS(timeout=45)
+              ftp.connect(host,21)
+              ftp.login(os.environ['INFOMANIAK_FTP_USER'].strip(), os.environ['INFOMANIAK_FTP_PASSWORD'].rstrip('\r\n'))
+              ftp.prot_p(); ftp.set_pasv(True)
+              candidates = ['/sites/marion-lucas.marionbolomey.fr','/']
+              root = None
+              for candidate in candidates:
+                  try:
+                      ftp.cwd(candidate); root = candidate; break
+                  except ftplib.all_errors:
+                      pass
+              if root is None: raise RuntimeError('Cannot locate Infomaniak web root')
+              for part in ['resources','monia','canon','lucas']:
+                  try: ftp.cwd(part)
+                  except ftplib.all_errors:
+                      ftp.mkd(part); ftp.cwd(part)
+              with target.open('rb') as fh:
+                  ftp.storbinary('STOR reference.jpg', fh, blocksize=1024*1024)
+              ftp.quit()
+              print(f'Lucas canon bootstrapped to Infomaniak: {target.stat().st_size} bytes')
+
+          source = Image.open(target).convert('RGB'); source.load()
+          canvas = Image.new('RGB',(1600,1200),'black')
+          side, top, bottom, gap = 0.012,0.13,0.025,0.008
+          cell_w=(1-side*2-gap*3)/4; cell_h=(1-top-bottom-gap*2)/3
+          cw,ch=round(cell_w*1600),round(cell_h*1200); tr=cw/ch; sr=source.width/source.height
+          if sr>tr:
+              nw=round(source.height*tr); left=max(0,(source.width-nw)//2); source=source.crop((left,0,left+nw,source.height))
+          elif sr<tr:
+              nh=round(source.width/tr); tc=max(0,(source.height-nh)//2); source=source.crop((0,tc,source.width,tc+nh))
+          source=source.resize((cw,ch),Image.Resampling.LANCZOS)
+          for row in range(3):
+              for col in range(4):
+                  canvas.paste(source,(round((side+col*(cell_w+gap))*1600),round((top+row*(cell_h+gap))*1200)))
+          atlas=Path('public/resources/monia/atlas-lucas.webp'); atlas.parent.mkdir(parents=True,exist_ok=True)
+          canvas.save(atlas,'WEBP',quality=94,method=6)
+          print(f'Lucas atlas ready from Infomaniak canon: {atlas.stat().st_size} bytes')
+          PY
+
+      - name: Generate and publish videos
+        shell: bash
+        run: |
+          cat > .monia_runner.py <<'PY'
+          import scripts.monia_intro_worker as worker
+
+          def generate_ltx_first(source, prompt, target):
+              attempts=[]; target.unlink(missing_ok=True)
+              try:
+                  worker.run_ltx(source,prompt,target)
+                  print(f'MONIA provider={worker.LTX_LABEL} ready bytes={target.stat().st_size}',flush=True)
+                  return worker.LTX_LABEL,attempts
+              except Exception as exc:
+                  target.unlink(missing_ok=True); attempts.append(f'{worker.LTX_LABEL}: {exc}')
+                  print(f'MONIA LTX failed: {exc}',flush=True)
+              for space,label in worker.WAN_PROVIDERS:
+                  try:
+                      worker.run_wan_with_timeout(space,label,source,prompt,target)
+                      return label,attempts
+                  except Exception as exc:
+                      target.unlink(missing_ok=True); attempts.append(f'{label}: {exc}')
+              raise RuntimeError(' | '.join(attempts))
+
+          worker.WAN_TIMEOUT_SECONDS=20
+          worker.generate=generate_ltx_first
+          for shot in worker.SHOTS:
+              if shot.get('id')=='lucas-presence':
+                  shot['prompt']=(
+                    'Photorealistic live-action cinematic portrait video of Lucas, the same man as the canonical reference extracted from the user-provided video, with stable identity. '
+                    'Preserve his angular masculine face, strong jaw and cheekbones, dark swept-back hair, light grey-green eyes, short dark stubble, tanned olive skin, and black tattoos visible across his neck and upper chest whenever clothing allows. '
+                    'Calm confident controlled presence, intense direct gaze, restrained half-smile, subtle brow reactions, realistic blinking, small eye shifts, natural breathing, slow precise head turns and understated body movement. '
+                    'Neutral realistic interior, soft cinematic daylight, premium short-drama realism, restrained camera movement. Lucas alone in frame. '
+                    'No woman, no second person, no dialogue, no text, no subtitles, no watermark, no UI, no morphing, no identity drift, no tattoo drift.'
+                  )
+          print('MonIA V2 source=Infomaniak canon; provider order=LTX then Wan fallback',flush=True)
+          raise SystemExit(worker.main())
+          PY
+          python .monia_runner.py
+
+      - name: Verify public result
+        run: |
+          python - <<'PY'
+          import requests
+          base='https://marion-lucas.marionbolomey.fr'
+          for path in ['/resources/monia/canon/lucas/reference.jpg','/resources/monia/generated/intro-marion-generated.mp4','/resources/monia/generated/intro-lucas-generated.mp4']:
+              r=requests.get(base+path+'?run=${{ github.run_id }}',timeout=30,headers={'Cache-Control':'no-cache'})
+              if not r.ok or len(r.content)<1024: raise SystemExit(f'Public verification failed {path}: HTTP {r.status_code} bytes={len(r.content)}')
+              print(f'publicVerification true {path} bytes={len(r.content)}')
+          PY
