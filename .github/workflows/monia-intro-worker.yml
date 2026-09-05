@@ -12,6 +12,7 @@ on:
     paths:
       - "scripts/monia_intro_worker.py"
       - ".github/workflows/monia-intro-worker.yml"
+      - "assets/lucas-reference-parts/**"
   schedule:
     - cron: "17 * * * *"
 
@@ -91,6 +92,52 @@ jobs:
           print(f'Prepared local Marion atlas from canonical video: {target} ({target.stat().st_size} bytes)')
           PY
 
+      - name: Prepare Lucas canonical source from user video
+        shell: bash
+        run: |
+          cat assets/lucas-reference-parts/part-*.txt | tr -d '\n\r ' | base64 --decode > /tmp/lucas-user-reference.jpg
+          python - <<'PY'
+          from pathlib import Path
+          from PIL import Image
+
+          source_path = Path('/tmp/lucas-user-reference.jpg')
+          source = Image.open(source_path).convert('RGB')
+          source.load()
+          if source.width < 300 or source.height < 400:
+              raise RuntimeError(f'Lucas canonical reference unexpectedly small: {source.size}')
+
+          canvas_w, canvas_h = 1600, 1200
+          side, top, bottom, gap = 0.012, 0.13, 0.025, 0.008
+          cell_w = (1 - side * 2 - gap * 3) / 4
+          cell_h = (1 - top - bottom - gap * 2) / 3
+          cw = round(cell_w * canvas_w)
+          ch = round(cell_h * canvas_h)
+          target_ratio = cw / ch
+          source_ratio = source.width / source.height
+
+          if source_ratio > target_ratio:
+              new_w = round(source.height * target_ratio)
+              left = max(0, (source.width - new_w) // 2)
+              source = source.crop((left, 0, left + new_w, source.height))
+          elif source_ratio < target_ratio:
+              new_h = round(source.width / target_ratio)
+              top_crop = max(0, (source.height - new_h) // 2)
+              source = source.crop((0, top_crop, source.width, top_crop + new_h))
+          source = source.resize((cw, ch), Image.Resampling.LANCZOS)
+
+          canvas = Image.new('RGB', (canvas_w, canvas_h), 'black')
+          for row in range(3):
+              for col in range(4):
+                  x = round((side + col * (cell_w + gap)) * canvas_w)
+                  y = round((top + row * (cell_h + gap)) * canvas_h)
+                  canvas.paste(source, (x, y))
+
+          target = Path('public/resources/monia/atlas-lucas.webp')
+          target.parent.mkdir(parents=True, exist_ok=True)
+          canvas.save(target, 'WEBP', quality=94, method=6)
+          print(f'Prepared Lucas atlas from user video reference: source={source_path.stat().st_size} bytes atlas={target.stat().st_size} bytes')
+          PY
+
       - name: Validate MonIA worker syntax
         run: python -m py_compile scripts/monia_intro_worker.py
 
@@ -134,7 +181,7 @@ jobs:
               for shot in worker.SHOTS:
                   if shot.get("id") == "lucas-presence":
                       shot["prompt"] = (
-                          "Photorealistic live-action cinematic portrait video of Lucas, the exact same man as the canonical Lucas reference image, with absolutely stable identity. "
+                          "Photorealistic live-action cinematic portrait video of Lucas, the exact same man as the canonical Lucas reference image extracted from the user-provided video, with absolutely stable identity. "
                           "Preserve his angular masculine face, strong jaw and cheekbones, dark swept-back hair, light grey-green eyes, short dark stubble, tanned olive skin, and the black tattoos visible across his neck and upper chest whenever clothing allows. "
                           "His presence is calm, confident and controlled: intense direct gaze, restrained half-smile, subtle brow reactions, realistic blinking, small eye shifts, natural breathing, slow precise head turns and understated body movement. "
                           "Keep his elegant sensual confidence without exaggerated acting. Neutral realistic interior, soft cinematic daylight, premium short-drama realism, restrained camera movement. "
@@ -142,7 +189,7 @@ jobs:
                       )
 
               print("MonIA provider order: LTX first; Wan 20s fallback probe only.", flush=True)
-              print("Lucas canon motion prompt updated from the user-provided video extract; Lucas alone in frame.", flush=True)
+              print("Lucas source: user-provided video reference reconstructed locally and used as canonical atlas.", flush=True)
               raise SystemExit(worker.main())
           PY
           python .monia_runner.py
