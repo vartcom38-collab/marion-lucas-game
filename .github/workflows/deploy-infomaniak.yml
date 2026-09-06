@@ -27,6 +27,20 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
+      - name: Install FFmpeg
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -y
+          sudo apt-get install -y ffmpeg
+
+      - name: Generate living world loops
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tools/generate-living-loops.mjs
+          find public/resources/living -maxdepth 1 -type f -name '*.mp4' -print || true
+
       - name: Build Vite application
         run: npm run build
 
@@ -39,6 +53,7 @@ jobs:
           test -d dist/assets
           test -d dist/resources
           test -f dist/api/monia-media-store.php
+          test -f dist/resources/living/home.mp4
 
       - name: Deploy dist to Infomaniak via FTPES
         env:
