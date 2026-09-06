@@ -1,19 +1,38 @@
 {
-  "version": 1,
+  "version": 2,
   "lucas": {
     "status": "locked",
     "source": "private canonical user video",
     "sourceStorage": "/private/monia/lucas/source.mp4",
-    "frames": {
-      "seriousSeconds": 22,
-      "primarySeconds": 26,
-      "smileSeconds": 30
+    "referencePack": {
+      "identity": {
+        "primary": "/resources/monia/canon/lucas/reference.jpg",
+        "frames": {
+          "seriousSeconds": 22,
+          "primarySeconds": 26,
+          "smileSeconds": 30
+        }
+      },
+      "motion": {
+        "video": "/private/monia/lucas/source.mp4",
+        "role": [
+          "body movement",
+          "posture",
+          "gaze behavior",
+          "micro-expressions",
+          "head movement",
+          "gesture rhythm"
+        ],
+        "priority": "canonical"
+      }
     },
     "primaryReference": "/resources/monia/canon/lucas/reference.jpg",
     "approvedIntroVideo": "/resources/monia/generated/intro-lucas-candidate-desktop.mp4",
     "approvedOn": "2026-09-06",
     "rules": [
       "Use only the canonical Lucas source video and extracted canon frames as identity references.",
+      "Use the canonical Lucas source video as the movement reference whenever the generation backend supports video guidance.",
+      "When direct video guidance is unavailable, derive motion cues from the canonical source video rather than inventing a different manner of moving.",
       "Do not redesign or substitute Lucas.",
       "Preserve facial geometry, hair, eyes, stubble, skin tone, neck and chest tattoos.",
       "Preserve natural ears exactly as the source; no holes, gauges, piercings, earrings or invented ear details.",
