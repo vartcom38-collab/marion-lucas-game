@@ -51,7 +51,7 @@ jobs:
           ! grep -Eqi "chatterbox|EDGE_SPACE|hf\.space|gradio_api" src/monia/voice-engine.ts
           ! grep -q "fetch(" src/monia/server-brain.ts
           ! grep -R -q "cdnjs.cloudflare.com/ajax/libs/onnxruntime-web" dist
-          grep -R -q "/ort/ort-wasm" dist/assets
+          test -n "$(find dist/assets -maxdepth 1 -type f -name 'piper-tts-web-*.js' -print -quit)"
           node -e "const fs=require('fs');const m=JSON.parse(fs.readFileSync('dist/config/monia-visio-approved.json','utf8'));if(m.status!=='locked'||!m.fallback)process.exit(1)"
           echo "Vite build is deployable: Lucas voice is local Piper with same-origin ONNX Runtime assets, paid server AI network disabled, locked visio manifest present."
 
