@@ -24,6 +24,29 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
+      - name: Validate Drama Director
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/drama_director.py \
+            --title "CI Drama Test" \
+            --location "apartment" \
+            --time "evening" \
+            --script $'Marion: Tu es rentré tard.\nLucas: Je sais. Désolé.' \
+            --output /tmp/episode-plan.json
+          python3 - <<'PY'
+          import json
+          p=json.load(open('/tmp/episode-plan.json', encoding='utf-8'))
+          assert p['rules']['candidate_only'] is True
+          assert p['rules']['auto_publish_live'] is False
+          assert p['characters']['lucas']['canon_ref'].endswith('/lucas/reference.jpg')
+          assert p['characters']['marion']['canon_ref'].endswith('/marion/reference.jpg')
+          assert len(p['scenes']) == 1
+          assert len(p['scenes'][0]['shots']) >= 5
+          assert all(s['quality_status'] == 'pending' for s in p['scenes'][0]['shots'])
+          print('Drama Director episode plan validated')
+          PY
+
       - name: Build Vite application
         run: npm run build
 
@@ -40,6 +63,9 @@ jobs:
           test -f dist/ort/ort-wasm-simd-threaded.mjs
           test -f dist/ort/ort-wasm-simd-threaded.wasm
           test -f src/monia/local-piper-voice.ts
+          test -f config/drama-character-bible.json
+          test -f scripts/drama_director.py
+          grep -q '"status": "locked"' config/drama-character-bible.json
           grep -q "@mintplex-labs/piper-tts-web" package.json
           grep -q '"onnxruntime-web": "1.18.0"' package.json
           grep -q "fr_FR-tom-medium" src/monia/local-piper-voice.ts
@@ -53,6 +79,6 @@ jobs:
           ! grep -R -q "cdnjs.cloudflare.com/ajax/libs/onnxruntime-web" dist
           test -n "$(find dist/assets -maxdepth 1 -type f -name 'piper-tts-web-*.js' -print -quit)"
           node -e "const fs=require('fs');const m=JSON.parse(fs.readFileSync('dist/config/monia-visio-approved.json','utf8'));if(m.status!=='locked'||!m.fallback)process.exit(1)"
-          echo "Vite build is deployable: Lucas voice is local Piper with same-origin ONNX Runtime assets, paid server AI network disabled, locked visio manifest present."
+          echo "Vite build is deployable: Drama Director validated, Lucas voice remains local-only, same-origin ONNX Runtime assets present, locked visio manifest present."
 
 # Validation rerun after migrating AppDeploy binary assets.
