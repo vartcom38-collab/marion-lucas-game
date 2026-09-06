@@ -1,5 +1,6 @@
 import { MARION_LUCAS_PROFILE, narrationPrompt, type MonIACompactContext } from './profile';
 import { moniaStorage } from './storage';
+import { askMonIAServerBrain } from './server-brain';
 import {
   directorPrompt,
   fallbackDirector,
@@ -78,7 +79,7 @@ class MonIARuntime {
   private worker: Worker | null = null;
   private pending = new Map<string, Pending>();
   private listeners = new Set<(s: MonIAStatus) => void>();
-  private state: MonIAStatus = { status: 'idle', progress: 0, label: 'Prête à charger à la première utilisation' };
+  private state: MonIAStatus = { status: 'idle', progress: 0, label: 'IA serveur prioritaire · secours local prêt' };
 
   isSupported() {
     return typeof Worker !== 'undefined' && typeof indexedDB !== 'undefined' && typeof WebAssembly !== 'undefined';
@@ -102,7 +103,7 @@ class MonIARuntime {
   private ensureWorker() {
     if (this.worker) return this.worker;
     if (!this.isSupported()) {
-      this.setState({ status: 'unsupported', progress: 0, label: 'Moteur local incompatible sur cet appareil · secours actif' });
+      this.setState({ status: 'unsupported', progress: 0, label: 'Moteur local incompatible · fallback déterministe actif' });
       return null;
     }
 
@@ -166,9 +167,34 @@ class MonIARuntime {
       pending.resolve(result);
     };
 
-    w.onerror = () => this.setState({ status: 'error', progress: 0, label: 'Erreur du moteur local · secours actif' });
+    w.onerror = () => this.setState({ status: 'error', progress: 0, label: 'IA locale indisponible · fallback déterministe actif' });
     this.worker = w;
     return w;
+  }
+
+  private async serverNarration(context:MonIACompactContext):Promise<MonIAResult|null>{
+    const response=await askMonIAServerBrain('narration',narrationPrompt(context));
+    if(!response.ok||!response.text)return null;
+    const parsed=parseNarrationJSON(response.text);
+    if(!parsed)return null;
+    const result:MonIAResult={...parsed,source:'local'};
+    if(result.memory){
+      await moniaStorage.put({id:`server-${Date.now()}-${Math.random().toString(36).slice(2)}`,kind:'action',text:result.memory,day:context.day,time:context.time,actors:[context.speaker],createdAt:Date.now()}).catch(()=>undefined);
+    }
+    this.setState({status:'ready',progress:100,label:`MonIA serveur prête${response.model?` · ${response.model}`:''}`});
+    return result;
+  }
+
+  private async serverDirector(request:MonIADirectorRequest,safe:MonIADirectorResult):Promise<MonIADirectorResult|null>{
+    const response=await askMonIAServerBrain('director',directorPrompt(request));
+    if(!response.ok||!response.text)return null;
+    const parsed=parseDirectorJSON(response.text,safe);
+    if(!parsed)return null;
+    if(parsed.memory){
+      await moniaStorage.put({id:`server-director-${Date.now()}-${Math.random().toString(36).slice(2)}`,kind:'dialogue',text:parsed.memory,day:request.context.day,time:request.context.time,actors:['Marion',request.actor],createdAt:Date.now()}).catch(()=>undefined);
+    }
+    this.setState({status:'ready',progress:100,label:`MonIA serveur prête${response.model?` · ${response.model}`:''}`});
+    return parsed;
   }
 
   async narrate(context: MonIACompactContext, mode: MonIAMode, enabled: boolean) {
@@ -184,6 +210,8 @@ class MonIARuntime {
     }).catch(() => undefined);
 
     if (!enabled) return safe;
+    const server=await this.serverNarration(context).catch(()=>null);
+    if(server)return server;
     const w = this.ensureWorker();
     if (!w) return safe;
 
@@ -207,6 +235,8 @@ class MonIARuntime {
     }).catch(() => undefined);
 
     if (!enabled) return safe;
+    const server=await this.serverDirector(request,safe).catch(()=>null);
+    if(server)return server;
     const w = this.ensureWorker();
     if (!w) return safe;
 
@@ -230,7 +260,7 @@ class MonIARuntime {
     this.worker?.terminate();
     this.worker = null;
     this.pending.clear();
-    this.setState({ status: 'idle', progress: 0, label: 'Modèle libéré · il se rechargera à la prochaine utilisation' });
+    this.setState({ status: 'idle', progress: 0, label: 'IA locale libérée · MonIA serveur reste prioritaire' });
   }
 }
 
