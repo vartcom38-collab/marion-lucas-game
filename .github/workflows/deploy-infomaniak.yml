@@ -53,6 +53,7 @@ jobs:
           test -d dist/assets
           test -d dist/resources
           test -f dist/api/monia-media-store.php
+          test -f dist/api/monia-ai.php
           test -f dist/resources/living/home.mp4
           test -f dist/config/monia-visio-approved.json
           node -e "const fs=require('fs');const m=JSON.parse(fs.readFileSync('dist/config/monia-visio-approved.json','utf8'));if(m.status!=='locked'||!m.fallback)process.exit(1)"
