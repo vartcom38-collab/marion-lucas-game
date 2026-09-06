@@ -1,29 +1,24 @@
 import { cancelMonIAVoice } from './voice-engine';
-import { speakLucasExpressive } from './expressive-voice';
+import { synthesizeLucasLocal, LUCAS_LOCAL_VOICE_ID } from './local-piper-voice';
 
 const diagnostics=()=>document.getElementById('diagnostics');
 const answer=()=>document.getElementById('answer');
 let speaking=false;
+let audio:HTMLAudioElement|null=null;
 
-async function playPremium(button:HTMLButtonElement){
+async function playLocal(button:HTMLButtonElement){
   const text=(answer()?.textContent||'').trim();
   if(!text)return;
-  if(speaking){cancelMonIAVoice();speaking=false;button.textContent='▶ Écouter le vocal';return;}
-  speaking=true;button.textContent='⏳ CosyVoice…';
-  const diag=diagnostics();if(diag)diag.textContent='Test vocal Lucas : initialisation CosyVoice strict…';
-  const result=await speakLucasExpressive(text,{
-    allowFallback:false,
-    onStage:stage=>{if(diag)diag.textContent=`CosyVoice Lucas · ${stage}`},
-    onProvider:provider=>{if(diag)diag.textContent=`Test vocal Lucas : provider réellement utilisé = ${provider}`},
-    onStart:()=>{button.textContent='■ Lecture CosyVoice…'},
-    onEnd:()=>{speaking=false;button.textContent='▶ Écouter le vocal'},
-    onError:error=>{speaking=false;button.textContent='▶ Écouter le vocal';if(diag)diag.textContent=`❌ CosyVoice réel en échec : ${error}`},
-  });
-  if(diag){
-    if(result.error)diag.textContent=`❌ CosyVoice réel en échec : ${result.error}`;
-    else diag.textContent='✓ Test vocal Lucas : provider = cosyvoice expressif';
-  }
-  if(result.error){speaking=false;button.textContent='▶ Écouter le vocal';}
+  if(speaking){cancelMonIAVoice();if(audio){audio.pause();audio.src='';audio=null}speaking=false;button.textContent='▶ Écouter Lucas local';return;}
+  speaking=true;button.textContent='⏳ Piper local…';
+  const diag=diagnostics();if(diag)diag.textContent=`Test vocal Lucas : Piper local ${LUCAS_LOCAL_VOICE_ID}…`;
+  const result=await synthesizeLucasLocal(text,detail=>{if(diag)diag.textContent=`Piper Lucas · ${detail}`});
+  if(!result.ok||!result.audioUrl){speaking=false;button.textContent='▶ Écouter Lucas local';if(diag)diag.textContent=`❌ Piper local en échec : ${result.error||'audio indisponible'}`;return;}
+  audio=new Audio(result.audioUrl);audio.preload='auto';
+  audio.onplay=()=>{button.textContent='■ Lecture Piper locale…';if(diag)diag.textContent=`✓ Voix locale Lucas · ${LUCAS_LOCAL_VOICE_ID}`};
+  audio.onended=()=>{speaking=false;audio=null;button.textContent='▶ Écouter Lucas local'};
+  audio.onerror=()=>{speaking=false;audio=null;button.textContent='▶ Écouter Lucas local';if(diag)diag.textContent='❌ Lecture Piper locale impossible'};
+  try{await audio.play()}catch(error){speaking=false;audio=null;button.textContent='▶ Écouter Lucas local';if(diag)diag.textContent=`❌ Lecture bloquée : ${error instanceof Error?error.message:String(error)}`;}
 }
 
 document.addEventListener('click',event=>{
@@ -31,7 +26,7 @@ document.addEventListener('click',event=>{
   const button=target?.closest('#audioZone .audioPlay') as HTMLButtonElement|null;
   if(!button)return;
   event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();
-  void playPremium(button);
+  void playLocal(button);
 },true);
 
-console.info('[MonIA Test] Strict expressive CosyVoice diagnostics active');
+console.info('[MonIA Test] Local Piper Lucas diagnostics active');
