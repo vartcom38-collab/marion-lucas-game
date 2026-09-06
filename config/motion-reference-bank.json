@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "status": "locked",
+  "policy": {
+    "motion_reference_only": true,
+    "copy_identity": false,
+    "copy_face": false,
+    "copy_body_identity": false,
+    "copy_wardrobe": false,
+    "character_canon_has_priority": true,
+    "age_appropriate_motion_required": true
+  },
+  "references": [
+    {
+      "id": "motion-user-20260906-a",
+      "source_file_label": "ScreenRecording_09-06-2026 22-34-28_1.mp4",
+      "asset_status": "pending-ingest",
+      "tags": ["motion_reference_only", "blocking", "walking", "body_movement", "camera_timing", "do_not_copy_identity"]
+    },
+    {
+      "id": "motion-user-20260906-b",
+      "source_file_label": "ScreenRecording_09-06-2026 22-35-51_1.mp4",
+      "asset_status": "pending-ingest",
+      "tags": ["motion_reference_only", "parent_child_interaction", "carrying_child", "protective_posture", "walking_with_child", "family_blocking_reference", "do_not_copy_identity"]
+    }
+  ],
+  "future_child_motion_bands": ["baby", "toddler", "young_child", "older_child", "teen"]
+}
