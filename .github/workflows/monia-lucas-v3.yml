@@ -22,6 +22,7 @@ jobs:
       INFOMANIAK_FTP_USER: ${{ secrets.INFOMANIAK_FTP_USER }}
       INFOMANIAK_FTP_PASSWORD: ${{ secrets.INFOMANIAK_FTP_PASSWORD }}
       HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      LUCAS_DRIVE_FILE_ID: "1b3cf_bsQ-t2Hex1MsGpr5dq1JdEoaK-h"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -29,16 +30,8 @@ jobs:
           python-version: "3.12"
       - name: Install free MonIA dependencies
         run: python -m pip install --disable-pip-version-check gradio_client pillow requests
-      - name: Refresh Lucas canon from private source video when available
-        run: |
-          python - <<'PY'
-          import subprocess
-          try:
-              subprocess.run(['python', 'scripts/monia_lucas_canon_from_video.py'], check=True)
-              print('Lucas canon refreshed directly from private source video.')
-          except subprocess.CalledProcessError as exc:
-              print(f'No usable private source video yet; keeping existing canon. exit={exc.returncode}')
-          PY
+      - name: Build Lucas canon strictly from the real source video
+        run: python scripts/monia_lucas_canon_from_video.py
       - name: Validate Lucas canon
         run: |
           python - <<'PY'
