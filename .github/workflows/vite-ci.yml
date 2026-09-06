@@ -67,6 +67,8 @@ jobs:
               'dist/index.html',
               'dist/monia-test.html',
               'dist/config/monia-visio-approved.json',
+              'dist/config/drama-approved.json',
+              'dist/config/motion-reference-bank.json',
               'dist/ort/ort-wasm-simd-threaded.mjs',
               'dist/ort/ort-wasm-simd-threaded.wasm',
               'src/monia/local-piper-voice.ts',
@@ -75,7 +77,11 @@ jobs:
               'src/monia/drama-shot-planner.ts',
               'src/monia/long-drama.ts',
               'src/monia/long-drama-bridge.ts',
+              'src/monia/drama-approval.ts',
+              'src/monia/media-predictor.ts',
               'config/drama-character-bible.json',
+              'config/drama-approved.json',
+              'config/motion-reference-bank.json',
               'scripts/drama_director.py',
           ]
           for item in required_files:
@@ -87,8 +93,20 @@ jobs:
           bible = json.loads(Path('config/drama-character-bible.json').read_text(encoding='utf-8'))
           require(bible.get('status') == 'locked', 'Drama Character Bible is locked')
 
+          drama_manifest = json.loads(Path('dist/config/drama-approved.json').read_text(encoding='utf-8'))
+          require(drama_manifest.get('status') == 'locked', 'Drama approval manifest is locked')
+          require(drama_manifest.get('policy',{}).get('fresh_generation_is_candidate_only') is True, 'fresh Drama generation is candidate-only')
+          require(drama_manifest.get('policy',{}).get('auto_publish_live') is False, 'Drama auto-publish live is forbidden')
+
+          motion = json.loads(Path('dist/config/motion-reference-bank.json').read_text(encoding='utf-8'))
+          require(motion.get('policy',{}).get('motion_reference_only') is True, 'motion bank is motion-only')
+          require(motion.get('policy',{}).get('copy_identity') is False, 'motion bank cannot copy identity')
+          require(any('carrying_child' in r.get('tags',[]) for r in motion.get('references',[])), 'parent-child carrying motion reference registered')
+
           index = Path('index.html').read_text(encoding='utf-8')
           bridge = Path('src/monia/long-drama-bridge.ts').read_text(encoding='utf-8')
+          approval = Path('src/monia/drama-approval.ts').read_text(encoding='utf-8')
+          predictor = Path('src/monia/media-predictor.ts').read_text(encoding='utf-8')
           trigger = Path('src/monia/gameplay-drama-trigger.ts').read_text(encoding='utf-8')
           planner = Path('src/monia/drama-shot-planner.ts').read_text(encoding='utf-8')
           long_drama = Path('src/monia/long-drama.ts').read_text(encoding='utf-8')
@@ -97,8 +115,18 @@ jobs:
           require("source:'gameplay'" in trigger, 'Drama trigger source is gameplay')
           require('./src/monia/auto-scene.ts' not in index, 'autonomous auto-scene is disabled')
           require('./src/monia/long-drama-bridge.ts' in index, 'long-drama bridge is loaded')
+          require('./src/monia/media-predictor.ts' in index, 'spoiler-safe Media Predictor is loaded')
           require('runtime.respond=async' not in bridge, 'Drama does not globally hook MonIA responses')
           require('dramaPassesQualityGate' in bridge, 'complete-scene quality gate is required')
+          require('saveDramaCandidate(trigger.signature,candidate)' in bridge, 'fresh generated Drama is stored as candidate')
+          require('deliverDrama(' not in bridge, 'fresh generated Drama has no direct delivery path')
+          require('approvedDramaForSignature' in bridge, 'live Drama comes from approval manifest')
+          require('playLongDrama(candidate)' not in bridge, 'candidate Drama cannot auto-play')
+          require('fresh_generation_is_candidate_only' in Path('config/drama-approved.json').read_text(encoding='utf-8'), 'candidate-only policy is explicit')
+          require("state:'candidate'" in approval, 'Drama candidate state is explicit')
+          require('identity:\'pending\'' in approval and 'canon:\'pending\'' in approval, 'identity/canon validation remains pending for fresh candidates')
+          require('candidateOnly:true' in predictor, 'Media Predictor only emits candidate opportunities')
+          require('narrativeAuthority:false' in predictor, 'Media Predictor has zero narrative authority')
           require('reusePreviousFrame' in planner, 'shot planner marks continuity reuse')
           require('extractLastVideoFrame' in long_drama, 'runtime extracts previous video final frame')
           require('previous-video-frame' in long_drama, 'next shot can use actual previous video frame')
@@ -138,7 +166,7 @@ jobs:
 
           manifest = json.loads(Path('dist/config/monia-visio-approved.json').read_text(encoding='utf-8'))
           require(manifest.get('status') == 'locked' and bool(manifest.get('fallback')), 'locked visio manifest has fallback')
-          print('Vite build is deployable: gameplay-only Drama and Visio directors, previous-frame continuity, complete-scene quality gate, approved visio media, local voice path and same-origin ONNX Runtime are locked.')
+          print('Vite build is deployable: gameplay-only Drama/Visio authority, approval-first Drama playback, spoiler-safe anticipation, motion-only reference bank, previous-frame continuity and local voice infrastructure are locked.')
           PY
 
 # Validation rerun after migrating AppDeploy binary assets.
