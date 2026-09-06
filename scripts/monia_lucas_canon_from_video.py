@@ -4,6 +4,7 @@ import argparse
 import ftplib
 import os
 import subprocess
+import time
 from pathlib import Path
 
 import requests
@@ -82,6 +83,22 @@ def download_drive_source(file_id: str, target: Path) -> None:
     raise RuntimeError('Unable to download shared Lucas source from Drive: ' + ' | '.join(errors[-4:]))
 
 
+def ftp_connect_with_retry(attempts: int = 6, delay: int = 8):
+    errors: list[str] = []
+    for attempt in range(1, attempts + 1):
+        try:
+            ftp = worker.ftp_connect()
+            root = worker.remote_root(ftp)
+            print(f'Connected to Infomaniak on attempt {attempt}; root={root}')
+            return ftp, root
+        except Exception as exc:
+            errors.append(f'{type(exc).__name__}: {exc}')
+            print(f'Infomaniak connection attempt {attempt}/{attempts} failed: {exc}')
+            if attempt < attempts:
+                time.sleep(delay)
+    raise RuntimeError('Unable to connect to Infomaniak after retries: ' + ' | '.join(errors[-3:]))
+
+
 def upload_private_source(ftp, root: str, source: Path) -> str:
     remote_path = private_source_path(root)
     ensure_remote_dir(ftp, str(Path(remote_path).parent).replace('\\', '/'))
@@ -91,31 +108,14 @@ def upload_private_source(ftp, root: str, source: Path) -> str:
     return remote_path
 
 
-def fetch_source(target: Path) -> tuple[object, str]:
-    ftp = worker.ftp_connect()
-    root = worker.remote_root(ftp)
-    path = private_source_path(root)
-    try:
-        with target.open('wb') as fh:
-            ftp.retrbinary(f'RETR {path}', fh.write, blocksize=1024 * 1024)
-        if looks_like_mp4(target):
-            print(f'Loaded private Lucas source from Infomaniak: {target.stat().st_size} bytes')
-            return ftp, root
-        target.unlink(missing_ok=True)
-    except ftplib.all_errors:
-        target.unlink(missing_ok=True)
-
+def fetch_source(target: Path) -> None:
+    # Drive is the canonical read source for CI. Do not depend on FTP being reachable
+    # before frame extraction. This exact path already proved capable of retrieving
+    # the user's 39.8 MB source video.
     drive_file_id = os.environ.get('LUCAS_DRIVE_FILE_ID', '').strip()
     if not drive_file_id:
-        try:
-            ftp.quit()
-        except Exception:
-            pass
-        raise FileNotFoundError(f'Private Lucas source video not found at {path} and LUCAS_DRIVE_FILE_ID is empty')
-
+        raise FileNotFoundError('LUCAS_DRIVE_FILE_ID is empty; refusing to fall back to an old Lucas canon')
     download_drive_source(drive_file_id, target)
-    upload_private_source(ftp, root, target)
-    return ftp, root
 
 
 def normalize_crop(image: Image.Image, box: tuple[int, int, int, int], target: Path) -> None:
@@ -163,12 +163,12 @@ def upload_refs(ftp, root: str, refs: dict[str, Path]) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description='Build Lucas canon directly from his private source video')
+    parser = argparse.ArgumentParser(description='Build Lucas canon directly from his real source video')
     parser.add_argument('--keep-source', action='store_true')
     args = parser.parse_args()
 
     source = WORK / 'source.mp4'
-    ftp, root = fetch_source(source)
+    fetch_source(source)
     try:
         refs: dict[str, Path] = {}
         for name, seconds, crop in FRAME_SPECS:
@@ -176,12 +176,24 @@ def main() -> None:
             extract_frame(source, seconds, target, crop)
             refs[name] = target
             print(f'Extracted Lucas {name} at {seconds:.1f}s -> {target}')
-        upload_refs(ftp, root, refs)
-    finally:
+
+        # Only connect to Infomaniak after the real source has already been downloaded
+        # and the exact canonical frames have been built locally.
+        ftp, root = ftp_connect_with_retry()
         try:
-            ftp.quit()
-        except Exception:
-            pass
+            # Keep a private source copy when FTP happens to be reachable, but never
+            # use it as the identity source for generation.
+            try:
+                upload_private_source(ftp, root, source)
+            except Exception as exc:
+                print(f'Private source refresh skipped: {type(exc).__name__}: {exc}')
+            upload_refs(ftp, root, refs)
+        finally:
+            try:
+                ftp.quit()
+            except Exception:
+                pass
+    finally:
         if not args.keep_source:
             source.unlink(missing_ok=True)
 
