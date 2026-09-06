@@ -4,7 +4,6 @@ const SAVE_KEY='marion-lucas-save-v4';
 let mounted:HTMLElement|null=null;
 let idleTimer=0;
 let focusLabel:HTMLElement|null=null;
-let lastPointer={x:0,y:0};
 
 type LooseSave={time?:string;place?:string;camera?:number;overlay?:string|null};
 
@@ -61,7 +60,6 @@ function pointerMove(game:HTMLElement,e:PointerEvent){
   const r=game.getBoundingClientRect();
   const x=((e.clientX-r.left)/Math.max(1,r.width)-.5)*20;
   const y=((e.clientY-r.top)/Math.max(1,r.height)-.5)*14;
-  lastPointer={x:e.clientX,y:e.clientY};
   game.style.setProperty('--gp-x',x.toFixed(2));
   game.style.setProperty('--gp-y',y.toFixed(2));
   nearestInteractive(game,e.clientX,e.clientY);
