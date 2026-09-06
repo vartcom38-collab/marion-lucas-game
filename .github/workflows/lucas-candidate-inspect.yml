@@ -1,0 +1,52 @@
+name: Lucas Candidate Inspect
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/lucas-candidate-inspect.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download candidate and extract frames
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p lucas-inspect/frames
+          curl -fL --retry 3 --retry-delay 2 \
+            'https://marion-lucas.marionbolomey.fr/resources/monia/generated/intro-lucas-candidate-desktop.mp4' \
+            -o lucas-inspect/candidate.mp4
+          ffprobe -v error -show_entries stream=width,height,duration -of default=noprint_wrappers=1 lucas-inspect/candidate.mp4 > lucas-inspect/metadata.txt
+          ffmpeg -hide_banner -loglevel error -y -ss 0.2 -i lucas-inspect/candidate.mp4 -frames:v 1 lucas-inspect/frames/frame-020.jpg
+          ffmpeg -hide_banner -loglevel error -y -ss 0.9 -i lucas-inspect/candidate.mp4 -frames:v 1 lucas-inspect/frames/frame-090.jpg
+          ffmpeg -hide_banner -loglevel error -y -ss 1.6 -i lucas-inspect/candidate.mp4 -frames:v 1 lucas-inspect/frames/frame-160.jpg
+          ffmpeg -hide_banner -loglevel error -y -ss 2.4 -i lucas-inspect/candidate.mp4 -frames:v 1 lucas-inspect/frames/frame-240.jpg
+          python - <<'PY'
+          from PIL import Image, ImageOps, ImageDraw
+          from pathlib import Path
+          files=sorted(Path('lucas-inspect/frames').glob('*.jpg'))
+          imgs=[Image.open(p).convert('RGB') for p in files]
+          thumbs=[]
+          for im in imgs:
+              t=ImageOps.contain(im,(640,360))
+              canvas=Image.new('RGB',(640,390),'white')
+              canvas.paste(t,((640-t.width)//2,0))
+              thumbs.append(canvas)
+          sheet=Image.new('RGB',(1280,780),'white')
+          for i,t in enumerate(thumbs):
+              sheet.paste(t,((i%2)*640,(i//2)*390))
+          sheet.save('lucas-inspect/contact.jpg',quality=92)
+          PY
+      - name: Upload inspection artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lucas-candidate-inspect
+          path: lucas-inspect/
+          retention-days: 7
