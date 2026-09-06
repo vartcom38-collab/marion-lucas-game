@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "policy": {
+    "identitySourceRequired": true,
+    "allowPromptOnlyCharacterGeneration": false,
+    "candidateOnly": true,
+    "paidProvidersAllowed": false
+  },
+  "characters": {
+    "lucas": {
+      "referenceMode": "video",
+      "video": {
+        "storage": "infomaniak-private",
+        "remotePath": "/private/monia/lucas/source.mp4",
+        "primarySecond": 26,
+        "referenceSeconds": [22, 26, 30]
+      },
+      "fallbackImage": "https://marion-lucas.marionbolomey.fr/resources/monia/canon/lucas/reference.jpg",
+      "rules": [
+        "The reference media is the identity authority.",
+        "Never substitute Lucas with another man.",
+        "Preserve face geometry, eyes, nose, mouth, jaw, hair, stubble, skin tone and tattoos.",
+        "Preserve natural ears; no holes, gauges, earrings, piercings or invented ear details.",
+        "Full-body, medium and close-up shots are allowed when the reference pack supports them."
+      ]
+    },
+    "marion": {
+      "referenceMode": "image-pack",
+      "atlasChunks": [
+        "assets/monia-atlas/chunks/marion-00.b64",
+        "assets/monia-atlas/chunks/marion-01.b64",
+        "assets/monia-atlas/chunks/marion-02.b64",
+        "assets/monia-atlas/chunks/marion-03.b64",
+        "assets/monia-atlas/chunks/marion-04.b64"
+      ],
+      "fallbackImage": "https://marion-lucas.marionbolomey.fr/resources/monia/canon/marion/reference.jpg",
+      "rules": [
+        "The reference pack is the identity authority.",
+        "Never substitute Marion with another woman.",
+        "Preserve her recognizable facial proportions, eyes, smile, hair and natural appearance.",
+        "Full-body, medium and close-up shots are allowed when the reference pack supports them."
+      ]
+    }
+  }
+}
