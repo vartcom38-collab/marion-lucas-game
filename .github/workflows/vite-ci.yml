@@ -71,6 +71,9 @@ jobs:
               'dist/ort/ort-wasm-simd-threaded.wasm',
               'src/monia/local-piper-voice.ts',
               'src/monia/gameplay-drama-trigger.ts',
+              'src/monia/drama-shot-planner.ts',
+              'src/monia/long-drama.ts',
+              'src/monia/long-drama-bridge.ts',
               'config/drama-character-bible.json',
               'scripts/drama_director.py',
           ]
@@ -86,10 +89,17 @@ jobs:
           index = Path('index.html').read_text(encoding='utf-8')
           bridge = Path('src/monia/long-drama-bridge.ts').read_text(encoding='utf-8')
           trigger = Path('src/monia/gameplay-drama-trigger.ts').read_text(encoding='utf-8')
+          planner = Path('src/monia/drama-shot-planner.ts').read_text(encoding='utf-8')
+          long_drama = Path('src/monia/long-drama.ts').read_text(encoding='utf-8')
           require('GAMEPLAY_DRAMA_EVENT' in bridge, 'long-drama listens to gameplay trigger')
           require("source:'gameplay'" in trigger, 'Drama trigger source is gameplay')
           require('./src/monia/auto-scene.ts' not in index, 'autonomous auto-scene is disabled')
           require('./src/monia/long-drama-bridge.ts' in index, 'long-drama bridge is loaded')
+          require('runtime.respond=async' not in bridge, 'Drama does not globally hook MonIA responses')
+          require('dramaPassesQualityGate' in bridge, 'complete-scene quality gate is required')
+          require('reusePreviousFrame' in planner, 'shot planner marks continuity reuse')
+          require('extractLastVideoFrame' in long_drama, 'runtime extracts previous video final frame')
+          require("previous-video-frame" in long_drama, 'next shot can use actual previous video frame')
 
           package = Path('package.json').read_text(encoding='utf-8')
           local_voice = Path('src/monia/local-piper-voice.ts').read_text(encoding='utf-8')
@@ -114,12 +124,12 @@ jobs:
               if p.is_file() and p.suffix in {'.js','.html','.css','.mjs','.json'}:
                   try: dist_text += p.read_text(encoding='utf-8', errors='ignore')
                   except Exception: pass
-          require('cdnjs.cloudflare.com/ajax/libs/onnxruntime-web' not in dist_text, 'ONNX runtime has no Cloudflare CDN dependency')
+          require('cdnjs.cloudflare.com/ajax/libs/onnxruntime-web' not in dist_text, 'ONNX runtime has no Cloudflare runtime dependency')
           require(any(Path('dist/assets').glob('piper-tts-web-*.js')), 'Piper bundle exists')
 
           manifest = json.loads(Path('dist/config/monia-visio-approved.json').read_text(encoding='utf-8'))
           require(manifest.get('status') == 'locked' and bool(manifest.get('fallback')), 'locked visio manifest has fallback')
-          print('Vite build is deployable: gameplay is the Drama trigger authority, Drama Director validated, Lucas voice remains local-only, same-origin ONNX Runtime assets present, locked visio manifest present.')
+          print('Vite build is deployable: gameplay-only Drama trigger, previous-frame continuity, complete-scene quality gate, Drama Director, local voice path and same-origin ONNX Runtime are locked.')
           PY
 
 # Validation rerun after migrating AppDeploy binary assets.
