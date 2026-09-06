@@ -36,8 +36,12 @@ jobs:
           test -d dist/assets
           test -d dist/resources
           test -f dist/config/monia-visio-approved.json
+          test -d dist/ort
+          test -f dist/ort/ort-wasm-simd-threaded.mjs
+          test -f dist/ort/ort-wasm-simd-threaded.wasm
           test -f src/monia/local-piper-voice.ts
           grep -q "@mintplex-labs/piper-tts-web" package.json
+          grep -q '"onnxruntime-web": "1.18.0"' package.json
           grep -q "fr_FR-tom-medium" src/monia/local-piper-voice.ts
           grep -q "./local-piper-voice" src/monia/visio-conversation.ts
           grep -q "./local-piper-voice" src/monia/test-voice-bridge.ts
@@ -46,7 +50,9 @@ jobs:
           ! grep -qi "cosyvoice" src/monia/test-voice-bridge.ts
           ! grep -Eqi "chatterbox|EDGE_SPACE|hf\.space|gradio_api" src/monia/voice-engine.ts
           ! grep -q "fetch(" src/monia/server-brain.ts
+          ! grep -R -q "cdnjs.cloudflare.com/ajax/libs/onnxruntime-web" dist
+          grep -R -q "/ort/ort-wasm" dist/assets
           node -e "const fs=require('fs');const m=JSON.parse(fs.readFileSync('dist/config/monia-visio-approved.json','utf8'));if(m.status!=='locked'||!m.fallback)process.exit(1)"
-          echo "Vite build is deployable: all Lucas voice paths are local Piper, paid server AI network disabled, locked visio manifest present."
+          echo "Vite build is deployable: Lucas voice is local Piper with same-origin ONNX Runtime assets, paid server AI network disabled, locked visio manifest present."
 
 # Validation rerun after migrating AppDeploy binary assets.
