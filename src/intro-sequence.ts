@@ -6,6 +6,10 @@ type ServerShot={id:string;label?:string;videoUrl:string};
 
 const sleep=(ms:number)=>new Promise<void>(r=>window.setTimeout(r,ms));
 
+// Lucas intro explicitly approved by the user on 2026-09-06.
+// Keep this candidate as the live Lucas shot until another candidate is explicitly approved.
+const APPROVED_LUCAS_VIDEO='./resources/monia/generated/intro-lucas-candidate-desktop.mp4';
+
 function sourceOf(id:string){return(document.getElementById(id) as HTMLVideoElement|null)?.src||''}
 
 function muteFromSettings(){
@@ -27,10 +31,9 @@ async function serverIntroShots():Promise<ServerShot[]>{
 function introShots(serverPrepared:ServerShot[]=[]):Shot[]{
   const prepared=getPreparedMonIAIntroShots();
   const marion=serverPrepared.find(s=>s.id==='marion-morning')||prepared.find(s=>s.id==='marion-morning');
-  const lucas=serverPrepared.find(s=>s.id==='lucas-presence')||prepared.find(s=>s.id==='lucas-presence');
   return [
     {src:marion?.videoUrl||sourceOf('introVideo'),label:marion?.label||'NÎMES'},
-    {src:lucas?.videoUrl||sourceOf('lucasVideo'),label:lucas?.label||'AILLEURS, AU MÊME MOMENT'},
+    {src:APPROVED_LUCAS_VIDEO,label:'AILLEURS, AU MÊME MOMENT'},
   ].filter(s=>Boolean(s.src));
 }
 
@@ -86,7 +89,7 @@ async function mountSequence(stage:HTMLElement){
   if(!stopped){stage.classList.add('introSequenceEnding');await sleep(520);skip.click()}
 }
 
-// Le worker serveur MonIA est prioritaire. La génération navigateur reste un secours opportuniste.
+// Le worker serveur MonIA est prioritaire pour Marion. Lucas reste verrouillé sur la vidéo approuvée ci-dessus.
 window.setTimeout(()=>{void prepareMonIAIntroShots()},1800);
 
 const observer=new MutationObserver(()=>{const stage=document.querySelector<HTMLElement>('.teaserCine');if(stage)void mountSequence(stage)});
