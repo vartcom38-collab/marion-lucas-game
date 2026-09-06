@@ -34,6 +34,8 @@ jobs:
           test -f dist/index.html
           test -d dist/assets
           test -d dist/resources
-          echo "Vite build is deployable."
+          test -f dist/config/monia-visio-approved.json
+          node -e "const fs=require('fs');const m=JSON.parse(fs.readFileSync('dist/config/monia-visio-approved.json','utf8'));if(m.status!=='locked'||!m.fallback)process.exit(1)"
+          echo "Vite build is deployable and contains the locked visio approval manifest."
 
 # Validation rerun after migrating AppDeploy binary assets.
