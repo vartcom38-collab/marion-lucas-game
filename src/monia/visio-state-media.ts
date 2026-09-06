@@ -3,6 +3,7 @@ import type { MonIAMaterializedMedia } from './experience-runtime';
 
 const BASE_KEY='monia-last-visio-media-v1';
 const CANDIDATES_KEY='monia-visio-state-candidates-v1';
+const REVIEW_MODE=new URLSearchParams(location.search).get('moniaReview')==='1'||location.hostname==='localhost'||location.hostname==='127.0.0.1';
 
 type VisioCandidateMedia={base?:string;listening?:string;speaking?:string;reaction?:string;sourceImage?:string;status:'idle'|'generating'|'ready'|'partial'|'error';updatedAt:number;errors:string[]};
 
@@ -20,8 +21,8 @@ const prompts={
 } as const;
 
 async function generateState(name:keyof typeof prompts,file:File,current:VisioCandidateMedia){const result=await generateFreeCanonVideo({referenceFile:file,prompt:prompts[name]});if(result.state==='ready'&&result.videoUrl){current[name]=result.videoUrl;writeCandidates({...current,updatedAt:Date.now()});return true}current.errors.push(`${name}: ${result.error||'génération indisponible'}`);writeCandidates({...current,updatedAt:Date.now()});return false}
-async function build(){if(running)return;const base=readBase();if(base?.state!=='ready'||!base.videoUrl||!base.imageUrl)return;if(base.imageUrl===lastSource){const current=readCandidates();if(current?.status==='ready'||current?.status==='partial')return}running=true;lastSource=base.imageUrl;const current:VisioCandidateMedia={base:base.videoUrl,sourceImage:base.imageUrl,status:'generating',updatedAt:Date.now(),errors:[]};writeCandidates(current);try{const file=await imageUrlToFile(base.imageUrl);const listeningOk=await generateState('listening',file,current);const speakingOk=await generateState('speaking',file,current);const reactionOk=await generateState('reaction',file,current);const count=[listeningOk,speakingOk,reactionOk].filter(Boolean).length;current.status=count===3?'ready':count>0?'partial':'error';current.updatedAt=Date.now();writeCandidates(current)}catch(error){current.status='error';current.errors.push(error instanceof Error?error.message:String(error));current.updatedAt=Date.now();writeCandidates(current)}finally{running=false}}
-window.setInterval(()=>{void build()},1500);window.addEventListener('storage',()=>{void build()});
+async function build(){if(!REVIEW_MODE||running)return;const base=readBase();if(base?.state!=='ready'||!base.videoUrl||!base.imageUrl)return;if(base.imageUrl===lastSource){const current=readCandidates();if(current?.status==='ready'||current?.status==='partial')return}running=true;lastSource=base.imageUrl;const current:VisioCandidateMedia={base:base.videoUrl,sourceImage:base.imageUrl,status:'generating',updatedAt:Date.now(),errors:[]};writeCandidates(current);try{const file=await imageUrlToFile(base.imageUrl);const listeningOk=await generateState('listening',file,current);const speakingOk=await generateState('speaking',file,current);const reactionOk=await generateState('reaction',file,current);const count=[listeningOk,speakingOk,reactionOk].filter(Boolean).length;current.status=count===3?'ready':count>0?'partial':'error';current.updatedAt=Date.now();writeCandidates(current)}catch(error){current.status='error';current.errors.push(error instanceof Error?error.message:String(error));current.updatedAt=Date.now();writeCandidates(current)}finally{running=false}}
+if(REVIEW_MODE){window.setInterval(()=>{void build()},1500);window.addEventListener('storage',()=>{void build()})}
 declare global{interface Window{__moniaVisioCandidates?:()=>VisioCandidateMedia|null}}
 window.__moniaVisioCandidates=readCandidates;
-console.info('[MonIA] Visio state generator produces review candidates only');
+console.info(REVIEW_MODE?'[MonIA] Visio review mode enabled: candidate generation allowed':'[MonIA] Production visio: candidate generation disabled; approved media only');
