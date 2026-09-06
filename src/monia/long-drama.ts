@@ -67,6 +67,7 @@ export async function materializeLongDrama(experience:MonIAExperienceResult,onPr
   if(active)return drama;
   active=true;write(drama);onProgress?.(drama);
   let continuityFrame:File|null=null;
+  let continuityFrameKind:'video-frame'|'fallback'|null=null;
   try{
     drama.state='generating';write(drama);
     for(let i=0;i<shots.length;i++){
@@ -79,8 +80,8 @@ export async function materializeLongDrama(experience:MonIAExperienceResult,onPr
         let usingPreviousFrame=false;
         if(i>0&&shotSpec.reusePreviousFrame&&continuityFrame){
           sourceFile=continuityFrame;
-          usingPreviousFrame=true;
-          clip.continuitySource='previous-video-frame';
+          usingPreviousFrame=continuityFrameKind==='video-frame';
+          clip.continuitySource=usingPreviousFrame?'previous-video-frame':'previous-reference-fallback';
         }else{
           const image=await generateAutonomousSourceImage({plan:shot});
           if(image.state!=='ready'||!image.imageUrl)throw new Error(image.error||'image source indisponible');
@@ -94,10 +95,11 @@ export async function materializeLongDrama(experience:MonIAExperienceResult,onPr
         clip.videoUrl=video.videoUrl;clip.state='ready';write(drama);onProgress?.(drama);
         try{
           continuityFrame=await extractLastVideoFrame(video.videoUrl,i);
+          continuityFrameKind='video-frame';
         }catch(error){
           continuityFrame=sourceFile;
+          continuityFrameKind='fallback';
           drama.errors.push(`${clip.id}: continuité vidéo indisponible, référence précédente conservée (${error instanceof Error?error.message:String(error)})`);
-          clip.continuitySource=clip.continuitySource||'previous-reference-fallback';
           write(drama);onProgress?.(drama);
         }
       }catch(error){
@@ -140,4 +142,4 @@ export function playLongDrama(drama=readLongDrama()){
   next();
 }
 
-console.info('[Drama] Gameplay-authoritative multi-shot runtime ready with previous-video-frame continuity; automatic character voice remains disabled until canon validation');
+console.info('[Drama] Gameplay-authoritative multi-shot runtime ready with tracked previous-video-frame continuity; automatic character voice remains disabled until canon validation');
