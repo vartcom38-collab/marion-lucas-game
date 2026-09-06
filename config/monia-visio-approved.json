@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "character": "lucas",
+  "status": "locked",
+  "fallback": "/resources/monia/generated/intro-lucas-candidate-desktop.mp4",
+  "states": {
+    "listening": null,
+    "speaking": null,
+    "reaction": null
+  },
+  "rules": [
+    "Only explicitly approved visio clips may be shown live.",
+    "Generated listening, speaking and reaction clips are candidates until approval.",
+    "Never use playback-rate warping or random seeking to fake lip synchronization.",
+    "If an approved state clip is missing, use the approved canonical fallback rather than an unvalidated generated clip.",
+    "Lucas identity must come from the locked Lucas canon pack and motion video.",
+    "Visio output must remain natural, photorealistic, desktop-first and free of identity drift."
+  ]
+}
