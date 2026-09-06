@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "marion": {
     "status": "locked",
     "source": "existing MonIA Marion atlas pack",
@@ -14,13 +14,15 @@
       ],
       "primary": "/resources/monia/canon/marion/reference.jpg"
     },
+    "approvedIntroVideo": "/resources/marion-nimes.mp4",
+    "approvedOn": "2026-09-06",
     "rules": [
       "Use the existing Marion MonIA atlas pack as the identity authority.",
       "Do not redesign, substitute or beautify Marion into a different woman.",
       "Preserve facial proportions, eyes, smile, hair and recognizable appearance across close-up, medium and full-body shots.",
       "Use full-body framing when the gameplay scene requires walking, posture or environmental interaction.",
       "Generate cinematic gameplay media in 16:9 desktop format by default.",
-      "Never replace a validated Marion media asset without explicit approval."
+      "Never replace the approved live Marion video without explicit approval."
     ]
   },
   "lucas": {
@@ -69,6 +71,7 @@
     "Do not generate a named character from text alone when a canonical pack exists.",
     "Prefer subtle believable movement over large gestures when identity preservation is at risk.",
     "Keep generated media as candidates until validated; gameplay must fall back to already approved media rather than publish an identity-drifted result.",
+    "Approved live intro media for Marion and Lucas must never be replaced automatically by background workers or manifests.",
     "Default cinematic gameplay composition is 16:9 desktop."
   ]
 }
