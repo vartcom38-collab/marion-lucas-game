@@ -2,13 +2,6 @@ name: MonIA Lucas V3
 
 on:
   workflow_dispatch:
-  push:
-    branches: ["main"]
-    paths:
-      - ".github/workflows/monia-lucas-v3.yml"
-      - "scripts/monia_video_engine.py"
-      - "scripts/monia_lucas_canon_from_video.py"
-      - "scripts/monia_intro_worker.py"
 
 permissions:
   contents: read
@@ -49,7 +42,7 @@ jobs:
           im=Image.open(io.BytesIO(r.content)); im.load()
           print(f'Lucas canon valid: {im.width}x{im.height}, {len(r.content)} bytes')
           PY
-      - name: Generate Lucas with MonIA zero-cost engine
+      - name: Generate Lucas candidate with MonIA zero-cost engine
         run: python -m scripts.monia_video_engine --character lucas --publish-candidate
       - name: Verify Lucas candidate publicly
         run: |
