@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 5,
   "marion": {
     "status": "locked",
     "source": "existing MonIA Marion atlas pack",
@@ -73,5 +73,13 @@
     "Keep generated media as candidates until validated; gameplay must fall back to already approved media rather than publish an identity-drifted result.",
     "Approved live intro media for Marion and Lucas must never be replaced automatically by background workers or manifests.",
     "Default cinematic gameplay composition is 16:9 desktop."
+  ],
+  "visioMediaRules": [
+    "Live visio may use only media listed in config/monia-visio-approved.json.",
+    "Automatically generated listening, speaking and reaction clips are review candidates only and must never be promoted to live without explicit approval.",
+    "Never fake speech synchronization by changing playback rate or randomly seeking inside a clip.",
+    "When an approved state-specific visio clip is unavailable, use the approved canonical fallback instead of an unvalidated generated clip.",
+    "Lucas visio candidates must preserve the locked Lucas identity and use the canonical motion video when the backend supports video guidance.",
+    "Reject identity drift, face morphing, unnatural mouth motion, invented ear details, tattoo changes, visible generation artifacts, text, subtitles or watermarks."
   ]
 }
