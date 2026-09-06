@@ -1,27 +1,26 @@
 import { moniaExperience } from './experience-runtime';
-import { materializeLongDrama, playLongDrama } from './long-drama';
+import { materializeLongDrama, playLongDrama, readLongDrama, type MonIALongDrama } from './long-drama';
 import { GAMEPLAY_DRAMA_EVENT, type GameplayDramaTrigger } from './gameplay-drama-trigger';
 
 const runtime=moniaExperience as any;
-const original=runtime.respond.bind(runtime);
-let running=false;
 let gameplayRunning=false;
 
-runtime.respond=async(...args:any[])=>{
-  const result=await original(...args);
-  const channel=result?.response?.channel;
-  const cinematic=result?.mediaPlan?.mode==='cinematic-drama'||channel==='scene'||channel==='video';
-  if(cinematic&&result?.mediaPlan?.visual?.required&&!running){
-    running=true;
-    void materializeLongDrama(result).then(drama=>{
-      if((drama.state==='ready'||drama.state==='partial')&&drama.clips.filter((c:any)=>c.state==='ready'&&c.videoUrl).length>=2){
-        if(document.visibilityState==='visible'&&!document.getElementById('moniaVisioOverlay'))playLongDrama(drama);
-        else try{sessionStorage.setItem('monia-long-drama-pending-v1','1')}catch{}
-      }
-    }).catch(error=>console.warn('[MonIA long drama]',error)).finally(()=>{running=false});
+function dramaPassesQualityGate(drama:MonIALongDrama|null){
+  if(!drama||drama.state!=='ready'||drama.clips.length<3)return false;
+  if(!drama.clips.every(c=>c.state==='ready'&&Boolean(c.videoUrl)))return false;
+  if(drama.clips[0]?.role!=='establishing')return false;
+  if(!drama.clips.some(c=>c.role==='dialogue'||c.role==='reaction'||c.role==='two-shot'))return false;
+  return true;
+}
+
+function deliverDrama(drama:MonIALongDrama){
+  if(!dramaPassesQualityGate(drama)){
+    console.warn('[Drama] Quality gate rejected incomplete scene; gameplay continues normally',drama.state,drama.errors);
+    return;
   }
-  return result;
-};
+  if(document.visibilityState==='visible'&&!document.getElementById('moniaVisioOverlay'))playLongDrama(drama);
+  else try{sessionStorage.setItem('monia-long-drama-pending-v1','1')}catch{}
+}
 
 function relationLabel(value:number){
   if(value>=70)return'relation très forte et intime';
@@ -36,7 +35,7 @@ async function handleGameplayDrama(trigger:GameplayDramaTrigger){
   gameplayRunning=true;
   try{
     const dialogue=trigger.dialogue.length?trigger.dialogue.join(' · '):trigger.body;
-    await runtime.respond({
+    const result=await runtime.respond({
       actor:'Lucas',
       requestedChannel:'scene',
       context:{
@@ -62,6 +61,13 @@ async function handleGameplayDrama(trigger:GameplayDramaTrigger){
       },
       availableMedia:['lucas-intro.mp4','appartement-nimes.png'],
     },'auto',true);
+
+    const channel=result?.response?.channel;
+    const cinematic=result?.mediaPlan?.mode==='cinematic-drama'||channel==='scene'||channel==='video';
+    if(!cinematic||!result?.mediaPlan?.visual?.required)return;
+
+    const drama=await materializeLongDrama(result);
+    deliverDrama(drama);
   }catch(error){
     console.warn('[Drama] Gameplay-triggered generation failed; gameplay continues normally',error);
   }finally{
@@ -78,10 +84,12 @@ function playPending(){
   try{
     if(sessionStorage.getItem('monia-long-drama-pending-v1')!=='1')return;
     if(document.getElementById('moniaVisioOverlay'))return;
-    sessionStorage.removeItem('monia-long-drama-pending-v1');playLongDrama();
+    sessionStorage.removeItem('monia-long-drama-pending-v1');
+    const drama=readLongDrama();
+    if(dramaPassesQualityGate(drama))playLongDrama(drama);
   }catch{}
 }
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)playPending()});
 window.setInterval(playPending,1800);
 
-console.info('[Drama] Long-drama engine is gameplay-triggered');
+console.info('[Drama] Strict gameplay-only generation bridge + complete-scene quality gate active');
