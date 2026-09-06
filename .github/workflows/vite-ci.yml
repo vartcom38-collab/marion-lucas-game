@@ -32,14 +32,19 @@ jobs:
         run: |
           set -euo pipefail
           test -f dist/index.html
+          test -f dist/monia-test.html
           test -d dist/assets
           test -d dist/resources
           test -f dist/config/monia-visio-approved.json
           test -f src/monia/local-piper-voice.ts
           grep -q "@mintplex-labs/piper-tts-web" package.json
           grep -q "fr_FR-tom-medium" src/monia/local-piper-voice.ts
+          grep -q "./local-piper-voice" src/monia/visio-conversation.ts
+          grep -q "./local-piper-voice" src/monia/test-voice-bridge.ts
+          grep -q "LUCAS_LOCAL_VOICE_ID" src/monia/test-voice-bridge.ts
+          ! grep -qi "cosyvoice" src/monia/test-voice-bridge.ts
           ! grep -q "fetch(" src/monia/server-brain.ts
           node -e "const fs=require('fs');const m=JSON.parse(fs.readFileSync('dist/config/monia-visio-approved.json','utf8'));if(m.status!=='locked'||!m.fallback)process.exit(1)"
-          echo "Vite build is deployable: local Piper voice present, paid server AI network disabled, locked visio manifest present."
+          echo "Vite build is deployable: production visio and test lab both use local Piper, paid server AI network disabled, locked visio manifest present."
 
 # Validation rerun after migrating AppDeploy binary assets.
