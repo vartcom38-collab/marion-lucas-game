@@ -7,6 +7,7 @@ on:
     paths:
       - ".github/workflows/monia-lucas-v3.yml"
       - "scripts/monia_video_engine.py"
+      - "scripts/monia_lucas_canon_from_video.py"
       - "scripts/monia_intro_worker.py"
 
 permissions:
@@ -28,6 +29,16 @@ jobs:
           python-version: "3.12"
       - name: Install free MonIA dependencies
         run: python -m pip install --disable-pip-version-check gradio_client pillow requests
+      - name: Refresh Lucas canon from private source video when available
+        run: |
+          python - <<'PY'
+          import subprocess
+          try:
+              subprocess.run(['python', 'scripts/monia_lucas_canon_from_video.py'], check=True)
+              print('Lucas canon refreshed directly from private source video.')
+          except subprocess.CalledProcessError as exc:
+              print(f'No usable private source video yet; keeping existing canon. exit={exc.returncode}')
+          PY
       - name: Validate Lucas canon
         run: |
           python - <<'PY'
