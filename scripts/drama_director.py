@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Literal
 
 ShotType = Literal["wide", "two-shot", "medium", "close-up", "insert", "reaction"]
+CHARACTER_BIBLE_PATH = Path("config/drama-character-bible.json")
 
 
 @dataclass
@@ -17,6 +18,7 @@ class CharacterLock:
     canon_ref: str
     voice_profile: str | None
     visual_rules: list[str]
+    acting_rules: list[str]
     forbidden: list[str]
 
 
@@ -71,44 +73,33 @@ class EpisodePlan:
     rules: dict[str, object]
 
 
-DEFAULT_CHARACTERS = {
-    "lucas": CharacterLock(
-        key="lucas",
-        display_name="Lucas Castellano",
-        canon_ref="/resources/monia/canon/lucas/reference.jpg",
-        voice_profile="lucas-canon-pending",
-        visual_rules=[
-            "same locked facial geometry in every shot",
-            "thick dark wavy hair with natural forehead strands",
-            "intense brown-hazel eyes",
-            "short stubble",
-            "olive/tanned skin",
-            "natural photoreal live-action rendering",
-        ],
-        forbidden=["tattoos", "facial scar", "nose scar", "identity drift", "generic male model"],
-    ),
-    "marion": CharacterLock(
-        key="marion",
-        display_name="Marion",
-        canon_ref="/resources/monia/canon/marion/reference.jpg",
-        voice_profile="marion-canon-pending",
-        visual_rules=[
-            "same locked facial proportions in every shot",
-            "recognizable identity from canonical reference",
-            "natural photoreal live-action rendering",
-        ],
-        forbidden=["identity drift", "generic model face", "beauty-filter redesign"],
-    ),
-}
+def load_character_bible(path: Path = CHARACTER_BIBLE_PATH) -> tuple[dict[str, CharacterLock], dict[str, object]]:
+    data = json.loads(path.read_text(encoding="utf-8"))
+    if data.get("status") != "locked":
+        raise RuntimeError("Drama character bible must be locked before generation")
+
+    characters: dict[str, CharacterLock] = {}
+    for key, raw in data.get("characters", {}).items():
+        voice = raw.get("voice_profile") or {}
+        characters[key] = CharacterLock(
+            key=key,
+            display_name=str(raw.get("display_name") or key.title()),
+            canon_ref=str(raw["identity_reference"]),
+            voice_profile=str(voice.get("status") or "pending-validation"),
+            visual_rules=list(raw.get("visual_rules") or []),
+            acting_rules=list(raw.get("acting_rules") or []),
+            forbidden=list(raw.get("forbidden") or []),
+        )
+    if "marion" not in characters or "lucas" not in characters:
+        raise RuntimeError("Drama character bible must define Marion and Lucas")
+    return characters, dict(data.get("global_story_rules") or {})
 
 
 def split_dialogue(script: str) -> list[tuple[str | None, str]]:
     parts: list[tuple[str | None, str]] = []
     pattern = re.compile(r"(?im)^\s*(marion|lucas)\s*[:\-]\s*(.+?)\s*$")
-    consumed: set[tuple[int, int]] = set()
     for match in pattern.finditer(script):
         parts.append((match.group(1).lower(), match.group(2).strip()))
-        consumed.add(match.span())
     if not parts and script.strip():
         sentences = [s.strip() for s in re.split(r"(?<=[.!?])\s+", script.strip()) if s.strip()]
         parts.extend((None, s) for s in sentences)
@@ -123,6 +114,18 @@ def _shot_pattern(index: int, has_dialogue: bool) -> ShotType:
     return "reaction" if index % 2 else "medium"
 
 
+def _continuity_after(base: ContinuityState, previous_shot_ref: str | None) -> ContinuityState:
+    return ContinuityState(
+        location=base.location,
+        time_of_day=base.time_of_day,
+        weather=base.weather,
+        wardrobe=dict(base.wardrobe),
+        props=list(base.props),
+        emotional_state=dict(base.emotional_state),
+        previous_shot_ref=previous_shot_ref,
+    )
+
+
 def build_episode_plan(
     title: str,
     script: str,
@@ -130,6 +133,7 @@ def build_episode_plan(
     time_of_day: str,
     target_duration_s: int = 45,
 ) -> EpisodePlan:
+    characters, story_rules = load_character_bible()
     beats = split_dialogue(script)
     if not beats:
         beats = [(None, "A quiet cinematic beat between Marion and Lucas.")]
@@ -154,20 +158,22 @@ def build_episode_plan(
         camera="slow restrained establishing move, no flashy motion",
         dialogue=None,
         ambience="natural room tone and subtle environment sound",
-        continuity=base_continuity,
-        identity_refs={k: v.canon_ref for k, v in DEFAULT_CHARACTERS.items()},
+        continuity=_continuity_after(base_continuity, None),
+        identity_refs={k: characters[k].canon_ref for k in ("marion", "lucas")},
     )
     shots.append(opening)
 
-    for idx, (speaker, text) in enumerate(beats, start=2):
+    for speaker, text in beats:
+        shot_order = len(shots) + 1
         chars = [speaker] if speaker else ["marion", "lucas"]
         dialogue = {speaker: text} if speaker else None
-        shot_type = _shot_pattern(idx - 1, dialogue is not None)
+        shot_type = _shot_pattern(shot_order - 1, dialogue is not None)
+        previous_id = shots[-1].id
         shots.append(
             DramaShot(
-                id=f"S01-SH{idx:02d}",
+                id=f"S01-SH{shot_order:02d}",
                 scene_id="S01",
-                order=idx,
+                order=shot_order,
                 shot_type=shot_type,
                 duration_s=4.0 if dialogue else 3.0,
                 characters=chars,
@@ -184,19 +190,20 @@ def build_episode_plan(
                 ),
                 dialogue=dialogue,
                 ambience="continuous ambience from previous shot",
-                continuity=ContinuityState(**asdict(base_continuity), previous_shot_ref=shots[-1].id),
-                identity_refs={k: DEFAULT_CHARACTERS[k].canon_ref for k in chars},
+                continuity=_continuity_after(base_continuity, previous_id),
+                identity_refs={k: characters[k].canon_ref for k in chars},
             )
         )
 
         reaction_target = "lucas" if speaker == "marion" else "marion" if speaker == "lucas" else None
         if reaction_target:
-            ridx = len(shots) + 1
+            reaction_order = len(shots) + 1
+            previous_id = shots[-1].id
             shots.append(
                 DramaShot(
-                    id=f"S01-SH{ridx:02d}",
+                    id=f"S01-SH{reaction_order:02d}",
                     scene_id="S01",
-                    order=ridx,
+                    order=reaction_order,
                     shot_type="reaction",
                     duration_s=2.2,
                     characters=[reaction_target],
@@ -205,8 +212,8 @@ def build_episode_plan(
                     camera="locked close reaction shot, no zoom effect",
                     dialogue=None,
                     ambience="continuous ambience from previous shot",
-                    continuity=ContinuityState(**asdict(base_continuity), previous_shot_ref=shots[-1].id),
-                    identity_refs={reaction_target: DEFAULT_CHARACTERS[reaction_target].canon_ref},
+                    continuity=_continuity_after(base_continuity, previous_id),
+                    identity_refs={reaction_target: characters[reaction_target].canon_ref},
                 )
             )
 
@@ -224,7 +231,7 @@ def build_episode_plan(
         title=title,
         format="vertical-micro-drama",
         target_duration_s=target_duration_s,
-        characters=DEFAULT_CHARACTERS,
+        characters=characters,
         scenes=[scene],
         rules={
             "aspect_ratio": "9:16",
@@ -235,7 +242,7 @@ def build_episode_plan(
             "require_continuity_validation": True,
             "require_voice_validation": True,
             "reuse_previous_frame_when_helpful": True,
-            "no_infidelity": True,
+            **story_rules,
         },
     )
 
