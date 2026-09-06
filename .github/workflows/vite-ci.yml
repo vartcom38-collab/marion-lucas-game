@@ -71,6 +71,7 @@ jobs:
               'dist/ort/ort-wasm-simd-threaded.wasm',
               'src/monia/local-piper-voice.ts',
               'src/monia/gameplay-drama-trigger.ts',
+              'src/monia/gameplay-visio-director.ts',
               'src/monia/drama-shot-planner.ts',
               'src/monia/long-drama.ts',
               'src/monia/long-drama-bridge.ts',
@@ -91,6 +92,7 @@ jobs:
           trigger = Path('src/monia/gameplay-drama-trigger.ts').read_text(encoding='utf-8')
           planner = Path('src/monia/drama-shot-planner.ts').read_text(encoding='utf-8')
           long_drama = Path('src/monia/long-drama.ts').read_text(encoding='utf-8')
+          visio_director = Path('src/monia/gameplay-visio-director.ts').read_text(encoding='utf-8')
           require('GAMEPLAY_DRAMA_EVENT' in bridge, 'long-drama listens to gameplay trigger')
           require("source:'gameplay'" in trigger, 'Drama trigger source is gameplay')
           require('./src/monia/auto-scene.ts' not in index, 'autonomous auto-scene is disabled')
@@ -99,7 +101,14 @@ jobs:
           require('dramaPassesQualityGate' in bridge, 'complete-scene quality gate is required')
           require('reusePreviousFrame' in planner, 'shot planner marks continuity reuse')
           require('extractLastVideoFrame' in long_drama, 'runtime extracts previous video final frame')
-          require("previous-video-frame" in long_drama, 'next shot can use actual previous video frame')
+          require('previous-video-frame' in long_drama, 'next shot can use actual previous video frame')
+
+          require('./src/monia/gameplay-visio-director.ts' in index, 'gameplay Visio Director is loaded')
+          require("source:'gameplay'" in visio_director, 'Visio requests are gameplay-authored')
+          require('Ne jamais déclencher une visio de sa propre initiative.' in visio_director, 'Visio cannot self-trigger')
+          require('signature(current!,request)!==sig' in visio_director, 'stale gameplay context cancels prepared visio')
+          require('monia-visio-approved.json' in visio_director, 'Visio Director prewarms approved-media manifest')
+          require("requestedChannel:'visio'" in visio_director, 'Visio Director requests only visio channel')
 
           package = Path('package.json').read_text(encoding='utf-8')
           local_voice = Path('src/monia/local-piper-voice.ts').read_text(encoding='utf-8')
@@ -129,7 +138,7 @@ jobs:
 
           manifest = json.loads(Path('dist/config/monia-visio-approved.json').read_text(encoding='utf-8'))
           require(manifest.get('status') == 'locked' and bool(manifest.get('fallback')), 'locked visio manifest has fallback')
-          print('Vite build is deployable: gameplay-only Drama trigger, previous-frame continuity, complete-scene quality gate, Drama Director, local voice path and same-origin ONNX Runtime are locked.')
+          print('Vite build is deployable: gameplay-only Drama and Visio directors, previous-frame continuity, complete-scene quality gate, approved visio media, local voice path and same-origin ONNX Runtime are locked.')
           PY
 
 # Validation rerun after migrating AppDeploy binary assets.
