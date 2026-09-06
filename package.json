@@ -6,8 +6,9 @@
   "scripts": {
     "materialize:drama": "node tools/materialize-drama-atlases.mjs",
     "materialize:runtime-config": "node tools/materialize-runtime-config.mjs",
-    "dev": "npm run materialize:drama && npm run materialize:runtime-config && vite",
-    "build": "npm run materialize:drama && npm run materialize:runtime-config && vite build",
+    "materialize:ort": "node tools/materialize-ort-assets.mjs",
+    "dev": "npm run materialize:drama && npm run materialize:runtime-config && npm run materialize:ort && vite",
+    "build": "npm run materialize:drama && npm run materialize:runtime-config && npm run materialize:ort && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -15,7 +16,8 @@
     "@gradio/client": "2.5.1",
     "@huggingface/transformers": "^3.8.1",
     "@mintplex-labs/piper-tts-web": "1.0.5",
-    "lucide": "^0.469.0"
+    "lucide": "^0.469.0",
+    "onnxruntime-web": "1.18.0"
   },
   "optionalDependencies": {
     "@rollup/rollup-linux-x64-gnu": "^4.0.0"
