@@ -1,0 +1,130 @@
+name: MonIA Lucas V3
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/monia-lucas-v3.yml"
+      - "scripts/monia_intro_worker.py"
+
+permissions:
+  contents: read
+
+jobs:
+  generate-lucas:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      INFOMANIAK_FTP_HOST: ${{ secrets.INFOMANIAK_FTP_HOST }}
+      INFOMANIAK_FTP_USER: ${{ secrets.INFOMANIAK_FTP_USER }}
+      INFOMANIAK_FTP_PASSWORD: ${{ secrets.INFOMANIAK_FTP_PASSWORD }}
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: python -m pip install --disable-pip-version-check gradio_client pillow requests
+      - name: Generate Lucas with resilient fallback
+        shell: bash
+        run: |
+          cat > .monia_lucas_v3.py <<'PY'
+          import io
+          import multiprocessing as mp
+          from pathlib import Path
+          import requests
+          from PIL import Image
+          import scripts.monia_intro_worker as worker
+
+          CANON_URL = 'https://marion-lucas.marionbolomey.fr/resources/monia/canon/lucas/reference.jpg'
+          source = Path('/tmp/lucas-source.png')
+          target = Path('.monia-intro-worker/intro-lucas-generated.mp4')
+          target.parent.mkdir(parents=True, exist_ok=True)
+
+          prompt = (
+              'Photorealistic live-action cinematic portrait video of Lucas, the same man as the canonical reference, with stable identity. '
+              'Preserve his angular masculine face, strong jaw and cheekbones, dark swept-back hair, light grey-green eyes, short dark stubble, tanned olive skin, and black tattoos visible across his neck and upper chest whenever clothing allows. '
+              'Calm, confident, controlled presence, intense direct gaze, restrained half-smile, subtle brow reactions, realistic blinking, small eye shifts, natural breathing, slow precise head turns and understated body movement. '
+              'Neutral realistic interior, soft cinematic daylight, premium short-drama realism, restrained camera movement. Lucas alone in frame. '
+              'No woman, no second person, no dialogue, no text, no subtitles, no watermark, no UI, no morphing, no identity drift, no tattoo drift.'
+          )
+
+          def prepare_source():
+              r = requests.get(CANON_URL, timeout=30, headers={'Cache-Control':'no-cache'})
+              r.raise_for_status()
+              im = Image.open(io.BytesIO(r.content)).convert('RGB')
+              im.load()
+              if im.width < 80 or im.height < 100:
+                  raise RuntimeError(f'Lucas canon too small: {im.size}')
+              ratio = 768/1024
+              sr = im.width/im.height
+              if sr > ratio:
+                  nw = round(im.height*ratio); left=max(0,(im.width-nw)//2); im=im.crop((left,0,left+nw,im.height))
+              elif sr < ratio:
+                  nh = round(im.width/ratio); top=max(0,(im.height-nh)//2); im=im.crop((0,top,im.width,top+nh))
+              im.resize((768,1024), Image.Resampling.LANCZOS).save(source,'PNG',optimize=True)
+              print(f'Lucas canon loaded from Infomaniak: {im.size} -> {source.stat().st_size} bytes', flush=True)
+
+          def run_wan_fork(space, label):
+              ctx = mp.get_context('fork')
+              queue = ctx.Queue()
+              proc = ctx.Process(target=worker._wan_child, args=(space, label, str(source), prompt, str(target), queue))
+              proc.start()
+              proc.join(90)
+              if proc.is_alive():
+                  proc.terminate(); proc.join(5)
+                  raise TimeoutError(f'{label} timeout after 90s')
+              if queue.empty():
+                  raise RuntimeError(f'{label} ended without result code={proc.exitcode}')
+              ok, detail = queue.get()
+              if not ok:
+                  raise RuntimeError(detail)
+
+          def upload():
+              ftp = worker.ftp_connect()
+              try:
+                  root = worker.remote_root(ftp)
+                  url = worker.upload_file(ftp, root, target, target.name)
+                  print(f'Lucas uploaded to Infomaniak: {url}', flush=True)
+              finally:
+                  try: ftp.quit()
+                  except Exception: pass
+
+          if __name__ == '__main__':
+              prepare_source()
+              errors=[]
+              try:
+                  worker.run_ltx(source, prompt, target)
+                  print(f'Lucas generated with {worker.LTX_LABEL}: {target.stat().st_size} bytes', flush=True)
+              except Exception as exc:
+                  target.unlink(missing_ok=True)
+                  errors.append(f'{worker.LTX_LABEL}: {exc}')
+                  print(f'LTX unavailable, switching to Wan: {exc}', flush=True)
+                  for space, label in worker.WAN_PROVIDERS:
+                      try:
+                          run_wan_fork(space, label)
+                          print(f'Lucas generated with {label}: {target.stat().st_size} bytes', flush=True)
+                          break
+                      except Exception as wan_exc:
+                          target.unlink(missing_ok=True)
+                          errors.append(f'{label}: {wan_exc}')
+                          print(f'Wan fallback failed {label}: {wan_exc}', flush=True)
+                  else:
+                      raise RuntimeError(' | '.join(errors))
+              if not worker.looks_like_video(target):
+                  raise RuntimeError('Generated Lucas file is not a valid video')
+              upload()
+          PY
+          python .monia_lucas_v3.py
+      - name: Verify Lucas publicly
+        run: |
+          python - <<'PY'
+          import requests
+          url='https://marion-lucas.marionbolomey.fr/resources/monia/generated/intro-lucas-generated.mp4?run=${{ github.run_id }}'
+          r=requests.get(url,timeout=30,headers={'Range':'bytes=0-63','Cache-Control':'no-cache','Accept':'video/*,*/*'})
+          ok=r.status_code in (200,206) and len(r.content)>=16 and (b'ftyp' in r.content[:32] or r.content.startswith(b'RIFF') or r.content.startswith(b'\x1aE\xdf\xa3'))
+          print(f'publicVerification={ok} status={r.status_code} bytes={len(r.content)}')
+          if not ok: raise SystemExit('Lucas public video verification failed')
+          PY
