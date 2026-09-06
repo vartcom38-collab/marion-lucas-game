@@ -4,6 +4,8 @@ const SAVE_KEY='marion-lucas-save-v4';
 let mounted:HTMLElement|null=null;
 let idleTimer=0;
 let focusLabel:HTMLElement|null=null;
+let pulseTimer=0;
+let lastPlace='';
 
 type LooseSave={time?:string;place?:string;camera?:number;overlay?:string|null};
 
@@ -53,7 +55,17 @@ function nearestInteractive(game:HTMLElement,x:number,y:number){
     best.classList.add('gp-near');
     const label=(best.querySelector('span')?.textContent||best.getAttribute('aria-label')||'').trim();
     showFocus(label);
-  }else showFocus('');
+    const br=best.getBoundingClientRect();
+    const gr=game.getBoundingClientRect();
+    const fx=((br.left+br.width/2-gr.left)/Math.max(1,gr.width))*100;
+    const fy=((br.top+br.height/2-gr.top)/Math.max(1,gr.height))*100;
+    game.style.setProperty('--gp-focus-x',`${fx.toFixed(2)}%`);
+    game.style.setProperty('--gp-focus-y',`${fy.toFixed(2)}%`);
+    game.classList.add('gp-has-focus');
+  }else{
+    showFocus('');
+    game.classList.remove('gp-has-focus');
+  }
 }
 
 function pointerMove(game:HTMLElement,e:PointerEvent){
@@ -70,13 +82,48 @@ function textFromAction(el:HTMLElement){
   return (el.querySelector('span')?.textContent||el.getAttribute('aria-label')||el.textContent||'').trim().replace(/\s+/g,' ');
 }
 
+function interactionPulse(game:HTMLElement,target:HTMLElement){
+  const r=target.getBoundingClientRect();
+  const g=game.getBoundingClientRect();
+  const x=((r.left+r.width/2-g.left)/Math.max(1,g.width))*100;
+  const y=((r.top+r.height/2-g.top)/Math.max(1,g.height))*100;
+  game.style.setProperty('--gp-action-x',`${x.toFixed(2)}%`);
+  game.style.setProperty('--gp-action-y',`${y.toFixed(2)}%`);
+  game.classList.remove('gp-action-pulse');
+  void game.offsetWidth;
+  game.classList.add('gp-action-pulse');
+  if(pulseTimer)window.clearTimeout(pulseTimer);
+  pulseTimer=window.setTimeout(()=>game.classList.remove('gp-action-pulse'),650);
+}
+
+function transitionBeat(game:HTMLElement){
+  const save=readSave();
+  const place=save?.place||'';
+  if(!lastPlace){lastPlace=place;return}
+  if(place&&place!==lastPlace){
+    game.classList.remove('gp-place-transition');
+    void game.offsetWidth;
+    game.classList.add('gp-place-transition');
+    window.setTimeout(()=>game.classList.remove('gp-place-transition'),900);
+    lastPlace=place;
+  }
+}
+
+function syncState(game:HTMLElement){
+  const save=readSave();
+  if(save?.place){
+    game.dataset.gpPlace=save.place;
+    if(!lastPlace)lastPlace=save.place;
+  }
+  if(save?.time)game.dataset.gpTime=save.time;
+  transitionBeat(game);
+}
+
 function install(game:HTMLElement){
   if(game===mounted)return;
   mounted=game;
   game.classList.add('cinematicGameplay');
-  const save=readSave();
-  if(save?.place)game.dataset.gpPlace=save.place;
-  if(save?.time)game.dataset.gpTime=save.time;
+  syncState(game);
 
   const onMove=(e:PointerEvent)=>pointerMove(game,e);
   game.addEventListener('pointermove',onMove,{passive:true});
@@ -84,13 +131,15 @@ function install(game:HTMLElement){
     game.style.setProperty('--gp-x','0');
     game.style.setProperty('--gp-y','0');
     game.querySelectorAll('.gp-near').forEach(n=>n.classList.remove('gp-near'));
+    game.classList.remove('gp-has-focus');
     showFocus('');
   },{passive:true});
 
   ['pointerdown','wheel','touchstart'].forEach(ev=>game.addEventListener(ev,()=>wake(game),{passive:true}));
   game.addEventListener('click',e=>{
-    const target=(e.target as HTMLElement|null)?.closest<HTMLElement>('[data-home-action],[data-world-action]');
+    const target=(e.target as HTMLElement|null)?.closest<HTMLElement>('[data-home-action],[data-world-action],.gameHotspot,.worldSpot');
     if(target){
+      interactionPulse(game,target);
       const label=textFromAction(target);
       if(label)beat(label);
     }
@@ -129,8 +178,10 @@ window.addEventListener('keydown',e=>{
 
 function scan(){
   const game=document.querySelector<HTMLElement>('.game');
-  if(game)install(game);
-  else{
+  if(game){
+    install(game);
+    syncState(game);
+  }else{
     mounted=null;
     showFocus('');
   }
