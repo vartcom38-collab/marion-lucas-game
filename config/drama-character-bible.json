@@ -1,0 +1,69 @@
+{
+  "version": 1,
+  "status": "locked",
+  "project": "Marion & Lucas",
+  "characters": {
+    "marion": {
+      "display_name": "Marion",
+      "age_at_start": 20,
+      "identity_reference": "/resources/monia/canon/marion/reference.jpg",
+      "voice_profile": {
+        "status": "pending-validation",
+        "rule": "Never auto-approve a generated or substituted voice."
+      },
+      "visual_rules": [
+        "Preserve the canonical facial proportions and recognizable identity from validated references.",
+        "Photorealistic live-action rendering only.",
+        "Natural skin texture and age-appropriate appearance.",
+        "No beauty-filter redesign or generic model substitution."
+      ],
+      "acting_rules": [
+        "Use restrained natural acting and micro-expressions.",
+        "Prefer eye movement, breathing, posture and small facial reactions over exaggerated gestures.",
+        "Keep emotional continuity between adjacent shots."
+      ],
+      "forbidden": [
+        "identity drift",
+        "generic model face",
+        "age shift",
+        "cartoon or illustration rendering"
+      ]
+    },
+    "lucas": {
+      "display_name": "Lucas Castellano",
+      "age_at_start": 22,
+      "identity_reference": "/resources/monia/canon/lucas/reference.jpg",
+      "voice_profile": {
+        "status": "pending-validation",
+        "language": "French",
+        "origin": "Spanish",
+        "target_character": "young, warm, natural, intense, lightly Spanish-colored French when appropriate",
+        "rule": "Never auto-approve a generated or substituted voice."
+      },
+      "visual_rules": [
+        "Preserve the same locked facial geometry in every shot.",
+        "Thick dark wavy hair with natural strands on the forehead.",
+        "Strong eyebrows, intense brown-hazel eyes, olive/tanned skin, defined jaw and short stubble.",
+        "Photorealistic live-action rendering only."
+      ],
+      "acting_rules": [
+        "Publicly charismatic, intense and controlled; privately tender, vulnerable and protective.",
+        "Use restrained masculine body language, breathing, gaze and micro-reactions.",
+        "No theatrical overacting unless explicitly required by the scene."
+      ],
+      "forbidden": [
+        "tattoos",
+        "facial scar",
+        "nose scar",
+        "identity drift",
+        "generic male model",
+        "invented piercings"
+      ]
+    }
+  },
+  "global_story_rules": {
+    "no_infidelity": true,
+    "romance_style": "tension, glances, proximity, protective gestures, embraces, non-explicit fade-to-black",
+    "cinematic_style": "photorealistic mini-drama, natural light, micro-expressions, simple elegant camera"
+  }
+}
