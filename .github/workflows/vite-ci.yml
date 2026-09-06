@@ -63,9 +63,14 @@ jobs:
           test -f dist/ort/ort-wasm-simd-threaded.mjs
           test -f dist/ort/ort-wasm-simd-threaded.wasm
           test -f src/monia/local-piper-voice.ts
+          test -f src/monia/gameplay-drama-trigger.ts
           test -f config/drama-character-bible.json
           test -f scripts/drama_director.py
           grep -q '"status": "locked"' config/drama-character-bible.json
+          grep -q "GAMEPLAY_DRAMA_EVENT" src/monia/long-drama-bridge.ts
+          grep -q "source:'gameplay'" src/monia/gameplay-drama-trigger.ts
+          ! grep -q "./src/monia/auto-scene.ts" index.html
+          grep -q "./src/monia/long-drama-bridge.ts" index.html
           grep -q "@mintplex-labs/piper-tts-web" package.json
           grep -q '"onnxruntime-web": "1.18.0"' package.json
           grep -q "fr_FR-tom-medium" src/monia/local-piper-voice.ts
@@ -79,6 +84,6 @@ jobs:
           ! grep -R -q "cdnjs.cloudflare.com/ajax/libs/onnxruntime-web" dist
           test -n "$(find dist/assets -maxdepth 1 -type f -name 'piper-tts-web-*.js' -print -quit)"
           node -e "const fs=require('fs');const m=JSON.parse(fs.readFileSync('dist/config/monia-visio-approved.json','utf8'));if(m.status!=='locked'||!m.fallback)process.exit(1)"
-          echo "Vite build is deployable: Drama Director validated, Lucas voice remains local-only, same-origin ONNX Runtime assets present, locked visio manifest present."
+          echo "Vite build is deployable: gameplay is the Drama trigger authority, Drama Director validated, Lucas voice remains local-only, same-origin ONNX Runtime assets present, locked visio manifest present."
 
 # Validation rerun after migrating AppDeploy binary assets.
