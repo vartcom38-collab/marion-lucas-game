@@ -27,6 +27,90 @@ jobs:
           python-version: "3.12"
       - name: Install dependencies
         run: python -m pip install --disable-pip-version-check gradio_client pillow requests
+      - name: Ensure Lucas canon is public on Infomaniak
+        shell: bash
+        run: |
+          python - <<'PY'
+          import ftplib, io, os, time
+          import requests
+          from PIL import Image
+
+          PUBLIC_URL='https://marion-lucas.marionbolomey.fr/resources/monia/canon/lucas/reference.jpg'
+          BOOTSTRAP_URL='https://pikaso.cdnpk.net/private/production/5364341239/3549261673.jpg?token=exp=1788998400~hmac=704a87649404f0b780d3618a1149ffd454a420ef53866062c8c76244f532e1c3'
+
+          def valid(data):
+              try:
+                  if len(data) < 2048: return False
+                  im=Image.open(io.BytesIO(data)); im.load()
+                  return im.width >= 80 and im.height >= 100
+              except Exception:
+                  return False
+
+          existing=requests.get(PUBLIC_URL,timeout=30,headers={'Cache-Control':'no-cache','Pragma':'no-cache'})
+          if existing.ok and valid(existing.content):
+              print(f'Lucas canon already public: {len(existing.content)} bytes')
+              raise SystemExit(0)
+
+          src=requests.get(BOOTSTRAP_URL,timeout=45)
+          src.raise_for_status()
+          if not valid(src.content): raise RuntimeError('Bootstrap image is invalid')
+
+          host=os.environ['INFOMANIAK_FTP_HOST'].strip().replace('ftpes://','').replace('ftps://','').replace('ftp://','').rstrip('/')
+          ftp=ftplib.FTP_TLS(timeout=45); ftp.connect(host,21)
+          ftp.login(os.environ['INFOMANIAK_FTP_USER'].strip(),os.environ['INFOMANIAK_FTP_PASSWORD'].rstrip('\r\n'))
+          ftp.prot_p(); ftp.set_pasv(True); ftp.cwd('/')
+
+          def read_text(path):
+              buf=io.BytesIO()
+              try:
+                  ftp.retrbinary(f'RETR {path}',buf.write)
+                  return buf.getvalue().decode('utf-8',errors='ignore').lower()
+              except ftplib.all_errors:
+                  return ''
+
+          def dir_exists(path):
+              cur=ftp.pwd()
+              try:
+                  ftp.cwd(path); ftp.cwd(cur); return True
+              except ftplib.all_errors:
+                  try: ftp.cwd(cur)
+                  except ftplib.all_errors: pass
+                  return False
+
+          root_index=read_text('/index.html')
+          markers=('site est actuellement en construction','bienvenue sur marion-lucas.marionbolomey.fr','hébergé chez infomaniak','<title>marion & lucas</title>','marion-nimes.mp4','lucas-intro.mp4')
+          configured='/sites/marion-lucas.marionbolomey.fr'
+          if any(m in root_index for m in markers):
+              root='/'
+          elif not root_index and dir_exists(configured):
+              root=configured
+          else:
+              root='/'
+          print(f'Lucas canon live FTP root detected: {root}')
+
+          parts=[p for p in ((root.rstrip('/') if root!='/' else '')+'/resources/monia/canon/lucas').split('/') if p]
+          ftp.cwd('/')
+          for part in parts:
+              try: ftp.cwd(part)
+              except ftplib.error_perm:
+                  ftp.mkd(part); ftp.cwd(part)
+          ftp.storbinary('STOR reference.jpg',io.BytesIO(src.content),blocksize=1024*1024)
+          ftp.quit()
+          print(f'Lucas canon uploaded: {len(src.content)} bytes')
+
+          last=None
+          for i in range(6):
+              try:
+                  r=requests.get(PUBLIC_URL+f'?bootstrap={int(time.time())}',timeout=30,headers={'Cache-Control':'no-cache','Pragma':'no-cache'})
+                  if r.ok and valid(r.content):
+                      print(f'Lucas canon publicVerification=true bytes={len(r.content)}')
+                      break
+                  last=f'HTTP {r.status_code} bytes={len(r.content)}'
+              except Exception as exc: last=str(exc)
+              time.sleep(3)
+          else:
+              raise RuntimeError(f'Lucas canon still not public after FTP upload: {last}')
+          PY
       - name: Generate Lucas with resilient fallback
         shell: bash
         run: |
@@ -38,84 +122,59 @@ jobs:
           from PIL import Image
           import scripts.monia_intro_worker as worker
 
-          CANON_URL = 'https://marion-lucas.marionbolomey.fr/resources/monia/canon/lucas/reference.jpg'
-          source = Path('/tmp/lucas-source.png')
-          target = Path('.monia-intro-worker/intro-lucas-generated.mp4')
-          target.parent.mkdir(parents=True, exist_ok=True)
+          CANON_URL='https://marion-lucas.marionbolomey.fr/resources/monia/canon/lucas/reference.jpg'
+          source=Path('/tmp/lucas-source.png')
+          target=Path('.monia-intro-worker/intro-lucas-generated.mp4')
+          target.parent.mkdir(parents=True,exist_ok=True)
+          prompt=('Photorealistic live-action cinematic portrait video of Lucas, the same man as the canonical reference, with stable identity. '
+                  'Preserve his angular masculine face, strong jaw and cheekbones, dark swept-back hair, light grey-green eyes, short dark stubble, tanned olive skin, and black tattoos visible across his neck and upper chest whenever clothing allows. '
+                  'Calm, confident, controlled presence, intense direct gaze, restrained half-smile, subtle brow reactions, realistic blinking, small eye shifts, natural breathing, slow precise head turns and understated body movement. '
+                  'Neutral realistic interior, soft cinematic daylight, premium short-drama realism, restrained camera movement. Lucas alone in frame. '
+                  'No woman, no second person, no dialogue, no text, no subtitles, no watermark, no UI, no morphing, no identity drift, no tattoo drift.')
 
-          prompt = (
-              'Photorealistic live-action cinematic portrait video of Lucas, the same man as the canonical reference, with stable identity. '
-              'Preserve his angular masculine face, strong jaw and cheekbones, dark swept-back hair, light grey-green eyes, short dark stubble, tanned olive skin, and black tattoos visible across his neck and upper chest whenever clothing allows. '
-              'Calm, confident, controlled presence, intense direct gaze, restrained half-smile, subtle brow reactions, realistic blinking, small eye shifts, natural breathing, slow precise head turns and understated body movement. '
-              'Neutral realistic interior, soft cinematic daylight, premium short-drama realism, restrained camera movement. Lucas alone in frame. '
-              'No woman, no second person, no dialogue, no text, no subtitles, no watermark, no UI, no morphing, no identity drift, no tattoo drift.'
-          )
+          r=requests.get(CANON_URL,timeout=30,headers={'Cache-Control':'no-cache'}); r.raise_for_status()
+          im=Image.open(io.BytesIO(r.content)).convert('RGB'); im.load()
+          ratio=768/1024; sr=im.width/im.height
+          if sr>ratio:
+              nw=round(im.height*ratio); left=max(0,(im.width-nw)//2); im=im.crop((left,0,left+nw,im.height))
+          elif sr<ratio:
+              nh=round(im.width/ratio); top=max(0,(im.height-nh)//2); im=im.crop((0,top,im.width,top+nh))
+          im.resize((768,1024),Image.Resampling.LANCZOS).save(source,'PNG',optimize=True)
+          print(f'Lucas canon loaded from Infomaniak -> {source.stat().st_size} bytes',flush=True)
 
-          def prepare_source():
-              r = requests.get(CANON_URL, timeout=30, headers={'Cache-Control':'no-cache'})
-              r.raise_for_status()
-              im = Image.open(io.BytesIO(r.content)).convert('RGB')
-              im.load()
-              if im.width < 80 or im.height < 100:
-                  raise RuntimeError(f'Lucas canon too small: {im.size}')
-              ratio = 768/1024
-              sr = im.width/im.height
-              if sr > ratio:
-                  nw = round(im.height*ratio); left=max(0,(im.width-nw)//2); im=im.crop((left,0,left+nw,im.height))
-              elif sr < ratio:
-                  nh = round(im.width/ratio); top=max(0,(im.height-nh)//2); im=im.crop((0,top,im.width,top+nh))
-              im.resize((768,1024), Image.Resampling.LANCZOS).save(source,'PNG',optimize=True)
-              print(f'Lucas canon loaded from Infomaniak: {im.size} -> {source.stat().st_size} bytes', flush=True)
+          def run_wan(space,label):
+              ctx=mp.get_context('fork'); q=ctx.Queue()
+              p=ctx.Process(target=worker._wan_child,args=(space,label,str(source),prompt,str(target),q)); p.start(); p.join(90)
+              if p.is_alive(): p.terminate(); p.join(5); raise TimeoutError(f'{label} timeout')
+              if q.empty(): raise RuntimeError(f'{label} ended without result code={p.exitcode}')
+              ok,detail=q.get()
+              if not ok: raise RuntimeError(detail)
 
-          def run_wan_fork(space, label):
-              ctx = mp.get_context('fork')
-              queue = ctx.Queue()
-              proc = ctx.Process(target=worker._wan_child, args=(space, label, str(source), prompt, str(target), queue))
-              proc.start()
-              proc.join(90)
-              if proc.is_alive():
-                  proc.terminate(); proc.join(5)
-                  raise TimeoutError(f'{label} timeout after 90s')
-              if queue.empty():
-                  raise RuntimeError(f'{label} ended without result code={proc.exitcode}')
-              ok, detail = queue.get()
-              if not ok:
-                  raise RuntimeError(detail)
+          errors=[]
+          try:
+              worker.run_ltx(source,prompt,target)
+              print(f'Lucas generated with {worker.LTX_LABEL}: {target.stat().st_size} bytes',flush=True)
+          except Exception as exc:
+              target.unlink(missing_ok=True); errors.append(f'{worker.LTX_LABEL}: {exc}')
+              print(f'LTX unavailable; switching to Wan: {exc}',flush=True)
+              for space,label in worker.WAN_PROVIDERS:
+                  try:
+                      run_wan(space,label)
+                      print(f'Lucas generated with {label}: {target.stat().st_size} bytes',flush=True)
+                      break
+                  except Exception as wexc:
+                      target.unlink(missing_ok=True); errors.append(f'{label}: {wexc}')
+                      print(f'Wan fallback failed {label}: {wexc}',flush=True)
+              else: raise RuntimeError(' | '.join(errors))
 
-          def upload():
-              ftp = worker.ftp_connect()
-              try:
-                  root = worker.remote_root(ftp)
-                  url = worker.upload_file(ftp, root, target, target.name)
-                  print(f'Lucas uploaded to Infomaniak: {url}', flush=True)
-              finally:
-                  try: ftp.quit()
-                  except Exception: pass
-
-          if __name__ == '__main__':
-              prepare_source()
-              errors=[]
-              try:
-                  worker.run_ltx(source, prompt, target)
-                  print(f'Lucas generated with {worker.LTX_LABEL}: {target.stat().st_size} bytes', flush=True)
-              except Exception as exc:
-                  target.unlink(missing_ok=True)
-                  errors.append(f'{worker.LTX_LABEL}: {exc}')
-                  print(f'LTX unavailable, switching to Wan: {exc}', flush=True)
-                  for space, label in worker.WAN_PROVIDERS:
-                      try:
-                          run_wan_fork(space, label)
-                          print(f'Lucas generated with {label}: {target.stat().st_size} bytes', flush=True)
-                          break
-                      except Exception as wan_exc:
-                          target.unlink(missing_ok=True)
-                          errors.append(f'{label}: {wan_exc}')
-                          print(f'Wan fallback failed {label}: {wan_exc}', flush=True)
-                  else:
-                      raise RuntimeError(' | '.join(errors))
-              if not worker.looks_like_video(target):
-                  raise RuntimeError('Generated Lucas file is not a valid video')
-              upload()
+          if not worker.looks_like_video(target): raise RuntimeError('Generated Lucas file is not a valid video')
+          ftp=worker.ftp_connect()
+          try:
+              root=worker.remote_root(ftp); url=worker.upload_file(ftp,root,target,target.name)
+              print(f'Lucas uploaded to Infomaniak: {url}',flush=True)
+          finally:
+              try: ftp.quit()
+              except Exception: pass
           PY
           python .monia_lucas_v3.py
       - name: Verify Lucas publicly
