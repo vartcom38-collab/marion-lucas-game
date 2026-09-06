@@ -1,7 +1,7 @@
 import { generateAutonomousSourceImage } from './autonomous-image';
 import { generateFreeCanonVideo } from './free-video';
 import type { MonIAExperienceResult } from './experience-runtime';
-import { cancelMonIAVoice, inferVoiceMood, speakMonIAPremium } from './voice-engine';
+import { cancelMonIAVoice } from './voice-engine';
 import { buildRuntimeDramaShots, shotMediaPlan, type RuntimeDramaShot } from './drama-shot-planner';
 
 export type MonIALongDramaClip={id:string;index:number;role:RuntimeDramaShot['role'];framing:RuntimeDramaShot['framing'];imageUrl?:string;videoUrl?:string;voiceText?:string;voiceActor?:'Lucas'|'Marion';state:'queued'|'image'|'video'|'ready'|'error';error?:string};
@@ -76,17 +76,16 @@ export function playLongDrama(drama=readLongDrama()){
   const counter=overlay.querySelector<HTMLElement>('#moniaLongDramaCounter')!;
   let index=0;
   const next=()=>{
-    if(index>=clips.length){cancelMonIAVoice();overlay.remove();return}
+    if(index>=clips.length){overlay.remove();return}
     const clip=clips[index];
     video.src=clip.videoUrl!;
     counter.textContent=`${clip.role} · plan ${index+1}/${clips.length}`;
     index++;
     void video.play().catch(()=>undefined);
-    if(clip.voiceText&&clip.voiceActor){void speakMonIAPremium(clip.voiceText,{actor:clip.voiceActor,mood:inferVoiceMood(clip.voiceText)})}
   };
   video.onended=next;
-  overlay.querySelector('#moniaLongDramaClose')?.addEventListener('click',()=>{cancelMonIAVoice();overlay.remove()});
+  overlay.querySelector('#moniaLongDramaClose')?.addEventListener('click',()=>overlay.remove());
   next();
 }
 
-console.info('[Drama] Gameplay-authoritative multi-shot runtime with explicit shot roles ready');
+console.info('[Drama] Gameplay-authoritative multi-shot runtime ready; automatic character voice is disabled until canon validation');
