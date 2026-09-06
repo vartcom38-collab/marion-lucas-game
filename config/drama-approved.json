@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "status": "locked",
+  "policy": {
+    "fresh_generation_is_candidate_only": true,
+    "auto_publish_live": false,
+    "gameplay_authority_required": true,
+    "approval_required": true
+  },
+  "entries": []
+}
