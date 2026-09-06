@@ -1,29 +1,12 @@
 export type MonIAServerBrainTask='narration'|'director';
 export type MonIAServerBrainResult={ok:boolean;text?:string;model?:string;error?:string;status:number};
 
-const ENDPOINT='./api/monia-ai.php';
-const TIMEOUT_MS=24_000;
-
-export async function askMonIAServerBrain(task:MonIAServerBrainTask,prompt:string):Promise<MonIAServerBrainResult>{
-  const controller=new AbortController();
-  const timer=window.setTimeout(()=>controller.abort(),TIMEOUT_MS);
-  try{
-    const response=await fetch(ENDPOINT,{
-      method:'POST',
-      credentials:'same-origin',
-      cache:'no-store',
-      headers:{'Content-Type':'application/json','Accept':'application/json'},
-      body:JSON.stringify({task,prompt}),
-      signal:controller.signal,
-    });
-    let data:any=null;
-    try{data=await response.json()}catch{}
-    if(!response.ok)return {ok:false,status:response.status,error:String(data?.error||`HTTP ${response.status}`)};
-    const text=typeof data?.text==='string'?data.text.trim():'';
-    if(!text)return {ok:false,status:502,error:'réponse IA serveur vide'};
-    return {ok:true,status:response.status,text,model:typeof data?.model==='string'?data.model:undefined};
-  }catch(error){
-    const message=error instanceof DOMException&&error.name==='AbortError'?'timeout IA serveur':error instanceof Error?error.message:String(error);
-    return {ok:false,status:0,error:message};
-  }finally{window.clearTimeout(timer)}
+/**
+ * Paid/server AI is intentionally disabled in the runtime.
+ * MonIA production uses the in-browser local model so normal play has no AI API cost.
+ * This compatibility shim remains only so older runtime code fails over immediately
+ * without performing any network request.
+ */
+export async function askMonIAServerBrain(_task:MonIAServerBrainTask,_prompt:string):Promise<MonIAServerBrainResult>{
+  return {ok:false,status:0,error:'IA serveur désactivée · mode local gratuit'};
 }
