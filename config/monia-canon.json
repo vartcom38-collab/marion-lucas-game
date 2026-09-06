@@ -1,5 +1,28 @@
 {
-  "version": 2,
+  "version": 3,
+  "marion": {
+    "status": "locked",
+    "source": "existing MonIA Marion atlas pack",
+    "referencePack": {
+      "atlas": "assets/monia-atlas/marion.webp.b64",
+      "chunks": [
+        "assets/monia-atlas/chunks/marion-00.b64",
+        "assets/monia-atlas/chunks/marion-01.b64",
+        "assets/monia-atlas/chunks/marion-02.b64",
+        "assets/monia-atlas/chunks/marion-03.b64",
+        "assets/monia-atlas/chunks/marion-04.b64"
+      ],
+      "primary": "/resources/monia/canon/marion/reference.jpg"
+    },
+    "rules": [
+      "Use the existing Marion MonIA atlas pack as the identity authority.",
+      "Do not redesign, substitute or beautify Marion into a different woman.",
+      "Preserve facial proportions, eyes, smile, hair and recognizable appearance across close-up, medium and full-body shots.",
+      "Use full-body framing when the gameplay scene requires walking, posture or environmental interaction.",
+      "Generate cinematic gameplay media in 16:9 desktop format by default.",
+      "Never replace a validated Marion media asset without explicit approval."
+    ]
+  },
   "lucas": {
     "status": "locked",
     "source": "private canonical user video",
@@ -36,8 +59,16 @@
       "Do not redesign or substitute Lucas.",
       "Preserve facial geometry, hair, eyes, stubble, skin tone, neck and chest tattoos.",
       "Preserve natural ears exactly as the source; no holes, gauges, piercings, earrings or invented ear details.",
+      "Use full-body framing when the gameplay scene requires walking, posture or environmental interaction.",
       "Generate candidates only in 16:9 desktop format.",
       "Never replace the approved live Lucas video without explicit user approval."
     ]
-  }
+  },
+  "gameplayMediaRules": [
+    "Dynamic gameplay cinematics must use the locked Marion and Lucas reference packs whenever either character appears.",
+    "Do not generate a named character from text alone when a canonical pack exists.",
+    "Prefer subtle believable movement over large gestures when identity preservation is at risk.",
+    "Keep generated media as candidates until validated; gameplay must fall back to already approved media rather than publish an identity-drifted result.",
+    "Default cinematic gameplay composition is 16:9 desktop."
+  ]
 }
