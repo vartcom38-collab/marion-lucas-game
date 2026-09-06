@@ -1,6 +1,7 @@
 import { moniaExperience } from './experience-runtime';
-import { materializeLongDrama, playLongDrama, readLongDrama, type MonIALongDrama } from './long-drama';
+import { materializeLongDrama, playLongDrama, type MonIALongDrama } from './long-drama';
 import { GAMEPLAY_DRAMA_EVENT, type GameplayDramaTrigger } from './gameplay-drama-trigger';
+import { approvedDramaForSignature, saveDramaCandidate } from './drama-approval';
 
 const runtime=moniaExperience as any;
 let gameplayRunning=false;
@@ -14,13 +15,12 @@ function dramaPassesQualityGate(drama:MonIALongDrama|null){
   return true;
 }
 
-function deliverDrama(drama:MonIALongDrama){
+function playApprovedDrama(drama:MonIALongDrama){
   if(!dramaPassesQualityGate(drama)){
-    console.warn('[Drama] Quality gate rejected incomplete or discontinuous scene; gameplay continues normally',drama.state,drama.errors);
+    console.warn('[Drama] Approved asset failed runtime integrity gate; gameplay continues',drama.id);
     return;
   }
   if(document.visibilityState==='visible'&&!document.getElementById('moniaVisioOverlay'))playLongDrama(drama);
-  else try{sessionStorage.setItem('monia-long-drama-pending-v1','1')}catch{}
 }
 
 function relationLabel(value:number){
@@ -31,46 +31,57 @@ function relationLabel(value:number){
   return'ils se connaissent encore peu';
 }
 
+async function generateCandidate(trigger:GameplayDramaTrigger){
+  const dialogue=trigger.dialogue.length?trigger.dialogue.join(' · '):trigger.body;
+  const result=await runtime.respond({
+    actor:'Lucas',
+    requestedChannel:'scene',
+    context:{
+      speaker:'Marion',
+      place:trigger.place,
+      time:trigger.time,
+      day:trigger.day,
+      recentAction:`Le gameplay vient de déclencher cette scène : ${trigger.title}. ${trigger.body}`,
+      activeObjective:'Préparer un candidat cinématographique de cet événement déjà décidé par le gameplay, sans inventer un nouveau tournant.',
+      relationship:relationLabel(trigger.relationship),
+      memories:[...trigger.memories,dialogue].filter(Boolean).slice(0,10),
+      recentEvents:trigger.recentEvents,
+      rules:[
+        'Le gameplay est l’autorité narrative : ne jamais remplacer, retarder ou inventer l’événement déclencheur.',
+        'Cette génération est un candidat de validation et ne doit jamais être publiée automatiquement dans le jeu.',
+        'Ne jamais révéler un événement futur ou une surprise.',
+        'Lucas reste absolument fidèle.',
+        'Préserver les identités canoniques de Marion et Lucas dans chaque plan.',
+        `Conserver la tenue actuelle de Marion : ${trigger.outfit||'tenue du gameplay'}.`,
+        `Respecter le ton ${trigger.tone} et la présentation ${trigger.presentation}.`,
+        'La scène doit rester courte et rendre le contrôle au gameplay immédiatement après.',
+        'Pas de texte, sous-titres, watermark ou UI dans les images générées.',
+      ],
+    },
+    availableMedia:['lucas-intro.mp4','appartement-nimes.png'],
+  },'auto',true);
+
+  const channel=result?.response?.channel;
+  const cinematic=result?.mediaPlan?.mode==='cinematic-drama'||channel==='scene'||channel==='video';
+  if(!cinematic||!result?.mediaPlan?.visual?.required)return;
+
+  const candidate=await materializeLongDrama(result);
+  saveDramaCandidate(trigger.signature,candidate);
+  console.info('[Drama] Fresh generation stored as candidate only; never auto-played',trigger.signature);
+}
+
 async function handleGameplayDrama(trigger:GameplayDramaTrigger){
   if(gameplayRunning||document.hidden)return;
   gameplayRunning=true;
   try{
-    const dialogue=trigger.dialogue.length?trigger.dialogue.join(' · '):trigger.body;
-    const result=await runtime.respond({
-      actor:'Lucas',
-      requestedChannel:'scene',
-      context:{
-        speaker:'Marion',
-        place:trigger.place,
-        time:trigger.time,
-        day:trigger.day,
-        recentAction:`Le gameplay vient de déclencher cette scène : ${trigger.title}. ${trigger.body}`,
-        activeObjective:'Mettre en scène cinématographiquement cet événement déjà décidé par le gameplay, sans inventer un nouveau tournant.',
-        relationship:relationLabel(trigger.relationship),
-        memories:[...trigger.memories,dialogue].filter(Boolean).slice(0,10),
-        recentEvents:trigger.recentEvents,
-        rules:[
-          'Le gameplay est l’autorité narrative : ne jamais remplacer, retarder ou inventer l’événement déclencheur.',
-          'Ne jamais révéler un événement futur ou une surprise.',
-          'Lucas reste absolument fidèle.',
-          'Préserver les identités canoniques de Marion et Lucas dans chaque plan.',
-          `Conserver la tenue actuelle de Marion : ${trigger.outfit||'tenue du gameplay'}.`,
-          `Respecter le ton ${trigger.tone} et la présentation ${trigger.presentation}.`,
-          'La scène doit rester courte et rendre le contrôle au gameplay immédiatement après.',
-          'Pas de texte, sous-titres, watermark ou UI dans les images générées.',
-        ],
-      },
-      availableMedia:['lucas-intro.mp4','appartement-nimes.png'],
-    },'auto',true);
-
-    const channel=result?.response?.channel;
-    const cinematic=result?.mediaPlan?.mode==='cinematic-drama'||channel==='scene'||channel==='video';
-    if(!cinematic||!result?.mediaPlan?.visual?.required)return;
-
-    const drama=await materializeLongDrama(result);
-    deliverDrama(drama);
+    const approved=await approvedDramaForSignature(trigger.signature);
+    if(approved){
+      playApprovedDrama(approved);
+      return;
+    }
+    void generateCandidate(trigger).catch(error=>console.warn('[Drama] Candidate generation failed; gameplay continues normally',error));
   }catch(error){
-    console.warn('[Drama] Gameplay-triggered generation failed; gameplay continues normally',error);
+    console.warn('[Drama] Gameplay-triggered Drama lookup failed; gameplay continues normally',error);
   }finally{
     gameplayRunning=false;
   }
@@ -81,16 +92,4 @@ window.addEventListener(GAMEPLAY_DRAMA_EVENT,((event:Event)=>{
   if(trigger?.source==='gameplay')void handleGameplayDrama(trigger);
 }) as EventListener);
 
-function playPending(){
-  try{
-    if(sessionStorage.getItem('monia-long-drama-pending-v1')!=='1')return;
-    if(document.getElementById('moniaVisioOverlay'))return;
-    sessionStorage.removeItem('monia-long-drama-pending-v1');
-    const drama=readLongDrama();
-    if(dramaPassesQualityGate(drama))playLongDrama(drama);
-  }catch{}
-}
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)playPending()});
-window.setInterval(playPending,1800);
-
-console.info('[Drama] Strict gameplay-only generation bridge + real previous-frame continuity quality gate active');
+console.info('[Drama] Strict gameplay-only + approval-first bridge active: generated media remains candidate-only');
