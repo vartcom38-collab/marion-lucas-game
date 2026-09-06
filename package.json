@@ -5,8 +5,9 @@
   "type": "module",
   "scripts": {
     "materialize:drama": "node tools/materialize-drama-atlases.mjs",
-    "dev": "npm run materialize:drama && vite",
-    "build": "npm run materialize:drama && vite build",
+    "materialize:runtime-config": "node tools/materialize-runtime-config.mjs",
+    "dev": "npm run materialize:drama && npm run materialize:runtime-config && vite",
+    "build": "npm run materialize:drama && npm run materialize:runtime-config && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
