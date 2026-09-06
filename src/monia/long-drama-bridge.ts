@@ -8,14 +8,15 @@ let gameplayRunning=false;
 function dramaPassesQualityGate(drama:MonIALongDrama|null){
   if(!drama||drama.state!=='ready'||drama.clips.length<3)return false;
   if(!drama.clips.every(c=>c.state==='ready'&&Boolean(c.videoUrl)))return false;
-  if(drama.clips[0]?.role!=='establishing')return false;
+  if(drama.clips[0]?.role!=='establishing'||drama.clips[0]?.continuitySource!=='generated-image')return false;
+  if(!drama.clips.slice(1).every(c=>c.continuitySource==='previous-video-frame'))return false;
   if(!drama.clips.some(c=>c.role==='dialogue'||c.role==='reaction'||c.role==='two-shot'))return false;
   return true;
 }
 
 function deliverDrama(drama:MonIALongDrama){
   if(!dramaPassesQualityGate(drama)){
-    console.warn('[Drama] Quality gate rejected incomplete scene; gameplay continues normally',drama.state,drama.errors);
+    console.warn('[Drama] Quality gate rejected incomplete or discontinuous scene; gameplay continues normally',drama.state,drama.errors);
     return;
   }
   if(document.visibilityState==='visible'&&!document.getElementById('moniaVisioOverlay'))playLongDrama(drama);
@@ -92,4 +93,4 @@ function playPending(){
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)playPending()});
 window.setInterval(playPending,1800);
 
-console.info('[Drama] Strict gameplay-only generation bridge + complete-scene quality gate active');
+console.info('[Drama] Strict gameplay-only generation bridge + real previous-frame continuity quality gate active');
