@@ -31,7 +31,7 @@ jobs:
       - name: Install free MonIA dependencies
         run: python -m pip install --disable-pip-version-check gradio_client pillow requests
       - name: Build Lucas canon strictly from the real source video
-        run: python scripts/monia_lucas_canon_from_video.py
+        run: python -m scripts.monia_lucas_canon_from_video
       - name: Validate Lucas canon
         run: |
           python - <<'PY'
@@ -48,7 +48,7 @@ jobs:
           print(f'Lucas canon valid: {im.width}x{im.height}, {len(r.content)} bytes')
           PY
       - name: Generate Lucas with MonIA zero-cost engine
-        run: python scripts/monia_video_engine.py --character lucas --publish-candidate
+        run: python -m scripts.monia_video_engine --character lucas --publish-candidate
       - name: Verify Lucas candidate publicly
         run: |
           python - <<'PY'
