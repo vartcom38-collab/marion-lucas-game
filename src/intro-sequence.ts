@@ -1,13 +1,13 @@
 import './intro-sequence.css';
-import { getPreparedMonIAIntroShots, prepareMonIAIntroShots } from './monia/intro-ai';
+import { prepareMonIAIntroShots } from './monia/intro-ai';
 
 type Shot={src:string;label:string};
-type ServerShot={id:string;label?:string;videoUrl:string};
 
 const sleep=(ms:number)=>new Promise<void>(r=>window.setTimeout(r,ms));
 
-// Lucas intro explicitly approved by the user on 2026-09-06.
-// Keep this candidate as the live Lucas shot until another candidate is explicitly approved.
+// APPROVED LIVE INTRO MEDIA.
+// New MonIA renders remain candidates and must never replace either shot without explicit user approval.
+const APPROVED_MARION_VIDEO='./resources/marion-nimes.mp4';
 const APPROVED_LUCAS_VIDEO='./resources/monia/generated/intro-lucas-candidate-desktop.mp4';
 
 function sourceOf(id:string){return(document.getElementById(id) as HTMLVideoElement|null)?.src||''}
@@ -16,23 +16,9 @@ function muteFromSettings(){
   try{const raw=localStorage.getItem('marion-lucas-settings-v2');if(!raw)return false;const p=JSON.parse(raw);return p?.sound===false}catch{return false}
 }
 
-async function serverIntroShots():Promise<ServerShot[]>{
-  const controller=new AbortController();
-  const timer=window.setTimeout(()=>controller.abort(),1400);
-  try{
-    const response=await fetch(`./resources/monia/generated/intro-manifest.json?ts=${Date.now()}`,{cache:'no-store',credentials:'same-origin',signal:controller.signal});
-    if(!response.ok)return [];
-    const data=await response.json();
-    return Array.isArray(data?.shots)?data.shots.filter((s:any)=>s&&typeof s.id==='string'&&typeof s.videoUrl==='string'&&s.videoUrl):[];
-  }catch{return []}
-  finally{window.clearTimeout(timer)}
-}
-
-function introShots(serverPrepared:ServerShot[]=[]):Shot[]{
-  const prepared=getPreparedMonIAIntroShots();
-  const marion=serverPrepared.find(s=>s.id==='marion-morning')||prepared.find(s=>s.id==='marion-morning');
+function introShots():Shot[]{
   return [
-    {src:marion?.videoUrl||sourceOf('introVideo'),label:marion?.label||'NÎMES'},
+    {src:APPROVED_MARION_VIDEO||sourceOf('introVideo'),label:'NÎMES'},
     {src:APPROVED_LUCAS_VIDEO,label:'AILLEURS, AU MÊME MOMENT'},
   ].filter(s=>Boolean(s.src));
 }
@@ -48,10 +34,9 @@ async function mountSequence(stage:HTMLElement){
   if(!legacy||!skip)return;
   stage.dataset.sequenceMounted='1';
 
-  const serverPrepared=await serverIntroShots();
   legacy.pause();legacy.onended=null;legacy.ontimeupdate=null;legacy.classList.remove('active');legacy.style.display='none';
 
-  const shots=introShots(serverPrepared);
+  const shots=introShots();
   if(!shots.length){skip.click();return}
 
   stage.classList.add('multiShotIntro');
@@ -89,7 +74,7 @@ async function mountSequence(stage:HTMLElement){
   if(!stopped){stage.classList.add('introSequenceEnding');await sleep(520);skip.click()}
 }
 
-// Le worker serveur MonIA est prioritaire pour Marion. Lucas reste verrouillé sur la vidéo approuvée ci-dessus.
+// MonIA may prepare future candidates in the background, but candidates are never promoted automatically.
 window.setTimeout(()=>{void prepareMonIAIntroShots()},1800);
 
 const observer=new MutationObserver(()=>{const stage=document.querySelector<HTMLElement>('.teaserCine');if(stage)void mountSequence(stage)});
