@@ -35,8 +35,8 @@ LUCAS = CharacterProfile(
         "Photorealistic live-action cinematic shot for the Marion & Lucas desktop game. "
         "The supplied Lucas reference is the absolute identity authority. Do not redesign, "
         "beautify, reinterpret, age-shift or substitute him. Preserve the same facial geometry, "
-        "eye spacing, nose, lips, jaw, cheekbones, hairline, dark swept-back hair, light eyes, "
-        "short stubble, tanned olive skin, neck tattoos and upper-chest tattoos visible in the canon. "
+        "eye spacing, nose, lips, jaw, cheekbones, hairline, thick dark wavy hair with natural strands, "
+        "intense brown-hazel eyes, short stubble and tanned olive skin. Lucas has no tattoos and no facial scar. "
         "Horizontal 16:9 desktop composition, chest-up framing, Lucas alone, realistic neutral interior, "
         "soft natural daylight. Motion is deliberately minimal to protect identity: natural breathing, "
         "one or two realistic blinks, a tiny eye shift, a very small controlled head inclination and at "
@@ -45,8 +45,8 @@ LUCAS = CharacterProfile(
     ),
     negative=(
         "different man, changed identity, generic male model, beauty filter, altered jaw, altered eyes, "
-        "altered nose, altered mouth, altered hairline, altered tattoos, altered ears, ear holes, gauges, "
-        "piercings, earrings, deformed ears, woman, second person, extra hands, talking, open mouth, "
+        "altered nose, altered mouth, altered hairline, tattoos, body ink, facial scar, nose scar, altered ears, "
+        "ear holes, gauges, piercings, earrings, deformed ears, woman, second person, extra hands, talking, open mouth, "
         "cartoon, illustration, text, subtitles, title, watermark, UI, jitter, morphing, identity drift"
     ),
 )
@@ -80,7 +80,6 @@ def _download_canon(profile: CharacterProfile, target: Path) -> None:
         raise RuntimeError(f"Canon {profile.key} is too small")
     image = Image.open(io.BytesIO(response.content)).convert("RGB")
     image.load()
-    # Preserve the actual portrait reference; the video engine itself creates the landscape frame.
     ratio = 768 / 1024
     source_ratio = image.width / image.height
     if source_ratio > ratio:
