@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "policy": {
     "identitySourceRequired": true,
     "allowPromptOnlyCharacterGeneration": false,
@@ -8,7 +8,11 @@
   },
   "characters": {
     "lucas": {
-      "referenceMode": "video",
+      "referenceMode": "hybrid-priority-pack",
+      "priorityImages": [
+        "assets/monia-atlas/lucas-priority-01.jpg.b64",
+        "assets/monia-atlas/lucas-priority-02.jpg.b64"
+      ],
       "video": {
         "storage": "infomaniak-private",
         "remotePath": "/private/monia/lucas/source.mp4",
@@ -17,10 +21,11 @@
       },
       "fallbackImage": "https://marion-lucas.marionbolomey.fr/resources/monia/canon/lucas/reference.jpg",
       "rules": [
-        "The reference media is the identity authority.",
+        "The two priority images are the primary face and appearance authority for Lucas.",
+        "The latest Lucas video remains the motion, presence and micro-expression authority.",
         "Never substitute Lucas with another man.",
-        "Preserve face geometry, eyes, nose, mouth, jaw, hair, stubble, skin tone and tattoos.",
-        "Preserve natural ears; no holes, gauges, earrings, piercings or invented ear details.",
+        "Preserve face geometry, eyes, nose, mouth, jaw, hair, stubble, skin tone and visible tattoos from the priority pack.",
+        "Do not copy text, logos or graphic overlays visible in reference media.",
         "Full-body, medium and close-up shots are allowed when the reference pack supports them."
       ]
     },
