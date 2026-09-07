@@ -1,0 +1,35 @@
+{
+  "id": "test-kaggle-marion-001",
+  "state": "queued",
+  "createdAt": "2026-09-07T10:10:00+02:00",
+  "source": "review-regeneration",
+  "candidateOnly": true,
+  "narrativeAuthority": false,
+  "sceneFamily": "reaction-closeup",
+  "signature": "test-kaggle-marion-001",
+  "prompt": "Photorealistic cinematic close-up of Marion, subtle natural breathing and micro-expression, soft daylight, realistic skin texture, simple camera, no text, no subtitles, no UI.",
+  "negativePrompt": "identity drift, face morphing, distorted face, extra limbs, duplicate person, text, subtitles, watermark, UI, slideshow, photo zoom",
+  "characters": [
+    {
+      "id": "marion",
+      "canonRef": "https://raw.githubusercontent.com/vartcom38-collab/marion-lucas-game/main/public/resources/photo.png",
+      "wardrobe": "neutral test wardrobe"
+    }
+  ],
+  "motion": {
+    "referenceId": "none-test",
+    "tags": ["subtle-breathing", "micro-expression"],
+    "copyIdentity": false
+  },
+  "generation": {
+    "provider": "kaggle",
+    "router": "ltx",
+    "width": 480,
+    "height": 832,
+    "seconds": 3,
+    "seed": 240907
+  },
+  "output": {
+    "candidatePath": "studio/candidates/test-kaggle-marion-001/"
+  }
+}
