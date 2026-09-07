@@ -5,7 +5,7 @@ const videos=document.getElementById('videos') as HTMLElement;
 
 const REPO_RAW='https://raw.githubusercontent.com/vartcom38-collab/marion-lucas-game/main';
 const MARION_FALLBACK=`${REPO_RAW}/public/resources/photo.png`;
-const MARION_ATLAS=[0,1,2,3,4].map(i=>`${REPO_RAW}/assets/monia-atlas/chunks/marion-0${i}.b64`);
+const MARION_ATLAS=[`${REPO_RAW}/assets/monia-atlas/marion.webp.b64`];
 const LUCAS_PRIORITY=[
   `${REPO_RAW}/assets/monia-atlas/lucas-priority-01.jpg.b64`,
   `${REPO_RAW}/assets/monia-atlas/lucas-priority-02.jpg.b64`
