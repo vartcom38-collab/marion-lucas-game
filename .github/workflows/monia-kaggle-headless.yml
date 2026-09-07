@@ -7,6 +7,10 @@ on:
       - '.github/workflows/monia-kaggle-headless.yml'
       - 'notebooks/monia_kaggle_oneclick.ipynb'
       - 'kaggle/monia-worker/kernel-metadata.json'
+      - 'studio/queue/test-kaggle-marion-001.json'
+      - 'config/monia-reference-packs.json'
+      - 'assets/monia-atlas/chunks/marion-*.b64'
+      - 'assets/monia-atlas/lucas-priority-*.jpg.b64'
   repository_dispatch:
     types: [monia_kaggle_run]
 
