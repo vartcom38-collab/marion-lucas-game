@@ -5,6 +5,10 @@
   "narrativeAuthority": false,
   "router": "ltx",
   "selectionMode": "surprise-auto",
+  "continuity": [
+    "generated-image",
+    "previous-video-frame"
+  ],
   "clips": [
     "shot-01.mp4",
     "shot-02.mp4"
