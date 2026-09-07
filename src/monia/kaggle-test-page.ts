@@ -11,11 +11,11 @@ function testJob(){
   return{
     id,state:'queued',createdAt:new Date().toISOString(),source:'manual-safe-test',candidateOnly:true,narrativeAuthority:false,
     sceneFamily:'isolated-test',signature:'manual-isolated-video-test',primaryCharacter:'marion',
-    prompt:'Photorealistic cinematic test scene, isolated from the game story. Marion is in a neutral interior, calm and natural. Preserve her identity from the reference image. Only subtle breathing, blinking, tiny gaze changes and a restrained natural smile. No story event, no reveal, no text, no subtitles, no watermark, no UI.',
-    negativePrompt:'identity drift, face morphing, wrong person, distorted face, duplicate person, extra limbs, text, subtitles, watermark, UI, slideshow, photo zoom',
+    prompt:'Photorealistic cinematic test scene, isolated from the game story. Marion is in a neutral interior, calm and natural. Preserve her identity from the reference image. Natural cinematic movement over several seconds: subtle breathing, blinking, small head movement, tiny gaze changes and a restrained natural smile. Keep the shot stable and realistic with gentle camera life. No story event, no reveal, no text, no subtitles, no watermark, no UI.',
+    negativePrompt:'identity drift, face morphing, wrong person, distorted face, duplicate person, extra limbs, text, subtitles, watermark, UI, slideshow, photo zoom, portrait framing, vertical video',
     characters:[{id:'marion',canonRef:MARION,wardrobe:'neutral contemporary outfit'}],
-    motion:{referenceId:'manual-test',tags:['natural-motion','micro-expression'],copyIdentity:false},
-    generation:{provider:'kaggle',router:'ltx',width:320,height:512,frames:17,steps:8,fps:12,seconds:1.4,seed:240907},
+    motion:{referenceId:'manual-test',tags:['natural-motion','micro-expression','cinematic-landscape'],copyIdentity:false},
+    generation:{provider:'kaggle',router:'ltx',width:768,height:432,frames:49,steps:8,fps:12,seconds:4.0,seed:240907},
     output:{candidatePath:`public/resources/monia/candidates/${id}/`}
   };
 }
@@ -32,7 +32,7 @@ async function run(){
     const body=await r.json().catch(()=>null) as any;
     if(!r.ok)throw new Error(body?.error||`HTTP ${r.status}`);
     state.textContent='Kaggle lancé. Génération en cours…';
-    log.textContent+=`\nDispatch accepté. J'attends les 2 vidéos…`;
+    log.textContent+=`\nDispatch accepté. J'attends les 2 vidéos paysage d'environ 4 secondes…`;
     const resultUrl=`${RAW}/${encodeURIComponent(job.id)}/result.json`;
     for(let i=0;i<180;i++){
       if(i>0)await sleep(5000);
@@ -42,7 +42,7 @@ async function run(){
       if(result?.state!=='candidate'||result?.candidateOnly!==true||result?.narrativeAuthority!==false||result?.selectionMode!=='surprise-auto'||!Array.isArray(result?.clips)||result.clips.length<2)continue;
       const base=`${RAW}/${encodeURIComponent(job.id)}`;
       for(const name of result.clips.slice(0,2)){
-        const v=document.createElement('video');v.src=`${base}/${encodeURIComponent(name)}?t=${Date.now()}`;v.controls=true;v.playsInline=true;videos.appendChild(v);
+        const v=document.createElement('video');v.src=`${base}/${encodeURIComponent(name)}?t=${Date.now()}`;v.controls=true;v.playsInline=true;v.style.width='100%';v.style.maxWidth='960px';v.style.aspectRatio='16 / 9';v.style.objectFit='contain';videos.appendChild(v);
       }
       state.textContent='✅ Les 2 vidéos test sont prêtes.';
       log.textContent+=`\nRésultat reçu. Aucun événement du jeu n'a été modifié.`;
