@@ -1,0 +1,10 @@
+{
+  "jobId": "test-kaggle-marion-001",
+  "state": "candidate",
+  "candidateOnly": true,
+  "narrativeAuthority": false,
+  "router": "ltx",
+  "clips": [
+    "shot-01.mp4"
+  ]
+}
