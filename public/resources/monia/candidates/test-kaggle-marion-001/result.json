@@ -4,7 +4,9 @@
   "candidateOnly": true,
   "narrativeAuthority": false,
   "router": "ltx",
+  "selectionMode": "surprise-auto",
   "clips": [
-    "shot-01.mp4"
+    "shot-01.mp4",
+    "shot-02.mp4"
   ]
 }
