@@ -1,38 +1,53 @@
 {
   "id": "test-kaggle-marion-001",
   "state": "queued",
-  "createdAt": "2026-09-07T10:10:00+02:00",
-  "source": "review-regeneration",
+  "createdAt": "2026-09-07T21:15:00+02:00",
+  "source": "new-game-opening-generation",
   "candidateOnly": true,
   "narrativeAuthority": false,
-  "sceneFamily": "reaction-closeup",
-  "signature": "test-kaggle-marion-001",
-  "prompt": "Photorealistic cinematic close-up of Marion, subtle natural breathing and micro-expression, soft daylight, realistic skin texture, simple camera, no text, no subtitles, no UI.",
-  "negativePrompt": "identity drift, face morphing, distorted face, extra limbs, duplicate person, text, subtitles, watermark, UI, slideshow, photo zoom",
+  "sceneFamily": "opening-intro",
+  "signature": "MONIA_NEW_GAME_OPENING_V1",
+  "primaryCharacter": "marion",
+  "prompt": "Premium photorealistic cinematic opening for the game Marion & Lucas. Romantic life-simulation mood, elegant natural light, subtle suspense, realistic body language and micro-expressions. Opening atmosphere only: no future-story reveal, no subtitles, no watermark, no UI, no slideshow.",
+  "negativePrompt": "identity drift, face morphing, wrong person, distorted face, duplicate person, extra limbs, text, subtitles, watermark, UI, slideshow, photo zoom, portrait framing, vertical video, exaggerated acting, kiss, wedding, children, spoiler",
   "characters": [
     {
       "id": "marion",
       "canonRef": "https://raw.githubusercontent.com/vartcom38-collab/marion-lucas-game/main/public/resources/photo.png",
-      "wardrobe": "neutral test wardrobe"
+      "wardrobe": "natural contemporary morning outfit, understated and elegant"
+    },
+    {
+      "id": "lucas",
+      "canonRef": "https://marion-lucas.marionbolomey.fr/resources/monia/canon/lucas/reference.jpg",
+      "wardrobe": "dark contemporary elegant outfit, understated and masculine"
     }
   ],
   "motion": {
-    "referenceId": "none-test",
-    "tags": ["subtle-breathing", "micro-expression"],
+    "referenceId": "opening-prototype",
+    "tags": ["natural-motion", "micro-expression", "cinematic-landscape", "opening-suspense"],
     "copyIdentity": false
   },
   "generation": {
     "provider": "kaggle",
     "router": "ltx",
-    "width": 320,
-    "height": 512,
-    "frames": 17,
+    "width": 768,
+    "height": 432,
+    "frames": 49,
     "steps": 8,
     "fps": 12,
-    "seconds": 1.4,
-    "seed": 240907
+    "seconds": 4.0,
+    "seed": 240911,
+    "shotCount": 4,
+    "shotCharacters": ["marion", "lucas", "marion", null],
+    "shotImages": [null, null, null, "https://raw.githubusercontent.com/vartcom38-collab/marion-lucas-game/main/public/resources/appartement-nimes.png"],
+    "shotPrompts": [
+      "SHOT 1 — NEW GAME OPENING. Marion alone in Nîmes in warm early-morning light. Preserve Marion identity from the canonical pack. She is 20, natural and believable, walking or pausing for a second as if a new chapter is beginning. Gentle breeze in hair, tiny glance upward, subtle hopeful expression, cinematic shallow depth of field, restrained camera movement. No dialogue, no text, no story reveal.",
+      "SHOT 2 — LUCAS SUSPENSE. Lucas alone somewhere else. Preserve Lucas identity exactly from the canonical reference. Calm, intense, private presence, subtle shift of gaze, restrained almost-smile, realistic breathing and micro-expression. Elegant cinematic composition, slight camera life. Do not show Marion, no dialogue, no text, no future-story reveal.",
+      "SHOT 3 — FIRST CONNECTION WITHOUT SPOILER. Marion in a natural intimate morning moment. Her attention is caught by a subtle phone vibration or light just outside the main focus; she gives a tiny curious reaction. Preserve Marion identity. Keep the phone/interface visually minimal and unreadable. No visible message content, no dialogue, no reveal, no exaggerated reaction. Premium cinematic realism.",
+      "SHOT 4 — ARRIVAL INTO GAMEPLAY. Use the supplied apartment image as the visual authority. Create a gentle cinematic settling shot of Marion’s Nîmes apartment in morning light: subtle curtain or plant movement, soft light drift, tiny camera push, realistic lived-in atmosphere. No person required, no text, no UI. End on a stable composition suitable to dissolve seamlessly into the playable apartment."
+    ]
   },
   "output": {
-    "candidatePath": "studio/candidates/test-kaggle-marion-001/"
+    "candidatePath": "public/resources/monia/candidates/test-kaggle-marion-001/"
   }
 }
