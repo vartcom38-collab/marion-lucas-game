@@ -69,7 +69,7 @@ jobs:
               'dist/config/monia-visio-approved.json',
               'dist/config/drama-approved.json',
               'dist/config/motion-reference-bank.json',
-              'dist/ort/ort-wasm-simd-threaded.mjs',
+              'dist/ort/ort-wasm-simd.wasm',
               'dist/ort/ort-wasm-simd-threaded.wasm',
               'src/monia/local-piper-voice.ts',
               'src/monia/gameplay-drama-trigger.ts',
@@ -144,8 +144,10 @@ jobs:
           test_voice = Path('src/monia/test-voice-bridge.ts').read_text(encoding='utf-8')
           voice_engine = Path('src/monia/voice-engine.ts').read_text(encoding='utf-8')
           server_brain = Path('src/monia/server-brain.ts').read_text(encoding='utf-8')
+          materializer = Path('tools/materialize-ort-assets.mjs').read_text(encoding='utf-8')
           require('@mintplex-labs/piper-tts-web' in package, 'Piper package present')
           require('"onnxruntime-web": "1.18.0"' in package, 'ONNX Runtime pinned to 1.18.0')
+          require('no runtime CDN fetch' in materializer, 'ORT materializer uses pinned npm package only')
           require('fr_FR-tom-medium' in local_voice, 'current local Lucas voice candidate present')
           require('./local-piper-voice' in visio, 'visio uses local voice')
           require('./local-piper-voice' in test_voice, 'test lab uses local voice')
