@@ -91,7 +91,7 @@ jobs:
           kaggle kernels output "$KERNEL" -p /tmp/monia-kaggle-output -o
           find /tmp/monia-kaggle-output -maxdepth 3 -type f -print
 
-      - name: Download candidate from Kaggle
+      - name: Download surprise candidates from Kaggle
         env:
           KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
         shell: bash
@@ -104,10 +104,12 @@ jobs:
           kaggle kernels output "$KERNEL" -p "$OUT" -o
           SRC="$OUT/monia-studio/test-kaggle-marion-001"
           test -f "$SRC/shot-01.mp4"
+          test -f "$SRC/shot-02.mp4"
           test -f "$SRC/result.json"
           DEST="public/resources/monia/candidates/test-kaggle-marion-001"
           mkdir -p "$DEST"
           cp "$SRC/shot-01.mp4" "$DEST/shot-01.mp4"
+          cp "$SRC/shot-02.mp4" "$DEST/shot-02.mp4"
           cp "$SRC/result.json" "$DEST/result.json"
 
       - name: Validate candidate safety
@@ -122,24 +124,27 @@ jobs:
           assert data.get('state') == 'candidate'
           assert data.get('candidateOnly') is True
           assert data.get('narrativeAuthority') is False
-          print('Candidate safety flags verified.')
+          assert data.get('selectionMode') == 'surprise-auto'
+          assert data.get('clips') == ['shot-01.mp4','shot-02.mp4']
+          print('Two-candidate surprise safety flags verified.')
           PY
 
-      - name: Commit candidate to repository
+      - name: Commit surprise candidates to repository
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add public/resources/monia/candidates/test-kaggle-marion-001/shot-01.mp4
+          git add public/resources/monia/candidates/test-kaggle-marion-001/shot-02.mp4
           git add public/resources/monia/candidates/test-kaggle-marion-001/result.json
           if git diff --cached --quiet; then
-            echo "Candidate unchanged; nothing to commit."
+            echo "Candidates unchanged; nothing to commit."
           else
-            git commit -m "MonIA candidate test-kaggle-marion-001"
+            git commit -m "MonIA surprise candidate pair test-kaggle-marion-001"
             git push origin HEAD:main
           fi
 
       - name: Note
         run: |
-          echo "Candidate-only pipeline complete. No approved/live manifest is modified automatically."
+          echo "Two surprise candidates collected. No approved/live manifest is modified automatically."
