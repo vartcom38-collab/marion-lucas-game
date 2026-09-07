@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://marion-lucas.marionbolomey.fr/studio/video-job.schema.json",
+  "title": "MonIA Studio Video Job",
+  "type": "object",
+  "required": ["id", "state", "createdAt", "source", "candidateOnly", "narrativeAuthority", "sceneFamily", "prompt", "characters", "output"],
+  "properties": {
+    "id": {"type": "string", "minLength": 1},
+    "state": {"enum": ["queued", "running", "candidate", "failed", "cancelled"]},
+    "createdAt": {"type": "string"},
+    "source": {"enum": ["gameplay", "anticipation", "review-regeneration"]},
+    "candidateOnly": {"const": true},
+    "narrativeAuthority": {"const": false},
+    "sceneFamily": {"type": "string"},
+    "signature": {"type": "string"},
+    "prompt": {"type": "string"},
+    "negativePrompt": {"type": "string"},
+    "characters": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "canonRef"],
+        "properties": {
+          "id": {"enum": ["marion", "lucas", "child", "secondary"]},
+          "canonRef": {"type": "string"},
+          "wardrobe": {"type": "string"}
+        }
+      }
+    },
+    "motion": {
+      "type": "object",
+      "properties": {
+        "referenceId": {"type": "string"},
+        "tags": {"type": "array", "items": {"type": "string"}},
+        "copyIdentity": {"const": false}
+      }
+    },
+    "continuity": {
+      "type": "object",
+      "properties": {
+        "previousFrameUrl": {"type": "string"},
+        "reusePreviousFrame": {"type": "boolean"}
+      }
+    },
+    "generation": {
+      "type": "object",
+      "properties": {
+        "provider": {"enum": ["kaggle"]},
+        "router": {"enum": ["auto", "wan", "ltx"]},
+        "width": {"type": "integer"},
+        "height": {"type": "integer"},
+        "seconds": {"type": "number"},
+        "seed": {"type": "integer"}
+      }
+    },
+    "output": {
+      "type": "object",
+      "required": ["candidatePath"],
+      "properties": {
+        "candidatePath": {"type": "string"},
+        "approvedPath": {"type": "string"}
+      }
+    }
+  }
+}
