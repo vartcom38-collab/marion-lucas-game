@@ -13,17 +13,30 @@
   "characters": [
     {
       "id": "marion",
+      "identityMode": "atlas-pack",
+      "atlasChunks": [
+        "https://raw.githubusercontent.com/vartcom38-collab/marion-lucas-game/main/assets/monia-atlas/chunks/marion-00.b64",
+        "https://raw.githubusercontent.com/vartcom38-collab/marion-lucas-game/main/assets/monia-atlas/chunks/marion-01.b64",
+        "https://raw.githubusercontent.com/vartcom38-collab/marion-lucas-game/main/assets/monia-atlas/chunks/marion-02.b64",
+        "https://raw.githubusercontent.com/vartcom38-collab/marion-lucas-game/main/assets/monia-atlas/chunks/marion-03.b64",
+        "https://raw.githubusercontent.com/vartcom38-collab/marion-lucas-game/main/assets/monia-atlas/chunks/marion-04.b64"
+      ],
       "canonRef": "https://raw.githubusercontent.com/vartcom38-collab/marion-lucas-game/main/public/resources/photo.png",
       "wardrobe": "natural contemporary morning outfit, understated and elegant"
     },
     {
       "id": "lucas",
+      "identityMode": "priority-image-pack",
+      "priorityImages": [
+        "https://raw.githubusercontent.com/vartcom38-collab/marion-lucas-game/main/assets/monia-atlas/lucas-priority-01.jpg.b64",
+        "https://raw.githubusercontent.com/vartcom38-collab/marion-lucas-game/main/assets/monia-atlas/lucas-priority-02.jpg.b64"
+      ],
       "canonRef": "https://marion-lucas.marionbolomey.fr/resources/monia/canon/lucas/reference.jpg",
       "wardrobe": "dark contemporary elegant outfit, understated and masculine"
     }
   ],
   "motion": {
-    "referenceId": "opening-prototype",
+    "referenceId": "opening-prototype+latest-lucas-video",
     "tags": ["natural-motion", "micro-expression", "cinematic-landscape", "opening-suspense"],
     "copyIdentity": false
   },
@@ -39,11 +52,12 @@
     "seed": 240911,
     "shotCount": 4,
     "shotCharacters": ["marion", "lucas", "marion", null],
+    "shotReferenceIndex": [0, 0, 0, null],
     "shotImages": [null, null, null, "https://raw.githubusercontent.com/vartcom38-collab/marion-lucas-game/main/public/resources/appartement-nimes.png"],
     "shotPrompts": [
-      "SHOT 1 — NEW GAME OPENING. Marion alone in Nîmes in warm early-morning light. Preserve Marion identity from the canonical pack. She is 20, natural and believable, walking or pausing for a second as if a new chapter is beginning. Gentle breeze in hair, tiny glance upward, subtle hopeful expression, cinematic shallow depth of field, restrained camera movement. No dialogue, no text, no story reveal.",
-      "SHOT 2 — LUCAS SUSPENSE. Lucas alone somewhere else. Preserve Lucas identity exactly from the canonical reference. Calm, intense, private presence, subtle shift of gaze, restrained almost-smile, realistic breathing and micro-expression. Elegant cinematic composition, slight camera life. Do not show Marion, no dialogue, no text, no future-story reveal.",
-      "SHOT 3 — FIRST CONNECTION WITHOUT SPOILER. Marion in a natural intimate morning moment. Her attention is caught by a subtle phone vibration or light just outside the main focus; she gives a tiny curious reaction. Preserve Marion identity. Keep the phone/interface visually minimal and unreadable. No visible message content, no dialogue, no reveal, no exaggerated reaction. Premium cinematic realism.",
+      "SHOT 1 — NEW GAME OPENING. Marion alone in Nîmes in warm early-morning light. Preserve Marion identity from the canonical atlas pack. She is 20, natural and believable, walking or pausing for a second as if a new chapter is beginning. Gentle breeze in hair, tiny glance upward, subtle hopeful expression, cinematic shallow depth of field, restrained camera movement. No dialogue, no text, no story reveal.",
+      "SHOT 2 — LUCAS SUSPENSE. Lucas alone somewhere else. Use the new priority Lucas photo pack as face and appearance authority, with the latest Lucas video only for presence and micro-expression. Preserve his exact recognizable face, dark hair, strong gaze, jaw, stubble and visible tattoo details supported by the references. Ignore any text or graphic overlays from reference images. Calm, intense, private presence, subtle shift of gaze, restrained almost-smile, realistic breathing. Do not show Marion, no dialogue, no text, no future-story reveal.",
+      "SHOT 3 — FIRST CONNECTION WITHOUT SPOILER. Marion in a natural intimate morning moment. Her attention is caught by a subtle phone vibration or light just outside the main focus; she gives a tiny curious reaction. Preserve Marion identity from the same canonical atlas pack used in shot 1. Keep the phone/interface visually minimal and unreadable. No visible message content, no dialogue, no reveal, no exaggerated reaction. Premium cinematic realism.",
       "SHOT 4 — ARRIVAL INTO GAMEPLAY. Use the supplied apartment image as the visual authority. Create a gentle cinematic settling shot of Marion’s Nîmes apartment in morning light: subtle curtain or plant movement, soft light drift, tiny camera push, realistic lived-in atmosphere. No person required, no text, no UI. End on a stable composition suitable to dissolve seamlessly into the playable apartment."
     ]
   },
