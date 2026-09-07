@@ -5,11 +5,13 @@ on:
   push:
     paths:
       - '.github/workflows/monia-kaggle-headless.yml'
+      - 'notebooks/monia_kaggle_oneclick.ipynb'
+      - 'kaggle/monia-worker/kernel-metadata.json'
   repository_dispatch:
     types: [monia_kaggle_run]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   submit-kaggle-worker:
@@ -49,7 +51,7 @@ jobs:
         run: |
           set -euo pipefail
           kaggle kernels push -p .kaggle-worker
-          echo "MonIA worker submitted to Kaggle. No notebook UI interaction required."
+          echo "MonIA worker submitted to Kaggle."
 
       - name: Wait for Kaggle completion
         env:
@@ -87,25 +89,56 @@ jobs:
           echo "===== Kaggle output files ====="
           mkdir -p /tmp/monia-kaggle-output
           kaggle kernels output "$KERNEL" -p /tmp/monia-kaggle-output -o
-          find /tmp/monia-kaggle-output -maxdepth 2 -type f -print
+          find /tmp/monia-kaggle-output -maxdepth 3 -type f -print
 
-      - name: Verify candidate returned to GitHub
+      - name: Download candidate from Kaggle
+        env:
+          KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
         shell: bash
         run: |
           set -euo pipefail
-          URL="https://api.github.com/repos/vartcom38-collab/marion-lucas-game/contents/public/resources/monia/candidates/test-kaggle-marion-001/result.json"
-          for attempt in $(seq 1 10); do
-            CODE="$(curl -sS -o /tmp/monia-result.json -w '%{http_code}' "$URL")"
-            if [ "$CODE" = "200" ]; then
-              echo "Candidate result found in GitHub."
-              cat /tmp/monia-result.json
-              exit 0
-            fi
-            echo "Candidate not visible yet (HTTP $CODE), waiting..."
-            sleep 15
-          done
-          echo "Kaggle completed but candidate result did not return to GitHub."
-          exit 1
+          KERNEL="marionbolomey/monia-headless-worker"
+          OUT="/tmp/monia-kaggle-output"
+          rm -rf "$OUT"
+          mkdir -p "$OUT"
+          kaggle kernels output "$KERNEL" -p "$OUT" -o
+          SRC="$OUT/monia-studio/test-kaggle-marion-001"
+          test -f "$SRC/shot-01.mp4"
+          test -f "$SRC/result.json"
+          DEST="public/resources/monia/candidates/test-kaggle-marion-001"
+          mkdir -p "$DEST"
+          cp "$SRC/shot-01.mp4" "$DEST/shot-01.mp4"
+          cp "$SRC/result.json" "$DEST/result.json"
+
+      - name: Validate candidate safety
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('public/resources/monia/candidates/test-kaggle-marion-001/result.json')
+          data=json.loads(p.read_text(encoding='utf-8'))
+          assert data.get('state') == 'candidate'
+          assert data.get('candidateOnly') is True
+          assert data.get('narrativeAuthority') is False
+          print('Candidate safety flags verified.')
+          PY
+
+      - name: Commit candidate to repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/resources/monia/candidates/test-kaggle-marion-001/shot-01.mp4
+          git add public/resources/monia/candidates/test-kaggle-marion-001/result.json
+          if git diff --cached --quiet; then
+            echo "Candidate unchanged; nothing to commit."
+          else
+            git commit -m "MonIA candidate test-kaggle-marion-001"
+            git push origin HEAD:main
+          fi
 
       - name: Note
         run: |
