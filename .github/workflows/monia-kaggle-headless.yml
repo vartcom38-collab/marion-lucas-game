@@ -48,6 +48,33 @@ jobs:
             echo "Using repository test job."
           fi
 
+          # Kaggle kernels push does not reliably expose arbitrary sidecar files to the
+          # running notebook. Embed the validated job directly into an early notebook
+          # cell so /kaggle/working/job.json is always materialized before generation.
+          python - <<'PY'
+          import base64, json
+          from pathlib import Path
+          nb_path=Path('.kaggle-worker/monia_kaggle_oneclick.ipynb')
+          job_path=Path('.kaggle-worker/job.json')
+          nb=json.loads(nb_path.read_text(encoding='utf-8'))
+          payload=base64.b64encode(job_path.read_bytes()).decode('ascii')
+          cell={
+              'cell_type':'code',
+              'execution_count':None,
+              'metadata':{},
+              'outputs':[],
+              'source':[
+                  'import base64\n',
+                  'from pathlib import Path\n',
+                  f"Path('/kaggle/working/job.json').write_bytes(base64.b64decode('{payload}'))\n",
+                  "print('✅ Bundled MonIA job materialized')\n",
+              ],
+          }
+          nb['cells'].insert(1,cell)
+          nb_path.write_text(json.dumps(nb,ensure_ascii=False,indent=1),encoding='utf-8')
+          print('Embedded job payload into Kaggle notebook:', job_path)
+          PY
+
       - name: Install Kaggle CLI
         run: python -m pip install --upgrade kaggle
 
