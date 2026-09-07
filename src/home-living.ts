@@ -2,6 +2,18 @@ import './homeLiving.css';
 
 let mounted:HTMLElement|null=null;
 let idleTimer=0;
+let discoveryTimers:number[]=[];
+
+function clearDiscovery(){for(const t of discoveryTimers)window.clearTimeout(t);discoveryTimers=[]}
+
+function pulseHotspots(stage:HTMLElement){
+  clearDiscovery();
+  const hotspots=[...stage.querySelectorAll<HTMLElement>('.gameHotspot')].slice(0,5);
+  hotspots.forEach((h,index)=>{
+    discoveryTimers.push(window.setTimeout(()=>h.classList.add('is-discovering'),450+index*430));
+    discoveryTimers.push(window.setTimeout(()=>h.classList.remove('is-discovering'),1450+index*430));
+  });
+}
 
 function install(stage:HTMLElement){
   if(stage===mounted)return;
@@ -38,14 +50,26 @@ function install(stage:HTMLElement){
     stage.style.setProperty('--look-x','0');stage.style.setProperty('--look-y','0');
     stage.querySelectorAll('.gameHotspot.is-near').forEach(x=>x.classList.remove('is-near'));
   },{passive:true});
+  stage.addEventListener('pointerdown',(e)=>{
+    if((e.pointerType==='touch'||e.pointerType==='pen')){
+      const target=e.target as HTMLElement|null;
+      if(!target?.closest('.gameHotspot'))pulseHotspots(stage);
+    }
+  },{passive:true});
   ['pointerdown','keydown','wheel','touchstart'].forEach(ev=>game?.addEventListener(ev,wake,{passive:true} as AddEventListenerOptions));
   wake();
+  pulseHotspots(stage);
 }
 
 function scan(){
   const stage=document.getElementById('homePhotoStage');
   if(stage instanceof HTMLElement)install(stage);
 }
+
+window.addEventListener('marion-home-first-control',()=>{
+  const stage=document.getElementById('homePhotoStage');
+  if(stage instanceof HTMLElement)pulseHotspots(stage);
+});
 
 new MutationObserver(scan).observe(document.documentElement,{childList:true,subtree:true});
 scan();
