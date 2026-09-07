@@ -48,9 +48,6 @@ jobs:
             echo "Using repository test job."
           fi
 
-          # Kaggle kernels push does not reliably expose arbitrary sidecar files to the
-          # running notebook. Embed the validated job directly into an early notebook
-          # cell so /kaggle/working/job.json is always materialized before generation.
           python - <<'PY'
           import base64, json
           from pathlib import Path
@@ -59,16 +56,8 @@ jobs:
           nb=json.loads(nb_path.read_text(encoding='utf-8'))
           payload=base64.b64encode(job_path.read_bytes()).decode('ascii')
           cell={
-              'cell_type':'code',
-              'execution_count':None,
-              'metadata':{},
-              'outputs':[],
-              'source':[
-                  'import base64\n',
-                  'from pathlib import Path\n',
-                  f"Path('/kaggle/working/job.json').write_bytes(base64.b64decode('{payload}'))\n",
-                  "print('✅ Bundled MonIA job materialized')\n",
-              ],
+              'cell_type':'code','execution_count':None,'metadata':{},'outputs':[],
+              'source':['import base64\n','from pathlib import Path\n',f"Path('/kaggle/working/job.json').write_bytes(base64.b64decode('{payload}'))\n","print('✅ Bundled MonIA job materialized')\n"],
           }
           nb['cells'].insert(1,cell)
           nb_path.write_text(json.dumps(nb,ensure_ascii=False,indent=1),encoding='utf-8')
@@ -137,7 +126,7 @@ jobs:
           kaggle kernels output "$KERNEL" -p /tmp/monia-kaggle-output -o
           find /tmp/monia-kaggle-output -maxdepth 3 -type f -print
 
-      - name: Download surprise candidates from Kaggle
+      - name: Download MonIA candidates from Kaggle
         env:
           KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
         shell: bash
@@ -149,14 +138,24 @@ jobs:
           mkdir -p "$OUT"
           kaggle kernels output "$KERNEL" -p "$OUT" -o
           SRC="$OUT/monia-studio/$MONIA_JOB_ID"
-          test -f "$SRC/shot-01.mp4"
-          test -f "$SRC/shot-02.mp4"
           test -f "$SRC/result.json"
           DEST="public/resources/monia/candidates/$MONIA_JOB_ID"
           mkdir -p "$DEST"
-          cp "$SRC/shot-01.mp4" "$DEST/shot-01.mp4"
-          cp "$SRC/shot-02.mp4" "$DEST/shot-02.mp4"
           cp "$SRC/result.json" "$DEST/result.json"
+          python - <<'PY'
+          import json, os, shutil
+          from pathlib import Path
+          src=Path('/tmp/monia-kaggle-output/monia-studio')/os.environ['MONIA_JOB_ID']
+          dest=Path('public/resources/monia/candidates')/os.environ['MONIA_JOB_ID']
+          data=json.loads((src/'result.json').read_text(encoding='utf-8'))
+          clips=data.get('clips') or []
+          assert 1 <= len(clips) <= 6
+          for name in clips:
+              assert name.startswith('shot-') and name.endswith('.mp4') and '/' not in name
+              assert (src/name).is_file(), name
+              shutil.copy2(src/name,dest/name)
+          print('Collected clips:', clips)
+          PY
 
       - name: Validate candidate safety
         shell: bash
@@ -172,25 +171,27 @@ jobs:
           assert data.get('candidateOnly') is True
           assert data.get('narrativeAuthority') is False
           assert data.get('selectionMode') == 'surprise-auto'
-          assert data.get('clips') == ['shot-01.mp4','shot-02.mp4']
-          print('Two-candidate surprise safety flags verified.')
+          clips=data.get('clips') or []
+          assert 1 <= len(clips) <= 6
+          for name in clips:
+              assert (p.parent/name).is_file()
+          print('MonIA candidate safety flags verified for', len(clips), 'clip(s).')
           PY
 
-      - name: Commit surprise candidates to repository
+      - name: Commit MonIA candidates to repository
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           DEST="public/resources/monia/candidates/$MONIA_JOB_ID"
-          git add "$DEST/shot-01.mp4" "$DEST/shot-02.mp4" "$DEST/result.json"
+          git add "$DEST"
           if git diff --cached --quiet; then
             echo "Candidates unchanged; nothing to commit."
           else
-            git commit -m "MonIA surprise candidate pair $MONIA_JOB_ID"
+            git commit -m "MonIA candidate package $MONIA_JOB_ID"
             git push origin HEAD:main
           fi
 
       - name: Note
-        run: |
-          echo "Two surprise candidates collected for $MONIA_JOB_ID. No approved/live manifest is modified automatically."
+        run: echo "MonIA candidates collected for $MONIA_JOB_ID. No approved/live manifest is modified automatically."
