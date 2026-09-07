@@ -26,10 +26,10 @@
     "router": "ltx",
     "width": 320,
     "height": 512,
-    "frames": 33,
-    "steps": 12,
-    "fps": 16,
-    "seconds": 2,
+    "frames": 17,
+    "steps": 8,
+    "fps": 12,
+    "seconds": 1.4,
     "seed": 240907
   },
   "output": {
