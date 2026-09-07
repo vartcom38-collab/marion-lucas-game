@@ -24,6 +24,7 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, 'index.html'),
         moniaTest: resolve(__dirname, 'monia-test.html'),
+        dramaReview: resolve(__dirname, 'drama-review.html'),
       },
       maxParallelFileOps: 128,
     },
