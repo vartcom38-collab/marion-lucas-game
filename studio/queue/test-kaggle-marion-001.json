@@ -1,7 +1,7 @@
 {
   "id": "test-kaggle-marion-001",
   "state": "queued",
-  "createdAt": "2026-09-07T21:15:00+02:00",
+  "createdAt": "2026-09-07T22:32:00+02:00",
   "source": "new-game-opening-generation",
   "candidateOnly": true,
   "narrativeAuthority": false,
@@ -15,11 +15,7 @@
       "id": "marion",
       "identityMode": "atlas-pack",
       "atlasChunks": [
-        "https://raw.githubusercontent.com/vartcom38-collab/marion-lucas-game/main/assets/monia-atlas/chunks/marion-00.b64",
-        "https://raw.githubusercontent.com/vartcom38-collab/marion-lucas-game/main/assets/monia-atlas/chunks/marion-01.b64",
-        "https://raw.githubusercontent.com/vartcom38-collab/marion-lucas-game/main/assets/monia-atlas/chunks/marion-02.b64",
-        "https://raw.githubusercontent.com/vartcom38-collab/marion-lucas-game/main/assets/monia-atlas/chunks/marion-03.b64",
-        "https://raw.githubusercontent.com/vartcom38-collab/marion-lucas-game/main/assets/monia-atlas/chunks/marion-04.b64"
+        "https://raw.githubusercontent.com/vartcom38-collab/marion-lucas-game/main/assets/monia-atlas/marion.webp.b64"
       ],
       "canonRef": "https://raw.githubusercontent.com/vartcom38-collab/marion-lucas-game/main/public/resources/photo.png",
       "wardrobe": "natural contemporary morning outfit, understated and elegant"
