@@ -7,6 +7,7 @@ const runtime=moniaExperience as any;
 let gameplayRunning=false;
 
 const KAGGLE_DISPATCH_URL='./api/monia-kaggle-dispatch.php';
+const REPO_RAW='https://raw.githubusercontent.com/vartcom38-collab/marion-lucas-game/main';
 const MARION_CANON='https://marion-lucas.marionbolomey.fr/resources/monia/canon/marion/reference.jpg';
 const LUCAS_CANON='https://marion-lucas.marionbolomey.fr/resources/monia/canon/lucas/reference.jpg';
 
@@ -55,6 +56,7 @@ function kaggleJobForTrigger(trigger:GameplayDramaTrigger){
     narrativeAuthority:false,
     sceneFamily:trigger.presentation||'gameplay-drama',
     signature:trigger.signature,
+    primaryCharacter:'lucas',
     prompt:[
       'Photorealistic cinematic short scene from the Marion & Lucas life game.',
       `Event already decided by gameplay: ${trigger.title}. ${trigger.body}`,
@@ -93,15 +95,17 @@ async function dispatchKagglePair(trigger:GameplayDramaTrigger):Promise<{id:stri
 }
 
 async function waitForKagglePair(id:string):Promise<MonIALongDrama|null>{
-  const base=`./resources/monia/candidates/${encodeURIComponent(id)}`;
+  const base=`${REPO_RAW}/public/resources/monia/candidates/${encodeURIComponent(id)}`;
   for(let attempt=0;attempt<90;attempt++){
     if(attempt>0)await new Promise(resolve=>setTimeout(resolve,5000));
+    if(document.hidden)return null;
     try{
-      const response=await fetch(`${base}/result.json?t=${Date.now()}`,{cache:'no-store',credentials:'same-origin'});
+      const response=await fetch(`${base}/result.json?t=${Date.now()}`,{cache:'no-store',mode:'cors'});
       if(!response.ok)continue;
       const result=await response.json() as any;
       if(result?.state!=='candidate'||result?.candidateOnly!==true||result?.narrativeAuthority!==false)continue;
       if(result?.selectionMode!=='surprise-auto'||!Array.isArray(result?.clips)||result.clips.length<2)continue;
+      if(result?.continuity?.[0]!=='generated-image'||result?.continuity?.[1]!=='previous-video-frame')continue;
       const clips=result.clips.slice(0,2).map((name:string,index:number)=>({
         id:`${id}-${index+1}`,
         index,
@@ -180,4 +184,4 @@ window.addEventListener(GAMEPLAY_DRAMA_EVENT,((event:Event)=>{
 
 function hash(value:string){let h=0;for(let i=0;i<value.length;i++)h=((h<<5)-h+value.charCodeAt(i))|0;return h}
 
-console.info('[Drama] Surprise Kaggle runtime active: gameplay can dispatch and auto-play a safe two-clip pair; manual review is debug-only');
+console.info('[Drama] Surprise Kaggle runtime active: gameplay dispatches a two-clip continuity-linked pair and auto-plays it after safety checks; manual review is debug-only');
