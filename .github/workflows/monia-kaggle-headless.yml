@@ -2,6 +2,9 @@ name: MonIA Kaggle Headless Worker
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/monia-kaggle-headless.yml'
   repository_dispatch:
     types: [monia_kaggle_run]
 
