@@ -24,9 +24,12 @@
   "generation": {
     "provider": "kaggle",
     "router": "ltx",
-    "width": 480,
-    "height": 832,
-    "seconds": 3,
+    "width": 320,
+    "height": 512,
+    "frames": 33,
+    "steps": 12,
+    "fps": 16,
+    "seconds": 2,
     "seed": 240907
   },
   "output": {
