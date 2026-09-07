@@ -17,6 +17,9 @@ jobs:
   submit-kaggle-worker:
     runs-on: ubuntu-latest
     timeout-minutes: 70
+    env:
+      MONIA_JOB_ID: ${{ github.event.client_payload.job_id || 'test-kaggle-marion-001' }}
+      MONIA_JOB_B64: ${{ github.event.client_payload.job_b64 || '' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -28,6 +31,22 @@ jobs:
           mkdir -p .kaggle-worker
           cp notebooks/monia_kaggle_oneclick.ipynb .kaggle-worker/monia_kaggle_oneclick.ipynb
           cp kaggle/monia-worker/kernel-metadata.json .kaggle-worker/kernel-metadata.json
+          if [ -n "${MONIA_JOB_B64:-}" ]; then
+            printf '%s' "$MONIA_JOB_B64" | base64 --decode > .kaggle-worker/job.json
+            python - <<'PY'
+          import json, os
+          from pathlib import Path
+          p=Path('.kaggle-worker/job.json')
+          job=json.loads(p.read_text(encoding='utf-8'))
+          assert job.get('id') == os.environ['MONIA_JOB_ID']
+          assert job.get('candidateOnly') is True
+          assert job.get('narrativeAuthority') is False
+          print('Dynamic MonIA job prepared:', job['id'])
+          PY
+          else
+            cp studio/queue/test-kaggle-marion-001.json .kaggle-worker/job.json
+            echo "Using repository test job."
+          fi
 
       - name: Install Kaggle CLI
         run: python -m pip install --upgrade kaggle
@@ -51,7 +70,7 @@ jobs:
         run: |
           set -euo pipefail
           kaggle kernels push -p .kaggle-worker
-          echo "MonIA worker submitted to Kaggle."
+          echo "MonIA worker submitted to Kaggle for $MONIA_JOB_ID."
 
       - name: Wait for Kaggle completion
         env:
@@ -102,11 +121,11 @@ jobs:
           rm -rf "$OUT"
           mkdir -p "$OUT"
           kaggle kernels output "$KERNEL" -p "$OUT" -o
-          SRC="$OUT/monia-studio/test-kaggle-marion-001"
+          SRC="$OUT/monia-studio/$MONIA_JOB_ID"
           test -f "$SRC/shot-01.mp4"
           test -f "$SRC/shot-02.mp4"
           test -f "$SRC/result.json"
-          DEST="public/resources/monia/candidates/test-kaggle-marion-001"
+          DEST="public/resources/monia/candidates/$MONIA_JOB_ID"
           mkdir -p "$DEST"
           cp "$SRC/shot-01.mp4" "$DEST/shot-01.mp4"
           cp "$SRC/shot-02.mp4" "$DEST/shot-02.mp4"
@@ -117,10 +136,11 @@ jobs:
         run: |
           set -euo pipefail
           python - <<'PY'
-          import json
+          import json, os
           from pathlib import Path
-          p=Path('public/resources/monia/candidates/test-kaggle-marion-001/result.json')
+          p=Path('public/resources/monia/candidates')/os.environ['MONIA_JOB_ID']/'result.json'
           data=json.loads(p.read_text(encoding='utf-8'))
+          assert data.get('jobId') == os.environ['MONIA_JOB_ID']
           assert data.get('state') == 'candidate'
           assert data.get('candidateOnly') is True
           assert data.get('narrativeAuthority') is False
@@ -135,16 +155,15 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add public/resources/monia/candidates/test-kaggle-marion-001/shot-01.mp4
-          git add public/resources/monia/candidates/test-kaggle-marion-001/shot-02.mp4
-          git add public/resources/monia/candidates/test-kaggle-marion-001/result.json
+          DEST="public/resources/monia/candidates/$MONIA_JOB_ID"
+          git add "$DEST/shot-01.mp4" "$DEST/shot-02.mp4" "$DEST/result.json"
           if git diff --cached --quiet; then
             echo "Candidates unchanged; nothing to commit."
           else
-            git commit -m "MonIA surprise candidate pair test-kaggle-marion-001"
+            git commit -m "MonIA surprise candidate pair $MONIA_JOB_ID"
             git push origin HEAD:main
           fi
 
       - name: Note
         run: |
-          echo "Two surprise candidates collected. No approved/live manifest is modified automatically."
+          echo "Two surprise candidates collected for $MONIA_JOB_ID. No approved/live manifest is modified automatically."
