@@ -95,8 +95,8 @@ jobs:
 
           drama_manifest = json.loads(Path('dist/config/drama-approved.json').read_text(encoding='utf-8'))
           require(drama_manifest.get('status') == 'locked', 'Drama approval manifest is locked')
-          require(drama_manifest.get('policy',{}).get('fresh_generation_is_candidate_only') is True, 'fresh Drama generation is candidate-only')
-          require(drama_manifest.get('policy',{}).get('auto_publish_live') is False, 'Drama auto-publish live is forbidden')
+          require(drama_manifest.get('policy',{}).get('fresh_generation_is_candidate_only') is True, 'fresh Drama generation remains candidate-only metadata')
+          require(drama_manifest.get('policy',{}).get('auto_publish_live') is False, 'generated media never mutates the locked live manifest')
 
           motion = json.loads(Path('dist/config/motion-reference-bank.json').read_text(encoding='utf-8'))
           require(motion.get('policy',{}).get('motion_reference_only') is True, 'motion bank is motion-only')
@@ -118,13 +118,18 @@ jobs:
           require('./src/monia/media-predictor.ts' in index, 'spoiler-safe Media Predictor is loaded')
           require('runtime.respond=async' not in bridge, 'Drama does not globally hook MonIA responses')
           require('dramaPassesQualityGate' in bridge, 'complete-scene quality gate is required')
-          require('saveDramaCandidate(trigger.signature,candidate)' in bridge, 'fresh generated Drama is stored as candidate')
-          require('deliverDrama(' not in bridge, 'fresh generated Drama has no direct delivery path')
-          require('approvedDramaForSignature' in bridge, 'live Drama comes from approval manifest')
-          require('playLongDrama(candidate)' not in bridge, 'candidate Drama cannot auto-play')
+          require('saveDramaCandidate(trigger.signature,generated)' in bridge, 'fresh generated Drama is retained as debug candidate metadata')
+          require('KAGGLE_DISPATCH_URL' in bridge and 'dispatchKagglePair' in bridge, 'gameplay can dispatch surprise video jobs through the same-origin Kaggle bridge')
+          require('waitForKagglePair' in bridge, 'runtime waits for the generated Kaggle pair')
+          require("result?.candidateOnly!==true" in bridge and "result?.narrativeAuthority!==false" in bridge, 'Kaggle result must keep candidate-only and zero narrative authority guards')
+          require("selectionMode!=='surprise-auto'" in bridge, 'Kaggle surprise-auto result is explicitly validated')
+          require("continuitySource:(index===0?'generated-image':'previous-video-frame')" in bridge, 'Kaggle pair exposes previous-frame continuity to the runtime quality gate')
+          require("playRuntimeDrama(generated,'generated')" in bridge, 'safe generated Drama can auto-play as a gameplay surprise')
+          require('deliverDrama(' not in bridge, 'there is no separate uncontrolled direct-delivery path')
+          require('approvedDramaForSignature' in bridge, 'approved Drama remains available as a preferred reusable asset')
           require('fresh_generation_is_candidate_only' in Path('config/drama-approved.json').read_text(encoding='utf-8'), 'candidate-only policy is explicit')
           require("state:'candidate'" in approval, 'Drama candidate state is explicit')
-          require('identity:\'pending\'' in approval and 'canon:\'pending\'' in approval, 'identity/canon validation remains pending for fresh candidates')
+          require('identity:\'pending\'' in approval and 'canon:\'pending\'' in approval, 'identity/canon review metadata remains pending for fresh debug candidates')
           require('candidateOnly:true' in predictor, 'Media Predictor only emits candidate opportunities')
           require('narrativeAuthority:false' in predictor, 'Media Predictor has zero narrative authority')
           require('reusePreviousFrame' in planner, 'shot planner marks continuity reuse')
@@ -168,7 +173,7 @@ jobs:
 
           manifest = json.loads(Path('dist/config/monia-visio-approved.json').read_text(encoding='utf-8'))
           require(manifest.get('status') == 'locked' and bool(manifest.get('fallback')), 'locked visio manifest has fallback')
-          print('Vite build is deployable: gameplay-only Drama/Visio authority, approval-first Drama playback, spoiler-safe anticipation, motion-only reference bank, previous-frame continuity and local voice infrastructure are locked.')
+          print('Vite build is deployable: gameplay-authoritative surprise Drama can use guarded Kaggle pairs without mutating canon; Visio, motion-only references, previous-frame continuity and local voice infrastructure remain locked.')
           PY
 
 # Validation rerun after migrating AppDeploy binary assets.
