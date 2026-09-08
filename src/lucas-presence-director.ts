@@ -22,7 +22,7 @@ function overlayOpen(){return Boolean(document.querySelector('#overlay.open,.eve
 function eligible(s:SaveLike){
   if(!s.metLucas||!s.official||s.screen!=='game'||document.hidden||overlayOpen())return false;
   if(!hasCoPresenceAffordance())return false;
-  if(Boolean(s.flags.lucasBusy)||Boolean(s.flags.lucasAway)||Boolean(s.flags.corridaLive))return false;
+  if(Boolean(s.flags.lucasBusy)||Boolean(s.flags.lucasAway)||Boolean(s.flags.corridaLive)||Boolean(s.flags.lucasRoutineBusy))return false;
   if(Number(s.flags.lucasPresenceDay||0)===s.day)return false;
   const h=mins(s.time);return h>=570&&h<=1350;
 }
