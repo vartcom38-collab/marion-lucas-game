@@ -5,10 +5,13 @@ let idleTimer=0;
 let discoveryTimers:number[]=[];
 let discoveryCursor=0;
 let firstControlAt=0;
+let hasActed=false;
+let echoTimer=0;
 
 function clearDiscovery(){for(const t of discoveryTimers)window.clearTimeout(t);discoveryTimers=[]}
 
 function revealOne(stage:HTMLElement,delay=0){
+  if(hasActed)return;
   clearDiscovery();
   const hotspots=[...stage.querySelectorAll<HTMLElement>('.gameHotspot')].filter(h=>h.offsetParent!==null);
   if(!hotspots.length)return;
@@ -19,14 +22,35 @@ function revealOne(stage:HTMLElement,delay=0){
 }
 
 function scheduleGentleDiscovery(stage:HTMLElement){
+  if(hasActed)return;
   clearDiscovery();
   const elapsed=firstControlAt?Date.now()-firstControlAt:99999;
   const delay=Math.max(1800,7200-elapsed);
   discoveryTimers.push(window.setTimeout(()=>{
     const game=stage.closest('.immersivePlayable');
-    if(!game||game.querySelector('.overlay.open,.eventOverlay,.incomingCallOverlay'))return;
+    if(hasActed||!game||game.querySelector('.overlay.open,.eventOverlay,.incomingCallOverlay'))return;
     revealOne(stage);
   },delay));
+}
+
+function actionLabel(hotspot:HTMLElement){
+  const label=hotspot.querySelector<HTMLElement>('span')?.textContent?.trim()||hotspot.getAttribute('aria-label')?.trim()||'';
+  return label.replace(/^(observer|voir|ouvrir|aller|utiliser)\s+/i,'').slice(0,42);
+}
+
+function feedback(stage:HTMLElement,hotspot:HTMLElement,e:PointerEvent){
+  hasActed=true;clearDiscovery();
+  hotspot.classList.remove('is-discovering');hotspot.classList.add('is-pressed');
+  window.setTimeout(()=>hotspot.classList.remove('is-pressed'),420);
+  const r=stage.getBoundingClientRect();
+  const pulse=document.createElement('i');pulse.className='homeTouchPulse';pulse.style.left=`${e.clientX-r.left}px`;pulse.style.top=`${e.clientY-r.top}px`;stage.appendChild(pulse);window.setTimeout(()=>pulse.remove(),650);
+  const label=actionLabel(hotspot);
+  if(label){
+    stage.querySelector('.homeActionEcho')?.remove();
+    const echo=document.createElement('div');echo.className='homeActionEcho';echo.textContent=label;stage.appendChild(echo);
+    if(echoTimer)window.clearTimeout(echoTimer);echoTimer=window.setTimeout(()=>{echo.classList.add('is-leaving');window.setTimeout(()=>echo.remove(),220)},720);
+  }
+  if((e.pointerType==='touch'||e.pointerType==='pen')&&'vibrate' in navigator){try{navigator.vibrate(7)}catch{}}
 }
 
 function install(stage:HTMLElement){
@@ -67,8 +91,9 @@ function install(stage:HTMLElement){
   stage.addEventListener('pointerdown',(e)=>{
     wake();
     const target=e.target as HTMLElement|null;
-    if((e.pointerType==='touch'||e.pointerType==='pen')&&!target?.closest('.gameHotspot'))revealOne(stage,120);
-    else if(target?.closest('.gameHotspot'))clearDiscovery();
+    const hotspot=target?.closest<HTMLElement>('.gameHotspot')||null;
+    if(hotspot)feedback(stage,hotspot,e);
+    else if((e.pointerType==='touch'||e.pointerType==='pen'))revealOne(stage,120);
   },{passive:true});
   ['keydown','wheel','touchstart'].forEach(ev=>game?.addEventListener(ev,wake,{passive:true} as AddEventListenerOptions));
   wake();
