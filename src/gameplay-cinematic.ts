@@ -5,6 +5,7 @@ let mounted:HTMLElement|null=null;
 let idleTimer=0;
 let focusLabel:HTMLElement|null=null;
 let pulseTimer=0;
+let commitTimer=0;
 let lastPlace='';
 
 type LooseSave={time?:string;place?:string;camera?:number;overlay?:string|null};
@@ -91,9 +92,11 @@ function interactionPulse(game:HTMLElement,target:HTMLElement){
   game.style.setProperty('--gp-action-y',`${y.toFixed(2)}%`);
   game.classList.remove('gp-action-pulse');
   void game.offsetWidth;
-  game.classList.add('gp-action-pulse');
+  game.classList.add('gp-action-pulse','gp-commit-focus');
   if(pulseTimer)window.clearTimeout(pulseTimer);
+  if(commitTimer)window.clearTimeout(commitTimer);
   pulseTimer=window.setTimeout(()=>game.classList.remove('gp-action-pulse'),650);
+  commitTimer=window.setTimeout(()=>game.classList.remove('gp-commit-focus'),760);
 }
 
 function transitionBeat(game:HTMLElement){
@@ -190,4 +193,4 @@ function scan(){
 new MutationObserver(scan).observe(document.getElementById('app')||document.documentElement,{childList:true,subtree:true});
 scan();
 
-console.info('[Gameplay] Cinematic exploration layer active');
+console.info('[Gameplay] Cinematic exploration focus polished');
