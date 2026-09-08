@@ -161,6 +161,37 @@ function temporalRules(request: MonIADirectorRequest) {
   return rules;
 }
 
+function gamePacingRules(request: MonIADirectorRequest, save: LooseSave | null) {
+  if (!save || isTestRequest(request)) return [] as string[];
+  const flags = save.flags || {};
+  const rules: string[] = [];
+  const nowMinutes = (() => {
+    const m = /^(\d{1,2}):(\d{2})/.exec(String(save.time || request.context.time || ''));
+    return m ? Number(m[1]) * 60 + Number(m[2]) : 0;
+  })();
+  const stamp = Number(save.day || request.context.day || 0) * 1440 + nowMinutes;
+  const contactAt = Number(flags.firstContactAt || flags.postContactSeenAt || 0);
+
+  if (contactAt && stamp >= contactAt && stamp - contactAt <= 50) {
+    rules.push('RYTHME ÉMOTIONNEL: un moment marquant vient d’avoir lieu. Ne pas remplir immédiatement le silence avec des explications, des questions intimes en rafale ou une déclaration disproportionnée. Laisser du sous-texte et de l’air est préférable.');
+    rules.push('Après un moment fort, une réponse courte, un geste verbal simple ou même une légère retenue peuvent être plus justes qu’un grand discours.');
+  }
+
+  if (flags.dayOneWithMarine && !flags.postContactSeeded && Number(save.day || 0) === 1) {
+    rules.push('Marion est actuellement dans sa propre journée et sa vie sociale existe autour d’elle. Ne pas recentrer artificiellement tout ce qui arrive sur Lucas ni interrompre chaque moment ordinaire avec du romantique.');
+  }
+
+  if (flags.weeklyLifeRhythmTone === 'busy' || flags.externalWorldPressureActive) {
+    rules.push('La journée est déjà chargée: privilégier des interventions brèves et plausibles. MonIA ne doit pas devenir une couche supplémentaire de sollicitations permanentes.');
+  }
+
+  if (flags.firstPlayableNeededNudge) {
+    rules.push('Quand Marion hésite dans un contexte nouveau, proposer au maximum une impulsion claire à la fois. Ne jamais transformer MonIA en tutoriel qui dicte le prochain clic.');
+  }
+
+  return rules;
+}
+
 function playerStyleRules(request: MonIADirectorRequest, save: LooseSave | null, thread: ThreadTurn[]) {
   if (!save || isTestRequest(request)) return [] as string[];
   const flags = save.flags || {};
@@ -223,6 +254,7 @@ monia.direct = async (request: MonIADirectorRequest, mode = 'auto', enabled = tr
       rules: uniqueMemories([
         ...(request.context.rules || []),
         ...temporalRules(request),
+        ...gamePacingRules(request, gameSave),
         ...playerStyleRules(request, gameSave, thread),
         'Les souvenirs marqués PROMESSE sont des engagements à respecter tant qu’un événement plus récent ne les contredit pas.',
         'Les souvenirs personnels peuvent guider le ton ou rappeler une préférence, mais seulement s’ils sont pertinents.',
@@ -231,7 +263,7 @@ monia.direct = async (request: MonIADirectorRequest, mode = 'auto', enabled = tr
         'Si Marion dit seulement pourquoi, sérieux, et demain, quoi, comment ça ou une réponse courte similaire, répondre à ce qu’elle vient réellement de reprendre dans la conversation.',
         'Ne jamais contredire sans raison une information que Lucas vient de donner quelques messages plus tôt.',
         'En cas de contradiction, le contexte le plus récent de la partie est prioritaire.',
-      ], 34),
+      ], 38),
     },
   };
 
@@ -292,4 +324,4 @@ monia.direct = async (request: MonIADirectorRequest, mode = 'auto', enabled = tr
   }
 };
 
-console.info('[MonIA] Long-term memory + conversation continuity + temporal coherence + soft player-style adaptation active');
+console.info('[MonIA] Long-term memory + conversation continuity + temporal coherence + emotional pacing + soft player-style adaptation active');
