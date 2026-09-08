@@ -12,6 +12,7 @@ const SAVE_KEY='marion-lucas-save-v4';
 const RELOAD_GUARD='marion-day-one-seed-reload-v1';
 let escalationOpen=false;
 let rendezvousOpen=false;
+let companionMomentOpen=false;
 let nimesArrivalTimer=0;
 
 function read():SaveLike|null{
@@ -118,6 +119,34 @@ function showEscalation(s:SaveLike){
   };
 }
 
+const marineWalkMoments=[
+  {line:'Marine ralentit juste assez pour te montrer une vitrine du menton.',quote:'« Celle-là, elle est tellement toi. Enfin… peut-être pas à neuf heures du matin. »',a:'La taquiner',b:'Regarder la vitrine'},
+  {line:'Elle reprend son histoire exactement là où elle l’avait laissée, sans vérifier si tu suivais.',quote:'« Et donc là, je lui ai dit : mais t’es sérieux ? »',a:'Laisser Marine raconter',b:'Lui demander la suite'},
+  {line:'Vous vous décalez toutes les deux pour laisser passer un groupe sur le trottoir.',quote:'« J’adore quand la ville commence comme ça. On sait jamais où on va finir. »',a:'Continuer avec elle',b:'Prendre votre temps'},
+  {line:'Marine te tend son café deux secondes pendant qu’elle fouille dans son sac.',quote:'« Tiens. Et bois pas tout, je te connais. »',a:'Boire une gorgée quand même',b:'Faire semblant d’être sage'}
+];
+
+function showCompanionMoment(s:SaveLike){
+  if(companionMomentOpen||!s.flags.dayOneWithMarine||s.metLucas||s.place==='home')return;
+  const game=document.querySelector<HTMLElement>('main.game');if(!game)return;
+  companionMomentOpen=true;
+  const count=Number(s.flags.dayOneMarineMomentCount||0);
+  const m=marineWalkMoments[count%marineWalkMoments.length];
+  const veil=document.createElement('div');veil.className='dayOneCompanionMomentVeil';
+  veil.innerHTML=`<section class="dayOneCompanionMoment"><span>EN MARCHANT · MARINE</span><p>${m.line}</p><blockquote>${m.quote}</blockquote><div><button data-marine-moment="a">${m.a}</button><button data-marine-moment="b">${m.b}</button></div></section>`;
+  game.appendChild(veil);
+  const close=()=>{veil.classList.add('leaving');window.setTimeout(()=>{veil.remove();companionMomentOpen=false},220)};
+  veil.querySelectorAll<HTMLButtonElement>('[data-marine-moment]').forEach(btn=>btn.onclick=()=>{
+    const latest=read();if(!latest){close();return}
+    latest.flags.dayOneMarineMomentCount=Number(latest.flags.dayOneMarineMomentCount||0)+1;
+    latest.flags.dayOneMarineLastMomentAt=nowStamp(latest);
+    latest.flags.dayOneMarineLastTone=btn.dataset.marineMoment||'a';
+    setMins(latest,mins(latest.time)+(btn.dataset.marineMoment==='a'?9:11));
+    if(count===0)remember(latest,'Avec Marine, la première promenade dans Nîmes a pris le rythme d’une vraie matinée entre amies.');
+    write(latest);close();window.setTimeout(()=>location.reload(),240);
+  });
+}
+
 function mountCompanion(s:SaveLike){
   if(s.day!==1||s.metLucas||s.place==='home'||!s.flags.dayOneSocialSeeded){removeCompanion();return}
   const arrivalAt=Number(s.flags.dayOneNimesArrivalAt||0);
@@ -127,10 +156,15 @@ function mountCompanion(s:SaveLike){
   let card=document.getElementById('dayOneCompanion') as HTMLButtonElement|null;
   if(!card){card=document.createElement('button');card.id='dayOneCompanion';card.className='dayOneCompanion';game.appendChild(card)}
   const together=!!s.flags.dayOneWithMarine;
-  card.innerHTML=together
-    ?'<span>AVEC MARINE</span><strong>Elle marche à côté de toi, café à la main.</strong><small>La conversation continue sans que tu aies besoin de la provoquer.</small>'
-    :'<span>MARINE · À DEUX PAS</span><strong>Elle vient de te faire signe entre deux passants.</strong><small>La rejoindre →</small>';
-  card.onclick=()=>{if(!together)showRendezvous(s)};
+  if(together){
+    const count=Number(s.flags.dayOneMarineMomentCount||0);
+    const snippets=['Elle parle, regarde les vitrines et se décale avec toi dans la foule.','La conversation saute d’un sujet à l’autre sans jamais vraiment s’arrêter.','Vous marchez au même rythme sans avoir décidé d’un itinéraire.','Elle te repasse son café comme si c’était parfaitement normal.'];
+    card.innerHTML=`<span>AVEC MARINE</span><strong>${snippets[count%snippets.length]}</strong><small>Un moment avec elle →</small>`;
+    card.onclick=()=>showCompanionMoment(s);
+  }else{
+    card.innerHTML='<span>MARINE · À DEUX PAS</span><strong>Elle vient de te faire signe entre deux passants.</strong><small>La rejoindre →</small>';
+    card.onclick=()=>showRendezvous(s);
+  }
 }
 
 function showRendezvous(s:SaveLike){
@@ -165,4 +199,4 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)scan()});
 window.setInterval(scan,4500);
 scan();
 
-console.info('[Day 1] reactive social director active with calmer home and first Nimes breathing room');
+console.info('[Day 1] Marine now walks as a living companion, not a static dialogue card');
