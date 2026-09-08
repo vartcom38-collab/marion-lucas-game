@@ -1,7 +1,7 @@
 import './postContactDirector.css';
 
 type SaveLike={
-  day:number;time:string;place:string;screen:string;metLucas:boolean;phoneUnread:number;
+  day:number;time:string;place:string;screen:string;overlay?:string|null;metLucas:boolean;phoneUnread:number;
   messages:Array<{from:string;text:string,day:number,read:boolean}>;
   memories:string[];flags:Record<string,boolean|number|string>;updatedAt:number;
 };
@@ -9,6 +9,7 @@ type SaveLike={
 const SAVE_KEY='marion-lucas-save-v4';
 let lastKey='';
 let pulseTimer=0;
+let pulseExitTimer=0;
 let breathingTimer=0;
 
 function read():SaveLike|null{try{return JSON.parse(localStorage.getItem(SAVE_KEY)||'null') as SaveLike|null}catch{return null}}
@@ -44,6 +45,7 @@ function mountBreathingRoom(s:SaveLike){
     game.classList.remove('postContactBreathing');
     s.flags.postContactBreathingDone=true;
     write(s);
+    window.setTimeout(scan,650);
     return;
   }
   game.classList.add('postContactBreathing');
@@ -52,6 +54,7 @@ function mountBreathingRoom(s:SaveLike){
     game.classList.remove('postContactBreathing');
     const latest=read();
     if(latest&&!latest.flags.postContactBreathingDone){latest.flags.postContactBreathingDone=true;write(latest)}
+    window.setTimeout(scan,650);
   },Math.max(250,4200-elapsed));
 }
 
@@ -68,9 +71,17 @@ function maybeMarineEcho(s:SaveLike){
   return true;
 }
 
-function removePulse(){document.getElementById('postContactPulse')?.remove()}
+function removePulse(){
+  document.getElementById('postContactPulse')?.remove();
+  if(pulseTimer)window.clearTimeout(pulseTimer);
+  if(pulseExitTimer)window.clearTimeout(pulseExitTimer);
+}
+function foregroundBusy(s:SaveLike){
+  if(s.overlay)return true;
+  return Boolean(document.querySelector('.eventOverlay,.dayOneCallVeil,.nimesFirstWalkVeil,.phoneDevice.is-open,.phoneOverlay,.premiumOverlay'));
+}
 function mountPulse(s:SaveLike){
-  if(!s.metLucas||s.screen!=='game'){removePulse();return}
+  if(!s.metLucas||s.screen!=='game'||!s.flags.postContactBreathingDone||s.flags.postContactPulseShown||foregroundBusy(s)){removePulse();return}
   const game=document.querySelector<HTMLElement>('main.game');if(!game){removePulse();return}
   const contact=firstAt(s)||Number(s.flags.postContactSeenAt||0);
   const elapsed=contact?stamp(s)-contact:0;
@@ -85,8 +96,15 @@ function mountPulse(s:SaveLike){
   pulse.innerHTML=home
     ?'<span>UN PEU PLUS TARD</span><strong>L’appartement est redevenu calme.</strong><small>Mais pas tout à fait comme ce matin.</small>'
     :'<span>QUELQUE CHOSE RESTE</span><strong>La ville continue autour de toi.</strong><small>Ton esprit, lui, revient parfois au même instant.</small>';
+  s.flags.postContactPulseShown=true;
+  write(s);
   if(pulseTimer)window.clearTimeout(pulseTimer);
-  pulseTimer=window.setTimeout(()=>pulse?.classList.add('is-soft'),5200);
+  pulseTimer=window.setTimeout(()=>pulse?.classList.add('is-soft'),3600);
+  if(pulseExitTimer)window.clearTimeout(pulseExitTimer);
+  pulseExitTimer=window.setTimeout(()=>{
+    pulse?.classList.add('leaving');
+    window.setTimeout(()=>pulse?.remove(),760);
+  },7200);
 }
 
 function scan(){
@@ -102,10 +120,10 @@ window.addEventListener('storage',scan);
 window.addEventListener('marion-home-first-control',()=>window.setTimeout(scan,300));
 document.addEventListener('click',e=>{
   const t=e.target as HTMLElement|null;
-  if(t?.closest('.eventOverlay,.choice,.eventCard,[data-choice]'))window.setTimeout(scan,320);
+  if(t?.closest('.eventOverlay,.choice,.eventCard,[data-choice],.premiumNav,.approvedAction,.mainAction'))window.setTimeout(scan,320);
 },{passive:true});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)scan()});
 window.setInterval(scan,7000);
 scan();
 
-console.info('[Romance] post-contact flow polished with breathing room and lighter DOM watching');
+console.info('[Romance] post-contact flow polished with one-shot quiet aftermath and uncluttered return to play');
