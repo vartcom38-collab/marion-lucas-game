@@ -3,16 +3,30 @@ import './homeLiving.css';
 let mounted:HTMLElement|null=null;
 let idleTimer=0;
 let discoveryTimers:number[]=[];
+let discoveryCursor=0;
+let firstControlAt=0;
 
 function clearDiscovery(){for(const t of discoveryTimers)window.clearTimeout(t);discoveryTimers=[]}
 
-function pulseHotspots(stage:HTMLElement){
+function revealOne(stage:HTMLElement,delay=0){
   clearDiscovery();
-  const hotspots=[...stage.querySelectorAll<HTMLElement>('.gameHotspot')].slice(0,5);
-  hotspots.forEach((h,index)=>{
-    discoveryTimers.push(window.setTimeout(()=>h.classList.add('is-discovering'),450+index*430));
-    discoveryTimers.push(window.setTimeout(()=>h.classList.remove('is-discovering'),1450+index*430));
-  });
+  const hotspots=[...stage.querySelectorAll<HTMLElement>('.gameHotspot')].filter(h=>h.offsetParent!==null);
+  if(!hotspots.length)return;
+  const target=hotspots[discoveryCursor%hotspots.length];
+  discoveryCursor=(discoveryCursor+1)%hotspots.length;
+  discoveryTimers.push(window.setTimeout(()=>target.classList.add('is-discovering'),delay));
+  discoveryTimers.push(window.setTimeout(()=>target.classList.remove('is-discovering'),delay+1350));
+}
+
+function scheduleGentleDiscovery(stage:HTMLElement){
+  clearDiscovery();
+  const elapsed=firstControlAt?Date.now()-firstControlAt:99999;
+  const delay=Math.max(1800,7200-elapsed);
+  discoveryTimers.push(window.setTimeout(()=>{
+    const game=stage.closest('.immersivePlayable');
+    if(!game||game.querySelector('.overlay.open,.eventOverlay,.incomingCallOverlay'))return;
+    revealOne(stage);
+  },delay));
 }
 
 function install(stage:HTMLElement){
@@ -29,7 +43,7 @@ function install(stage:HTMLElement){
   const wake=()=>{
     game?.classList.remove('home-ui-idle');
     if(idleTimer)window.clearTimeout(idleTimer);
-    idleTimer=window.setTimeout(()=>game?.classList.add('home-ui-idle'),4200);
+    idleTimer=window.setTimeout(()=>game?.classList.add('home-ui-idle'),6200);
   };
   const move=(e:PointerEvent)=>{
     const r=stage.getBoundingClientRect();
@@ -41,7 +55,7 @@ function install(stage:HTMLElement){
     for(const h of hotspots){
       const hr=h.getBoundingClientRect();
       const dx=e.clientX-(hr.left+hr.width/2),dy=e.clientY-(hr.top+hr.height/2);
-      h.classList.toggle('is-near',Math.hypot(dx,dy)<110);
+      h.classList.toggle('is-near',Math.hypot(dx,dy)<105);
     }
     wake();
   };
@@ -51,14 +65,14 @@ function install(stage:HTMLElement){
     stage.querySelectorAll('.gameHotspot.is-near').forEach(x=>x.classList.remove('is-near'));
   },{passive:true});
   stage.addEventListener('pointerdown',(e)=>{
-    if((e.pointerType==='touch'||e.pointerType==='pen')){
-      const target=e.target as HTMLElement|null;
-      if(!target?.closest('.gameHotspot'))pulseHotspots(stage);
-    }
+    wake();
+    const target=e.target as HTMLElement|null;
+    if((e.pointerType==='touch'||e.pointerType==='pen')&&!target?.closest('.gameHotspot'))revealOne(stage,120);
+    else if(target?.closest('.gameHotspot'))clearDiscovery();
   },{passive:true});
-  ['pointerdown','keydown','wheel','touchstart'].forEach(ev=>game?.addEventListener(ev,wake,{passive:true} as AddEventListenerOptions));
+  ['keydown','wheel','touchstart'].forEach(ev=>game?.addEventListener(ev,wake,{passive:true} as AddEventListenerOptions));
   wake();
-  pulseHotspots(stage);
+  scheduleGentleDiscovery(stage);
 }
 
 function scan(){
@@ -67,8 +81,9 @@ function scan(){
 }
 
 window.addEventListener('marion-home-first-control',()=>{
+  firstControlAt=Date.now();
   const stage=document.getElementById('homePhotoStage');
-  if(stage instanceof HTMLElement)pulseHotspots(stage);
+  if(stage instanceof HTMLElement)scheduleGentleDiscovery(stage);
 });
 
 new MutationObserver(scan).observe(document.documentElement,{childList:true,subtree:true});
