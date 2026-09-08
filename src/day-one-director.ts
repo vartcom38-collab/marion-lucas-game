@@ -31,7 +31,7 @@ function seedDayOne(s:SaveLike){
   if(!s.calendar.some(i=>i.day===1&&i.title==='Retrouver Marine près des arènes')){
     s.calendar.push({owner:'Marion',title:'Retrouver Marine près des arènes',day:1,note:'Elle t’a écrit ce matin. La ville commence déjà à bouger.'});
   }
-  s.flags.phoneToast='Marine|Allez viens. Je suis vers les arènes ☕';
+  s.flags.phoneToast='Marine|Je suis vers les arènes ☕';
   s.flags.phoneToastAt=nowStamp(s);
   write(s);
   return true;
@@ -56,32 +56,32 @@ function removeImpulse(){document.getElementById('dayOneImpulse')?.remove()}
 function removeCompanion(){document.getElementById('dayOneCompanion')?.remove()}
 
 function mountImpulse(s:SaveLike){
-  if(s.day!==1||s.metLucas||s.place!=='home'||!s.flags.dayOneSocialSeeded){removeImpulse();return}
+  if(s.day!==1||s.metLucas||s.place!=='home'||!s.flags.dayOneSocialSeeded||mins(s.time)<550){removeImpulse();return}
   const game=document.querySelector<HTMLElement>('main.game.immersivePlayable');
   if(!game)return;
   let card=document.getElementById('dayOneImpulse') as HTMLButtonElement|null;
   if(!card){card=document.createElement('button');card.id='dayOneImpulse';card.className='dayOneImpulse';game.appendChild(card)}
   const late=mins(s.time)>=600;
   card.innerHTML=late
-    ?'<span>MARINE T’ATTEND</span><strong>La matinée vient de trouver son mouvement.</strong><small>Voir où la rejoindre →</small>'
-    :'<span>UN MESSAGE CHANGE TES PLANS</span><strong>Marine est déjà en ville.</strong><small>Te préparer →</small>';
-  card.onclick=()=>{const target=document.getElementById(late?'premiumMap':'premiumWardrobe') as HTMLButtonElement|null;target?.click()};
+    ?'<span>MARINE EST EN VILLE</span><strong>Son café tient toujours.</strong><small>Voir où elle est →</small>'
+    :'<span>UN MESSAGE T’ATTEND</span><strong>Marine te propose un café près des arènes.</strong><small>Regarder quand tu veux →</small>';
+  card.onclick=()=>{const target=document.getElementById(late?'premiumMap':'premiumPhone') as HTMLButtonElement|null;target?.click()};
   const objective=document.querySelector<HTMLElement>('.approvedObjective');
-  if(objective){
+  if(objective&&mins(s.time)>=565){
     const strong=objective.querySelector('strong'),p=objective.querySelector('p');
-    if(strong)strong.textContent=late?'Marine t’attend en ville':'Tu avais prévu une matinée calme…';
-    if(p)p.textContent=late?'Tu peux encore prendre ton temps, mais quelque chose t’attire déjà dehors.':'Ton téléphone vient de décider que la journée ne resterait pas tranquille.';
+    if(strong)strong.textContent=late?'Marine est déjà dehors':'La matinée reste à toi';
+    if(p)p.textContent=late?'Tu peux la rejoindre, ou finir ce que tu fais avant de sortir.':'Un message t’attend, mais rien ne presse. Tu peux encore profiter de l’appartement.';
   }
 }
 
 function showEscalation(s:SaveLike){
-  if(escalationOpen||s.flags.dayOneMarineCallSeen||s.day!==1||s.place!=='home'||s.metLucas||mins(s.time)<645)return;
+  if(escalationOpen||s.flags.dayOneMarineCallSeen||s.day!==1||s.place!=='home'||s.metLucas||mins(s.time)<660)return;
   const game=document.querySelector<HTMLElement>('main.game.immersivePlayable');if(!game)return;
   escalationOpen=true;s.flags.dayOneMarineCallSeen=true;
-  s.messages.unshift({from:'Marine',text:'Je suis presque en bas 😅 Descends quand tu es prête, je t’embarque.',day:1,read:false});
+  s.messages.unshift({from:'Marine',text:'Bon 😭 je suis pas loin. Descends quand tu veux, je t’embarque.',day:1,read:false});
   s.phoneUnread=Math.max(0,Number(s.phoneUnread||0))+1;write(s);
   const veil=document.createElement('div');veil.className='dayOneCallVeil';
-  veil.innerHTML=`<section class="dayOneCallCard"><span>APPEL · MARINE</span><h2>« Allez, viens. »</h2><p>Elle est déjà dehors. La ville s’anime et ta matinée vient clairement de changer de direction.</p><div><button id="dayOneGo" class="primary">Je descends</button><button id="dayOneLater">Deux minutes</button></div></section>`;
+  veil.innerHTML=`<section class="dayOneCallCard"><span>APPEL · MARINE</span><h2>« Alors, tu viens ? »</h2><p>Elle est dehors, de bonne humeur, sans te mettre la pression. La ville bouge déjà et tu sens que rester enfermée toute la matinée serait dommage.</p><div><button id="dayOneGo" class="primary">Oui, j’arrive</button><button id="dayOneLater">Je finis un truc</button></div></section>`;
   game.appendChild(veil);
   const close=()=>{veil.remove();escalationOpen=false};
   (veil.querySelector('#dayOneLater') as HTMLButtonElement).onclick=close;
@@ -112,7 +112,7 @@ function showRendezvous(s:SaveLike){
   const game=document.querySelector<HTMLElement>('main.game');if(!game)return;
   rendezvousOpen=true;
   const veil=document.createElement('div');veil.className='dayOneCallVeil dayOneMeetVeil';
-  veil.innerHTML=`<section class="dayOneCallCard dayOneMeetCard"><span>NÎMES · AVEC MARINE</span><h2>Ta journée a déjà changé.</h2><p>Marine arrive avec son énergie habituelle, te raconte trois choses à la fois et t’entraîne naturellement dans le mouvement de la ville.</p><div><button id="dayOneMeet" class="primary">Rester avec elle un moment</button><button id="dayOneWander">Flâner d’abord</button></div></section>`;
+  veil.innerHTML=`<section class="dayOneCallCard dayOneMeetCard"><span>NÎMES · AVEC MARINE</span><h2>Tu la retrouves naturellement.</h2><p>Marine arrive avec son énergie habituelle, te raconte trois choses à la fois et la ville reprend simplement autour de vous.</p><div><button id="dayOneMeet" class="primary">Marcher avec elle</button><button id="dayOneWander">Flâner encore un peu</button></div></section>`;
   game.appendChild(veil);
   const close=()=>{veil.remove();rendezvousOpen=false};
   (veil.querySelector('#dayOneWander') as HTMLButtonElement).onclick=()=>{const latest=read();if(latest){latest.flags.dayOneRendezvousSnoozeUntil=nowStamp(latest)+25;write(latest)}close()};
@@ -134,8 +134,8 @@ function scan(){
 
 window.addEventListener('marion-home-first-control',()=>window.setTimeout(scan,260));
 window.addEventListener('storage',scan);
-new MutationObserver(()=>scan()).observe(document.documentElement,{childList:true,subtree:true});
-window.setInterval(scan,4000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)scan()});
+window.setInterval(scan,4500);
 scan();
 
-console.info('[Day 1] reactive social director active');
+console.info('[Day 1] reactive social director active with a calmer first-morning pace');
