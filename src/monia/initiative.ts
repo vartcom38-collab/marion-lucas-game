@@ -2,7 +2,7 @@ import { monia } from './runtime';
 import type { MonIAChannel } from './director';
 
 const SAVE_KEY = 'marion-lucas-save-v4';
-const STATE_KEY = 'monia-initiative-state-v2';
+const STATE_KEY = 'monia-initiative-state-v3';
 
 type Message = { from: string; text: string; day: number; read: boolean };
 type LooseSave = {
@@ -11,10 +11,12 @@ type LooseSave = {
   place?: string;
   relationship?: number;
   metLucas?: boolean;
+  phoneUnread?: number;
   messages?: Message[];
   eventHistory?: string[];
   memories?: string[];
   flags?: Record<string, string | number | boolean>;
+  updatedAt?: number;
 };
 
 type InitiativeState = {
@@ -35,7 +37,7 @@ function readSave(): LooseSave | null {
 }
 
 function writeSave(save: LooseSave) {
-  try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch { /* optional */ }
+  try { save.updatedAt = Date.now(); localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch { /* optional */ }
 }
 
 function readState(): InitiativeState {
@@ -71,14 +73,6 @@ function latestMessages(save: LooseSave) {
   return (save.messages || []).slice(0, 8);
 }
 
-function latestLucasMessage(save: LooseSave) {
-  return latestMessages(save).find(m => m.from === 'Lucas');
-}
-
-function latestMarionMessage(save: LooseSave) {
-  return latestMessages(save).find(m => m.from === 'Toi' || m.from === 'Marion');
-}
-
 function contentSignature(save: LooseSave) {
   const messages = latestMessages(save).slice(0, 4).map(m => `${m.from}:${m.text}`).join('|');
   const event = (save.eventHistory || []).slice(-2).join('|');
@@ -88,6 +82,18 @@ function contentSignature(save: LooseSave) {
 function hasPendingInteraction(save: LooseSave) {
   const f = save.flags || {};
   return Boolean(f.smsPending || f.smsPendingText || f.smsReplyAt || f.smsTyping || f.moniaSmsPending);
+}
+
+function lucasUnavailable(save: LooseSave) {
+  const f = save.flags || {};
+  return Boolean(
+    f.lucasBusy ||
+    f.lucasAtTraining ||
+    f.lucasInCorrida ||
+    f.corridaInProgress ||
+    f.lucasTraveling ||
+    f.lucasSleeping
+  );
 }
 
 function latestSpeaker(save: LooseSave) {
@@ -116,10 +122,13 @@ function initiativeScore(save: LooseSave, state: InitiativeState) {
   const silence = silenceSinceChange(save, state);
   const relation = Number(save.relationship || 0);
   const latest = latestSpeaker(save);
+  const hour = Math.floor(minuteOfDay(save.time) / 60);
 
-  if (sinceInitiative < 360) return -999; // jamais plus d'environ une initiative par 6 h de jeu
-  if (silence < 90) return -999; // laisser respirer une conversation récente
-  if (latest === 'Lucas' && silence < 300) return -999; // ne pas se répondre à lui-même trop vite
+  if (sinceInitiative < 360) return -999;
+  if (silence < 90) return -999;
+  if (latest === 'Lucas' && silence < 300) return -999;
+  if (lucasUnavailable(save)) return -999;
+  if (hour < 8 || hour >= 23) return -999;
 
   if (silence >= 120) score += 2;
   if (silence >= 240) score += 2;
@@ -168,6 +177,10 @@ function safeContext(save: LooseSave, silenceMinutes: number) {
   };
 }
 
+function plainPreview(text: string) {
+  return text.replace(/^\[\[voice:/, '').replace(/\]\]$/, '').slice(0, 110);
+}
+
 let running = false;
 async function evaluate() {
   if (running) return;
@@ -176,7 +189,6 @@ async function evaluate() {
   const state = readState();
   const currentContent = contentSignature(save);
 
-  // Un vrai changement de conversation remet le compteur de silence à zéro.
   if (currentContent !== state.lastObservedContent) {
     state.lastObservedContent = currentContent;
     state.lastChangeDay = Number(save.day || 0);
@@ -201,20 +213,29 @@ async function evaluate() {
     const fresh = readSave();
     if (!fresh) return;
     fresh.messages = fresh.messages || [];
+    fresh.flags = fresh.flags || {};
     const prefix = result.channel === 'voice' ? '[[voice:' : '';
     const suffix = result.channel === 'voice' ? ']]' : '';
+    const rendered = `${prefix}${result.text || result.spokenText}${suffix}`;
     fresh.messages.unshift({
       from: 'Lucas',
-      text: `${prefix}${result.text || result.spokenText}${suffix}`,
+      text: rendered,
       day: Number(fresh.day || 0),
       read: false,
     });
+    fresh.phoneUnread = Math.max(0, Number(fresh.phoneUnread || 0)) + 1;
+    fresh.flags.phoneToast = `Lucas|${result.channel === 'voice' ? 'Message vocal' : plainPreview(rendered)}`;
+    fresh.flags.phoneToastAt = absoluteMinute(fresh);
+    fresh.flags.lastLucasInitiativeAt = absoluteMinute(fresh);
+    fresh.flags.lastLucasInitiativeChannel = result.channel;
     if (result.memory) {
       fresh.memories = fresh.memories || [];
       fresh.memories.unshift(result.memory);
       fresh.memories = fresh.memories.slice(0, 80);
     }
     writeSave(fresh);
+
+    window.dispatchEvent(new CustomEvent('marion-lucas-phone-initiative', { detail: { actor: 'Lucas', channel: result.channel } }));
 
     const done = readState();
     done.lastDay = Number(fresh.day || 0);
