@@ -2,15 +2,15 @@ import './premiumCinema.css';
 
 const SAVE='marion-lucas-save-v4';
 const MEDIA=[
-  './resources/marion-nimes.mp4',
-  './resources/monia/generated/intro-lucas-candidate-desktop.mp4',
   './resources/appartement-nimes.png'
 ];
 let mounted:HTMLElement|null=null;
 let lastPlace='';
-let raf=0;
-let frames=0;
-let started=performance.now();
+let lastOverlay=false;
+let sampleRaf=0;
+let sampleStart=0;
+let sampleFrames=0;
+let perfTimer=0;
 
 type LooseSave={place?:string;time?:string;overlay?:string|null;screen?:string};
 function save():LooseSave{try{return JSON.parse(localStorage.getItem(SAVE)||'{}')}catch{return {}}}
@@ -20,8 +20,8 @@ function preload(){
   if(conn?.saveData)return;
   for(const src of MEDIA){
     const link=document.createElement('link');
-    link.rel=src.endsWith('.mp4')?'preload':'prefetch';
-    link.as=src.endsWith('.mp4')?'video':'image';
+    link.rel='prefetch';
+    link.as='image';
     link.href=src;
     document.head.appendChild(link);
   }
@@ -32,6 +32,15 @@ function transition(game:HTMLElement){
   void game.offsetWidth;
   game.classList.add('pc-place-change');
   window.setTimeout(()=>game.classList.remove('pc-place-change'),850);
+}
+
+function overlayHandoff(game:HTMLElement,open:boolean){
+  if(open===lastOverlay)return;
+  lastOverlay=open;
+  game.classList.remove('pc-drama-enter','pc-drama-exit');
+  void game.offsetWidth;
+  game.classList.add(open?'pc-drama-enter':'pc-drama-exit');
+  window.setTimeout(()=>game.classList.remove('pc-drama-enter','pc-drama-exit'),520);
 }
 
 function pulse(game:HTMLElement,x:number,y:number){
@@ -50,7 +59,9 @@ function sync(game:HTMLElement){
   if(lastPlace&&place!==lastPlace)transition(game);
   lastPlace=place;
   game.dataset.pcPlace=place;
-  game.classList.toggle('pc-overlay-open',Boolean(s.overlay));
+  const overlayOpen=Boolean(s.overlay);
+  overlayHandoff(game,overlayOpen);
+  game.classList.toggle('pc-overlay-open',overlayOpen);
   const hour=Number((s.time||'12:00').split(':')[0]);
   game.dataset.pcDaypart=hour>=21||hour<6?'night':hour>=18?'evening':hour<11?'morning':'day';
 }
@@ -68,22 +79,36 @@ function install(game:HTMLElement){
 
 function scan(){
   const game=document.querySelector<HTMLElement>('.game');
-  if(game){install(game);sync(game)} else mounted=null;
+  if(game){install(game);sync(game)} else {mounted=null;lastOverlay=false}
 }
 
-function performanceGuard(now:number){
-  frames++;
-  const elapsed=now-started;
-  if(elapsed>3500){
-    const fps=frames/(elapsed/1000);
-    document.documentElement.classList.toggle('pc-low-fps',fps<42);
-    frames=0;started=now;
+function stopSample(){
+  if(sampleRaf){cancelAnimationFrame(sampleRaf);sampleRaf=0}
+}
+
+function sampleFrame(now:number){
+  if(document.hidden||!document.querySelector('.game')){stopSample();return}
+  sampleFrames++;
+  const elapsed=now-sampleStart;
+  if(elapsed>=900){
+    const fps=sampleFrames/(elapsed/1000);
+    document.documentElement.classList.toggle('pc-low-fps',fps<38);
+    stopSample();
+    return;
   }
-  raf=requestAnimationFrame(performanceGuard);
+  sampleRaf=requestAnimationFrame(sampleFrame);
+}
+
+function samplePerformance(){
+  if(document.hidden||sampleRaf||!document.querySelector('.game'))return;
+  sampleFrames=0;sampleStart=performance.now();
+  sampleRaf=requestAnimationFrame(sampleFrame);
 }
 
 new MutationObserver(scan).observe(document.getElementById('app')||document.documentElement,{childList:true,subtree:true});
 window.addEventListener('storage',scan);
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)scan()});
-preload();scan();raf=requestAnimationFrame(performanceGuard);
-console.info('[Cinema] Premium cinematic layer active');
+document.addEventListener('visibilitychange',()=>{if(document.hidden)stopSample();else{scan();samplePerformance()}});
+preload();scan();samplePerformance();
+perfTimer=window.setInterval(samplePerformance,12000);
+void perfTimer;
+console.info('[Cinema] Premium layer now uses softer drama handoffs and sampled performance checks');
