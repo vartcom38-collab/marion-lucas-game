@@ -153,9 +153,6 @@ jobs:
 
           ensure_remote_dir(remote_root)
 
-          # Keep the currently working index live while every new hashed asset and
-          # resource is uploaded. Old hashed assets stay present, so the old page
-          # continues to work throughout the deployment.
           entrypoints = {local_root / 'index.html', local_root / 'monia-test.html'}
           for root, dirs, files in os.walk(local_root):
               local_dir = Path(root)
@@ -166,7 +163,6 @@ jobs:
                       continue
                   upload_file(local_path, remote_dir)
 
-          # Publish HTML entrypoints only after their referenced assets exist.
           for entrypoint in ('monia-test.html', 'index.html'):
               local_path = local_root / entrypoint
               if local_path.exists():
@@ -174,3 +170,25 @@ jobs:
 
           ftp.quit()
           PY
+
+      - name: Verify public site and entry assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          base='https://marion-lucas.marionbolomey.fr'
+          html="$(curl -fsSL --retry 4 --retry-delay 2 --connect-timeout 15 --max-time 45 "$base/?deploy=${GITHUB_SHA}")"
+          printf '%s' "$html" | grep -q '<title>Marion & Lucas</title>' || {
+            echo 'ERROR: the public URL is not serving the freshly deployed Marion & Lucas index.'
+            printf '%s\n' "$html" | head -c 1200
+            exit 1
+          }
+          js="$(printf '%s' "$html" | grep -oE 'src="[^"]+\.js"' | tail -1 | cut -d'"' -f2)"
+          css="$(printf '%s' "$html" | grep -oE 'href="[^"]+\.css"' | tail -1 | cut -d'"' -f2)"
+          test -n "$js"
+          test -n "$css"
+          case "$js" in http*) js_url="$js" ;; /*) js_url="$base$js" ;; *) js_url="$base/${js#./}" ;; esac
+          case "$css" in http*) css_url="$css" ;; /*) css_url="$base$css" ;; *) css_url="$base/${css#./}" ;; esac
+          echo "Public JS: $js_url"
+          echo "Public CSS: $css_url"
+          curl -fsSI --retry 3 --connect-timeout 15 --max-time 45 "$js_url" | head
+          curl -fsSI --retry 3 --connect-timeout 15 --max-time 45 "$css_url" | head
