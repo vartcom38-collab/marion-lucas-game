@@ -12,6 +12,7 @@ const SAVE_KEY='marion-lucas-save-v4';
 const RELOAD_GUARD='marion-day-one-seed-reload-v1';
 let escalationOpen=false;
 let rendezvousOpen=false;
+let nimesArrivalTimer=0;
 
 function read():SaveLike|null{
   try{return JSON.parse(localStorage.getItem(SAVE_KEY)||'null') as SaveLike|null}catch{return null}
@@ -54,6 +55,7 @@ function syncFreshGame(){
 
 function removeImpulse(){document.getElementById('dayOneImpulse')?.remove()}
 function removeCompanion(){document.getElementById('dayOneCompanion')?.remove()}
+function removeNimesArrival(){document.getElementById('dayOneNimesArrival')?.remove()}
 
 function mountImpulse(s:SaveLike){
   if(s.day!==1||s.metLucas||s.place!=='home'||!s.flags.dayOneSocialSeeded||mins(s.time)<550){removeImpulse();return}
@@ -72,6 +74,28 @@ function mountImpulse(s:SaveLike){
     if(strong)strong.textContent=late?'Marine est déjà dehors':'La matinée reste à toi';
     if(p)p.textContent=late?'Tu peux la rejoindre, ou finir ce que tu fais avant de sortir.':'Un message t’attend, mais rien ne presse. Tu peux encore profiter de l’appartement.';
   }
+}
+
+function mountNimesArrival(s:SaveLike){
+  if(s.day!==1||s.metLucas||s.place!=='nimes'||!s.flags.dayOneSocialSeeded){removeNimesArrival();return}
+  const game=document.querySelector<HTMLElement>('main.game');if(!game)return;
+  const existing=document.getElementById('dayOneNimesArrival');
+  if(existing)return;
+  if(s.flags.dayOneNimesArrivalShown)return;
+  s.flags.dayOneNimesArrivalShown=true;
+  s.flags.dayOneNimesArrivalAt=Date.now();
+  write(s);
+  game.classList.add('dayOneFirstNimes');
+  const card=document.createElement('aside');
+  card.id='dayOneNimesArrival';card.className='dayOneNimesArrival';
+  card.innerHTML='<span>NÎMES · PREMIERS PAS</span><strong>La ville est déjà en mouvement.</strong><small>Tu peux regarder autour de toi avant de décider quoi que ce soit.</small>';
+  game.appendChild(card);
+  if(nimesArrivalTimer)window.clearTimeout(nimesArrivalTimer);
+  nimesArrivalTimer=window.setTimeout(()=>{
+    card.classList.add('leaving');
+    game.classList.remove('dayOneFirstNimes');
+    window.setTimeout(()=>card.remove(),320);
+  },4200);
 }
 
 function showEscalation(s:SaveLike){
@@ -96,6 +120,8 @@ function showEscalation(s:SaveLike){
 
 function mountCompanion(s:SaveLike){
   if(s.day!==1||s.metLucas||s.place==='home'||!s.flags.dayOneSocialSeeded){removeCompanion();return}
+  const arrivalAt=Number(s.flags.dayOneNimesArrivalAt||0);
+  if(s.place==='nimes'&&arrivalAt&&Date.now()-arrivalAt<6500){removeCompanion();return}
   if(Number(s.flags.dayOneRendezvousSnoozeUntil||0)>nowStamp(s)){removeCompanion();return}
   const game=document.querySelector<HTMLElement>('main.game');if(!game)return;
   let card=document.getElementById('dayOneCompanion') as HTMLButtonElement|null;
@@ -127,9 +153,10 @@ function showRendezvous(s:SaveLike){
 
 function scan(){
   syncFreshGame();const s=read();if(!s)return;
-  mountImpulse(s);showEscalation(s);mountCompanion(s);
+  mountImpulse(s);mountNimesArrival(s);showEscalation(s);mountCompanion(s);
   if(s.day!==1||s.metLucas||s.place!=='home')removeImpulse();
   if(s.day!==1||s.metLucas||s.place==='home')removeCompanion();
+  if(s.day!==1||s.metLucas||s.place!=='nimes')removeNimesArrival();
 }
 
 window.addEventListener('marion-home-first-control',()=>window.setTimeout(scan,260));
@@ -138,4 +165,4 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)scan()});
 window.setInterval(scan,4500);
 scan();
 
-console.info('[Day 1] reactive social director active with a calmer first-morning pace');
+console.info('[Day 1] reactive social director active with calmer home and first Nimes breathing room');
