@@ -8,6 +8,10 @@ const THREAD_PREFIX = 'monia-thread-v1';
 type LooseSave = {
   day?: number;
   time?: string;
+  place?: string;
+  relationship?: number;
+  trust?: number;
+  chemistry?: number;
   flags?: Record<string, string | number | boolean>;
 };
 
@@ -16,6 +20,15 @@ type ThreadTurn = {
   text: string;
   at: number;
 };
+
+function readGameSave(): LooseSave | null {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    return raw ? JSON.parse(raw) as LooseSave : null;
+  } catch {
+    return null;
+  }
+}
 
 function clearLegacySmsPending() {
   try {
@@ -148,6 +161,44 @@ function temporalRules(request: MonIADirectorRequest) {
   return rules;
 }
 
+function playerStyleRules(request: MonIADirectorRequest, save: LooseSave | null, thread: ThreadTurn[]) {
+  if (!save || isTestRequest(request)) return [] as string[];
+  const flags = save.flags || {};
+  const rules = [
+    'ADAPTATION JOUEUSE: observer les habitudes de Marion comme des signaux souples, jamais comme une personnalité figée ni une autorisation à forcer une scène.',
+    'Lucas doit rester autonome: s’adapter au rythme de Marion ne signifie pas toujours lui donner ce qu’elle attend.',
+  ];
+
+  if (flags.marionCoupleInitiativeChoice === 'yes') {
+    rules.push('Marion a déjà pris spontanément l’initiative dans le couple: Lucas peut reconnaître qu’elle vient parfois vers lui d’elle-même, sans transformer cela en attente permanente.');
+  } else if (flags.marionCoupleInitiativeChoice === 'later') {
+    rules.push('Marion a déjà choisi de garder son propre rythme plutôt que saisir immédiatement un moment à deux: respecter naturellement son espace et éviter de sur-solliciter.');
+  }
+
+  const ownLifeDay = Number(flags.marionOwnLifeLastDay || 0);
+  if (ownLifeDay && Number(save.day || 0) - ownLifeDay <= 4) {
+    rules.push('Marion protège aussi sa vie personnelle: Lucas ne doit pas agir comme si son temps lui appartenait ni recentrer chaque échange sur le couple.');
+  }
+
+  if (flags.environmentInteractionKind) {
+    rules.push('La joueuse prête attention aux petits détails du quotidien et du décor: privilégier parfois un geste, un objet ou une micro-observation concrète plutôt qu’une grande déclaration.');
+  }
+
+  if (flags.firstPlayableNeededNudge) {
+    rules.push('Au début de partie, la joueuse a eu besoin d’un peu de temps avant sa première action: lorsque le contexte est nouveau, préférer une impulsion naturelle claire à une avalanche d’options ou d’explications.');
+  }
+
+  const playerTurns = thread.filter(turn => turn.speaker === 'Marion').slice(-4);
+  const latest = request.playerText?.trim() || playerTurns.at(-1)?.text || '';
+  if (latest) {
+    if (latest.length <= 26) rules.push('Marion communique ici de façon brève: répondre naturellement et précisément, sans faire un monologue disproportionné.');
+    if (/[❤️💕😘🥰]|\b(mon coeur|mon cœur|bébé|je t’aime|tu me manques)\b/i.test(latest)) rules.push('Le message actuel est affectueux: Lucas peut recevoir cette tendresse sans devenir excessivement lyrique ni perdre son caractère.');
+    if (/\?|pourquoi|comment|quand|où|ou\b/i.test(latest)) rules.push('Marion pose une vraie question: y répondre d’abord avant d’ajouter du flirt, de l’ambiance ou une diversion.');
+  }
+
+  return rules;
+}
+
 const originalDirect = monia.direct.bind(monia);
 
 monia.direct = async (request: MonIADirectorRequest, mode = 'auto', enabled = true) => {
@@ -161,6 +212,7 @@ monia.direct = async (request: MonIADirectorRequest, mode = 'auto', enabled = tr
   });
   const thread = loadThread(request);
   const continuity = conversationContext(thread);
+  const gameSave = readGameSave();
 
   const enriched: MonIADirectorRequest = {
     ...request,
@@ -171,6 +223,7 @@ monia.direct = async (request: MonIADirectorRequest, mode = 'auto', enabled = tr
       rules: uniqueMemories([
         ...(request.context.rules || []),
         ...temporalRules(request),
+        ...playerStyleRules(request, gameSave, thread),
         'Les souvenirs marqués PROMESSE sont des engagements à respecter tant qu’un événement plus récent ne les contredit pas.',
         'Les souvenirs personnels peuvent guider le ton ou rappeler une préférence, mais seulement s’ils sont pertinents.',
         'Utiliser un souvenir uniquement s’il est pertinent pour la situation actuelle; ne pas forcer une référence ancienne.',
@@ -178,7 +231,7 @@ monia.direct = async (request: MonIADirectorRequest, mode = 'auto', enabled = tr
         'Si Marion dit seulement pourquoi, sérieux, et demain, quoi, comment ça ou une réponse courte similaire, répondre à ce qu’elle vient réellement de reprendre dans la conversation.',
         'Ne jamais contredire sans raison une information que Lucas vient de donner quelques messages plus tôt.',
         'En cas de contradiction, le contexte le plus récent de la partie est prioritaire.',
-      ], 28),
+      ], 34),
     },
   };
 
@@ -239,4 +292,4 @@ monia.direct = async (request: MonIADirectorRequest, mode = 'auto', enabled = tr
   }
 };
 
-console.info('[MonIA] Long-term memory + conversation continuity + temporal coherence active');
+console.info('[MonIA] Long-term memory + conversation continuity + temporal coherence + soft player-style adaptation active');
