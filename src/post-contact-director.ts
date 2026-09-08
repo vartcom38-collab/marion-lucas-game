@@ -9,6 +9,7 @@ type SaveLike={
 const SAVE_KEY='marion-lucas-save-v4';
 let lastKey='';
 let pulseTimer=0;
+let breathingTimer=0;
 
 function read():SaveLike|null{try{return JSON.parse(localStorage.getItem(SAVE_KEY)||'null') as SaveLike|null}catch{return null}}
 function write(s:SaveLike){s.updatedAt=Date.now();localStorage.setItem(SAVE_KEY,JSON.stringify(s))}
@@ -27,9 +28,31 @@ function seedAftermath(s:SaveLike){
   s.flags.postContactSeeded=true;
   s.flags.postContactMood='unsettled';
   s.flags.postContactSeenAt=stamp(s);
+  s.flags.postContactBreathingStartedAt=Date.now();
   addMemory(s,'Après cette rencontre, un détail te revient sans raison précise.');
   write(s);
   return true;
+}
+
+function mountBreathingRoom(s:SaveLike){
+  const game=document.querySelector<HTMLElement>('main.game');
+  if(!game||!s.metLucas||s.flags.postContactBreathingDone)return;
+  const started=Number(s.flags.postContactBreathingStartedAt||0);
+  if(!started)return;
+  const elapsed=Date.now()-started;
+  if(elapsed>=4200){
+    game.classList.remove('postContactBreathing');
+    s.flags.postContactBreathingDone=true;
+    write(s);
+    return;
+  }
+  game.classList.add('postContactBreathing');
+  if(breathingTimer)window.clearTimeout(breathingTimer);
+  breathingTimer=window.setTimeout(()=>{
+    game.classList.remove('postContactBreathing');
+    const latest=read();
+    if(latest&&!latest.flags.postContactBreathingDone){latest.flags.postContactBreathingDone=true;write(latest)}
+  },Math.max(250,4200-elapsed));
 }
 
 function maybeMarineEcho(s:SaveLike){
@@ -69,15 +92,20 @@ function mountPulse(s:SaveLike){
 function scan(){
   const s=read();if(!s)return;
   const seeded=seedAftermath(s);
-  if(seeded){window.setTimeout(scan,60);return}
+  if(seeded){window.setTimeout(scan,80);return}
+  mountBreathingRoom(s);
   if(maybeMarineEcho(s)){window.setTimeout(()=>location.reload(),40);return}
   mountPulse(s);
 }
 
 window.addEventListener('storage',scan);
 window.addEventListener('marion-home-first-control',()=>window.setTimeout(scan,300));
-new MutationObserver(scan).observe(document.documentElement,{childList:true,subtree:true});
+document.addEventListener('click',e=>{
+  const t=e.target as HTMLElement|null;
+  if(t?.closest('.eventOverlay,.choice,.eventCard,[data-choice]'))window.setTimeout(scan,320);
+},{passive:true});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)scan()});
 window.setInterval(scan,7000);
 scan();
 
-console.info('[Romance] post-contact emotional director active');
+console.info('[Romance] post-contact flow polished with breathing room and lighter DOM watching');
