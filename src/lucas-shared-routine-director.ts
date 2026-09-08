@@ -21,7 +21,7 @@ function physicallyTogether(){return Boolean(document.querySelector('[data-world
 
 function eligible(s:SaveLike){
   if(!s.metLucas||!s.official||s.screen!=='game'||document.hidden||overlayOpen()||!physicallyTogether())return false;
-  if(Boolean(s.flags.lucasBusy)||Boolean(s.flags.lucasAway)||Boolean(s.flags.corridaLive))return false;
+  if(Boolean(s.flags.lucasBusy)||Boolean(s.flags.lucasAway)||Boolean(s.flags.corridaLive)||Boolean(s.flags.lucasRoutineBusy))return false;
   if(Number(s.flags.lucasSharedRoutineDay||0)===s.day)return false;
   if(Number(s.flags.lucasPresenceDay||0)!==s.day)return false; // une présence subtile précède toujours une proposition
   const h=mins(s.time);return h>=660&&h<=1290;
