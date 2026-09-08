@@ -10,7 +10,7 @@ permissions:
 
 concurrency:
   group: infomaniak-production
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build-and-deploy:
@@ -136,23 +136,41 @@ jobs:
                       ftp.mkd(part)
                       ftp.cwd(part)
 
+          def remote_dir_for(local_dir: Path) -> str:
+              rel = local_dir.relative_to(local_root)
+              if str(rel) == '.':
+                  return remote_root
+              if remote_root == '/':
+                  return '/' + rel.as_posix()
+              return remote_root.rstrip('/') + '/' + rel.as_posix()
+
+          def upload_file(local_path: Path, remote_dir: str):
+              ensure_remote_dir(remote_dir)
+              ftp.cwd(remote_dir)
+              with local_path.open('rb') as fh:
+                  ftp.storbinary(f'STOR {local_path.name}', fh, blocksize=1024 * 1024)
+              print(f'uploaded {local_path} -> {remote_dir.rstrip("/")}/{local_path.name}')
+
           ensure_remote_dir(remote_root)
 
+          # Keep the currently working index live while every new hashed asset and
+          # resource is uploaded. Old hashed assets stay present, so the old page
+          # continues to work throughout the deployment.
+          entrypoints = {local_root / 'index.html', local_root / 'monia-test.html'}
           for root, dirs, files in os.walk(local_root):
-              rel = Path(root).relative_to(local_root)
-              if str(rel) == '.':
-                  remote_dir = remote_root
-              elif remote_root == '/':
-                  remote_dir = '/' + rel.as_posix()
-              else:
-                  remote_dir = remote_root.rstrip('/') + '/' + rel.as_posix()
-
-              ensure_remote_dir(remote_dir)
+              local_dir = Path(root)
+              remote_dir = remote_dir_for(local_dir)
               for filename in files:
-                  local_path = Path(root) / filename
-                  with local_path.open('rb') as fh:
-                      ftp.storbinary(f'STOR {filename}', fh, blocksize=1024 * 1024)
-                  print(f'uploaded {local_path} -> {remote_dir.rstrip("/")}/{filename}')
+                  local_path = local_dir / filename
+                  if local_path in entrypoints:
+                      continue
+                  upload_file(local_path, remote_dir)
+
+          # Publish HTML entrypoints only after their referenced assets exist.
+          for entrypoint in ('monia-test.html', 'index.html'):
+              local_path = local_root / entrypoint
+              if local_path.exists():
+                  upload_file(local_path, remote_root)
 
           ftp.quit()
           PY
