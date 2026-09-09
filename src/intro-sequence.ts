@@ -1,82 +1,33 @@
-import './intro-sequence.css';
-import { prepareMonIAIntroShots } from './monia/intro-ai';
+// Opening videos are intentionally disabled: a new game should drop straight into play.
+// We keep this tiny bridge because main.ts still mounts the legacy cinematic stage.
+// As soon as that stage appears, trigger its existing skip/continue path so save-state
+// transitions remain exactly the same without loading or playing any intro media.
 
-type Shot={src:string;label:string};
+function skipOpeningVideo(stage: HTMLElement) {
+  if (stage.dataset.sequenceMounted === '1') return;
+  const skip = stage.querySelector<HTMLButtonElement>('#skip');
+  if (!skip) return;
+  stage.dataset.sequenceMounted = '1';
 
-const sleep=(ms:number)=>new Promise<void>(r=>window.setTimeout(r,ms));
-
-// APPROVED LIVE INTRO MEDIA.
-// New MonIA renders remain candidates and must never replace either shot without explicit user approval.
-const APPROVED_MARION_VIDEO='./resources/marion-nimes.mp4';
-const APPROVED_LUCAS_VIDEO='./resources/monia/generated/intro-lucas-candidate-desktop.mp4';
-
-function sourceOf(id:string){return(document.getElementById(id) as HTMLVideoElement|null)?.src||''}
-
-function muteFromSettings(){
-  try{const raw=localStorage.getItem('marion-lucas-settings-v2');if(!raw)return false;const p=JSON.parse(raw);return p?.sound===false}catch{return false}
-}
-
-function introShots():Shot[]{
-  return [
-    {src:APPROVED_MARION_VIDEO||sourceOf('introVideo'),label:'NÎMES'},
-    {src:APPROVED_LUCAS_VIDEO,label:'AILLEURS, AU MÊME MOMENT'},
-  ].filter(s=>Boolean(s.src));
-}
-
-async function playSafe(video:HTMLVideoElement){
-  try{await video.play();return true}catch{video.muted=true;try{await video.play();return true}catch{return false}}
-}
-
-async function mountSequence(stage:HTMLElement){
-  if(stage.dataset.sequenceMounted==='1')return;
-  const legacy=stage.querySelector<HTMLVideoElement>('#cineA');
-  const skip=stage.querySelector<HTMLButtonElement>('#skip');
-  if(!legacy||!skip)return;
-  stage.dataset.sequenceMounted='1';
-
-  legacy.pause();legacy.onended=null;legacy.ontimeupdate=null;legacy.classList.remove('active');legacy.style.display='none';
-
-  const shots=introShots();
-  if(!shots.length){skip.click();return}
-
-  stage.classList.add('multiShotIntro');
-  const shell=document.createElement('div');shell.className='introSequenceShell';
-  shell.innerHTML=`<video class="introShot introShotA" playsinline preload="auto"></video><video class="introShot introShotB" playsinline preload="auto"></video><div class="introCinemaShade"></div><div class="introShotMeta"><span></span></div><div class="introSequenceProgress"><i></i></div>`;
-  stage.insertBefore(shell,stage.firstChild);
-  const players=[shell.querySelector<HTMLVideoElement>('.introShotA')!,shell.querySelector<HTMLVideoElement>('.introShotB')!];
-  const meta=shell.querySelector<HTMLElement>('.introShotMeta span')!;
-  const progress=shell.querySelector<HTMLElement>('.introSequenceProgress i')!;
-  let stopped=false;
-  const stop=()=>{stopped=true;players.forEach(v=>{v.pause();v.removeAttribute('src');v.load()})};
-  skip.addEventListener('click',stop,{once:true});
-  const durations:number[]=new Array(shots.length).fill(1);
-  let completed=0;
-
-  for(let i=0;i<shots.length&&!stopped;i++){
-    const current=players[i%2],other=players[(i+1)%2];
-    other.classList.remove('visible');other.pause();
-    current.src=shots[i].src;current.muted=muteFromSettings();current.volume=1;current.load();
-    if(shots[i+1]){other.src=shots[i+1].src;other.preload='auto';other.load()}
-    meta.textContent=shots[i].label;
-    await new Promise<void>(resolve=>{
-      const ready=()=>{durations[i]=Number.isFinite(current.duration)&&current.duration>0?current.duration:1;resolve()};
-      if(current.readyState>=1)ready();else{current.addEventListener('loadedmetadata',ready,{once:true});window.setTimeout(resolve,1400)}
-    });
-    if(stopped)break;
-    current.classList.add('visible');
-    const update=()=>{const total=durations.reduce((a,b)=>a+b,0)||1;const now=completed+Math.min(current.currentTime||0,durations[i]);progress.style.transform=`scaleX(${Math.min(1,now/total)})`};
-    current.addEventListener('timeupdate',update);
-    const ok=await playSafe(current);if(!ok){current.removeEventListener('timeupdate',update);continue}
-    await new Promise<void>(resolve=>{current.addEventListener('ended',()=>resolve(),{once:true});window.setTimeout(()=>{if(current.ended||stopped)resolve()},Math.max(1200,durations[i]*1000+2500))});
-    current.removeEventListener('timeupdate',update);completed+=durations[i];progress.style.transform=`scaleX(${Math.min(1,completed/(durations.reduce((a,b)=>a+b,0)||1))})`;
-    if(i<shots.length-1&&!stopped){current.classList.add('fading');await sleep(360);current.classList.remove('visible','fading');await sleep(90)}
+  const legacy = stage.querySelector<HTMLVideoElement>('#cineA');
+  if (legacy) {
+    legacy.pause();
+    legacy.onended = null;
+    legacy.ontimeupdate = null;
+    legacy.removeAttribute('src');
+    legacy.load();
   }
-  if(!stopped){stage.classList.add('introSequenceEnding');await sleep(520);skip.click()}
+
+  queueMicrotask(() => skip.click());
 }
 
-// MonIA may prepare future candidates in the background, but candidates are never promoted automatically.
-window.setTimeout(()=>{void prepareMonIAIntroShots()},1800);
+function scan() {
+  const stage = document.querySelector<HTMLElement>('.teaserCine');
+  if (stage) skipOpeningVideo(stage);
+}
 
-const observer=new MutationObserver(()=>{const stage=document.querySelector<HTMLElement>('.teaserCine');if(stage)void mountSequence(stage)});
-observer.observe(document.documentElement,{childList:true,subtree:true});
-const existing=document.querySelector<HTMLElement>('.teaserCine');if(existing)void mountSequence(existing);
+const observer = new MutationObserver(scan);
+observer.observe(document.documentElement, { childList: true, subtree: true });
+scan();
+
+console.info('[Intro] Opening video disabled — new games enter gameplay directly');
