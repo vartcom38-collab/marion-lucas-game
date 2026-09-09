@@ -76,13 +76,19 @@ jobs:
           user = os.environ['INFOMANIAK_FTP_USER'].strip()
           password = os.environ['INFOMANIAK_FTP_PASSWORD'].rstrip('\r\n')
           local_root = Path('dist')
-          remote_root = '/sites/marion-lucas.marionbolomey.fr'
 
           ftp = ftplib.FTP_TLS(timeout=45)
           ftp.connect(host, 21)
           ftp.login(user, password)
           ftp.prot_p()
           ftp.set_pasv(True)
+
+          # This Infomaniak FTP account is already chrooted to the site's
+          # document root. Deploying to /sites/... creates a nested folder and
+          # leaves the real public index untouched. The live document root is /.
+          remote_root = '/'
+          print(f'FTP login root: {ftp.pwd()}')
+          print('Deploying Marion & Lucas directly to FTP / (public document root).')
 
           def ensure_remote_dir(path: str):
               parts = [p for p in path.split('/') if p]
@@ -98,7 +104,7 @@ jobs:
               rel = local_dir.relative_to(local_root)
               if str(rel) == '.':
                   return remote_root
-              return remote_root.rstrip('/') + '/' + rel.as_posix()
+              return '/' + rel.as_posix()
 
           def remote_size(remote_dir: str, filename: str):
               ftp.cwd(remote_dir)
@@ -140,7 +146,7 @@ jobs:
                           if final_size != expected:
                               raise RuntimeError(f'{final_name}: remote size after rename {final_size}, expected {expected}')
 
-                      print(f'uploaded+verified {local_path} -> {remote_dir.rstrip("/")}/{final_name} ({expected} bytes)')
+                      print(f'uploaded+verified {local_path} -> {remote_dir.rstrip("/") or "/"}/{final_name} ({expected} bytes)')
                       return
                   except Exception as exc:
                       last_error = exc
@@ -148,8 +154,6 @@ jobs:
                       time.sleep(attempt * 2)
 
               raise RuntimeError(f'Upload failed after retries for {local_path}: {last_error}')
-
-          ensure_remote_dir(remote_root)
 
           entrypoints = {local_root / 'index.html', local_root / 'monia-test.html'}
           for root, dirs, files in os.walk(local_root):
@@ -161,19 +165,18 @@ jobs:
                       continue
                   upload_verified(local_path, remote_dir)
 
-          # HTML entrypoints are published last and atomically so the live site can
-          # never be left with a truncated/zero-byte index during an FTP transfer.
+          # Publish HTML entrypoints last and atomically.
           for entrypoint in ('monia-test.html', 'index.html'):
               local_path = local_root / entrypoint
               if local_path.exists():
                   upload_verified(local_path, remote_root, atomic=True)
 
-          # Final server-side assertion: index.html must exist and be non-empty.
           expected_index = (local_root / 'index.html').stat().st_size
           live_index = remote_size(remote_root, 'index.html')
           if live_index != expected_index:
               raise RuntimeError(f'FINAL index verification failed: remote={live_index}, expected={expected_index}')
 
+          print(f'Public-root index verified at {live_index} bytes.')
           ftp.quit()
           PY
 
