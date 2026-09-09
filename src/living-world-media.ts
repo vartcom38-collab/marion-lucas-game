@@ -37,9 +37,14 @@ async function mountVideo(game:HTMLElement){
   const current=++token;
   const save=readSave();
   const place=(save?.place||'home').toLowerCase();
-  const url=sourceFor(place);
   game.dataset.livingPlace=place;
   clearVideo();
+
+  // The Nîmes apartment is deliberately photo-based: no full-frame ambient video.
+  // Full-frame video made the room feel unstable and also cost unnecessary GPU/CPU.
+  if(place==='home')return;
+
+  const url=sourceFor(place);
   if(!(await mediaExists(url))||current!==token||!game.isConnected)return;
 
   const video=document.createElement('video');
@@ -81,4 +86,4 @@ document.addEventListener('visibilitychange',()=>{
 });
 scan();
 
-console.info('[World] Optional place-video layer active');
+console.info('[World] Optional place-video layer active (disabled at home)');
