@@ -48,8 +48,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test -f dist/index.html
-          test -f dist/monia-test.html
+          test -s dist/index.html
+          test -s dist/monia-test.html
           test -d dist/assets
           test -d dist/resources
           test -f dist/api/monia-media-store.php
@@ -68,63 +68,21 @@ jobs:
           set -euo pipefail
           python3 <<'PY'
           import ftplib
-          import io
           import os
+          import time
           from pathlib import Path
 
           host = os.environ['INFOMANIAK_FTP_HOST'].strip().replace('ftpes://', '').replace('ftps://', '').replace('ftp://', '').rstrip('/')
           user = os.environ['INFOMANIAK_FTP_USER'].strip()
           password = os.environ['INFOMANIAK_FTP_PASSWORD'].rstrip('\r\n')
           local_root = Path('dist')
-          configured_root = '/sites/marion-lucas.marionbolomey.fr'
+          remote_root = '/sites/marion-lucas.marionbolomey.fr'
 
-          ftp = ftplib.FTP_TLS(timeout=30)
+          ftp = ftplib.FTP_TLS(timeout=45)
           ftp.connect(host, 21)
           ftp.login(user, password)
           ftp.prot_p()
           ftp.set_pasv(True)
-
-          def read_remote_text(path: str) -> str:
-              buffer = io.BytesIO()
-              try:
-                  ftp.retrbinary(f'RETR {path}', buffer.write)
-                  return buffer.getvalue().decode('utf-8', errors='ignore')
-              except ftplib.all_errors:
-                  return ''
-
-          def dir_exists(path: str) -> bool:
-              current = ftp.pwd()
-              try:
-                  ftp.cwd(path)
-                  ftp.cwd(current)
-                  return True
-              except ftplib.all_errors:
-                  try:
-                      ftp.cwd(current)
-                  except ftplib.all_errors:
-                      pass
-                  return False
-
-          ftp.cwd('/')
-          root_index = read_remote_text('/index.html').lower()
-          root_markers = (
-              'site est actuellement en construction',
-              'bienvenue sur marion-lucas.marionbolomey.fr',
-              'hébergé chez infomaniak',
-              '<title>marion & lucas</title>',
-              'marion-nimes.mp4',
-              'lucas-intro.mp4',
-          )
-
-          if any(marker in root_index for marker in root_markers):
-              remote_root = '/'
-              print('Detected the live Marion & Lucas document root at FTP /; deploying directly to /.')
-          elif not root_index and dir_exists(configured_root):
-              remote_root = configured_root
-              print(f'No index visible at FTP root; deploying to configured site directory: {remote_root}')
-          else:
-              remote_root = '/'
-              print('Using FTP root as the public document root.')
 
           def ensure_remote_dir(path: str):
               parts = [p for p in path.split('/') if p]
@@ -140,16 +98,56 @@ jobs:
               rel = local_dir.relative_to(local_root)
               if str(rel) == '.':
                   return remote_root
-              if remote_root == '/':
-                  return '/' + rel.as_posix()
               return remote_root.rstrip('/') + '/' + rel.as_posix()
 
-          def upload_file(local_path: Path, remote_dir: str):
+          def remote_size(remote_dir: str, filename: str):
+              ftp.cwd(remote_dir)
+              try:
+                  ftp.voidcmd('TYPE I')
+                  return ftp.size(filename)
+              except ftplib.all_errors:
+                  return None
+
+          def upload_verified(local_path: Path, remote_dir: str, atomic=False):
               ensure_remote_dir(remote_dir)
               ftp.cwd(remote_dir)
-              with local_path.open('rb') as fh:
-                  ftp.storbinary(f'STOR {local_path.name}', fh, blocksize=1024 * 1024)
-              print(f'uploaded {local_path} -> {remote_dir.rstrip("/")}/{local_path.name}')
+              expected = local_path.stat().st_size
+              if expected <= 0:
+                  raise RuntimeError(f'Refusing to deploy empty file: {local_path}')
+
+              final_name = local_path.name
+              upload_name = f'.{final_name}.uploading' if atomic else final_name
+              last_error = None
+
+              for attempt in range(1, 4):
+                  try:
+                      ftp.cwd(remote_dir)
+                      with local_path.open('rb') as fh:
+                          ftp.storbinary(f'STOR {upload_name}', fh, blocksize=1024 * 1024)
+
+                      actual = remote_size(remote_dir, upload_name)
+                      if actual != expected:
+                          raise RuntimeError(f'{upload_name}: remote size {actual}, expected {expected}')
+
+                      if atomic:
+                          ftp.cwd(remote_dir)
+                          try:
+                              ftp.delete(final_name)
+                          except ftplib.all_errors:
+                              pass
+                          ftp.rename(upload_name, final_name)
+                          final_size = remote_size(remote_dir, final_name)
+                          if final_size != expected:
+                              raise RuntimeError(f'{final_name}: remote size after rename {final_size}, expected {expected}')
+
+                      print(f'uploaded+verified {local_path} -> {remote_dir.rstrip("/")}/{final_name} ({expected} bytes)')
+                      return
+                  except Exception as exc:
+                      last_error = exc
+                      print(f'upload attempt {attempt}/3 failed for {local_path}: {exc}')
+                      time.sleep(attempt * 2)
+
+              raise RuntimeError(f'Upload failed after retries for {local_path}: {last_error}')
 
           ensure_remote_dir(remote_root)
 
@@ -161,12 +159,20 @@ jobs:
                   local_path = local_dir / filename
                   if local_path in entrypoints:
                       continue
-                  upload_file(local_path, remote_dir)
+                  upload_verified(local_path, remote_dir)
 
+          # HTML entrypoints are published last and atomically so the live site can
+          # never be left with a truncated/zero-byte index during an FTP transfer.
           for entrypoint in ('monia-test.html', 'index.html'):
               local_path = local_root / entrypoint
               if local_path.exists():
-                  upload_file(local_path, remote_root)
+                  upload_verified(local_path, remote_root, atomic=True)
+
+          # Final server-side assertion: index.html must exist and be non-empty.
+          expected_index = (local_root / 'index.html').stat().st_size
+          live_index = remote_size(remote_root, 'index.html')
+          if live_index != expected_index:
+              raise RuntimeError(f'FINAL index verification failed: remote={live_index}, expected={expected_index}')
 
           ftp.quit()
           PY
