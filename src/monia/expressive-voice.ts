@@ -2,8 +2,9 @@ import { Client, handle_file } from '@gradio/client';
 import { persistGeneratedAudio } from './server-media-store';
 import { inferVoiceMood, speakMonIAPremium, type MonIAVoiceMood } from './voice-engine';
 import { inspectVoiceAudio, voiceQualitySummary, type VoiceQualityReport } from './voice-quality';
+import { inspectLucasVoiceConsistency, voiceConsistencySummary, type VoiceConsistencyReport } from './voice-consistency';
 
-export type ExpressiveVoiceResult={provider:'cosyvoice'|'legacy';audioUrl?:string;fallback:boolean;error?:string;stage?:string;quality?:VoiceQualityReport};
+export type ExpressiveVoiceResult={provider:'cosyvoice'|'legacy';audioUrl?:string;fallback:boolean;error?:string;stage?:string;quality?:VoiceQualityReport;consistency?:VoiceConsistencyReport};
 
 type Options={
   mood?:MonIAVoiceMood;
@@ -14,6 +15,7 @@ type Options={
   onProvider?:(provider:'cosyvoice'|'legacy')=>void;
   onStage?:(stage:string)=>void;
   onQuality?:(quality:VoiceQualityReport)=>void;
+  onConsistency?:(consistency:VoiceConsistencyReport)=>void;
 };
 
 const COSY_SPACE_ID='FunAudioLLM/Fun-CosyVoice3-0.5B';
@@ -41,7 +43,7 @@ async function rawCall(space:string,api:string,data:any[],timeout=60000){
 
 async function seedReference(onStage?:(stage:string)=>void){
   const key='lucas-cosy-seed-v3';
-  onStage?.('1/6 · empreinte masculine française');
+  onStage?.('1/7 · empreinte masculine française');
   try{const saved=localStorage.getItem(key);if(saved)return saved}catch{}
   const data=await rawCall(EDGE_SPACE,'tts_interface',[SEED_SENTENCE,'fr-FR-RemyMultilingualNeural',-4,-2],45000);
   const remote=fileUrl(data,EDGE_SPACE);if(!remote)throw new Error('empreinte masculine introuvable');
@@ -61,7 +63,7 @@ function instruction(mood:MonIAVoiceMood){
 
 function readCache(key:string){try{return JSON.parse(localStorage.getItem(CACHE_KEY)||'{}')?.[key]||''}catch{return''}}
 function saveCache(key:string,url:string){if(!(url.startsWith('/')||url.startsWith(location.origin)))return;try{const all=JSON.parse(localStorage.getItem(CACHE_KEY)||'{}');all[key]=url;localStorage.setItem(CACHE_KEY,JSON.stringify(all))}catch{}}
-async function play(url:string,options:Options){options.onStage?.('6/6 · lecture audio CosyVoice');if(currentAudio){currentAudio.pause();currentAudio=null}const audio=new Audio(url);currentAudio=audio;audio.onplay=()=>{options.onProvider?.('cosyvoice');options.onStart?.()};audio.onended=()=>{currentAudio=null;options.onEnd?.()};audio.onerror=()=>options.onError?.('lecture CosyVoice impossible');await audio.play()}
+async function play(url:string,options:Options){options.onStage?.('7/7 · lecture audio CosyVoice');if(currentAudio){currentAudio.pause();currentAudio=null}const audio=new Audio(url);currentAudio=audio;audio.onplay=()=>{options.onProvider?.('cosyvoice');options.onStart?.()};audio.onended=()=>{currentAudio=null;options.onEnd?.()};audio.onerror=()=>options.onError?.('lecture CosyVoice impossible');await audio.play()}
 
 function findGenerateEndpoint(info:any){
   const unnamed=info?.unnamed_endpoints||{};
@@ -74,12 +76,12 @@ function findGenerateEndpoint(info:any){
 }
 
 async function cosyGenerate(spoken:string,mood:MonIAVoiceMood,reference:string,onStage?:(stage:string)=>void){
-  onStage?.('2/6 · connexion au Space CosyVoice');
+  onStage?.('2/7 · connexion au Space CosyVoice');
   const app=await Client.connect(COSY_SPACE_ID,{events:['status','data']});
-  onStage?.('3/6 · détection endpoint Gradio');
+  onStage?.('3/7 · détection endpoint Gradio');
   const info:any=await app.view_api();
   const fnIndex=findGenerateEndpoint(info);
-  onStage?.(`4/6 · génération GPU CosyVoice · fn_index=${fnIndex}`);
+  onStage?.(`4/7 · génération GPU CosyVoice · fn_index=${fnIndex}`);
   const result:any=await app.predict(fnIndex,[spoken,'instruct',SEED_SENTENCE,handle_file(reference),null,instruction(mood),7319,false,'En']);
   const remote=deep(result?.data??result);
   if(!remote)throw new Error(`CosyVoice fn_index=${fnIndex} terminé sans audio`);
@@ -87,31 +89,34 @@ async function cosyGenerate(spoken:string,mood:MonIAVoiceMood,reference:string,o
 }
 
 async function preflight(url:string,options:Options){
-  options.onStage?.('5/6 · contrôle qualité de la voix');
+  options.onStage?.('5/7 · contrôle qualité de la voix');
   const quality=await inspectVoiceAudio(url);options.onQuality?.(quality);
   if(quality.status==='reject')throw new Error(voiceQualitySummary(quality));
-  return quality;
+  options.onStage?.('6/7 · contrôle cohérence Lucas');
+  const consistency=await inspectLucasVoiceConsistency(url);options.onConsistency?.(consistency);
+  if(consistency.status==='hold')throw new Error(voiceConsistencySummary(consistency));
+  return {quality,consistency};
 }
 
 export async function speakLucasExpressive(text:string,options:Options={}):Promise<ExpressiveVoiceResult>{
   const spoken=clean(text).slice(0,190),mood=options.mood||inferVoiceMood(spoken),key=hash(`cosy-v3|${mood}|${spoken.toLowerCase()}`);
-  let stage='initialisation';let quality:VoiceQualityReport|undefined;
+  let stage='initialisation';let quality:VoiceQualityReport|undefined;let consistency:VoiceConsistencyReport|undefined;
   const setStage=(value:string)=>{stage=value;options.onStage?.(value)};
   try{
     const cached=readCache(key);
-    if(cached){setStage('5/6 · contrôle cache CosyVoice');quality=await preflight(cached,options);await play(cached,options);return {provider:'cosyvoice',audioUrl:cached,fallback:false,stage,quality}}
+    if(cached){setStage('5/7 · contrôle cache CosyVoice');({quality,consistency}=await preflight(cached,options));await play(cached,options);return {provider:'cosyvoice',audioUrl:cached,fallback:false,stage,quality,consistency}}
     const reference=await seedReference(setStage);
     const remote=await cosyGenerate(spoken,mood,reference,setStage);
-    setStage('4.5/6 · stockage audio Infomaniak');
+    setStage('4.5/7 · stockage audio Infomaniak');
     const stored=await persistGeneratedAudio(remote,key),url=stored.audioUrl||remote;
-    quality=await preflight(url,options);
+    ({quality,consistency}=await preflight(url,options));
     if(stored.persisted)saveCache(key,url);
-    await play(url,options);return {provider:'cosyvoice',audioUrl:url,fallback:false,stage,quality};
+    await play(url,options);return {provider:'cosyvoice',audioUrl:url,fallback:false,stage,quality,consistency};
   }catch(error){
     const message=`${stage} · ${err(error)}`;
-    if(options.allowFallback===false){options.onError?.(message);return {provider:'cosyvoice',fallback:false,error:message,stage,quality}}
+    if(options.allowFallback===false){options.onError?.(message);return {provider:'cosyvoice',fallback:false,error:message,stage,quality,consistency}}
     options.onProvider?.('legacy');
     const legacy=await speakMonIAPremium(spoken,{actor:'Lucas',mood,onStart:options.onStart,onEnd:options.onEnd,onError:options.onError});
-    return {provider:'legacy',audioUrl:legacy.audioUrl,fallback:true,error:message,stage,quality};
+    return {provider:'legacy',audioUrl:legacy.audioUrl,fallback:true,error:message,stage,quality,consistency};
   }
 }
