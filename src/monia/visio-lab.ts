@@ -6,6 +6,8 @@ const input=document.getElementById('moniaVisioLucasRef') as HTMLInputElement|nu
 const button=document.getElementById('moniaGenerateVisio') as HTMLButtonElement|null;
 const status=document.getElementById('moniaVisioStatus');
 const output=document.getElementById('moniaVisioOutput');
+const params=new URLSearchParams(location.search);
+const AUTO_VISIO=params.get('autoVisio')==='1';
 
 function setStatus(text:string){if(status)status.textContent=text}
 
@@ -32,6 +34,19 @@ async function videoFrame(file:File):Promise<File>{
   } finally {URL.revokeObjectURL(url)}
 }
 
+function addResultLink(url:string){
+  if(!output)return;
+  const a=document.createElement('a');
+  a.href=url;
+  a.target='_blank';
+  a.rel='noopener noreferrer';
+  a.textContent='🔗 Ouvrir la vidéo générée';
+  a.style.color='#fff';
+  a.style.fontWeight='700';
+  a.style.textDecoration='underline';
+  output.appendChild(a);
+}
+
 async function run(){
   if(!button||!output)return;
   button.disabled=true;
@@ -42,10 +57,10 @@ async function run(){
     const referenceFile=selected?await videoFrame(selected):undefined;
     const motion=selectLucasMotionDirections({intent:'visio Lucas calme écoute réaction tendre naturelle regard caméra respiration micro expression',tags:['visio','listening','reaction','tender','closeup'],limit:3});
     const prompt=[
-      'Photorealistic webcam-style video call candidate of Lucas, alone in frame, seated naturally in front of a computer.',
-      'Preserve the exact canonical Lucas identity and facial proportions. Natural skin, hair, eyes, jaw, stubble and age continuity. No tattoos, no facial scar.',
-      'He first looks at the screen, breathes naturally, blinks with irregular human timing, makes a tiny eye movement toward the camera, then gives a very slight restrained half-smile and settles again.',
-      'Static webcam framing, soft neutral indoor background, subtle depth of field, no zoom, no dramatic camera move, no subtitles, no text, no watermark, silent visual performance.',
+      'Photorealistic live smartphone video-call candidate of the exact canonical Lucas identity, alone in frame.',
+      'Preserve the exact canonical Lucas face and facial proportions: eyes, eyebrows, nose, mouth, jaw, hair, stubble, skin tone and age continuity. Lucas has no tattoos and no facial scar.',
+      'Natural intimate visio performance: he first looks at the screen, breathes naturally, blinks with irregular human timing, makes a tiny eye movement toward the camera, then gives a very slight restrained half-smile and settles again.',
+      'Front-camera framing, warm believable indoor environment, tiny natural phone-camera imperfections, subtle depth of field, no dramatic camera move, no subtitles, no text, no watermark, silent visual performance.',
       'Motion references are movement/timing inspiration only; never copy another person, co-actor, wardrobe, tattoos, scars or body identity.',
       ...motion,
     ].join(' ');
@@ -60,18 +75,19 @@ async function run(){
       id:`visio-lucas-candidate-${Date.now()}`,
       kind:'visio',actor:'Lucas',role:'visio-listening-reaction',url:result.videoUrl,status:'candidate',source:'generated',
       tags:['lucas','visio','candidate','listening','reaction','tender','closeup','motion-language'],
-      metadata:{generator:'monia-free-video',humanApprovalRequired:true,reference:selected?'user-lucas-reference':'canon-atlas',motionLanguage:true},
+      metadata:{generator:'monia-free-video',humanApprovalRequired:true,reference:selected?'user-lucas-reference':'canon-atlas',motionLanguage:true,autoVisio:AUTO_VISIO},
     });
-    await moniaCreativeVault.recordGeneration({kind:'video',actor:'Lucas',promptKey:'direct-visio-lucas-v1',resultUrl:result.videoUrl,status:'generated'});
+    await moniaCreativeVault.recordGeneration({kind:'video',actor:'Lucas',promptKey:'direct-visio-lucas-v2',resultUrl:result.videoUrl,status:'generated'});
     window.dispatchEvent(new CustomEvent('monia:vault-changed',{detail:{asset}}));
     const video=document.createElement('video');
     video.src=result.videoUrl;video.controls=true;video.playsInline=true;video.autoplay=true;video.muted=true;video.loop=true;
     output.appendChild(video);
+    addResultLink(result.videoUrl);
     const note=document.createElement('p');
     note.className='status';
     note.textContent='Candidat MonIA créé. Il reste hors du jeu jusqu’à validation dans le coffre.';
     output.appendChild(note);
-    setStatus('Candidat visio Lucas prêt à valider');
+    setStatus('Candidat visio Lucas prêt à regarder et à valider');
   }catch(error){
     const message=error instanceof Error?error.message:String(error);
     setStatus(`Génération indisponible : ${message}`);
@@ -79,3 +95,9 @@ async function run(){
 }
 
 button?.addEventListener('click',()=>void run());
+
+if(AUTO_VISIO){
+  window.addEventListener('load',()=>{
+    window.setTimeout(()=>void run(),450);
+  },{once:true});
+}
