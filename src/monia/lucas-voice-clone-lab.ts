@@ -1,9 +1,13 @@
 import { Client, handle_file } from '@gradio/client';
 import { lucasVoiceReferenceFile } from './lucas-voice-reference';
+import { persistGeneratedAudio } from './server-media-store';
+import { setApprovedLucasVoiceReference } from './voice-reference-provider';
+import { approveLucasVoiceBaseline } from './voice-consistency';
 
 type ClonePreset={id:string;label:string;detail:string;exaggeration:number;temperature:number;cfg:number;seed:number};
 const SPACE_ID='ResembleAI/Chatterbox-Multilingual-TTS';
 const FAVORITES_KEY='monia-lucas-clone-favorites-v1';
+const MASTER_KEY='monia-lucas-master-voice-preset-v1';
 const DEFAULT_TEXT='Marion… attends. Je voulais juste entendre ta voix avant de rentrer.';
 
 const PRESETS:ClonePreset[]=[
@@ -38,6 +42,7 @@ let activeAudio:HTMLAudioElement|null=null;
 const generated=new Map<string,string>();
 function favorites(){try{return new Set<string>(JSON.parse(localStorage.getItem(FAVORITES_KEY)||'[]'))}catch{return new Set<string>()}}
 function saveFavorites(set:Set<string>){localStorage.setItem(FAVORITES_KEY,JSON.stringify([...set]));}
+function currentMaster(){try{return localStorage.getItem(MASTER_KEY)||''}catch{return''}}
 function stopAudio(){if(activeAudio){activeAudio.pause();activeAudio.src='';activeAudio=null}}
 function deepAudio(value:any):string{
   if(!value)return'';
@@ -72,10 +77,24 @@ async function generate(preset:ClonePreset,text:string,onStatus:(s:string)=>void
   if(!url)throw new Error('Audio généré mais URL introuvable');
   generated.set(preset.id,url);return url;
 }
+async function approveAsMaster(preset:ClonePreset,text:string,onStatus:(s:string)=>void){
+  onStatus('préparation de la voix maître…');
+  const remote=await generate(preset,text,onStatus);
+  onStatus('stockage permanent…');
+  const stored=await persistGeneratedAudio(remote,`lucas-master-${preset.id}-${Date.now()}`);
+  const url=stored.audioUrl||remote;
+  if(!(url.startsWith('/')||url.startsWith(location.origin)))throw new Error('La voix doit être stockée sur MonIA avant verrouillage.');
+  const transcript=(text.trim()||DEFAULT_TEXT).slice(0,300);
+  setApprovedLucasVoiceReference(url,transcript);
+  await approveLucasVoiceBaseline(url);
+  localStorage.setItem(MASTER_KEY,preset.id);
+  window.dispatchEvent(new CustomEvent('monia:lucas-master-voice-approved',{detail:{preset:preset.id,url}}));
+  return url;
+}
 function mount(){
   const host=document.getElementById('voiceAuditionLab');if(!host||document.getElementById('lucasCloneLab'))return;
   const section=document.createElement('section');section.id='lucasCloneLab';section.className='card voiceLab';
-  section.innerHTML=`<h2>🧬 Clones de la vraie voix Lucas</h2><p class="status">Ces candidats utilisent tous la voix de l'homme que tu as validée comme référence. Chatterbox Multilingual tourne sur une file ZeroGPU gratuite. Aucun candidat n'est envoyé dans le jeu automatiquement.</p><div class="referenceNote"><strong>Référence verrouillée</strong><p>Voix homme de la vidéo validée · extrait préparé pour le clonage. Le bouton ci-dessous permet de la réécouter.</p><button type="button" class="ghost" data-clone-reference>▶ Écouter la référence</button></div><label style="display:block;margin-top:14px">Phrase de comparaison<textarea data-clone-text rows="3">${DEFAULT_TEXT}</textarea></label><div class="voiceToolbar"><button type="button" class="ghost" data-clone-stop>■ Tout arrêter</button><label><input type="checkbox" data-clone-favorites> seulement mes ★</label><span class="pill" data-clone-count>${PRESETS.length} candidats</span><span class="pill" data-clone-status>Prêt</span></div><div class="voiceGrid" data-clone-grid></div>`;
+  section.innerHTML=`<h2>🧬 Clones de la vraie voix Lucas</h2><p class="status">Ces candidats utilisent tous la référence Lucas verrouillée. Aucun candidat n'est envoyé dans le jeu automatiquement. Une voix ne devient la voix maître qu'après ton clic explicite sur « Verrouiller comme voix Lucas ».</p><div class="referenceNote"><strong>Référence verrouillée</strong><p>Voix homme de la vidéo validée · extrait préparé pour le clonage. Le bouton ci-dessous permet de la réécouter.</p><button type="button" class="ghost" data-clone-reference>▶ Écouter la référence</button></div><label style="display:block;margin-top:14px">Phrase de comparaison<textarea data-clone-text rows="3">${DEFAULT_TEXT}</textarea></label><div class="voiceToolbar"><button type="button" class="ghost" data-clone-stop>■ Tout arrêter</button><label><input type="checkbox" data-clone-favorites> seulement mes ★</label><span class="pill" data-clone-count>${PRESETS.length} candidats</span><span class="pill" data-clone-status>Prêt</span></div><div class="voiceGrid" data-clone-grid></div>`;
   host.insertAdjacentElement('afterend',section);
   const grid=section.querySelector<HTMLElement>('[data-clone-grid]')!;
   const status=section.querySelector<HTMLElement>('[data-clone-status]')!;
@@ -83,10 +102,11 @@ function mount(){
   const only=section.querySelector<HTMLInputElement>('[data-clone-favorites]')!;
   const fav=favorites();
   const render=()=>{
-    grid.innerHTML='';const list=only.checked?PRESETS.filter(p=>fav.has(p.id)):PRESETS;
-    for(const p of list){const card=document.createElement('article');card.className='voiceCandidate';card.dataset.cloneId=p.id;card.innerHTML=`<div class="voiceCandidateTop"><div><strong>${p.label}</strong><small>${p.detail}</small></div><button type="button" class="voiceStar" data-star>${fav.has(p.id)?'★':'☆'}</button></div><div class="voicePreset">Même voix de base<span>expressivité ${p.exaggeration.toFixed(2)} · rythme ${p.cfg.toFixed(2)} · variation ${p.temperature.toFixed(2)}</span></div><div class="voiceActions"><button type="button" class="voiceListen" data-generate>▶ Générer / écouter</button><code>${p.id}</code></div>`;
+    grid.innerHTML='';const list=only.checked?PRESETS.filter(p=>fav.has(p.id)):PRESETS;const master=currentMaster();
+    for(const p of list){const card=document.createElement('article');card.className='voiceCandidate';card.dataset.cloneId=p.id;card.innerHTML=`<div class="voiceCandidateTop"><div><strong>${p.label}${master===p.id?' · VOIX LUCAS ✓':''}</strong><small>${p.detail}</small></div><button type="button" class="voiceStar" data-star>${fav.has(p.id)?'★':'☆'}</button></div><div class="voicePreset">Même voix de base<span>expressivité ${p.exaggeration.toFixed(2)} · rythme ${p.cfg.toFixed(2)} · variation ${p.temperature.toFixed(2)}</span></div><div class="voiceActions"><button type="button" class="voiceListen" data-generate>▶ Générer / écouter</button><button type="button" class="ghost" data-approve ${master===p.id?'disabled':''}>${master===p.id?'✓ Voix Lucas verrouillée':'Verrouiller comme voix Lucas'}</button><code>${p.id}</code></div>`;
       card.querySelector('[data-star]')?.addEventListener('click',()=>{fav.has(p.id)?fav.delete(p.id):fav.add(p.id);saveFavorites(fav);render()});
       card.querySelector('[data-generate]')?.addEventListener('click',async e=>{const button=e.currentTarget as HTMLButtonElement;button.disabled=true;stopAudio();try{status.textContent=`${p.label} · génération…`;const url=await generate(p,text.value,s=>status.textContent=`${p.label} · ${s}`);activeAudio=new Audio(url);activeAudio.preload='auto';activeAudio.onended=()=>{activeAudio=null;status.textContent='Prêt'};await activeAudio.play();status.textContent=`${p.label} · lecture`}catch(err){status.textContent=`Échec ${p.label} · ${err instanceof Error?err.message:String(err)}`}finally{button.disabled=false}});
+      card.querySelector('[data-approve]')?.addEventListener('click',async e=>{const button=e.currentTarget as HTMLButtonElement;if(!confirm(`Utiliser « ${p.label} » comme voix maître de Lucas ? Cette voix servira ensuite de référence aux nouvelles répliques.`))return;button.disabled=true;stopAudio();try{status.textContent=`${p.label} · verrouillage…`;await approveAsMaster(p,text.value,s=>status.textContent=`${p.label} · ${s}`);status.textContent=`${p.label} · voix maître Lucas verrouillée`;render()}catch(err){status.textContent=`Échec verrouillage · ${err instanceof Error?err.message:String(err)}`}finally{button.disabled=false}});
       grid.appendChild(card)
     }
   };
@@ -95,4 +115,4 @@ function mount(){
   render();
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount);else mount();
-console.info('[MonIA Test] Lucas reference-voice clone audition lab ready');
+console.info('[MonIA Test] Lucas reference-voice clone audition lab ready with explicit master approval');
