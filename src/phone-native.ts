@@ -12,6 +12,7 @@ function initials(name:string){return name.split(/\s+/).filter(Boolean).slice(0,
 function appIcon(label:string){const t=label.toLowerCase();if(t.includes('message'))return'💬';if(t.includes('appel'))return'☎';if(t.includes('mail'))return'✉';if(t.includes('agenda'))return'31';if(t.includes('presse'))return'P';if(t.includes('insta'))return'◎';if(t.includes('galerie'))return'▧';if(t.includes('contact'))return'♙';return'•'}
 function unreadCount(s:SaveLike){const direct=(s.messages||[]).filter(m=>m.from!=='Toi'&&!m.read).length;return Math.max(Number(s.phoneUnread||0),direct)}
 function latestUnread(s:SaveLike){return [...(s.messages||[])].reverse().find(m=>m.from!=='Toi'&&!m.read)||null}
+function unreadKey(m:Message|null){return m?`${m.from}|${m.text}|${m.day}`:''}
 
 function ensureChrome(phone:HTMLElement,s:SaveLike){
   if(!phone.querySelector('.nativeStatusBar')){
@@ -25,7 +26,7 @@ function ensureNotification(phone:HTMLElement,s:SaveLike){
   const unread=latestUnread(s);let stack=phone.querySelector<HTMLElement>('.nativeNotificationStack');
   if(!unread){stack?.remove();phone.classList.remove('hasNativeNotification');return}
   if(!stack){stack=document.createElement('div');stack.className='nativeNotificationStack';phone.appendChild(stack)}
-  const key=`${unread.from}|${unread.text}|${unread.day}`;
+  const key=unreadKey(unread);
   if(stack.dataset.key!==key){stack.dataset.key=key;stack.innerHTML=`<button type="button" class="nativeNotification"><i class="nativeNotificationIcon">💬</i><span class="nativeNotificationText"><strong>${safe(unread.from)}</strong><span>${safe(unread.text)}</span></span><time>maintenant</time></button>`}
   phone.classList.add('hasNativeNotification');
 }
@@ -51,19 +52,21 @@ function animateNewMessages(c:HTMLElement){for(const msg of c.querySelectorAll<H
 function enhanceTyping(c:HTMLElement,name:string){const pending=c.querySelector<HTMLElement>('.smsPending');if(!pending)return;pending.classList.add('nativeTyping');pending.setAttribute('aria-label',`${name} est en train d’écrire`);if(!pending.querySelector('.nativeTypingLabel')){const label=document.createElement('span');label.className='nativeTypingLabel';label.textContent=`${name} écrit…`;pending.appendChild(label)}}
 function decorateContent(phone:HTMLElement,s:SaveLike){const c=phone.querySelector<HTMLElement>('#phoneContent');if(!c)return;if(c.querySelector('.smsThread')){phone.classList.remove('hasNativeNotification');phone.querySelector('.nativeNotificationStack')?.remove();c.classList.add('nativeMessages');const name=activeContact(s,c);let h=c.querySelector<HTMLElement>('.nativeThreadHead');if(!h){h=document.createElement('div');h.className='nativeThreadHead';c.prepend(h)}h.innerHTML=`<button type="button" aria-label="Retour">‹</button><i>${safe(initials(name))}</i><div><strong>${safe(name)}</strong><small class="nativePresence">${c.querySelector('.smsPending')?'écrit…':'Messages'}</small></div><button type="button" aria-label="Appeler">☎</button>`;animateNewMessages(c);enhanceTyping(c,name);const thread=c.querySelector<HTMLElement>('.smsThread');if(thread)window.requestAnimationFrame(()=>thread.scrollTo({top:thread.scrollHeight,behavior:'smooth'}))}if(c.querySelector('.memoryGallery'))c.classList.add('nativeGallery');if(c.querySelector('.pressItem'))c.classList.add('nativeNews');if(c.querySelector('.socialActions'))c.classList.add('nativeSocial');if(c.querySelector('.mailItem'))c.classList.add('nativeMail')}
 
-function decorateIncomingCalls(){
-  for(const call of document.querySelectorAll<HTMLElement>('.incomingCall')){call.classList.add('nativeIncomingCall')}
-}
-function decorateLiveCalls(){
-  for(const call of document.querySelectorAll<HTMLElement>('.callLive,.videoCall')){
-    call.classList.add('nativeLiveCall');if(call.querySelector('.nativeCallHUD'))continue;
-    const hud=document.createElement('div');hud.className='nativeCallHUD';const name=call.querySelector<HTMLElement>('.callContext,strong,h2')?.textContent?.trim()||'Appel en cours';hud.innerHTML=`<strong>${safe(name)}</strong><span>00:00</span>`;call.appendChild(hud);const started=Date.now();const timer=window.setInterval(()=>{if(!hud.isConnected){window.clearInterval(timer);return}const sec=Math.floor((Date.now()-started)/1000);const mm=String(Math.floor(sec/60)).padStart(2,'0'),ss=String(sec%60).padStart(2,'0');const label=hud.querySelector('span');if(label)label.textContent=`${mm}:${ss}`},1000)
-  }
+function decorateIncomingCalls(){for(const call of document.querySelectorAll<HTMLElement>('.incomingCall'))call.classList.add('nativeIncomingCall')}
+function decorateLiveCalls(){for(const call of document.querySelectorAll<HTMLElement>('.callLive,.videoCall')){call.classList.add('nativeLiveCall');if(call.querySelector('.nativeCallHUD'))continue;const hud=document.createElement('div');hud.className='nativeCallHUD';const name=call.querySelector<HTMLElement>('.callContext,strong,h2')?.textContent?.trim()||'Appel en cours';hud.innerHTML=`<strong>${safe(name)}</strong><span>00:00</span>`;call.appendChild(hud);const started=Date.now();const timer=window.setInterval(()=>{if(!hud.isConnected){window.clearInterval(timer);return}const sec=Math.floor((Date.now()-started)/1000);const mm=String(Math.floor(sec/60)).padStart(2,'0'),ss=String(sec%60).padStart(2,'0');const label=hud.querySelector('span');if(label)label.textContent=`${mm}:${ss}`},1000)}}
+function openMessagesFromNotification(phone:HTMLElement){const buttons=[...phone.querySelectorAll<HTMLButtonElement>('.appGrid button')];buttons.find(b=>(b.textContent||'').toLowerCase().includes('message'))?.click()}
+function openPhoneAndMessages(){const trigger=document.querySelector<HTMLElement>('#premiumPhone,#phone,#phoneExact,[data-open="phone"],[data-overlay="phone"]');trigger?.click();window.setTimeout(()=>{const phone=document.querySelector<HTMLElement>('.phoneDevice');if(phone)openMessagesFromNotification(phone)},120)}
+
+let lastWorldNotif='';let worldNotifTimer=0;
+function ensureWorldNotification(s:SaveLike){
+  const unread=latestUnread(s),key=unreadKey(unread),phoneOpen=!!document.querySelector('.phoneDevice');
+  if(!unread||!key||phoneOpen||key===lastWorldNotif)return;
+  lastWorldNotif=key;document.querySelector('.worldPhoneNotification')?.remove();
+  const n=document.createElement('button');n.type='button';n.className='worldPhoneNotification';n.innerHTML=`<i>💬</i><span><strong>${safe(unread.from)}</strong><small>${safe(unread.text)}</small></span><em>maintenant</em>`;document.body.appendChild(n);
+  n.addEventListener('click',()=>{n.remove();openPhoneAndMessages()},{once:true});
+  if(worldNotifTimer)window.clearTimeout(worldNotifTimer);worldNotifTimer=window.setTimeout(()=>n.remove(),6000)
 }
 
-function openMessagesFromNotification(phone:HTMLElement){
-  const buttons=[...phone.querySelectorAll<HTMLButtonElement>('.appGrid button')];const target=buttons.find(b=>(b.textContent||'').toLowerCase().includes('message'));target?.click()
-}
-function mount(){const phone=document.querySelector<HTMLElement>('.phoneDevice');if(phone){const s=read();ensureChrome(phone,s);decorateHome(phone,s);decorateContent(phone,s)}decorateIncomingCalls();decorateLiveCalls()}
+function mount(){const s=read();const phone=document.querySelector<HTMLElement>('.phoneDevice');if(phone){ensureChrome(phone,s);decorateHome(phone,s);decorateContent(phone,s)}else ensureWorldNotification(s);decorateIncomingCalls();decorateLiveCalls()}
 let timer=0;function soon(){if(timer)window.clearTimeout(timer);timer=window.setTimeout(()=>{timer=0;mount()},45)}
-document.addEventListener('click',e=>{const t=e.target as HTMLElement|null;if(!t)return;const notif=t.closest('.nativeNotification');if(notif){const phone=notif.closest('.phoneDevice') as HTMLElement|null;if(phone)openMessagesFromNotification(phone);window.setTimeout(soon,80);return}if(t.closest('[data-native-contacts]')){const phone=t.closest('.phoneDevice') as HTMLElement|null;if(phone)renderContacts(phone,read());return}if(t.closest('#premiumPhone,#phone,#phoneExact,.phoneDevice,[data-phoneapp],.incomingCall,.callLive,.videoCall'))soon()},{passive:true});window.addEventListener('storage',soon);new MutationObserver(soon).observe(document.getElementById('app')||document.documentElement,{childList:true,subtree:true,characterData:true});soon();console.info('[Phone] live smartphone presentation + notifications/calls active');
+document.addEventListener('click',e=>{const t=e.target as HTMLElement|null;if(!t)return;const notif=t.closest('.nativeNotification');if(notif){const phone=notif.closest('.phoneDevice') as HTMLElement|null;if(phone)openMessagesFromNotification(phone);window.setTimeout(soon,80);return}if(t.closest('[data-native-contacts]')){const phone=t.closest('.phoneDevice') as HTMLElement|null;if(phone)renderContacts(phone,read());return}if(t.closest('#premiumPhone,#phone,#phoneExact,.phoneDevice,[data-phoneapp],.incomingCall,.callLive,.videoCall'))soon()},{passive:true});window.addEventListener('storage',soon);new MutationObserver(soon).observe(document.getElementById('app')||document.documentElement,{childList:true,subtree:true,characterData:true});soon();console.info('[Phone] live smartphone presentation + in-world notifications/calls active');
