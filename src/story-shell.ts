@@ -13,34 +13,17 @@ function isHome(save:any){return (save?.place||'home')==='home'}
 
 function narrativeFor(save:any){
   const day=Number(save?.day||1);
+  const time=String(save?.time||'09:00');
   if(day<=1)return {
-    kicker:'DÉBUT DE L’AVENTURE',
-    title:'Nîmes, ce matin',
-    body:'La journée commence doucement. Tu peux prendre ton temps, regarder ce qui t’attend… ou simplement décider de sortir.'
+    kicker:'NÎMES · JOUR 1',
+    title: time<'12:00'?'Un matin à toi':'Ta journée commence',
+    body:'Prends le temps de regarder autour de toi. Tu peux explorer l’appartement directement, ouvrir ton téléphone ou sortir quand tu en as envie.'
   };
   return {
     kicker:`JOUR ${day}`,
-    title:'Un nouveau moment',
-    body:'Ta vie continue. Les lieux, les messages et les rencontres peuvent faire basculer la journée sans prévenir.'
+    title:'Chez toi',
+    body:'Le monde continue autour de toi. Explore, réponds à tes messages ou poursuis simplement ta journée.'
   };
-}
-
-function cleanLabel(h:HTMLElement){
-  const raw=h.querySelector<HTMLElement>('span')?.textContent?.trim()||h.getAttribute('aria-label')?.trim()||'';
-  return raw.replace(/^(observer|voir|ouvrir|aller|utiliser)\s+/i,'').trim();
-}
-
-function collectActions(host:HTMLElement){
-  const seen=new Set<string>();
-  const list:Array<{label:string;target:HTMLElement}>=[];
-  for(const h of host.querySelectorAll<HTMLElement>('.gameHotspot')){
-    if(h.offsetParent===null)continue;
-    const label=cleanLabel(h);
-    if(!label||seen.has(label))continue;
-    seen.add(label);list.push({label,target:h});
-    if(list.length>=3)break;
-  }
-  return list;
 }
 
 function ensurePanel(host:HTMLElement){
@@ -48,9 +31,9 @@ function ensurePanel(host:HTMLElement){
   panel?.remove();
   currentHost=host;
   panel=document.createElement('section');
-  panel.className='storyShell';
-  panel.setAttribute('aria-label','Narration et choix');
-  panel.innerHTML='<div class="storyShellText"><div class="storyShellKicker"></div><h2></h2><p></p></div><div class="storyShellChoices"></div>';
+  panel.className='storyShell storyShellAmbient';
+  panel.setAttribute('aria-label','Contexte de la scène');
+  panel.innerHTML='<div class="storyShellText"><div class="storyShellKicker"></div><h2></h2><p></p></div>';
   host.appendChild(panel);
   return panel;
 }
@@ -64,15 +47,6 @@ function render(){
   p.querySelector<HTMLElement>('.storyShellKicker')!.textContent=copy.kicker;
   p.querySelector<HTMLHeadingElement>('h2')!.textContent=copy.title;
   p.querySelector<HTMLParagraphElement>('p')!.textContent=copy.body;
-  const choices=p.querySelector<HTMLElement>('.storyShellChoices')!;
-  choices.replaceChildren();
-  for(const action of collectActions(host)){
-    const b=document.createElement('button');
-    b.type='button';b.className='storyChoice';b.textContent=action.label;
-    b.addEventListener('click',()=>action.target.click());
-    choices.appendChild(b);
-  }
-  p.classList.toggle('hasChoices',choices.childElementCount>0);
 }
 
 function schedule(){if(refreshTimer)window.clearTimeout(refreshTimer);refreshTimer=window.setTimeout(render,80)}
