@@ -1,6 +1,7 @@
 import { generateFreeCanonVideo } from './free-video';
 import { selectLucasMotionDirections } from './motion-language';
 import { moniaCreativeVault } from './creative-vault';
+import { persistGeneratedVideo } from './server-media-store';
 
 const input=document.getElementById('moniaVisioLucasRef') as HTMLInputElement|null;
 const button=document.getElementById('moniaGenerateVisio') as HTMLButtonElement|null;
@@ -34,13 +35,13 @@ async function videoFrame(file:File):Promise<File>{
   } finally {URL.revokeObjectURL(url)}
 }
 
-function addResultLink(url:string){
+function addResultLink(url:string,persisted=false){
   if(!output)return;
   const a=document.createElement('a');
   a.href=url;
   a.target='_blank';
   a.rel='noopener noreferrer';
-  a.textContent='🔗 Ouvrir la vidéo générée';
+  a.textContent=persisted?'🔗 Ouvrir la vidéo permanente':'🔗 Ouvrir la vidéo générée';
   a.style.color='#fff';
   a.style.fontWeight='700';
   a.style.textDecoration='underline';
@@ -71,23 +72,33 @@ async function run(){
       onState:(state,detail)=>setStatus(detail||state),
     });
     if(result.state!=='ready'||!result.videoUrl)throw new Error(result.error||'Aucun GPU gratuit disponible');
+
+    setStatus('Vidéo reçue. Sauvegarde permanente sur Infomaniak…');
+    const storageKey=`lucas-visio-${Date.now()}`;
+    const stored=await persistGeneratedVideo(result.videoUrl,storageKey);
+    const finalUrl=stored.persisted?stored.videoUrl:result.videoUrl;
+    const absoluteUrl=stored.persisted?stored.absoluteUrl:result.videoUrl;
+
     const asset=await moniaCreativeVault.registerAsset({
       id:`visio-lucas-candidate-${Date.now()}`,
-      kind:'visio',actor:'Lucas',role:'visio-listening-reaction',url:result.videoUrl,status:'candidate',source:'generated',
+      kind:'visio',actor:'Lucas',role:'visio-listening-reaction',url:finalUrl,status:'candidate',source:'generated',
       tags:['lucas','visio','candidate','listening','reaction','tender','closeup','motion-language'],
-      metadata:{generator:'monia-free-video',humanApprovalRequired:true,reference:selected?'user-lucas-reference':'canon-atlas',motionLanguage:true,autoVisio:AUTO_VISIO},
+      metadata:{generator:'monia-free-video',humanApprovalRequired:true,reference:selected?'user-lucas-reference':'canon-atlas',motionLanguage:true,autoVisio:AUTO_VISIO,persistedOnInfomaniak:stored.persisted},
     });
-    await moniaCreativeVault.recordGeneration({kind:'video',actor:'Lucas',promptKey:'direct-visio-lucas-v2',resultUrl:result.videoUrl,status:'generated'});
+    await moniaCreativeVault.recordGeneration({kind:'video',actor:'Lucas',promptKey:'direct-visio-lucas-v3',resultUrl:finalUrl,status:'generated'});
     window.dispatchEvent(new CustomEvent('monia:vault-changed',{detail:{asset}}));
+
     const video=document.createElement('video');
-    video.src=result.videoUrl;video.controls=true;video.playsInline=true;video.autoplay=true;video.muted=true;video.loop=true;
+    video.src=finalUrl;video.controls=true;video.playsInline=true;video.autoplay=true;video.muted=true;video.loop=true;
     output.appendChild(video);
-    addResultLink(result.videoUrl);
+    addResultLink(absoluteUrl,stored.persisted);
     const note=document.createElement('p');
     note.className='status';
-    note.textContent='Candidat MonIA créé. Il reste hors du jeu jusqu’à validation dans le coffre.';
+    note.textContent=stored.persisted
+      ?`Candidat MonIA sauvegardé sur Infomaniak. Lien permanent : ${absoluteUrl}`
+      :'Candidat MonIA créé, mais la copie permanente Infomaniak a échoué pour ce run. Le résultat reste hors du jeu jusqu’à validation.';
     output.appendChild(note);
-    setStatus('Candidat visio Lucas prêt à regarder et à valider');
+    setStatus(stored.persisted?'Candidat visio Lucas sauvegardé avec lien permanent':'Candidat visio Lucas prêt, stockage permanent en attente');
   }catch(error){
     const message=error instanceof Error?error.message:String(error);
     setStatus(`Génération indisponible : ${message}`);
