@@ -60,5 +60,12 @@ export async function planMonIAContent(need:MonIAContentNeed):Promise<MonIAConte
 }
 
 export async function rememberGeneratedContent(input:{kind:'text'|'image'|'video'|'voice';actor?:string;promptKey:string;resultUrl?:string;resultText?:string;accepted?:boolean}){
-  return moniaCreativeVault.recordGeneration({kind:input.kind,actor:input.actor,promptKey:input.promptKey,resultUrl:input.resultUrl,resultText:input.resultText,status:input.accepted?'generated':'generated'});
+  return moniaCreativeVault.recordGeneration({
+    kind:input.kind,
+    actor:input.actor,
+    promptKey:input.promptKey,
+    resultUrl:input.resultUrl,
+    resultText:input.resultText,
+    status:input.accepted===false?'rejected':'generated'
+  });
 }
