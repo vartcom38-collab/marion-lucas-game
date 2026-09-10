@@ -13,6 +13,21 @@
 .immersivePlayable .approvedStats{opacity:.5;transform:scale(.92);transform-origin:left top}
 .game:not(.immersivePlayable) .hudMinimal{background:transparent!important;border:0!important;box-shadow:none!important;backdrop-filter:none!important}
 .game:not(.immersivePlayable) .storyPulse{max-width:min(520px,calc(100vw - 28px));background:rgba(12,10,9,.5);border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(14px)}
+
+/* 2026-09-10 gameplay stabilization: the apartment is the scene, not the HUD. */
+.immersivePlayable .worldBackdrop,.immersivePlayable .homePhotoStage{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;min-height:100dvh!important;overflow:hidden!important;background:#15110e!important}
+.immersivePlayable .homePhotoStage>img{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;display:block!important;opacity:1!important;visibility:visible!important;object-fit:cover!important;object-position:center!important;filter:none!important;transform:none!important;z-index:0!important}
+.immersivePlayable .homePhotoStage.imageLoadFailed{background:#15110e url('/resources/appartement-nimes.png') center/cover no-repeat!important}
+.immersivePlayable .homeLightSweep,.immersivePlayable .homeDepth{pointer-events:none!important}
+.immersivePlayable .gameHotspot{background:transparent!important;border:0!important;box-shadow:none!important;color:transparent!important}
+.immersivePlayable .gameHotspot i,.immersivePlayable .gameHotspot span{opacity:0!important;visibility:hidden!important}
+/* Messages belong in the phone. Keep only the unread badge in the compact phone shortcut. */
+.premiumGame .phoneToast{display:none!important}
+/* The old objective block reads like an app dashboard; the narrative layer can carry context instead. */
+.immersivePlayable .approvedObjective{display:none!important}
+/* Exact legacy hit-zones stay invisible and clickable where needed. */
+.immersivePlayable .exactControls,.immersivePlayable .exactHit{background:transparent!important;border:0!important;box-shadow:none!important;color:transparent!important}
+
 @media(max-width:760px){.premiumGame .premiumNav{top:9px;right:9px;left:auto;width:auto;max-width:calc(100vw - 18px);gap:2px;padding:4px}.premiumGame .premiumNav button{flex:none;width:36px;min-width:36px;height:36px;border-radius:13px}.premiumGame .premiumNav .uiLineIcon{width:17px;height:17px}.premiumGame .approvedTopLeft{top:11px;left:11px}.premiumGame .approvedTopLeft small{display:none}.premiumGame .approvedTopLeft b{font-size:17px}.premiumGame .approvedTopLeft span{font-size:7px}.immersivePlayable .approvedStats{display:none!important}}
 @media(max-width:430px){.premiumGame .premiumNav{top:auto;bottom:10px;right:10px;left:auto;z-index:37}.storyShell{bottom:62px!important}.premiumGame .premiumNav button{width:34px;min-width:34px;height:34px}.premiumGame .premiumNav button:nth-child(2),.premiumGame .premiumNav button:nth-child(4){display:none}.premiumGame .approvedTopLeft{top:10px;left:10px}}
 @media(prefers-reduced-motion:reduce){.premiumGame .premiumNav button{transition:none}}
