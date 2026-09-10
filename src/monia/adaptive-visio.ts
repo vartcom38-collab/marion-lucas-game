@@ -1,4 +1,5 @@
 import { selectLucasMotionDirections } from './motion-language';
+import { buildVisioVariation } from './visio-variation';
 
 export type LucasVisioState='listening'|'speaking'|'reaction'|'thinking';
 export type LucasVisioMood='neutral'|'tender'|'playful'|'worried'|'hurt'|'distant'|'intense'|'relieved';
@@ -42,12 +43,13 @@ export function buildAdaptiveLucasVisioPrompt(context:LucasVisioContext){
     tags:['visio',context.state,mood,'closeup','natural',context.relationship||'',context.recentBeat||''].filter(Boolean),
     limit:3
   });
+  const variation=buildVisioVariation(context);
 
   const scene=[
     clean(context.place)&&`PLACE: ${clean(context.place)}`,
     clean(context.timeOfDay)&&`TIME: ${clean(context.timeOfDay)}`,
-    clean(context.backgroundHint)&&`BACKGROUND: ${clean(context.backgroundHint)}`,
-    clean(context.outfitHint)&&`OUTFIT: ${clean(context.outfitHint)}`,
+    clean(context.backgroundHint)&&`BACKGROUND HINT: ${clean(context.backgroundHint)}`,
+    clean(context.outfitHint)&&`OUTFIT HINT: ${clean(context.outfitHint)}`,
     clean(context.relationship)&&`RELATIONSHIP CONTEXT: ${clean(context.relationship)}`,
     clean(context.recentBeat)&&`RECENT CONTEXT: ${clean(context.recentBeat)}`
   ].filter(Boolean).join(' ');
@@ -58,8 +60,13 @@ export function buildAdaptiveLucasVisioPrompt(context:LucasVisioContext){
     `STATE: ${stateDirection[context.state]}.`,
     `MOOD: ${moodDirection[mood]}.`,
     scene,
+    `VARIATION SIGNATURE: ${variation.signature}.`,
+    `FRAMING: ${variation.framing}.`,
+    `LIGHTING: ${variation.lighting}.`,
+    `SCENE VARIATION: ${variation.background}.`,
+    `MICRO ACTION: ${variation.microAction}.`,
     `MOTION LANGUAGE: ${motion.join(' | ')}`,
-    'Every visio must adapt naturally to current story context, time, place, relationship, recent events and emotion. Do not reuse one identical expression, pose, background or rhythm for every call.',
+    'Every visio must adapt naturally to current story context, time, place, relationship, recent events and emotion. Do not reuse one identical expression, pose, background, lighting setup or rhythm for every call.',
     'Motion references are gesture/timing references only. Never copy any reference actor or co-actor identity, face, body identity, wardrobe, tattoos, scars or distinctive appearance.',
     'Keep smartphone-call realism: front-camera framing, tiny handheld imperfections, natural breathing, irregular blink rhythm, subtle eye-line changes, realistic skin and lighting.',
     'No identity drift, no morphing, no exaggerated mouth motion, no robotic blink rhythm, no text, no subtitles, no watermark, no fake zoom.'
