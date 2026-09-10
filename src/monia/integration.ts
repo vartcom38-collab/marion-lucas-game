@@ -1,5 +1,7 @@
 import { moniaExperience, type MonIAMaterializedMedia } from './experience-runtime';
 import type { MonIAChannel, MonIADirectorResult } from './director';
+import { ensureMonIACanonBootstrap } from './canon-bootstrap';
+import { ensureMonIAAssetBootstrap } from './asset-bootstrap';
 
 const SAVE_KEY = 'marion-lucas-save-v4';
 const SETTINGS_KEY = 'marion-lucas-settings-v2';
@@ -183,8 +185,8 @@ function openVisio(result: MonIADirectorResult) {
   const duration = Math.max(4, Math.min(30, scene?.duration || 8));
   const visual = media?.state === 'ready' && media.videoUrl
     ? `<video id="moniaVisioVideo" src="${safeHTML(media.videoUrl)}" autoplay muted loop playsinline style="width:100%;height:100%;object-fit:cover"></video>`
-    : `<div style="position:absolute;inset:0;display:grid;place-items:center;background:radial-gradient(circle at 50% 35%,#26211d,#090807 72%)"><div style="text-align:center;padding:28px;max-width:420px"><div style="font-size:2.2rem;margin-bottom:12px">◇</div><strong>Connexion vidéo en préparation</strong><p style="opacity:.72;line-height:1.45">MonIA génère une vraie image source puis une vraie vidéo. Aucun ancien clip ou faux zoom n’est utilisé à la place.</p></div></div>`;
-  overlay.innerHTML = `<div style="position:absolute;inset:0;overflow:hidden">${visual}<div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.42),transparent 35%,rgba(0,0,0,.68))"></div></div><div style="position:absolute;top:22px;left:24px;right:24px;display:flex;justify-content:space-between;align-items:flex-start;text-shadow:0 2px 12px #000"><div><small style="letter-spacing:.18em">VISIO · MONIA AUTONOME</small><h2 style="margin:.35rem 0 0;font-size:1.35rem">Lucas</h2><span style="opacity:.75;font-size:.82rem">${location}</span></div><button id="closeMoniaVisio" style="border:0;border-radius:999px;width:44px;height:44px;background:rgba(0,0,0,.52);color:#fff;font-size:24px;cursor:pointer">×</button></div><div style="position:absolute;left:24px;right:24px;bottom:24px;max-width:720px;margin:auto;background:rgba(12,10,9,.62);backdrop-filter:blur(12px);padding:18px 20px;border-radius:20px;border:1px solid rgba(255,255,255,.14)"><small style="opacity:.68">${framing} · ${duration}s · ${safeHTML(result.emotion)}</small><p style="font-size:1.08rem;line-height:1.45;margin:.55rem 0">${safeHTML(result.spokenText || result.text)}</p><span style="opacity:.65;font-size:.8rem">${action}</span><div style="display:flex;gap:10px;margin-top:14px"><button id="replayMoniaVoice" style="border:0;border-radius:999px;padding:10px 16px;cursor:pointer">▶ Réécouter</button><button id="endMoniaVisio" style="border:0;border-radius:999px;padding:10px 16px;background:#a33131;color:white;cursor:pointer">Raccrocher</button></div></div>`;
+    : `<div style="position:absolute;inset:0;display:grid;place-items:center;background:radial-gradient(circle at 50% 35%,#26211d,#090807 72%)"><div style="text-align:center;padding:28px;max-width:420px"><div style="font-size:2.2rem;margin-bottom:12px">◇</div><strong>Connexion vidéo en préparation</strong><p style="opacity:.72;line-height:1.45">MonIA prépare le meilleur média Lucas déjà validé ou un nouveau candidat hors du gameplay. Aucun clip non validé n’est montré en direct.</p></div></div>`;
+  overlay.innerHTML = `<div style="position:absolute;inset:0;overflow:hidden">${visual}<div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.42),transparent 35%,rgba(0,0,0,.68))"></div></div><div style="position:absolute;top:22px;left:24px;right:24px;display:flex;justify-content:space-between;align-items:flex-start;text-shadow:0 2px 12px #000"><div><small style="letter-spacing:.18em">VISIO · MONIA</small><h2 style="margin:.35rem 0 0;font-size:1.35rem">Lucas</h2><span style="opacity:.75;font-size:.82rem">${location}</span></div><button id="closeMoniaVisio" style="border:0;border-radius:999px;width:44px;height:44px;background:rgba(0,0,0,.52);color:#fff;font-size:24px;cursor:pointer">×</button></div><div style="position:absolute;left:24px;right:24px;bottom:24px;max-width:720px;margin:auto;background:rgba(12,10,9,.62);backdrop-filter:blur(12px);padding:18px 20px;border-radius:20px;border:1px solid rgba(255,255,255,.14)"><small style="opacity:.68">${framing} · ${duration}s · ${safeHTML(result.emotion)}</small><p style="font-size:1.08rem;line-height:1.45;margin:.55rem 0">${safeHTML(result.spokenText || result.text)}</p><span style="opacity:.65;font-size:.8rem">${action}</span><div style="display:flex;gap:10px;margin-top:14px"><button id="replayMoniaVoice" style="border:0;border-radius:999px;padding:10px 16px;cursor:pointer">▶ Réécouter</button><button id="endMoniaVisio" style="border:0;border-radius:999px;padding:10px 16px;background:#a33131;color:white;cursor:pointer">Raccrocher</button></div></div>`;
   document.body.appendChild(overlay);
   const close = () => closeVisio();
   document.getElementById('closeMoniaVisio')?.addEventListener('click', close);
@@ -332,4 +334,9 @@ if ('speechSynthesis' in window) {
   window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
 }
 
-console.info('[MonIA] Autonomous director + media orchestration + true-video visio active');
+void Promise.all([
+  ensureMonIACanonBootstrap(),
+  ensureMonIAAssetBootstrap(),
+]).catch(error=>console.warn('[MonIA] bootstrap coffre créatif incomplet',error));
+
+console.info('[MonIA] Autonomous director + media orchestration + creative vault active');
