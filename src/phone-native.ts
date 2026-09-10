@@ -1,6 +1,7 @@
 import './menu-reality';
 import './phoneNative.css';
 import './phoneLiveEvents.css';
+import './social-freedom';
 
 const SAVE_KEY='marion-lucas-save-v4';
 type Message={from:string;text:string;day:number;read:boolean};
@@ -45,6 +46,7 @@ function schedule(forceMessages=false){if(syncTimer)window.clearTimeout(syncTime
 
 document.addEventListener('click',e=>{const t=e.target as HTMLElement|null;if(!t)return;const reply=t.closest<HTMLElement>('[data-native-reply]');if(reply){e.preventDefault();chooseReply((reply.dataset.nativeReply||'later') as ReplyKind);return}if(t.closest('[data-phoneapp="messages"],.nativeNotification')){window.setTimeout(()=>schedule(true),80);return}if(t.closest('.nativeBack,.phoneDevice>.x')){const s=read();markThreadRead(s);const phone=t.closest<HTMLElement>('.phoneDevice');phone?.classList.remove('isMessagesOpen');emitStateChange();return}if(t.closest('#premiumPhone,#phone,#phoneExact,.phoneDevice,[data-phoneapp]'))window.setTimeout(()=>schedule(false),80)},{capture:true});
 window.addEventListener('storage',()=>schedule(false));
+window.addEventListener('marion:phone-refresh',()=>schedule(false));
 new MutationObserver(records=>{if(records.some(r=>[...r.addedNodes].some(n=>n instanceof HTMLElement&&(n.matches?.('.phoneDevice,#phoneContent,.smsThread')||n.querySelector?.('.phoneDevice,#phoneContent,.smsThread')))))schedule(false)}).observe(document.getElementById('app')||document.documentElement,{childList:true,subtree:true});
 schedule(false);
 console.info('[Phone] viewed messages sync read state and gameplay guidance immediately');
