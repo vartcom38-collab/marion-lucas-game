@@ -5,7 +5,7 @@ import './phoneLiveEvents.css';
 const SAVE_KEY='marion-lucas-save-v4';
 type Message={from:string;text:string;day:number;read:boolean};
 type SaveLike={day?:number;time?:string;place?:string;metLucas?:boolean;messages?:Message[];mails?:Array<{from:string;subject:string}>;memories?:string[];phoneUnread?:number;flags?:Record<string,boolean|number|string>;updatedAt?:number};
-let syncTimer=0;
+let syncTimer=0,pendingTimer=0;
 
 function read():SaveLike{try{return JSON.parse(localStorage.getItem(SAVE_KEY)||'{}') as SaveLike}catch{return {}}}
 function write(s:SaveLike){s.updatedAt=Date.now();localStorage.setItem(SAVE_KEY,JSON.stringify(s))}
@@ -16,121 +16,31 @@ function unreadCount(s:SaveLike){return Math.max(Number(s.phoneUnread||0),(s.mes
 function latestUnread(s:SaveLike){return (s.messages||[]).find(m=>m.from!=='Toi'&&!m.read)||null}
 function appIcon(label:string){const t=label.toLowerCase();if(t.includes('message'))return'●';if(t.includes('appel'))return'☎';if(t.includes('mail'))return'✉';if(t.includes('agenda'))return'31';if(t.includes('presse'))return'P';if(t.includes('insta'))return'◎';if(t.includes('galerie'))return'▧';if(t.includes('contact'))return'♙';return'•'}
 
-function ensureChrome(phone:HTMLElement,s:SaveLike){
-  phone.classList.add('nativePhoneShell');
-  let bar=phone.querySelector<HTMLElement>('.nativeStatusBar');
-  if(!bar){bar=document.createElement('div');bar.className='nativeStatusBar';bar.innerHTML='<strong></strong><div class="nativeIsland"></div><span class="nativeSignal">▮▮▮ ᯤ ▰</span>';phone.prepend(bar)}
-  const time=bar.querySelector<HTMLElement>('strong');if(time&&time.textContent!==(s.time||'09:00'))time.textContent=s.time||'09:00';
-  if(!phone.querySelector('.nativeHomeIndicator')){const home=document.createElement('div');home.className='nativeHomeIndicator';phone.appendChild(home)}
-  phone.querySelector('.phoneHead')?.classList.add('nativePhoneHead');
-}
+function ensureChrome(phone:HTMLElement,s:SaveLike){phone.classList.add('nativePhoneShell');let bar=phone.querySelector<HTMLElement>('.nativeStatusBar');if(!bar){bar=document.createElement('div');bar.className='nativeStatusBar';bar.innerHTML='<strong></strong><div class="nativeIsland"></div><span class="nativeSignal">▮▮▮ ᯤ ▰</span>';phone.prepend(bar)}const time=bar.querySelector<HTMLElement>('strong');if(time)time.textContent=s.time||'09:00';if(!phone.querySelector('.nativeHomeIndicator')){const home=document.createElement('div');home.className='nativeHomeIndicator';phone.appendChild(home)}phone.querySelector('.phoneHead')?.classList.add('nativePhoneHead')}
 
-function decorateApps(phone:HTMLElement,s:SaveLike){
-  const grid=phone.querySelector<HTMLElement>('.appGrid');if(!grid)return;
-  phone.classList.add('nativePhoneHome');phone.querySelector('.nativePhoneWidget')?.remove();
-  const unread=unreadCount(s);
-  grid.querySelectorAll<HTMLButtonElement>('button').forEach((b,i)=>{
-    const span=b.querySelector('span');const label=(span?.textContent||b.textContent||'').trim();
-    if(b.dataset.nativeApp!=='1'){
-      b.dataset.nativeApp='1';b.classList.add('nativeApp',`nativeApp-${i%8}`);
-      const icon=document.createElement('i');icon.className='realAppIcon';icon.textContent=appIcon(label);b.prepend(icon);
-    }
-    let badge=b.querySelector<HTMLElement>('.nativeUnreadBadge');
-    if(label.toLowerCase().includes('message')&&unread>0){if(!badge){badge=document.createElement('em');badge.className='nativeUnreadBadge';b.appendChild(badge)}badge.textContent=String(unread)}else badge?.remove();
-  });
-  if(!grid.querySelector('[data-native-contacts]')){const contacts=document.createElement('button');contacts.type='button';contacts.dataset.nativeContacts='1';contacts.className='nativeApp nativeContacts';contacts.innerHTML='<i class="realAppIcon">♙</i><span>Contacts</span>';grid.appendChild(contacts)}
-}
+function decorateApps(phone:HTMLElement,s:SaveLike){const grid=phone.querySelector<HTMLElement>('.appGrid');if(!grid)return;phone.classList.add('nativePhoneHome');phone.querySelector('.nativePhoneWidget')?.remove();const unread=unreadCount(s);grid.querySelectorAll<HTMLButtonElement>('button').forEach((b,i)=>{const span=b.querySelector('span');const label=(span?.textContent||b.textContent||'').trim();if(b.dataset.nativeApp!=='1'){b.dataset.nativeApp='1';b.classList.add('nativeApp',`nativeApp-${i%8}`);const icon=document.createElement('i');icon.className='realAppIcon';icon.textContent=appIcon(label);b.prepend(icon)}let badge=b.querySelector<HTMLElement>('.nativeUnreadBadge');if(label.toLowerCase().includes('message')&&unread>0){if(!badge){badge=document.createElement('em');badge.className='nativeUnreadBadge';b.appendChild(badge)}badge.textContent=String(unread)}else badge?.remove()});if(!grid.querySelector('[data-native-contacts]')){const contacts=document.createElement('button');contacts.type='button';contacts.dataset.nativeContacts='1';contacts.className='nativeApp nativeContacts';contacts.innerHTML='<i class="realAppIcon">♙</i><span>Contacts</span>';grid.appendChild(contacts)}}
 
-function activeContact(s:SaveLike,c:HTMLElement){
-  const visible=[...c.querySelectorAll<HTMLElement>('.msg b')].map(x=>x.textContent?.trim()||'').find(x=>x&&x!=='Toi');
-  if(visible)return visible;
-  return (s.messages||[]).find(m=>m.from&&m.from!=='Toi')?.from||'Messages';
-}
+function activeContact(s:SaveLike,c:HTMLElement){const visible=[...c.querySelectorAll<HTMLElement>('.msg b')].map(x=>x.textContent?.trim()||'').find(x=>x&&x!=='Toi');if(visible)return visible;return (s.messages||[]).find(m=>m.from&&m.from!=='Toi')?.from||'Messages'}
+function markThreadRead(s:SaveLike,name:string){let changed=false;for(const m of s.messages||[]){if(m.from===name&&!m.read){m.read=true;changed=true}}if(changed){s.phoneUnread=(s.messages||[]).filter(m=>m.from!=='Toi'&&!m.read).length;write(s)}}
+function marineInviteActive(s:SaveLike,name:string){if(name!=='Marine'||Number(s.day||1)!==1||s.metLucas||f(s).dayOneMarineReply)return false;return (s.messages||[]).some(m=>m.from==='Marine'&&/(ar[eè]nes|caf[eé]|allez viens|on prend un caf|viens)/i.test(m.text||''))}
 
-function markThreadRead(s:SaveLike,name:string){
-  let changed=false;
-  for(const m of s.messages||[]){if(m.from===name&&!m.read){m.read=true;changed=true}}
-  if(changed){s.phoneUnread=(s.messages||[]).filter(m=>m.from!=='Toi'&&!m.read).length;write(s)}
-}
-
-function marineInviteActive(s:SaveLike,name:string){
-  if(name!=='Marine'||Number(s.day||1)!==1||s.metLucas||f(s).dayOneMarineReply)return false;
-  return (s.messages||[]).some(m=>m.from==='Marine'&&/(ar[eè]nes|caf[eé]|allez viens|on prend un caf|viens)/i.test(m.text||''));
-}
-
-const replyMap={
-  now:{mine:'J’arrive',answer:'Parfait ☕ Je t’attends vers les arènes.',thread:'marine_join_now',guide:'goMarine'},
-  prepare:{mine:'Je me prépare et je te rejoins',answer:'Ça marche, prends ton temps. Dis-moi quand tu sors.',thread:'marine_after_prepare',guide:'prepareThenMarine'},
-  later:{mine:'Je te redis dans un moment',answer:'Ça marche 😌 Je bouge un peu, redis-moi.',thread:'marine_later',guide:'freeMorning'}
-} as const;
-
+const replyMap={now:{mine:'J’arrive',answer:'Parfait ☕ Je t’attends vers les arènes.',thread:'marine_join_now',guide:'goMarine'},prepare:{mine:'Je me prépare et je te rejoins',answer:'Ça marche, prends ton temps. Dis-moi quand tu sors.',thread:'marine_after_prepare',guide:'prepareThenMarine'},later:{mine:'Je te redis dans un moment',answer:'Ça marche 😌 Je bouge un peu, redis-moi.',thread:'marine_later',guide:'freeMorning'}} as const;
 type ReplyKind=keyof typeof replyMap;
 
-function appendBubble(thread:HTMLElement,from:string,text:string,mine=false){
-  const article=document.createElement('article');article.className=`msg ${mine?'mine ':''}nativeMessageArrive`;
-  article.innerHTML=`<b>${safe(from)}</b><p>${safe(text)}</p><span>Jour 1</span>`;thread.appendChild(article);
-  window.setTimeout(()=>article.classList.remove('nativeMessageArrive'),520);
-}
+function appendBubble(thread:HTMLElement,from:string,text:string,mine=false){const article=document.createElement('article');article.className=`msg ${mine?'mine ':''}nativeMessageArrive`;article.innerHTML=`<b>${safe(from)}</b><p>${safe(text)}</p><span>Jour 1</span>`;thread.appendChild(article);window.setTimeout(()=>article.classList.remove('nativeMessageArrive'),520)}
+function mountQuickReplies(c:HTMLElement,s:SaveLike,name:string){const existing=c.querySelector<HTMLElement>('.nativeQuickReplies');if(!marineInviteActive(s,name)){existing?.remove();return}if(existing)return;const box=document.createElement('div');box.className='nativeQuickReplies';box.innerHTML='<span>RÉPONDRE À MARINE</span><button data-native-reply="now">J’arrive</button><button data-native-reply="prepare">Je me prépare et je te rejoins</button><button data-native-reply="later">Je te redis dans un moment</button>';const composer=c.querySelector('.smsComposer');if(composer)composer.replaceWith(box);else c.appendChild(box)}
 
-function mountQuickReplies(c:HTMLElement,s:SaveLike,name:string){
-  const existing=c.querySelector<HTMLElement>('.nativeQuickReplies');
-  if(!marineInviteActive(s,name)){existing?.remove();return}
-  if(existing)return;
-  const box=document.createElement('div');box.className='nativeQuickReplies';box.innerHTML='<span>CHOISIS TA RÉPONSE</span><button data-native-reply="now">J’arrive</button><button data-native-reply="prepare">Je me prépare et je te rejoins</button><button data-native-reply="later">Je te redis dans un moment</button>';
-  const thread=c.querySelector('.smsThread');if(thread)thread.insertAdjacentElement('afterend',box);else c.appendChild(box);
-}
+function armPendingDelivery(){if(pendingTimer)window.clearTimeout(pendingTimer);const s=read(),due=Number(f(s).phoneReplyDueAt||0);if(!due||f(s).phoneReplyDelivered)return;pendingTimer=window.setTimeout(()=>{pendingTimer=0;deliverPendingReply();syncPhone()},Math.max(0,due-Date.now()+40))}
+function chooseReply(kind:ReplyKind){const s=read(),state=f(s),r=replyMap[kind];if(state.dayOneMarineReply)return;s.messages=s.messages||[];s.messages.unshift({from:'Toi',text:r.mine,day:Number(s.day||1),read:true});state.dayOneMarineReply=kind;state.dayOneThread=r.thread;state.dayOneSuggestedAction=r.guide;state.phoneTypingContact='Marine';state.phoneReplyDueAt=Date.now()+1100;state.phoneReplyText=r.answer;state.phoneReplyDelivered=false;write(s);const c=document.querySelector<HTMLElement>('.phoneDevice #phoneContent'),thread=c?.querySelector<HTMLElement>('.smsThread');c?.querySelector('.nativeQuickReplies')?.remove();if(thread){appendBubble(thread,'Toi',r.mine,true);const typing=document.createElement('div');typing.className='smsPending nativeTyping nativeInjectedTyping';typing.innerHTML='<i></i><span class="nativeTypingLabel">Marine écrit…</span>';thread.appendChild(typing);thread.scrollTo({top:thread.scrollHeight,behavior:'smooth'})}armPendingDelivery()}
+function deliverPendingReply(){const s=read(),state=f(s);if(!state.phoneReplyDueAt||state.phoneReplyDelivered||Date.now()<Number(state.phoneReplyDueAt))return;const text=String(state.phoneReplyText||'');if(text){s.messages=s.messages||[];s.messages.unshift({from:'Marine',text,day:Number(s.day||1),read:!!document.querySelector('.phoneDevice .nativeMessages')})}state.phoneReplyDelivered=true;state.phoneTypingContact='';s.phoneUnread=(s.messages||[]).filter(m=>m.from!=='Toi'&&!m.read).length;write(s);const c=document.querySelector<HTMLElement>('.phoneDevice #phoneContent'),thread=c?.querySelector<HTMLElement>('.smsThread');thread?.querySelector('.nativeInjectedTyping')?.remove();if(thread&&text){appendBubble(thread,'Marine',text,false);thread.scrollTo({top:thread.scrollHeight,behavior:'smooth'})}}
 
-function chooseReply(kind:ReplyKind){
-  const s=read(),state=f(s),r=replyMap[kind];
-  if(state.dayOneMarineReply)return;
-  s.messages=s.messages||[];s.messages.unshift({from:'Toi',text:r.mine,day:Number(s.day||1),read:true});
-  state.dayOneMarineReply=kind;state.dayOneThread=r.thread;state.dayOneSuggestedAction=r.guide;state.phoneTypingContact='Marine';
-  state.phoneReplyDueAt=Date.now()+1100;state.phoneReplyText=r.answer;state.phoneReplyDelivered=false;
-  write(s);
-  const c=document.querySelector<HTMLElement>('.phoneDevice #phoneContent');const thread=c?.querySelector<HTMLElement>('.smsThread');
-  c?.querySelector('.nativeQuickReplies')?.remove();
-  if(thread){appendBubble(thread,'Toi',r.mine,true);const typing=document.createElement('div');typing.className='smsPending nativeTyping nativeInjectedTyping';typing.innerHTML='<i></i><span class="nativeTypingLabel">Marine écrit…</span>';thread.appendChild(typing);thread.scrollTo({top:thread.scrollHeight,behavior:'smooth'})}
-  window.setTimeout(()=>{deliverPendingReply();syncPhone()},1200);
-}
-
-function deliverPendingReply(){
-  const s=read(),state=f(s);if(!state.phoneReplyDueAt||state.phoneReplyDelivered||Date.now()<Number(state.phoneReplyDueAt))return;
-  const text=String(state.phoneReplyText||'');
-  if(text){s.messages=s.messages||[];s.messages.unshift({from:'Marine',text,day:Number(s.day||1),read:!!document.querySelector('.phoneDevice .nativeMessages')})}
-  state.phoneReplyDelivered=true;state.phoneTypingContact='';s.phoneUnread=(s.messages||[]).filter(m=>m.from!=='Toi'&&!m.read).length;write(s);
-  const c=document.querySelector<HTMLElement>('.phoneDevice #phoneContent');const thread=c?.querySelector<HTMLElement>('.smsThread');
-  thread?.querySelector('.nativeInjectedTyping')?.remove();if(thread&&text){appendBubble(thread,'Marine',text,false);thread.scrollTo({top:thread.scrollHeight,behavior:'smooth'})}
-}
-
-function decorateConversation(phone:HTMLElement,s:SaveLike){
-  const c=phone.querySelector<HTMLElement>('#phoneContent');if(!c||!c.querySelector('.smsThread'))return;
-  c.classList.add('nativeMessages');phone.querySelector('.nativeNotificationStack')?.remove();phone.classList.remove('hasNativeNotification');
-  const name=activeContact(s,c);markThreadRead(s,name);
-  let head=c.querySelector<HTMLElement>('.nativeThreadHead');if(!head){head=document.createElement('div');head.className='nativeThreadHead';c.prepend(head)}
-  const typing=String(f(s).phoneTypingContact||'')===name&&!f(s).phoneReplyDelivered;const signature=`${name}|${typing}`;
-  if(head.dataset.signature!==signature){head.dataset.signature=signature;head.innerHTML=`<button type="button" aria-label="Retour">‹</button><i>${safe(initials(name))}</i><div><strong>${safe(name)}</strong><small class="nativePresence">${typing?'écrit…':'Messages'}</small></div><button type="button" aria-label="Appeler">☎</button>`}
-  mountQuickReplies(c,s,name);
-  const thread=c.querySelector<HTMLElement>('.smsThread');if(thread&&!thread.dataset.nativeReady){thread.dataset.nativeReady='1';window.requestAnimationFrame(()=>thread.scrollTo({top:thread.scrollHeight}))}
-}
-
-function ensureNotification(phone:HTMLElement,s:SaveLike){
-  if(phone.querySelector('.nativeMessages'))return;
-  const unread=latestUnread(s);let stack=phone.querySelector<HTMLElement>('.nativeNotificationStack');
-  if(!unread){stack?.remove();return}
-  const key=`${unread.from}|${unread.text}|${unread.day}`;
-  if(!stack){stack=document.createElement('div');stack.className='nativeNotificationStack';phone.appendChild(stack)}
-  if(stack.dataset.key!==key){stack.dataset.key=key;stack.innerHTML=`<button type="button" class="nativeNotification"><i class="nativeNotificationIcon">●</i><span class="nativeNotificationText"><strong>${safe(unread.from)}</strong><span>${safe(unread.text)}</span></span><time>maintenant</time></button>`}
-}
-
-function syncPhone(){
-  deliverPendingReply();const phone=document.querySelector<HTMLElement>('.phoneDevice');if(!phone)return;
-  const s=read();ensureChrome(phone,s);decorateApps(phone,s);decorateConversation(phone,s);ensureNotification(phone,s);
-}
+function decorateConversation(phone:HTMLElement,s:SaveLike){const c=phone.querySelector<HTMLElement>('#phoneContent');if(!c||!c.querySelector('.smsThread'))return;c.classList.add('nativeMessages');phone.querySelector('.nativeNotificationStack')?.remove();phone.classList.remove('hasNativeNotification');const name=activeContact(s,c);markThreadRead(s,name);let head=c.querySelector<HTMLElement>('.nativeThreadHead');if(!head){head=document.createElement('div');head.className='nativeThreadHead';c.prepend(head)}const typing=String(f(s).phoneTypingContact||'')===name&&!f(s).phoneReplyDelivered;const signature=`${name}|${typing}`;if(head.dataset.signature!==signature){head.dataset.signature=signature;head.innerHTML=`<button type="button" aria-label="Retour">‹</button><i>${safe(initials(name))}</i><div><strong>${safe(name)}</strong><small class="nativePresence">${typing?'écrit…':'Messages'}</small></div><button type="button" aria-label="Appeler">☎</button>`}mountQuickReplies(c,s,name);const thread=c.querySelector<HTMLElement>('.smsThread');if(thread&&!thread.dataset.nativeReady){thread.dataset.nativeReady='1';window.requestAnimationFrame(()=>thread.scrollTo({top:thread.scrollHeight}))}armPendingDelivery()}
+function ensureNotification(phone:HTMLElement,s:SaveLike){if(phone.querySelector('.nativeMessages'))return;const unread=latestUnread(s);let stack=phone.querySelector<HTMLElement>('.nativeNotificationStack');if(!unread){stack?.remove();return}const key=`${unread.from}|${unread.text}|${unread.day}`;if(!stack){stack=document.createElement('div');stack.className='nativeNotificationStack';phone.appendChild(stack)}if(stack.dataset.key!==key){stack.dataset.key=key;stack.innerHTML=`<button type="button" class="nativeNotification"><i class="nativeNotificationIcon">●</i><span class="nativeNotificationText"><strong>${safe(unread.from)}</strong><span>${safe(unread.text)}</span></span><time>maintenant</time></button>`}}
+function syncPhone(){deliverPendingReply();const phone=document.querySelector<HTMLElement>('.phoneDevice');if(!phone)return;const s=read();ensureChrome(phone,s);decorateApps(phone,s);decorateConversation(phone,s);ensureNotification(phone,s)}
 function schedule(){if(syncTimer)window.clearTimeout(syncTimer);syncTimer=window.setTimeout(syncPhone,80)}
 
 document.addEventListener('click',e=>{const t=e.target as HTMLElement|null;if(!t)return;const reply=t.closest<HTMLElement>('[data-native-reply]');if(reply){e.preventDefault();chooseReply((reply.dataset.nativeReply||'later') as ReplyKind);return}if(t.closest('#premiumPhone,#phone,#phoneExact,.phoneDevice,[data-phoneapp],.nativeNotification'))schedule()},{capture:true});
 window.addEventListener('storage',schedule);
 new MutationObserver(records=>{if(records.some(r=>[...r.addedNodes].some(n=>n instanceof HTMLElement&&(n.matches?.('.phoneDevice,#phoneContent,.smsThread')||n.querySelector?.('.phoneDevice,#phoneContent,.smsThread')))))schedule()}).observe(document.getElementById('app')||document.documentElement,{childList:true,subtree:true});
-window.setInterval(()=>{deliverPendingReply()},1000);
 schedule();
-console.info('[Phone] direct in-thread replies active with low-overhead rendering');
+console.info('[Phone] direct in-thread replies active without background polling');
