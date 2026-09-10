@@ -1,0 +1,18 @@
+.premiumGame .premiumNav{top:16px;right:16px;left:auto;gap:6px;padding:6px;border-radius:22px;background:rgba(12,11,10,.54);border:1px solid rgba(255,255,255,.11);backdrop-filter:blur(18px) saturate(1.08);box-shadow:0 10px 34px rgba(0,0,0,.2)}
+.premiumGame .premiumNav button{display:grid;place-items:center;width:42px;min-width:42px;height:42px;padding:0;border:0!important;border-radius:15px;background:transparent;color:rgba(255,255,255,.88);transition:background .18s ease,transform .18s ease,opacity .18s ease}
+.premiumGame .premiumNav button:hover,.premiumGame .premiumNav button:focus-visible{background:rgba(255,255,255,.11);transform:translateY(-1px)}
+.premiumGame .premiumNav button:active{transform:scale(.96)}
+.premiumGame .premiumNav .uiLineIcon{width:19px;height:19px;stroke:currentColor;opacity:.9}
+.premiumGame .premiumNav button>span{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+.premiumGame .premiumNav button>i{right:1px;top:0;min-width:16px;height:16px;padding:1px 4px;border:2px solid rgba(12,11,10,.9);font-size:8px;line-height:12px}
+.premiumGame .approvedTopLeft{top:18px;left:18px;padding:0;border:0;background:transparent!important;box-shadow:none!important;backdrop-filter:none!important;text-shadow:0 1px 8px rgba(0,0,0,.72)}
+.premiumGame .approvedTopLeft span{font-size:8px;letter-spacing:.16em;color:rgba(255,255,255,.58)}
+.premiumGame .approvedTopLeft b{font-size:20px;font-weight:560;color:#fff}
+.premiumGame .approvedTopLeft small{font-size:8px;color:rgba(255,255,255,.62)}
+.immersivePlayable .approvedSceneNav,.immersivePlayable .approvedExplore,.immersivePlayable .mainAction.approvedAction{display:none!important}
+.immersivePlayable .approvedStats{opacity:.5;transform:scale(.92);transform-origin:left top}
+.game:not(.immersivePlayable) .hudMinimal{background:transparent!important;border:0!important;box-shadow:none!important;backdrop-filter:none!important}
+.game:not(.immersivePlayable) .storyPulse{max-width:min(520px,calc(100vw - 28px));background:rgba(12,10,9,.5);border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(14px)}
+@media(max-width:760px){.premiumGame .premiumNav{top:9px;right:9px;left:auto;width:auto;max-width:calc(100vw - 18px);gap:2px;padding:4px}.premiumGame .premiumNav button{flex:none;width:36px;min-width:36px;height:36px;border-radius:13px}.premiumGame .premiumNav .uiLineIcon{width:17px;height:17px}.premiumGame .approvedTopLeft{top:11px;left:11px}.premiumGame .approvedTopLeft small{display:none}.premiumGame .approvedTopLeft b{font-size:17px}.premiumGame .approvedTopLeft span{font-size:7px}.immersivePlayable .approvedStats{display:none!important}}
+@media(max-width:430px){.premiumGame .premiumNav{top:auto;bottom:10px;right:10px;left:auto;z-index:37}.storyShell{bottom:62px!important}.premiumGame .premiumNav button{width:34px;min-width:34px;height:34px}.premiumGame .premiumNav button:nth-child(2),.premiumGame .premiumNav button:nth-child(4){display:none}.premiumGame .approvedTopLeft{top:10px;left:10px}}
+@media(prefers-reduced-motion:reduce){.premiumGame .premiumNav button{transition:none}}
