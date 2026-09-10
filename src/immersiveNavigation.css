@@ -12,9 +12,10 @@
 .premiumGame .approvedTopLeft small{font-size:9px;color:rgba(255,255,255,.7)}
 
 .immersivePlayable{position:relative!important;min-height:100dvh!important;overflow:hidden!important;background:#15110e!important}
-.immersivePlayable .worldBackdrop,.immersivePlayable .homePhotoStage{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;min-height:100dvh!important;overflow:hidden!important;background:#15110e!important;z-index:0!important}
-.immersivePlayable .homePhotoStage.live3DHome>img{display:none!important;opacity:0!important;visibility:hidden!important}
-.immersivePlayable #immersiveHome3D{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;display:block!important;touch-action:none!important;outline:none!important;z-index:1!important;background:#1a1511!important}
+.immersivePlayable .worldBackdrop,.immersivePlayable .homePhotoStage{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;min-height:100dvh!important;overflow:hidden!important;z-index:0!important}
+.immersivePlayable .homePhotoStage{background:#15110e url('/resources/appartement-nimes.png') center center/cover no-repeat!important}
+.immersivePlayable .homePhotoStage>img,.immersivePlayable .homePhotoStage.live3DHome>img{position:absolute!important;inset:0!important;display:block!important;width:100%!important;height:100%!important;min-width:100%!important;min-height:100%!important;object-fit:cover!important;object-position:center center!important;opacity:1!important;visibility:visible!important;z-index:0!important}
+.immersivePlayable #immersiveHome3D{display:none!important;visibility:hidden!important;pointer-events:none!important}
 .immersivePlayable .homeLightSweep,.immersivePlayable .homeDepth{display:none!important}
 .immersivePlayable .gameHotspot{background:transparent!important;border:0!important;box-shadow:none!important;color:transparent!important;outline:0!important}
 .immersivePlayable .gameHotspot i,.immersivePlayable .gameHotspot span{opacity:0!important;visibility:hidden!important}
