@@ -1,3 +1,4 @@
+import './menu-reality';
 import './phoneNative.css';
 
 const SAVE_KEY='marion-lucas-save-v4';
