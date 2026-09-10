@@ -1,0 +1,105 @@
+{
+  "version": 1,
+  "status": "locked",
+  "purpose": "Single MonIA production policy for cinematic, visio and voice candidates before anything can reach gameplay.",
+  "pipeline": [
+    "request",
+    "plan",
+    "identity_bind",
+    "voice_bind",
+    "generate_candidate",
+    "technical_check",
+    "identity_check",
+    "motion_check",
+    "voice_check",
+    "human_approval",
+    "publish_approved",
+    "runtime"
+  ],
+  "hardRules": {
+    "candidateOnlyByDefault": true,
+    "generationMayNeverPublishDirectlyToGameplay": true,
+    "promptOnlyCharacterGeneration": false,
+    "approvedMediaOnlyInLiveVisio": true,
+    "approvedMediaOnlyForStoryCinematics": true,
+    "fakeLipSyncByPlaybackWarping": false,
+    "randomSeekingToSimulateSpeech": false,
+    "identitySubstitution": false
+  },
+  "lucas": {
+    "identityAuthority": "config/monia-reference-packs.json#characters.lucas",
+    "voiceAuthority": "lucas-voice-reference",
+    "mustPreserve": [
+      "face geometry",
+      "eyes",
+      "nose",
+      "mouth",
+      "jaw",
+      "hair",
+      "stubble",
+      "skin tone",
+      "age continuity",
+      "natural ears"
+    ],
+    "mustNotInvent": [
+      "facial scar",
+      "tattoos",
+      "different eye shape",
+      "different jaw",
+      "different hairstyle identity",
+      "older or younger-looking replacement actor"
+    ],
+    "minimumIdentityScore": 0.94,
+    "minimumTemporalIdentityScore": 0.92
+  },
+  "voice": {
+    "goal": "Human, fluid, intimate French speech that remains recognizably the same speaker across scenes.",
+    "preferActualCharacterReference": true,
+    "genericSeedIsFallbackOnly": true,
+    "requiredQualities": [
+      "stable timbre",
+      "natural prosody",
+      "non-uniform cadence",
+      "subtle breathing",
+      "contextual pauses",
+      "emotion without theatrical overacting",
+      "no robotic diction",
+      "no presenter cadence"
+    ],
+    "minimumNaturalnessScore": 0.90,
+    "minimumSpeakerConsistencyScore": 0.93
+  },
+  "visio": {
+    "requiredApprovedStates": [
+      "listening",
+      "speaking",
+      "reaction"
+    ],
+    "preferredAdditionalStates": [
+      "soft_smile",
+      "thinking",
+      "concerned",
+      "tender",
+      "tired",
+      "warm"
+    ],
+    "camera": "credible desktop/video-call framing",
+    "motion": "micro-movements only unless a specific approved clip requires more",
+    "fallback": "approved canonical fallback only"
+  },
+  "rejectionReasons": [
+    "identity drift",
+    "face morphing between frames",
+    "wrong age",
+    "wrong facial features",
+    "invented scar or tattoo",
+    "rubbery mouth",
+    "uncanny blinking",
+    "robotic voice",
+    "voice identity mismatch",
+    "lip movement visibly unrelated to speech",
+    "excessive camera motion",
+    "text or watermark",
+    "continuity mismatch"
+  ]
+}
