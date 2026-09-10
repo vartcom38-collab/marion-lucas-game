@@ -1,19 +1,51 @@
 {
-  "version": 1,
+  "version": 2,
   "character": "lucas",
   "status": "locked",
-  "fallback": "/resources/monia/generated/intro-lucas-candidate-desktop.mp4",
+  "fallback": null,
   "states": {
     "listening": null,
     "speaking": null,
-    "reaction": null
+    "reaction": null,
+    "thinking": null
+  },
+  "adaptive": {
+    "enabled": true,
+    "vary_by": [
+      "story_context",
+      "time_of_day",
+      "place",
+      "relationship_state",
+      "recent_events",
+      "emotion",
+      "call_state"
+    ],
+    "identity_anchor": "approved_lucas_visio_face",
+    "must_keep": [
+      "same Lucas identity",
+      "no tattoos",
+      "no facial scar",
+      "natural front-camera realism",
+      "subtle human micro-movements"
+    ],
+    "must_vary": [
+      "expression",
+      "pose",
+      "gesture rhythm",
+      "background when context changes",
+      "lighting when time changes",
+      "reaction intensity",
+      "speaking/listening cadence"
+    ]
   },
   "rules": [
     "Only explicitly approved visio clips may be shown live.",
-    "Generated listening, speaking and reaction clips are candidates until approval.",
+    "Generated listening, speaking, reaction and thinking clips are candidates until approval.",
     "Never use playback-rate warping or random seeking to fake lip synchronization.",
-    "If an approved state clip is missing, use the approved canonical fallback rather than an unvalidated generated clip.",
-    "Lucas identity must come from the locked Lucas canon pack and motion video.",
-    "Visio output must remain natural, photorealistic, desktop-first and free of identity drift."
+    "If an approved state clip is missing, show a neutral call state without unapproved video rather than any candidate fallback.",
+    "Lucas identity must come from the locked Lucas canon pack and approved Lucas visio face reference.",
+    "Lucas has no tattoos and no facial scar.",
+    "Every visio must adapt to the current gameplay context and must not be a visually identical loop reused for every call.",
+    "Visio output must remain natural, photorealistic and free of identity drift."
   ]
 }
