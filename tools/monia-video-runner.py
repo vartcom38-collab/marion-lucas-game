@@ -18,6 +18,8 @@ RENDER_COMMAND=os.environ.get('MONIA_VIDEO_RENDER_COMMAND','').strip()
 ALLOWED_GAME_ORIGIN='https://marion-lucas.marionbolomey.fr'
 QUALITY_POLICY='config/monia-generation-quality.json'
 QUALITY_SCRIPT=Path(__file__).with_name('monia-video-quality.py')
+FACE_SCRIPT=Path(__file__).with_name('monia-face-consistency.py')
+LUCAS_REFERENCE=os.environ.get('MONIA_LUCAS_REFERENCE','').strip()
 
 renders={}
 work=queue.Queue()
@@ -31,7 +33,8 @@ def public_render(render):
         'renderId':render['renderId'],'state':render['state'],
         'jobs':[public_job(j) for j in render['jobs']],
         'candidateUrl':render.get('candidateUrl'),'finalUrl':render.get('finalUrl'),
-        'preflight':render.get('preflight'),'review':render.get('review'),'error':render.get('error'),
+        'preflight':render.get('preflight'),'faceConsistency':render.get('faceConsistency'),
+        'review':render.get('review'),'error':render.get('error'),
     }
 
 def run_external(prompt,duration,output_path,shot):
@@ -59,29 +62,58 @@ def concat_manifest(paths,target):
         subprocess.run(['ffmpeg','-y','-f','concat','-safe','0','-i',str(manifest),'-c','copy',str(target)],check=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
     finally: manifest.unlink(missing_ok=True)
 
+def run_json_tool(args,timeout=120):
+    try:
+        proc=subprocess.run(args,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True,timeout=timeout)
+        try: report=json.loads(proc.stdout or '{}')
+        except Exception: report={'available':False,'status':'error','reason':'tool returned unreadable JSON','stderr':(proc.stderr or '')[-500:]}
+        report['exitCode']=proc.returncode
+        return report
+    except Exception as exc:
+        return {'available':False,'status':'error','reason':str(exc),'exitCode':None}
+
 def run_preflight(candidate):
     if not QUALITY_SCRIPT.exists():
         return {'status':'error','reasons':['quality preflight script missing']}
-    proc=subprocess.run(['python3',str(QUALITY_SCRIPT),str(candidate)],stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True,timeout=120)
-    try: report=json.loads(proc.stdout or '{}')
-    except Exception: report={'status':'error','reasons':['quality preflight returned unreadable JSON'],'stderr':(proc.stderr or '')[-500:]}
-    report['exitCode']=proc.returncode
+    return run_json_tool(['python3',str(QUALITY_SCRIPT),str(candidate)])
+
+def plan_has_lucas(render):
+    raw=json.dumps(render.get('plan') or {},ensure_ascii=False).lower()
+    return 'lucas' in raw
+
+def run_face_consistency(candidate,render):
+    if not plan_has_lucas(render):
+        return {'available':False,'status':'not_required','reason':'Lucas absent from render plan','autoReject':False}
+    if not FACE_SCRIPT.exists():
+        return {'available':False,'status':'unavailable','reason':'face consistency script missing','autoReject':False}
+    args=['python3',str(FACE_SCRIPT),str(candidate),'--sample-fps','2']
+    if LUCAS_REFERENCE:
+        args.extend(['--reference',LUCAS_REFERENCE])
+    report=run_json_tool(args,timeout=180)
+    report['status']='auto_reject' if report.get('autoReject') else ('scored' if report.get('available') else 'human_review_required')
     return report
 
-def build_review_manifest(render,folder,candidate,preflight):
+def build_review_manifest(render,folder,candidate,preflight,face_consistency):
     probes=[]
     for job in render['jobs']:
         clip=folder/f"{job['shotId']}.mp4";probes.append({'shotId':job['shotId'],'technical':probe_video(clip)})
-    rejected=preflight.get('status')=='reject'
+    rejected=preflight.get('status')=='reject' or bool(face_consistency.get('autoReject'))
     manifest={
         'renderId':render['renderId'],
         'status':'candidate_auto_rejected' if rejected else 'candidate_pending_human_approval',
         'candidateOnly':True,'mayPublishToGameplay':False,'qualityPolicy':QUALITY_POLICY,'createdAt':time.time(),'candidateFile':candidate.name,
         'automaticPreflight':preflight,
+        'automaticFaceConsistency':face_consistency,
         'checks':{
             'technical':probes,
-            'identity':{'status':'required','automaticScore':None,'humanApprovalRequired':True},
-            'temporalIdentity':{'status':'required','automaticScore':None,'humanApprovalRequired':True},
+            'identity':{
+                'status':'automatic_signal_plus_human_review' if face_consistency.get('available') else 'human_review_required',
+                'automaticScore':face_consistency.get('identityScore'),'humanApprovalRequired':True
+            },
+            'temporalIdentity':{
+                'status':'automatic_signal_plus_human_review' if face_consistency.get('available') else 'human_review_required',
+                'automaticScore':face_consistency.get('temporalIdentityScore'),'humanApprovalRequired':True
+            },
             'motion':{'status':'required','humanApprovalRequired':True},
             'voice':{'status':'required_if_present','naturalnessScore':None,'speakerConsistencyScore':None,'humanApprovalRequired':True},
         },
@@ -107,10 +139,14 @@ def worker():
                 if not technical.get('ok'): raise RuntimeError(f"Clip {job['shotId']} illisible ou techniquement invalide")
                 with lock: job['state']='candidate';job['progress']=100;job['clipUrl']=f'/files/{render_id}/{output.name}';job['technical']=technical
             candidate=folder/'candidate.mp4';concat_manifest(clips,candidate)
-            preflight=run_preflight(candidate);review=build_review_manifest(render,folder,candidate,preflight)
+            preflight=run_preflight(candidate)
+            face_consistency=run_face_consistency(candidate,render)
+            review=build_review_manifest(render,folder,candidate,preflight,face_consistency)
+            auto_rejected=preflight.get('status')=='reject' or bool(face_consistency.get('autoReject'))
             with lock:
-                render['candidateUrl']=f'/files/{render_id}/candidate.mp4';render['finalUrl']=None;render['preflight']=preflight;render['review']=review
-                render['state']='candidate_auto_rejected' if preflight.get('status')=='reject' else 'candidate_pending_review'
+                render['candidateUrl']=f'/files/{render_id}/candidate.mp4';render['finalUrl']=None
+                render['preflight']=preflight;render['faceConsistency']=face_consistency;render['review']=review
+                render['state']='candidate_auto_rejected' if auto_rejected else 'candidate_pending_review'
         except Exception as exc:
             with lock:
                 render['state']='error';render['error']=str(exc)[:500]
@@ -137,7 +173,13 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(204);self.cors();self.end_headers()
     def do_GET(self):
         path=urlparse(self.path).path
-        if path=='/health':self.send_json(200,{'ok':True,'name':'MonIA Video Runner','backendConfigured':bool(RENDER_COMMAND),'qualityPreflight':QUALITY_SCRIPT.exists(),'output':str(ROOT),'candidateOnly':True,'qualityPolicy':QUALITY_POLICY});return
+        if path=='/health':
+            self.send_json(200,{
+                'ok':True,'name':'MonIA Video Runner','backendConfigured':bool(RENDER_COMMAND),
+                'qualityPreflight':QUALITY_SCRIPT.exists(),'faceConsistencyPreflight':FACE_SCRIPT.exists(),
+                'lucasReferenceConfigured':bool(LUCAS_REFERENCE),'output':str(ROOT),
+                'candidateOnly':True,'qualityPolicy':QUALITY_POLICY
+            });return
         if path.startswith('/render/'):
             rid=path.split('/')[-1]
             with lock:render=renders.get(rid)
@@ -166,4 +208,9 @@ class Handler(BaseHTTPRequestHandler):
     def log_message(self,fmt,*args):print('[MonIA Video]',fmt%args)
 
 if __name__=='__main__':
-    print(f'MonIA Video Runner http://{HOST}:{PORT}');print('Backend configuré:',bool(RENDER_COMMAND));print('Pré-contrôle qualité:',QUALITY_SCRIPT.exists());print('Mode candidat uniquement: oui — aucune génération ne peut devenir live sans validation');ThreadingHTTPServer((HOST,PORT),Handler).serve_forever()
+    print(f'MonIA Video Runner http://{HOST}:{PORT}')
+    print('Backend configuré:',bool(RENDER_COMMAND))
+    print('Pré-contrôle qualité:',QUALITY_SCRIPT.exists())
+    print('Pré-contrôle visage Lucas:',FACE_SCRIPT.exists(),'référence configurée:',bool(LUCAS_REFERENCE))
+    print('Mode candidat uniquement: oui — aucune génération ne peut devenir live sans validation')
+    ThreadingHTTPServer((HOST,PORT),Handler).serve_forever()
