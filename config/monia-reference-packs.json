@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "policy": {
     "identitySourceRequired": true,
     "allowPromptOnlyCharacterGeneration": false,
@@ -24,7 +24,8 @@
         "The two priority images are the primary face and appearance authority for Lucas.",
         "The latest Lucas video remains the motion, presence and micro-expression authority.",
         "Never substitute Lucas with another man.",
-        "Preserve face geometry, eyes, nose, mouth, jaw, hair, stubble, skin tone and visible tattoos from the priority pack.",
+        "Preserve face geometry, eyes, nose, mouth, jaw, hair, stubble, skin tone, natural ears and the canon absence of tattoos and facial scars.",
+        "Do not invent tattoos, facial scars, piercings or other permanent distinguishing marks that are not in the locked canon.",
         "Do not copy text, logos or graphic overlays visible in reference media.",
         "Full-body, medium and close-up shots are allowed when the reference pack supports them."
       ]
