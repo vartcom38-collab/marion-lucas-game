@@ -16,6 +16,7 @@ ROOT=Path(os.environ.get('MONIA_VIDEO_OUTPUT',Path.home()/'MonIA'/'renders')).ex
 ROOT.mkdir(parents=True,exist_ok=True)
 RENDER_COMMAND=os.environ.get('MONIA_VIDEO_RENDER_COMMAND','').strip()
 ALLOWED_GAME_ORIGIN='https://marion-lucas.marionbolomey.fr'
+QUALITY_POLICY='config/monia-generation-quality.json'
 
 renders={}
 work=queue.Queue()
@@ -29,7 +30,9 @@ def public_render(render):
         'renderId':render['renderId'],
         'state':render['state'],
         'jobs':[public_job(j) for j in render['jobs']],
+        'candidateUrl':render.get('candidateUrl'),
         'finalUrl':render.get('finalUrl'),
+        'review':render.get('review'),
         'error':render.get('error'),
     }
 
@@ -48,6 +51,25 @@ def run_external(prompt, duration, output_path, shot):
     if not output_path.exists():
         raise RuntimeError('Le backend a terminé sans créer le clip attendu.')
 
+def probe_video(path):
+    try:
+        out=subprocess.check_output([
+            'ffprobe','-v','error','-select_streams','v:0',
+            '-show_entries','stream=width,height,r_frame_rate,duration',
+            '-of','json',str(path)
+        ],stderr=subprocess.STDOUT,timeout=20)
+        data=json.loads(out.decode('utf-8'))
+        stream=(data.get('streams') or [{}])[0]
+        return {
+            'ok':bool(stream.get('width') and stream.get('height')),
+            'width':stream.get('width'),
+            'height':stream.get('height'),
+            'fps':stream.get('r_frame_rate'),
+            'duration':stream.get('duration'),
+        }
+    except Exception as exc:
+        return {'ok':False,'error':str(exc)[:240]}
+
 def concat_manifest(paths, target):
     manifest=target.with_suffix('.txt')
     def escaped(path):
@@ -62,6 +84,36 @@ def concat_manifest(paths, target):
         )
     finally:
         manifest.unlink(missing_ok=True)
+
+def build_review_manifest(render, folder, candidate):
+    probes=[]
+    for job in render['jobs']:
+        clip=folder/f"{job['shotId']}.mp4"
+        probes.append({'shotId':job['shotId'],'technical':probe_video(clip)})
+    manifest={
+        'renderId':render['renderId'],
+        'status':'candidate_pending_human_approval',
+        'candidateOnly':True,
+        'mayPublishToGameplay':False,
+        'qualityPolicy':QUALITY_POLICY,
+        'createdAt':time.time(),
+        'candidateFile':candidate.name,
+        'checks':{
+            'technical':probes,
+            'identity':{'status':'required','automaticScore':None,'humanApprovalRequired':True},
+            'temporalIdentity':{'status':'required','automaticScore':None,'humanApprovalRequired':True},
+            'motion':{'status':'required','humanApprovalRequired':True},
+            'voice':{'status':'required_if_present','naturalnessScore':None,'speakerConsistencyScore':None,'humanApprovalRequired':True},
+        },
+        'hardBlocks':[
+            'identity drift','face morphing','wrong age','invented tattoo or facial scar',
+            'rubbery mouth','uncanny blinking','robotic voice','voice identity mismatch',
+            'lip movement visibly unrelated to speech','continuity mismatch','text or watermark'
+        ],
+        'approval':{'approved':False,'approvedBy':None,'approvedAt':None}
+    }
+    (folder/'review.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2),encoding='utf-8')
+    return manifest
 
 def worker():
     while True:
@@ -83,15 +135,22 @@ def worker():
                 output=folder/f"{job['shotId']}.mp4"
                 run_external(job['prompt'],job['duration'],output,job['shot'])
                 clips.append(output)
+                technical=probe_video(output)
+                if not technical.get('ok'):
+                    raise RuntimeError(f"Clip {job['shotId']} illisible ou techniquement invalide")
                 with lock:
-                    job['state']='ready'
+                    job['state']='candidate'
                     job['progress']=100
                     job['clipUrl']=f'/files/{render_id}/{output.name}'
-            final=folder/'final.mp4'
-            concat_manifest(clips,final)
+                    job['technical']=technical
+            candidate=folder/'candidate.mp4'
+            concat_manifest(clips,candidate)
+            review=build_review_manifest(render,folder,candidate)
             with lock:
-                render['state']='ready'
-                render['finalUrl']=f'/files/{render_id}/final.mp4'
+                render['state']='candidate_pending_review'
+                render['candidateUrl']=f'/files/{render_id}/candidate.mp4'
+                render['finalUrl']=None
+                render['review']=review
         except Exception as exc:
             with lock:
                 render['state']='error'
@@ -139,7 +198,7 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         path=urlparse(self.path).path
         if path=='/health':
-            self.send_json(200,{'ok':True,'name':'MonIA Video Runner','backendConfigured':bool(RENDER_COMMAND),'output':str(ROOT)})
+            self.send_json(200,{'ok':True,'name':'MonIA Video Runner','backendConfigured':bool(RENDER_COMMAND),'output':str(ROOT),'candidateOnly':True,'qualityPolicy':QUALITY_POLICY})
             return
         if path.startswith('/render/'):
             rid=path.split('/')[-1]
@@ -194,13 +253,13 @@ class Handler(BaseHTTPRequestHandler):
                     'prompt':prompt,
                     'shot':shot,
                 })
-            render={'renderId':rid,'state':'queued','jobs':jobs,'createdAt':time.time(),'plan':plan}
+            render={'renderId':rid,'state':'queued','jobs':jobs,'createdAt':time.time(),'plan':plan,'candidateOnly':True}
             with lock:
                 renders[rid]=render
             (ROOT/rid).mkdir(parents=True,exist_ok=True)
             (ROOT/rid/'plan.json').write_text(json.dumps(plan,ensure_ascii=False,indent=2),encoding='utf-8')
             work.put(rid)
-            self.send_json(202,{'renderId':rid,'state':'queued'})
+            self.send_json(202,{'renderId':rid,'state':'queued','candidateOnly':True})
         except Exception as exc:
             self.send_json(400,{'error':str(exc)})
     def log_message(self,fmt,*args):
@@ -209,4 +268,5 @@ class Handler(BaseHTTPRequestHandler):
 if __name__=='__main__':
     print(f'MonIA Video Runner http://{HOST}:{PORT}')
     print('Backend configuré:',bool(RENDER_COMMAND))
+    print('Mode candidat uniquement: oui — aucune génération ne peut devenir live sans validation')
     ThreadingHTTPServer((HOST,PORT),Handler).serve_forever()
