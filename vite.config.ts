@@ -26,6 +26,7 @@ export default defineConfig({
         moniaTest: resolve(__dirname, 'monia-test.html'),
         moniaKaggleTest: resolve(__dirname, 'monia-kaggle-test.html'),
         dramaReview: resolve(__dirname, 'drama-review.html'),
+        latestVisio: resolve(__dirname, 'latest-visio.html'),
       },
       maxParallelFileOps: 128,
     },
