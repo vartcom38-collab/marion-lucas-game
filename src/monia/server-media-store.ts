@@ -85,6 +85,12 @@ export async function persistGeneratedMedia(plan:MonIAMediaPlan,imageUrl:string,
   return {imageUrl:storedImageUrl,videoUrl:storedVideoUrl,persisted:storedImageUrl!==imageUrl||storedVideoUrl!==videoUrl};
 }
 
+export async function persistGeneratedVideo(sourceUrl:string,key:string){
+  const videoUrl=await persistOne(sourceUrl,`video|${key}`,'video');
+  const persisted=videoUrl!==sourceUrl && (videoUrl.startsWith('/')||videoUrl.startsWith(location.origin));
+  return {videoUrl,persisted,absoluteUrl:videoUrl.startsWith('/')?new URL(videoUrl,location.origin).href:videoUrl};
+}
+
 export async function persistGeneratedAudio(sourceUrl:string,key:string){
   const audioUrl=await persistOne(sourceUrl,`voice|${key}`,'audio');
   return {audioUrl,persisted:audioUrl!==sourceUrl};
