@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "status": "locked",
   "policy": {
     "motion_reference_only": true,
@@ -75,6 +75,34 @@
       "asset_status": "motion-profile-extracted",
       "motion_profile": "intimate-proximity-with-restraint",
       "tags": ["motion_reference_only", "romantic_proximity", "lean_in", "micro_pause", "gentle_hand_placement", "chemistry", "non_explicit", "do_not_copy_identity", "ignore_coactor_appearance"]
+    },
+    {
+      "id": "motion-user-20260910-h",
+      "source_file_label": "ScreenRecording_09-10-2026 18-54-56_1.mp4",
+      "asset_status": "motion-profile-extracted",
+      "motion_profile": "formal-tense-observation",
+      "tags": ["motion_reference_only", "formal_scene", "standing_presence", "focused_gaze", "measured_head_turn", "controlled_reaction", "prop_or_letter_attention", "do_not_copy_identity", "ignore_coactor_appearance"]
+    },
+    {
+      "id": "motion-user-20260910-i",
+      "source_file_label": "ScreenRecording_09-10-2026 18-55-27_1.mp4",
+      "asset_status": "motion-profile-extracted",
+      "motion_profile": "intimate-face-contact-rhythm",
+      "tags": ["motion_reference_only", "romantic_proximity", "face_touch", "lean_in", "kiss_timing_reference", "breath_pause", "gentle_contact", "non_explicit", "do_not_copy_identity", "ignore_coactor_appearance"]
+    },
+    {
+      "id": "motion-user-20260910-j",
+      "source_file_label": "ScreenRecording_09-10-2026 18-58-40_1.mp4",
+      "asset_status": "motion-profile-extracted",
+      "motion_profile": "father-child-soft-protective",
+      "tags": ["motion_reference_only", "parent_child_interaction", "child_on_lap", "protective_hold", "soft_smile", "gaze_to_child", "gentle_reassurance", "family_blocking_reference", "do_not_copy_identity", "ignore_coactor_appearance"]
+    },
+    {
+      "id": "motion-user-20260910-k",
+      "source_file_label": "ScreenRecording_09-10-2026 19-00-15_1.mp4",
+      "asset_status": "motion-profile-extracted",
+      "motion_profile": "emotion-to-prop-closeup",
+      "tags": ["motion_reference_only", "closeup", "emotional_reaction", "gaze_drop", "prop_interaction", "flower_or_gift_handling", "pause_before_reaction", "subtle_breathing", "do_not_copy_identity", "ignore_coactor_appearance"]
     }
   ],
   "future_child_motion_bands": ["baby", "toddler", "young_child", "older_child", "teen"]
