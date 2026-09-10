@@ -65,7 +65,7 @@ async function play(url:string,options:Options){options.onStage?.('6/6 · lectur
 
 function findGenerateEndpoint(info:any){
   const unnamed=info?.unnamed_endpoints||{};
-  for(const [key,value] of Object.entries<any>>(unnamed)){
+  for(const [key,value] of Object.entries<any>(unnamed)){
     const params=value?.parameters||[],returns=value?.returns||[];
     const labels=params.map((p:any)=>String(p?.label||'').toLowerCase()).join('|');
     if(params.length===9 && returns.some((r:any)=>String(r?.component||'').toLowerCase()==='audio') && (labels.includes('text')||labels.includes('synth')))return Number(key);
