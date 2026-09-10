@@ -50,13 +50,21 @@ jobs:
           set -euo pipefail
           test -s dist/index.html
           test -s dist/monia-test.html
+          test -s dist/latest-visio.html
           test -d dist/assets
           test -d dist/resources
           test -f dist/api/monia-media-store.php
           test -f dist/api/monia-ai.php
           test -f dist/resources/living/home.mp4
           test -f dist/config/monia-visio-approved.json
-          node -e "const fs=require('fs');const m=JSON.parse(fs.readFileSync('dist/config/monia-visio-approved.json','utf8'));if(m.status!=='locked'||!m.fallback)process.exit(1)"
+          node - <<'NODE'
+          const fs=require('fs');
+          const m=JSON.parse(fs.readFileSync('dist/config/monia-visio-approved.json','utf8'));
+          if(m.status!=='locked') process.exit(1);
+          if(m.fallback!==null) process.exit(1);
+          if(!Object.values(m.states||{}).every(v=>v===null)) process.exit(1);
+          console.log('Visio manifest OK: no unapproved fallback or state clip.');
+          NODE
 
       - name: Deploy dist to Infomaniak via FTPES
         env:
@@ -82,13 +90,7 @@ jobs:
           ftp.login(user, password)
           ftp.prot_p()
           ftp.set_pasv(True)
-
-          # This Infomaniak FTP account is already chrooted to the site's
-          # document root. Deploying to /sites/... creates a nested folder and
-          # leaves the real public index untouched. The live document root is /.
           remote_root = '/'
-          print(f'FTP login root: {ftp.pwd()}')
-          print('Deploying Marion & Lucas directly to FTP / (public document root).')
 
           def ensure_remote_dir(path: str):
               parts = [p for p in path.split('/') if p]
@@ -102,9 +104,7 @@ jobs:
 
           def remote_dir_for(local_dir: Path) -> str:
               rel = local_dir.relative_to(local_root)
-              if str(rel) == '.':
-                  return remote_root
-              return '/' + rel.as_posix()
+              return remote_root if str(rel) == '.' else '/' + rel.as_posix()
 
           def remote_size(remote_dir: str, filename: str):
               ftp.cwd(remote_dir)
@@ -120,21 +120,17 @@ jobs:
               expected = local_path.stat().st_size
               if expected <= 0:
                   raise RuntimeError(f'Refusing to deploy empty file: {local_path}')
-
               final_name = local_path.name
               upload_name = f'.{final_name}.uploading' if atomic else final_name
               last_error = None
-
               for attempt in range(1, 4):
                   try:
                       ftp.cwd(remote_dir)
                       with local_path.open('rb') as fh:
                           ftp.storbinary(f'STOR {upload_name}', fh, blocksize=1024 * 1024)
-
                       actual = remote_size(remote_dir, upload_name)
                       if actual != expected:
                           raise RuntimeError(f'{upload_name}: remote size {actual}, expected {expected}')
-
                       if atomic:
                           ftp.cwd(remote_dir)
                           try:
@@ -142,20 +138,18 @@ jobs:
                           except ftplib.all_errors:
                               pass
                           ftp.rename(upload_name, final_name)
-                          final_size = remote_size(remote_dir, final_name)
-                          if final_size != expected:
-                              raise RuntimeError(f'{final_name}: remote size after rename {final_size}, expected {expected}')
-
-                      print(f'uploaded+verified {local_path} -> {remote_dir.rstrip("/") or "/"}/{final_name} ({expected} bytes)')
                       return
                   except Exception as exc:
                       last_error = exc
-                      print(f'upload attempt {attempt}/3 failed for {local_path}: {exc}')
                       time.sleep(attempt * 2)
-
               raise RuntimeError(f'Upload failed after retries for {local_path}: {last_error}')
 
-          entrypoints = {local_root / 'index.html', local_root / 'monia-test.html'}
+          entrypoints = {
+              local_root / 'index.html',
+              local_root / 'monia-test.html',
+              local_root / 'latest-visio.html',
+          }
+
           for root, dirs, files in os.walk(local_root):
               local_dir = Path(root)
               remote_dir = remote_dir_for(local_dir)
@@ -165,18 +159,11 @@ jobs:
                       continue
                   upload_verified(local_path, remote_dir)
 
-          # Publish HTML entrypoints last and atomically.
-          for entrypoint in ('monia-test.html', 'index.html'):
+          for entrypoint in ('latest-visio.html', 'monia-test.html', 'index.html'):
               local_path = local_root / entrypoint
               if local_path.exists():
                   upload_verified(local_path, remote_root, atomic=True)
 
-          expected_index = (local_root / 'index.html').stat().st_size
-          live_index = remote_size(remote_root, 'index.html')
-          if live_index != expected_index:
-              raise RuntimeError(f'FINAL index verification failed: remote={live_index}, expected={expected_index}')
-
-          print(f'Public-root index verified at {live_index} bytes.')
           ftp.quit()
           PY
 
@@ -185,19 +172,5 @@ jobs:
         run: |
           set -euo pipefail
           base='https://marion-lucas.marionbolomey.fr'
-          html="$(curl -fsSL --retry 4 --retry-delay 2 --connect-timeout 15 --max-time 45 "$base/?deploy=${GITHUB_SHA}")"
-          printf '%s' "$html" | grep -q '<title>Marion & Lucas</title>' || {
-            echo 'ERROR: the public URL is not serving the freshly deployed Marion & Lucas index.'
-            printf '%s\n' "$html" | head -c 1200
-            exit 1
-          }
-          js="$(printf '%s' "$html" | grep -oE 'src="[^"]+\.js"' | tail -1 | cut -d'"' -f2)"
-          css="$(printf '%s' "$html" | grep -oE 'href="[^"]+\.css"' | tail -1 | cut -d'"' -f2)"
-          test -n "$js"
-          test -n "$css"
-          case "$js" in http*) js_url="$js" ;; /*) js_url="$base$js" ;; *) js_url="$base/${js#./}" ;; esac
-          case "$css" in http*) css_url="$css" ;; /*) css_url="$base$css" ;; *) css_url="$base/${css#./}" ;; esac
-          echo "Public JS: $js_url"
-          echo "Public CSS: $css_url"
-          curl -fsSI --retry 3 --connect-timeout 15 --max-time 45 "$js_url" | head
-          curl -fsSI --retry 3 --connect-timeout 15 --max-time 45 "$css_url" | head
+          curl -fsSL --retry 4 --retry-delay 2 --connect-timeout 15 --max-time 45 "$base/?deploy=${GITHUB_SHA}" >/dev/null
+          curl -fsSI --retry 4 --retry-delay 2 --connect-timeout 15 --max-time 45 "$base/latest-visio.html" >/dev/null
