@@ -95,16 +95,24 @@ class CreativeVault{
     await this.put('assets',next);return next;
   }
 
-  async approvedAssets(query:{kind?:MonIAAssetKind;actor?:string;role?:string;tags?:string[]}={}){
+  async assets(query:{status?:MonIAAssetStatus;kind?:MonIAAssetKind;actor?:string;role?:string;tags?:string[]}={}){
     const tags=unique(query.tags||[]),actor=norm(query.actor||''),role=norm(query.role||'');
     return (await this.all<MonIAAsset>('assets')).filter(asset=>{
-      if(asset.status!=='approved')return false;
+      if(query.status&&asset.status!==query.status)return false;
       if(query.kind&&asset.kind!==query.kind)return false;
       if(actor&&norm(asset.actor||'')!==actor)return false;
       if(role&&norm(asset.role||'')!==role)return false;
       const own=new Set(asset.tags.map(norm));
       return tags.every(tag=>own.has(tag));
-    }).sort((a,b)=>b.useCount-a.useCount||b.updatedAt-a.updatedAt);
+    }).sort((a,b)=>b.updatedAt-a.updatedAt||b.useCount-a.useCount);
+  }
+
+  async approvedAssets(query:{kind?:MonIAAssetKind;actor?:string;role?:string;tags?:string[]}={}){
+    return this.assets({...query,status:'approved'});
+  }
+
+  async candidateAssets(query:{kind?:MonIAAssetKind;actor?:string;role?:string;tags?:string[]}={}){
+    return this.assets({...query,status:'candidate'});
   }
 
   async bestReusableAsset(query:{kind:MonIAAssetKind;actor?:string;role?:string;tags?:string[]}){
