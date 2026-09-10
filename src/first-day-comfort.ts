@@ -16,11 +16,27 @@ function hasUnread(s:SaveLike){return Number(s.phoneUnread||0)>0||(s.messages||[
 function invitationWaiting(s:SaveLike){const thread=String(s.flags.dayOneThread||'');if(thread.startsWith('marine_')&&thread!=='marine_later')return true;const m=latestIncoming(s);return Boolean(m&&/(ar[eè]nes|viens|rejoins|caf[eé]|on se voit|je t.attends)/i.test(m.text||''))}
 function invitationDeferred(s:SaveLike){const until=Number(s.flags.firstDayInvitationDeferredUntil||0);return until>nowStamp(s)||String(s.flags.dayOneSuggestedAction||'')==='freeMorning'}
 function hasRepliedToMarine(s:SaveLike){return Boolean(s.flags.dayOneMarineReply)}
+function recentFreeSocial(s:SaveLike){
+  const action=String(s.flags.lastFreeSocialAction||'');
+  const at=Number(s.flags.lastFreeSocialAt||0);
+  if(!action||!at||Date.now()-at>120000)return null;
+  const [kind,who]=action.split(':');
+  if(!who)return null;
+  const name=who==='lucas'?'Lucas':'Marine';
+  return{kind,who,name};
+}
 
 function showToast(title:string,body:string,duration=2300){document.querySelector('.firstDayComfortToast')?.remove();const toast=document.createElement('aside');toast.className='firstDayComfortToast';toast.innerHTML=`<strong>${title}</strong><small>${body}</small>`;document.body.appendChild(toast);if(toastTimer)window.clearTimeout(toastTimer);toastTimer=window.setTimeout(()=>{toast.classList.add('is-leaving');window.setTimeout(()=>toast.remove(),260)},duration)}
 function clickOne(selectors:string){for(const sel of selectors.split(',')){const el=document.querySelector<HTMLElement>(sel.trim());if(el){el.click();return true}}return false}
 function guideCopy(s:SaveLike){
   const deferred=invitationDeferred(s),suggested=String(s.flags.dayOneSuggestedAction||'');
+  const social=recentFreeSocial(s);
+  if(social&&hasRepliedToMarine(s)){
+    const label=social.kind==='visio'?`Ta visio avec ${social.name} fait partie de la journée.`:`Ton appel avec ${social.name} fait partie de la journée.`;
+    if(suggested==='goMarine')return{eyebrow:'TU GARDES LA MAIN',title:label,body:'Ce que tu fais librement compte. Ton plan précédent reste disponible quand tu veux le reprendre.',primary:'Reprendre mon plan',primaryAction:'map',secondary:'Continuer sur le téléphone',secondaryAction:'phone'};
+    if(suggested==='prepareThenMarine'&&!s.flags.firstDayChoseOutfit)return{eyebrow:'TU GARDES LA MAIN',title:label,body:'Ton initiative est enregistrée. Tu peux maintenant te préparer, ou continuer à faire autre chose avant.',primary:'Me préparer',primaryAction:'wardrobe',secondary:'Téléphone',secondaryAction:'phone'};
+    if(suggested==='freeMorning')return{eyebrow:'TA MATINÉE BOUGE',title:label,body:'Une action libre peut créer ses propres réactions. Rien ne t’oblige à revenir immédiatement à un objectif.',primary:'Me préparer',primaryAction:'wardrobe',secondary:'Téléphone',secondaryAction:'phone'};
+  }
   // Once Marion has answered, that decision is the source of truth. A later acknowledgement
   // from Marine must never send the guide back to “Tu as reçu un message”.
   if(hasRepliedToMarine(s)){
@@ -47,4 +63,4 @@ function exitVeil(){document.querySelector('.firstDayExitVeil')?.remove();const 
 
 function handleClick(e:MouseEvent){const target=e.target as HTMLElement|null;if(!target)return;if(target.closest('[data-tutorial-done]')){const s=read();if(s){s.flags.firstDayTutorialSeen=true;write(s)}document.querySelector('.firstDayTutorial')?.remove();scheduleGuide();return}const guide=target.closest<HTMLElement>('[data-guide-action]');if(guide){const a=guide.dataset.guideAction;if(a==='phone')clickOne('#premiumPhone,#phone,#phoneExact');if(a==='wardrobe')clickOne('#premiumWardrobe,#goWardrobe');if(a==='map')clickOne('#premiumMap,#worldQuick,#worldExact,#goWorld');if(a==='defer'){const s=read();if(s){s.flags.firstDayInvitationDeferredUntil=nowStamp(s)+30;s.flags.dayOneSuggestedAction='freeMorning';write(s)}showToast('Tu prends ton temps.','Le jeu garde ce qui s’est passé en mémoire. Tu peux faire autre chose avant.')}window.setTimeout(scheduleGuide,120);return}const s=read();if(target.closest('#premiumWardrobe,#goWardrobe'))window.setTimeout(decorateWardrobe,80);if(target.closest('#premiumMap,#worldQuick,#worldExact,#goWorld'))window.setTimeout(decorateWorld,80);if(isFirstHome(s)&&target.closest('.wardrobeStudio [data-outfit]')){const fresh=read();if(fresh){fresh.flags.firstDayChoseOutfit=true;write(fresh)}window.setTimeout(()=>showToast('C’est bon.','Le jeu a enregistré ton choix. La prochaine proposition s’adapte à ce que tu viens de faire.'),120);window.setTimeout(scheduleGuide,160)}const place=target.closest<HTMLElement>('[data-place]')?.dataset.place;if(isFirstHome(s)&&place==='nimes'){const fresh=read();if(fresh){fresh.flags.firstDayLeftHomeComfortably=true;fresh.flags.dayOneSuggestedAction='';write(fresh)}exitVeil()}window.setTimeout(scheduleGuide,120)}
 
-document.addEventListener('click',handleClick,{passive:true,capture:true});new MutationObserver(records=>{if(records.some(r=>[...r.addedNodes].some(n=>n instanceof HTMLElement&&(n.matches?.('.immersivePlayable,.wardrobeStudio,.worldGalleryPanel')||n.querySelector?.('.immersivePlayable,.wardrobeStudio,.worldGalleryPanel')))))scheduleGuide()}).observe(document.getElementById('app')||document.documentElement,{childList:true,subtree:true});window.addEventListener('storage',scheduleGuide);window.addEventListener('marion:statechange',scheduleGuide);scheduleGuide();console.info('[Day 1] guidance follows decisions immediately while free actions remain available');
+document.addEventListener('click',handleClick,{passive:true,capture:true});new MutationObserver(records=>{if(records.some(r=>[...r.addedNodes].some(n=>n instanceof HTMLElement&&(n.matches?.('.immersivePlayable,.wardrobeStudio,.worldGalleryPanel')||n.querySelector?.('.immersivePlayable,.wardrobeStudio,.worldGalleryPanel')))))scheduleGuide()}).observe(document.getElementById('app')||document.documentElement,{childList:true,subtree:true});window.addEventListener('storage',scheduleGuide);window.addEventListener('marion:statechange',scheduleGuide);scheduleGuide();console.info('[Day 1] guidance now reacts to free calls without losing the current plan');
