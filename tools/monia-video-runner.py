@@ -17,6 +17,7 @@ ROOT.mkdir(parents=True,exist_ok=True)
 RENDER_COMMAND=os.environ.get('MONIA_VIDEO_RENDER_COMMAND','').strip()
 ALLOWED_GAME_ORIGIN='https://marion-lucas.marionbolomey.fr'
 QUALITY_POLICY='config/monia-generation-quality.json'
+QUALITY_SCRIPT=Path(__file__).with_name('monia-video-quality.py')
 
 renders={}
 work=queue.Queue()
@@ -27,77 +28,56 @@ def public_job(job):
 
 def public_render(render):
     return {
-        'renderId':render['renderId'],
-        'state':render['state'],
+        'renderId':render['renderId'],'state':render['state'],
         'jobs':[public_job(j) for j in render['jobs']],
-        'candidateUrl':render.get('candidateUrl'),
-        'finalUrl':render.get('finalUrl'),
-        'review':render.get('review'),
-        'error':render.get('error'),
+        'candidateUrl':render.get('candidateUrl'),'finalUrl':render.get('finalUrl'),
+        'preflight':render.get('preflight'),'review':render.get('review'),'error':render.get('error'),
     }
 
-def run_external(prompt, duration, output_path, shot):
+def run_external(prompt,duration,output_path,shot):
     if not RENDER_COMMAND:
         raise RuntimeError('Aucun backend vidéo configuré. Définir MONIA_VIDEO_RENDER_COMMAND.')
-    env=os.environ.copy()
-    env.update({
-        'MONIA_PROMPT':prompt,
-        'MONIA_DURATION':str(duration),
-        'MONIA_OUTPUT':str(output_path),
+    env=os.environ.copy();env.update({
+        'MONIA_PROMPT':prompt,'MONIA_DURATION':str(duration),'MONIA_OUTPUT':str(output_path),
         'MONIA_SHOT_JSON':json.dumps(shot,ensure_ascii=False),
     })
-    command=RENDER_COMMAND.format(output=str(output_path),duration=duration)
-    subprocess.run(command,shell=True,check=True,env=env)
-    if not output_path.exists():
-        raise RuntimeError('Le backend a terminé sans créer le clip attendu.')
+    subprocess.run(RENDER_COMMAND.format(output=str(output_path),duration=duration),shell=True,check=True,env=env)
+    if not output_path.exists(): raise RuntimeError('Le backend a terminé sans créer le clip attendu.')
 
 def probe_video(path):
     try:
-        out=subprocess.check_output([
-            'ffprobe','-v','error','-select_streams','v:0',
-            '-show_entries','stream=width,height,r_frame_rate,duration',
-            '-of','json',str(path)
-        ],stderr=subprocess.STDOUT,timeout=20)
-        data=json.loads(out.decode('utf-8'))
-        stream=(data.get('streams') or [{}])[0]
-        return {
-            'ok':bool(stream.get('width') and stream.get('height')),
-            'width':stream.get('width'),
-            'height':stream.get('height'),
-            'fps':stream.get('r_frame_rate'),
-            'duration':stream.get('duration'),
-        }
-    except Exception as exc:
-        return {'ok':False,'error':str(exc)[:240]}
+        out=subprocess.check_output(['ffprobe','-v','error','-select_streams','v:0','-show_entries','stream=width,height,r_frame_rate,duration','-of','json',str(path)],stderr=subprocess.STDOUT,timeout=20)
+        stream=(json.loads(out.decode('utf-8')).get('streams') or [{}])[0]
+        return {'ok':bool(stream.get('width') and stream.get('height')),'width':stream.get('width'),'height':stream.get('height'),'fps':stream.get('r_frame_rate'),'duration':stream.get('duration')}
+    except Exception as exc:return {'ok':False,'error':str(exc)[:240]}
 
-def concat_manifest(paths, target):
+def concat_manifest(paths,target):
     manifest=target.with_suffix('.txt')
-    def escaped(path):
-        return str(path).replace("'", "'\\''")
+    def escaped(path): return str(path).replace("'", "'\\''")
     manifest.write_text(''.join(f"file '{escaped(p)}'\n" for p in paths),encoding='utf-8')
     try:
-        subprocess.run(
-            ['ffmpeg','-y','-f','concat','-safe','0','-i',str(manifest),'-c','copy',str(target)],
-            check=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
-    finally:
-        manifest.unlink(missing_ok=True)
+        subprocess.run(['ffmpeg','-y','-f','concat','-safe','0','-i',str(manifest),'-c','copy',str(target)],check=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+    finally: manifest.unlink(missing_ok=True)
 
-def build_review_manifest(render, folder, candidate):
+def run_preflight(candidate):
+    if not QUALITY_SCRIPT.exists():
+        return {'status':'error','reasons':['quality preflight script missing']}
+    proc=subprocess.run(['python3',str(QUALITY_SCRIPT),str(candidate)],stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True,timeout=120)
+    try: report=json.loads(proc.stdout or '{}')
+    except Exception: report={'status':'error','reasons':['quality preflight returned unreadable JSON'],'stderr':(proc.stderr or '')[-500:]}
+    report['exitCode']=proc.returncode
+    return report
+
+def build_review_manifest(render,folder,candidate,preflight):
     probes=[]
     for job in render['jobs']:
-        clip=folder/f"{job['shotId']}.mp4"
-        probes.append({'shotId':job['shotId'],'technical':probe_video(clip)})
+        clip=folder/f"{job['shotId']}.mp4";probes.append({'shotId':job['shotId'],'technical':probe_video(clip)})
+    rejected=preflight.get('status')=='reject'
     manifest={
         'renderId':render['renderId'],
-        'status':'candidate_pending_human_approval',
-        'candidateOnly':True,
-        'mayPublishToGameplay':False,
-        'qualityPolicy':QUALITY_POLICY,
-        'createdAt':time.time(),
-        'candidateFile':candidate.name,
+        'status':'candidate_auto_rejected' if rejected else 'candidate_pending_human_approval',
+        'candidateOnly':True,'mayPublishToGameplay':False,'qualityPolicy':QUALITY_POLICY,'createdAt':time.time(),'candidateFile':candidate.name,
+        'automaticPreflight':preflight,
         'checks':{
             'technical':probes,
             'identity':{'status':'required','automaticScore':None,'humanApprovalRequired':True},
@@ -105,11 +85,7 @@ def build_review_manifest(render, folder, candidate):
             'motion':{'status':'required','humanApprovalRequired':True},
             'voice':{'status':'required_if_present','naturalnessScore':None,'speakerConsistencyScore':None,'humanApprovalRequired':True},
         },
-        'hardBlocks':[
-            'identity drift','face morphing','wrong age','invented tattoo or facial scar',
-            'rubbery mouth','uncanny blinking','robotic voice','voice identity mismatch',
-            'lip movement visibly unrelated to speech','continuity mismatch','text or watermark'
-        ],
+        'hardBlocks':['identity drift','face morphing','wrong age','invented tattoo or facial scar','rubbery mouth','uncanny blinking','robotic voice','voice identity mismatch','lip movement visibly unrelated to speech','continuity mismatch','text or watermark'],
         'approval':{'approved':False,'approvedBy':None,'approvedAt':None}
     }
     (folder/'review.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2),encoding='utf-8')
@@ -120,153 +96,74 @@ def worker():
         render_id=work.get()
         with lock:
             render=renders.get(render_id)
-            if not render:
-                work.task_done()
-                continue
+            if not render: work.task_done();continue
             render['state']='rendering'
-        folder=ROOT/render_id
-        folder.mkdir(parents=True,exist_ok=True)
-        clips=[]
+        folder=ROOT/render_id;folder.mkdir(parents=True,exist_ok=True);clips=[]
         try:
             for job in render['jobs']:
-                with lock:
-                    job['state']='generating'
-                    job['progress']=5
-                output=folder/f"{job['shotId']}.mp4"
-                run_external(job['prompt'],job['duration'],output,job['shot'])
-                clips.append(output)
+                with lock: job['state']='generating';job['progress']=5
+                output=folder/f"{job['shotId']}.mp4";run_external(job['prompt'],job['duration'],output,job['shot']);clips.append(output)
                 technical=probe_video(output)
-                if not technical.get('ok'):
-                    raise RuntimeError(f"Clip {job['shotId']} illisible ou techniquement invalide")
-                with lock:
-                    job['state']='candidate'
-                    job['progress']=100
-                    job['clipUrl']=f'/files/{render_id}/{output.name}'
-                    job['technical']=technical
-            candidate=folder/'candidate.mp4'
-            concat_manifest(clips,candidate)
-            review=build_review_manifest(render,folder,candidate)
+                if not technical.get('ok'): raise RuntimeError(f"Clip {job['shotId']} illisible ou techniquement invalide")
+                with lock: job['state']='candidate';job['progress']=100;job['clipUrl']=f'/files/{render_id}/{output.name}';job['technical']=technical
+            candidate=folder/'candidate.mp4';concat_manifest(clips,candidate)
+            preflight=run_preflight(candidate);review=build_review_manifest(render,folder,candidate,preflight)
             with lock:
-                render['state']='candidate_pending_review'
-                render['candidateUrl']=f'/files/{render_id}/candidate.mp4'
-                render['finalUrl']=None
-                render['review']=review
+                render['candidateUrl']=f'/files/{render_id}/candidate.mp4';render['finalUrl']=None;render['preflight']=preflight;render['review']=review
+                render['state']='candidate_auto_rejected' if preflight.get('status')=='reject' else 'candidate_pending_review'
         except Exception as exc:
             with lock:
-                render['state']='error'
-                render['error']=str(exc)[:500]
+                render['state']='error';render['error']=str(exc)[:500]
                 for job in render['jobs']:
-                    if job['state']=='generating':
-                        job['state']='error'
-                        job['error']=render['error']
-        finally:
-            work.task_done()
+                    if job['state']=='generating': job['state']='error';job['error']=render['error']
+        finally: work.task_done()
 
 threading.Thread(target=worker,daemon=True).start()
 
 class Handler(BaseHTTPRequestHandler):
     def allowed_origin(self):
         origin=self.headers.get('Origin','')
-        if origin==ALLOWED_GAME_ORIGIN:
-            return origin
-        if origin.startswith('http://localhost:') or origin.startswith('http://127.0.0.1:'):
-            return origin
+        if origin==ALLOWED_GAME_ORIGIN:return origin
+        if origin.startswith('http://localhost:') or origin.startswith('http://127.0.0.1:'):return origin
         return ''
     def cors(self):
         origin=self.allowed_origin()
-        if origin:
-            self.send_header('Access-Control-Allow-Origin',origin)
-            self.send_header('Vary','Origin')
-        self.send_header('Access-Control-Allow-Headers','content-type')
-        self.send_header('Access-Control-Allow-Methods','GET,POST,OPTIONS')
+        if origin:self.send_header('Access-Control-Allow-Origin',origin);self.send_header('Vary','Origin')
+        self.send_header('Access-Control-Allow-Headers','content-type');self.send_header('Access-Control-Allow-Methods','GET,POST,OPTIONS')
     def send_json(self,status,data):
-        payload=json.dumps(data,ensure_ascii=False).encode('utf-8')
-        self.send_response(status)
-        self.cors()
-        self.send_header('Content-Type','application/json; charset=utf-8')
-        self.send_header('Content-Length',str(len(payload)))
-        self.end_headers()
-        self.wfile.write(payload)
+        payload=json.dumps(data,ensure_ascii=False).encode('utf-8');self.send_response(status);self.cors();self.send_header('Content-Type','application/json; charset=utf-8');self.send_header('Content-Length',str(len(payload)));self.end_headers();self.wfile.write(payload)
     def do_OPTIONS(self):
-        if not self.allowed_origin():
-            self.send_response(403)
-            self.end_headers()
-            return
-        self.send_response(204)
-        self.cors()
-        self.end_headers()
+        if not self.allowed_origin():self.send_response(403);self.end_headers();return
+        self.send_response(204);self.cors();self.end_headers()
     def do_GET(self):
         path=urlparse(self.path).path
-        if path=='/health':
-            self.send_json(200,{'ok':True,'name':'MonIA Video Runner','backendConfigured':bool(RENDER_COMMAND),'output':str(ROOT),'candidateOnly':True,'qualityPolicy':QUALITY_POLICY})
-            return
+        if path=='/health':self.send_json(200,{'ok':True,'name':'MonIA Video Runner','backendConfigured':bool(RENDER_COMMAND),'qualityPreflight':QUALITY_SCRIPT.exists(),'output':str(ROOT),'candidateOnly':True,'qualityPolicy':QUALITY_POLICY});return
         if path.startswith('/render/'):
             rid=path.split('/')[-1]
-            with lock:
-                render=renders.get(rid)
-            if not render:
-                self.send_json(404,{'error':'render not found'})
-                return
-            self.send_json(200,public_render(render))
-            return
+            with lock:render=renders.get(rid)
+            if not render:self.send_json(404,{'error':'render not found'});return
+            self.send_json(200,public_render(render));return
         if path.startswith('/files/'):
-            rel=Path(path[len('/files/'):])
-            target=(ROOT/rel).resolve()
-            if ROOT.resolve() not in target.parents or not target.is_file():
-                self.send_error(404)
-                return
-            data=target.read_bytes()
-            self.send_response(200)
-            self.cors()
-            self.send_header('Content-Type','video/mp4')
-            self.send_header('Content-Length',str(len(data)))
-            self.end_headers()
-            self.wfile.write(data)
-            return
+            rel=Path(path[len('/files/'):]);target=(ROOT/rel).resolve()
+            if ROOT.resolve() not in target.parents or not target.is_file():self.send_error(404);return
+            data=target.read_bytes();self.send_response(200);self.cors();self.send_header('Content-Type','video/mp4');self.send_header('Content-Length',str(len(data)));self.end_headers();self.wfile.write(data);return
         self.send_json(404,{'error':'not found'})
     def do_POST(self):
-        if urlparse(self.path).path!='/render':
-            self.send_json(404,{'error':'not found'})
-            return
-        if not self.allowed_origin():
-            self.send_json(403,{'error':'origin not allowed'})
-            return
+        if urlparse(self.path).path!='/render':self.send_json(404,{'error':'not found'});return
+        if not self.allowed_origin():self.send_json(403,{'error':'origin not allowed'});return
         try:
-            size=int(self.headers.get('Content-Length','0'))
-            body=json.loads(self.rfile.read(size) or b'{}')
-            plan=body.get('plan') or {}
-            shots=plan.get('shots') or []
-            if not shots:
-                raise ValueError('Aucun plan à rendre.')
-            rid=str(body.get('renderId') or f'drama-{uuid.uuid4().hex[:10]}')
-            jobs=[]
+            size=int(self.headers.get('Content-Length','0'));body=json.loads(self.rfile.read(size) or b'{}');plan=body.get('plan') or {};shots=plan.get('shots') or []
+            if not shots:raise ValueError('Aucun plan à rendre.')
+            rid=str(body.get('renderId') or f'drama-{uuid.uuid4().hex[:10]}');jobs=[]
             for shot in shots:
                 prompt=str(shot.get('prompt') or '').strip()
-                if not prompt:
-                    raise ValueError(f"Prompt manquant pour {shot.get('id','shot')}")
-                jobs.append({
-                    'id':f"{rid}-{shot.get('id')}",
-                    'shotId':str(shot.get('id')),
-                    'state':'queued',
-                    'progress':0,
-                    'duration':float(shot.get('duration') or 3),
-                    'prompt':prompt,
-                    'shot':shot,
-                })
+                if not prompt:raise ValueError(f"Prompt manquant pour {shot.get('id','shot')}")
+                jobs.append({'id':f"{rid}-{shot.get('id')}",'shotId':str(shot.get('id')),'state':'queued','progress':0,'duration':float(shot.get('duration') or 3),'prompt':prompt,'shot':shot})
             render={'renderId':rid,'state':'queued','jobs':jobs,'createdAt':time.time(),'plan':plan,'candidateOnly':True}
-            with lock:
-                renders[rid]=render
-            (ROOT/rid).mkdir(parents=True,exist_ok=True)
-            (ROOT/rid/'plan.json').write_text(json.dumps(plan,ensure_ascii=False,indent=2),encoding='utf-8')
-            work.put(rid)
-            self.send_json(202,{'renderId':rid,'state':'queued','candidateOnly':True})
-        except Exception as exc:
-            self.send_json(400,{'error':str(exc)})
-    def log_message(self,fmt,*args):
-        print('[MonIA Video]',fmt%args)
+            with lock:renders[rid]=render
+            (ROOT/rid).mkdir(parents=True,exist_ok=True);(ROOT/rid/'plan.json').write_text(json.dumps(plan,ensure_ascii=False,indent=2),encoding='utf-8');work.put(rid);self.send_json(202,{'renderId':rid,'state':'queued','candidateOnly':True})
+        except Exception as exc:self.send_json(400,{'error':str(exc)})
+    def log_message(self,fmt,*args):print('[MonIA Video]',fmt%args)
 
 if __name__=='__main__':
-    print(f'MonIA Video Runner http://{HOST}:{PORT}')
-    print('Backend configuré:',bool(RENDER_COMMAND))
-    print('Mode candidat uniquement: oui — aucune génération ne peut devenir live sans validation')
-    ThreadingHTTPServer((HOST,PORT),Handler).serve_forever()
+    print(f'MonIA Video Runner http://{HOST}:{PORT}');print('Backend configuré:',bool(RENDER_COMMAND));print('Pré-contrôle qualité:',QUALITY_SCRIPT.exists());print('Mode candidat uniquement: oui — aucune génération ne peut devenir live sans validation');ThreadingHTTPServer((HOST,PORT),Handler).serve_forever()
