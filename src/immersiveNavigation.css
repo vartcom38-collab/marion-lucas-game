@@ -13,8 +13,8 @@
 
 .immersivePlayable{position:relative!important;min-height:100dvh!important;overflow:hidden!important;background:#15110e!important}
 .immersivePlayable .worldBackdrop,.immersivePlayable .homePhotoStage{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;min-height:100dvh!important;overflow:hidden!important;background:#15110e!important;z-index:0!important}
-.immersivePlayable .homePhotoStage>img{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;display:block!important;opacity:1!important;visibility:visible!important;object-fit:cover!important;object-position:center center!important;filter:none!important;transform:none!important;z-index:0!important}
-.immersivePlayable .homePhotoStage.imageLoadFailed{background:#15110e url('/resources/appartement-nimes.png') center/cover no-repeat!important}
+.immersivePlayable .homePhotoStage.live3DHome>img{display:none!important;opacity:0!important;visibility:hidden!important}
+.immersivePlayable #immersiveHome3D{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;display:block!important;touch-action:none!important;outline:none!important;z-index:1!important;background:#1a1511!important}
 .immersivePlayable .homeLightSweep,.immersivePlayable .homeDepth{display:none!important}
 .immersivePlayable .gameHotspot{background:transparent!important;border:0!important;box-shadow:none!important;color:transparent!important;outline:0!important}
 .immersivePlayable .gameHotspot i,.immersivePlayable .gameHotspot span{opacity:0!important;visibility:hidden!important}
@@ -24,11 +24,10 @@
 .premiumGame .phoneToast{display:none!important}
 .immersivePlayable #globalHomeButton{display:none!important}
 
-/* The apartment narrative is atmosphere, not a navigation panel. */
-.immersivePlayable .storyShell.storyShellAmbient{left:50%!important;right:auto!important;bottom:26px!important;transform:translateX(-50%)!important;width:min(520px,calc(100vw - 32px))!important;max-width:520px!important;min-height:0!important;padding:16px 18px!important;border-radius:20px!important;background:linear-gradient(180deg,rgba(16,13,11,.42),rgba(16,13,11,.58))!important;border:1px solid rgba(255,255,255,.09)!important;box-shadow:0 16px 48px rgba(0,0,0,.22)!important;backdrop-filter:blur(16px) saturate(1.05)!important}
-.immersivePlayable .storyShell.storyShellAmbient .storyShellKicker{font-size:8px!important;letter-spacing:.16em!important;opacity:.62!important;margin-bottom:5px!important}
-.immersivePlayable .storyShell.storyShellAmbient h2{font-size:22px!important;line-height:1.05!important;margin:0 0 5px!important}
-.immersivePlayable .storyShell.storyShellAmbient p{font-size:12px!important;line-height:1.45!important;margin:0!important;max-width:46ch!important;color:rgba(255,255,255,.76)!important}
+.immersivePlayable .storyShell.storyShellAmbient{left:50%!important;right:auto!important;bottom:24px!important;transform:translateX(-50%)!important;width:min(500px,calc(100vw - 32px))!important;max-width:500px!important;min-height:0!important;padding:14px 16px!important;border-radius:18px!important;background:linear-gradient(180deg,rgba(16,13,11,.32),rgba(16,13,11,.5))!important;border:1px solid rgba(255,255,255,.08)!important;box-shadow:0 16px 48px rgba(0,0,0,.2)!important;backdrop-filter:blur(14px) saturate(1.04)!important}
+.immersivePlayable .storyShell.storyShellAmbient .storyShellKicker{font-size:8px!important;letter-spacing:.16em!important;opacity:.6!important;margin-bottom:4px!important}
+.immersivePlayable .storyShell.storyShellAmbient h2{font-size:20px!important;line-height:1.05!important;margin:0 0 4px!important}
+.immersivePlayable .storyShell.storyShellAmbient p{font-size:11px!important;line-height:1.4!important;margin:0!important;max-width:48ch!important;color:rgba(255,255,255,.72)!important}
 .immersivePlayable .storyShellChoices{display:none!important}
 
 .game:not(.immersivePlayable) .hudMinimal{background:transparent!important;border:0!important;box-shadow:none!important;backdrop-filter:none!important}
@@ -43,9 +42,9 @@
   .premiumGame .approvedTopLeft b{font-size:18px}
   .premiumGame .approvedTopLeft span{font-size:7px}
   .immersivePlayable .approvedStats{display:none!important}
-  .immersivePlayable .storyShell.storyShellAmbient{bottom:18px!important;width:min(460px,calc(100vw - 20px))!important;padding:13px 14px!important;border-radius:17px!important}
-  .immersivePlayable .storyShell.storyShellAmbient h2{font-size:19px!important}
-  .immersivePlayable .storyShell.storyShellAmbient p{font-size:11px!important}
+  .immersivePlayable .storyShell.storyShellAmbient{bottom:18px!important;width:min(440px,calc(100vw - 20px))!important;padding:12px 13px!important;border-radius:16px!important}
+  .immersivePlayable .storyShell.storyShellAmbient h2{font-size:18px!important}
+  .immersivePlayable .storyShell.storyShellAmbient p{font-size:10.5px!important}
 }
 @media(max-width:430px){
   .premiumGame .premiumNav{top:auto;bottom:10px;right:10px;left:auto;z-index:37}
