@@ -1,8 +1,8 @@
 {
-  "version": 3,
+  "version": 4,
   "status": "locked",
   "policy": {
-    "motion_reference_only": true,
+    "motion_reference_only": false,
     "copy_identity": false,
     "copy_face": false,
     "copy_body_identity": false,
@@ -12,97 +12,104 @@
     "character_canon_has_priority": true,
     "lucas_face_canon_required": true,
     "age_appropriate_motion_required": true,
-    "appearance_features_ignored_during_motion_ingest": true
+    "allow_male_body_shape_reference": true,
+    "allow_male_posture_and_silhouette_reference": true,
+    "allow_face_similarity_as_secondary_reference": true,
+    "female_coactor_identity_ignored": true,
+    "marion_identity_never_inferred_from_coactor": true,
+    "appearance_features_ignored_during_motion_ingest": false,
+    "reference_layers": ["lucas_canon_identity", "male_body_presence", "motion_contact_language", "camera_timing"],
+    "priority_order": ["lucas_canon_identity", "approved_lucas_visual_pack", "male_body_presence", "motion_contact_language", "camera_timing"]
   },
   "references": [
     {
       "id": "motion-user-20260906-a",
       "source_file_label": "ScreenRecording_09-06-2026 22-34-28_1.mp4",
       "asset_status": "pending-ingest",
-      "tags": ["motion_reference_only", "blocking", "walking", "body_movement", "camera_timing", "do_not_copy_identity"]
+      "tags": ["motion_reference", "male_body_reference", "blocking", "walking", "body_movement", "camera_timing", "do_not_copy_identity"]
     },
     {
       "id": "motion-user-20260906-b",
       "source_file_label": "ScreenRecording_09-06-2026 22-35-51_1.mp4",
       "asset_status": "pending-ingest",
-      "tags": ["motion_reference_only", "parent_child_interaction", "carrying_child", "protective_posture", "walking_with_child", "family_blocking_reference", "do_not_copy_identity"]
+      "tags": ["motion_reference", "male_body_reference", "parent_child_interaction", "carrying_child", "protective_posture", "walking_with_child", "family_blocking_reference", "do_not_copy_identity"]
     },
     {
       "id": "motion-user-20260910-a",
       "source_file_label": "ScreenRecording_09-10-2026 18-45-33_1.mp4",
       "asset_status": "motion-profile-extracted",
       "motion_profile": "restrained-protective-close",
-      "tags": ["motion_reference_only", "protective", "close_proximity", "controlled_tension", "gaze", "small_hand_movement", "natural_breathing", "do_not_copy_identity", "ignore_coactor_appearance"]
+      "tags": ["motion_reference", "male_body_reference", "protective", "close_proximity", "controlled_tension", "gaze", "small_hand_movement", "natural_breathing", "do_not_copy_identity", "ignore_female_identity"]
     },
     {
       "id": "motion-user-20260910-b",
       "source_file_label": "ScreenRecording_09-10-2026 18-46-40_1.mp4",
       "asset_status": "motion-profile-extracted",
       "motion_profile": "private-soft-reaction",
-      "tags": ["motion_reference_only", "listening", "reaction", "micro_expression", "restrained_smile", "head_turn", "gaze_shift", "do_not_copy_identity", "ignore_coactor_appearance"]
+      "tags": ["motion_reference", "face_similarity_secondary", "male_body_reference", "listening", "reaction", "micro_expression", "restrained_smile", "head_turn", "gaze_shift", "do_not_copy_identity", "ignore_female_identity"]
     },
     {
       "id": "motion-user-20260910-c",
       "source_file_label": "ScreenRecording_09-10-2026 18-47-57_1.mp4",
       "asset_status": "motion-profile-extracted",
       "motion_profile": "formal-room-presence",
-      "tags": ["motion_reference_only", "formal_presence", "standing", "social_scene", "measured_eye_contact", "economical_motion", "do_not_copy_identity", "ignore_coactor_appearance"]
+      "tags": ["motion_reference", "male_body_reference", "formal_presence", "standing", "social_scene", "measured_eye_contact", "economical_motion", "do_not_copy_identity", "ignore_female_identity"]
     },
     {
       "id": "motion-user-20260910-d",
       "source_file_label": "ScreenRecording_09-10-2026 18-48-55_1.mp4",
       "asset_status": "motion-profile-extracted",
       "motion_profile": "everyday-table-behaviour",
-      "tags": ["motion_reference_only", "everyday", "table", "object_interaction", "eating", "natural_action_overlap", "do_not_copy_identity", "ignore_coactor_appearance"]
+      "tags": ["motion_reference", "male_body_reference", "everyday", "table", "object_interaction", "eating", "natural_action_overlap", "do_not_copy_identity", "ignore_female_identity"]
     },
     {
       "id": "motion-user-20260910-e",
       "source_file_label": "ScreenRecording_09-10-2026 18-49-25_1.mp4",
       "asset_status": "motion-profile-extracted",
       "motion_profile": "cinematic-reaction-rhythm",
-      "tags": ["motion_reference_only", "dialogue_reaction", "closeup", "eye_change", "pause_before_speech", "stillness", "do_not_copy_identity", "ignore_coactor_appearance"]
+      "tags": ["motion_reference", "face_similarity_secondary", "male_body_reference", "dialogue_reaction", "closeup", "eye_change", "pause_before_speech", "stillness", "do_not_copy_identity", "ignore_female_identity"]
     },
     {
       "id": "motion-user-20260910-f",
       "source_file_label": "ScreenRecording_09-10-2026 18-50-03_1.mp4",
       "asset_status": "motion-profile-extracted",
       "motion_profile": "quiet-emotional-care",
-      "tags": ["motion_reference_only", "care", "gentle_hand_contact", "quiet_emotion", "slow_approach", "gaze_to_contact_point", "do_not_copy_identity", "ignore_coactor_appearance"]
+      "tags": ["motion_reference", "male_body_reference", "care", "gentle_hand_contact", "quiet_emotion", "slow_approach", "gaze_to_contact_point", "do_not_copy_identity", "ignore_female_identity"]
     },
     {
       "id": "motion-user-20260910-g",
       "source_file_label": "ScreenRecording_09-10-2026 18-51-01_1.mp4",
       "asset_status": "motion-profile-extracted",
       "motion_profile": "intimate-proximity-with-restraint",
-      "tags": ["motion_reference_only", "romantic_proximity", "lean_in", "micro_pause", "gentle_hand_placement", "chemistry", "non_explicit", "do_not_copy_identity", "ignore_coactor_appearance"]
+      "tags": ["motion_reference", "male_body_reference", "romantic_proximity", "lean_in", "micro_pause", "gentle_hand_placement", "chemistry", "non_explicit", "do_not_copy_identity", "ignore_female_identity"]
     },
     {
       "id": "motion-user-20260910-h",
       "source_file_label": "ScreenRecording_09-10-2026 18-54-56_1.mp4",
       "asset_status": "motion-profile-extracted",
       "motion_profile": "formal-tense-observation",
-      "tags": ["motion_reference_only", "formal_scene", "standing_presence", "focused_gaze", "measured_head_turn", "controlled_reaction", "prop_or_letter_attention", "do_not_copy_identity", "ignore_coactor_appearance"]
+      "tags": ["motion_reference", "male_body_reference", "formal_scene", "standing_presence", "focused_gaze", "measured_head_turn", "controlled_reaction", "prop_or_letter_attention", "do_not_copy_identity", "ignore_female_identity"]
     },
     {
       "id": "motion-user-20260910-i",
       "source_file_label": "ScreenRecording_09-10-2026 18-55-27_1.mp4",
       "asset_status": "motion-profile-extracted",
       "motion_profile": "intimate-face-contact-rhythm",
-      "tags": ["motion_reference_only", "romantic_proximity", "face_touch", "lean_in", "kiss_timing_reference", "breath_pause", "gentle_contact", "non_explicit", "do_not_copy_identity", "ignore_coactor_appearance"]
+      "tags": ["motion_reference", "face_similarity_secondary", "male_body_reference", "romantic_proximity", "face_touch", "lean_in", "kiss_timing_reference", "breath_pause", "gentle_contact", "non_explicit", "do_not_copy_identity", "ignore_female_identity"]
     },
     {
       "id": "motion-user-20260910-j",
       "source_file_label": "ScreenRecording_09-10-2026 18-58-40_1.mp4",
       "asset_status": "motion-profile-extracted",
       "motion_profile": "father-child-soft-protective",
-      "tags": ["motion_reference_only", "parent_child_interaction", "child_on_lap", "protective_hold", "soft_smile", "gaze_to_child", "gentle_reassurance", "family_blocking_reference", "do_not_copy_identity", "ignore_coactor_appearance"]
+      "tags": ["motion_reference", "male_body_reference", "parent_child_interaction", "child_on_lap", "protective_hold", "soft_smile", "gaze_to_child", "gentle_reassurance", "family_blocking_reference", "do_not_copy_identity", "ignore_female_identity"]
     },
     {
       "id": "motion-user-20260910-k",
       "source_file_label": "ScreenRecording_09-10-2026 19-00-15_1.mp4",
       "asset_status": "motion-profile-extracted",
       "motion_profile": "emotion-to-prop-closeup",
-      "tags": ["motion_reference_only", "closeup", "emotional_reaction", "gaze_drop", "prop_interaction", "flower_or_gift_handling", "pause_before_reaction", "subtle_breathing", "do_not_copy_identity", "ignore_coactor_appearance"]
+      "tags": ["motion_reference", "face_similarity_secondary", "male_body_reference", "closeup", "emotional_reaction", "gaze_drop", "prop_interaction", "flower_or_gift_handling", "pause_before_reaction", "subtle_breathing", "do_not_copy_identity", "ignore_female_identity"]
     }
   ],
   "future_child_motion_bands": ["baby", "toddler", "young_child", "older_child", "teen"]
