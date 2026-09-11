@@ -1,3 +1,5 @@
+import './assembled-scene-approval';
+
 export type MonIACompactContext={speaker:string;place:string;time:string;day:number;recentAction:string;activeObjective:string;relationship:string;memories:string[];recentEvents:string[];rules:string[]};
 
 export const MARION_LUCAS_PROFILE={
