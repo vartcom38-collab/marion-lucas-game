@@ -1,5 +1,6 @@
 import { moniaCreativeVault } from './creative-vault';
 import { learnSurpriseTrustFromHumanApproval, surpriseGate, type SurpriseCandidateFacts } from './surprise-approval';
+import { enqueueApprovedSurpriseScene } from './surprise-delivery';
 
 const CANDIDATE_KEY='monia-assembled-scene-candidate-v1';
 const REVIEW_KEY='monia-assembled-scene-review-v1';
@@ -110,6 +111,7 @@ async function registerApprovedAsset(candidate:AssembledSceneCandidate,review:As
     metadata:{
       candidateId:candidate.id,
       jobId:candidate.jobId,
+      route:candidate.route,
       continuityKey:candidate.continuityKey,
       approvalMode,
       shotCount:candidate.shotIds.length,
@@ -118,6 +120,7 @@ async function registerApprovedAsset(candidate:AssembledSceneCandidate,review:As
   });
   const approvedReview:AssembledSceneReview={...review,decision:'approved',updatedAt:Date.now(),notes:notes||review.notes};
   saveAssembledSceneReview(approvedReview);
+  enqueueApprovedSurpriseScene(asset);
   window.dispatchEvent(new CustomEvent('monia:assembled-scene-approved',{detail:{candidate,asset,review:approvedReview,approvalMode}}));
   return asset;
 }
