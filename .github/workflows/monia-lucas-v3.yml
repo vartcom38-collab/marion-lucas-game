@@ -64,3 +64,5 @@ jobs:
           if not ok:
               raise SystemExit('Lucas visio candidate public verification failed')
           PY
+
+# Triggered from the approved Lucas visio test flow on 2026-09-11.
