@@ -1,7 +1,7 @@
 {
-  "version": 2,
+  "version": 3,
   "status": "locked",
-  "principle": "generation -> candidate -> validation -> live",
+  "principle": "generation -> candidate -> validation gate -> live",
   "gameplay": {
     "playerNeverSeesGenerationMechanics": true,
     "preferApprovedCache": true,
@@ -34,6 +34,39 @@
       "preferSilenceOverWrongScene": true
     }
   },
+  "approval": {
+    "calibrationMode": "human",
+    "surpriseMode": "armed",
+    "surpriseModePurpose": "preserve player discovery by avoiding scene-by-scene preview once stable production domains are trusted",
+    "surpriseModeActivationRequires": [
+      "lucas identity pipeline validated",
+      "marion identity pipeline validated",
+      "duo identity continuity validated",
+      "motion/body language profiles validated",
+      "scene continuity validated",
+      "assembled video quality gate validated"
+    ],
+    "whenSurpriseModeActive": {
+      "humanPreviewsEveryScene": false,
+      "validationAuthority": "MonIA quality gate",
+      "candidateStageStillRequired": true,
+      "autoPublishWithoutValidation": false,
+      "publishOnlyAfterGatePass": true,
+      "manualReviewOnGateFailure": true,
+      "manualReviewOnNewUntrustedDomain": true,
+      "neverRevealFutureSceneContentToPlayer": true
+    },
+    "untrustedDomainsAlwaysRequireHumanCalibration": [
+      "new character identity",
+      "new Lucas identity anchor",
+      "new Marion identity anchor",
+      "new duo identity method",
+      "new voice model or voice identity",
+      "new intimate-contact grammar",
+      "new family/child interaction grammar",
+      "new generation backend behavior"
+    ]
+  },
   "video": {
     "finalMode": "true_video_required",
     "targetSceneSeconds": [12, 60],
@@ -60,16 +93,19 @@
     "noTattoo": true,
     "noFacialScar": true,
     "noLookalikeDrift": true,
-    "performanceReferencesAreMotionOnly": true,
-    "approvedMotionDomains": [
-      "close facial reactions",
+    "performanceReferencesAreMotionOnly": false,
+    "performanceReferencesMayGuide": [
+      "male body presence",
+      "posture and silhouette",
       "full-body stance and walk",
       "shoulder line and weight shifts",
       "protective presence",
       "contained romantic tension",
       "gentle physical contact",
-      "family protective handling"
-    ]
+      "family protective handling",
+      "camera timing"
+    ],
+    "identityAuthorityAlways": "locked official Lucas canon"
   },
   "marion": {
     "identity": "locked official Marion canon",
@@ -108,7 +144,7 @@
       "Ken Burns still-image motion",
       "source-video replay disguised as generation",
       "identity replacement from motion reference actor",
-      "unapproved candidate auto-published to gameplay"
+      "candidate published before its required validation gate"
     ]
   },
   "visio": {
