@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "status": "locked",
   "principle": "generation -> candidate -> validation -> live",
   "gameplay": {
@@ -7,7 +7,32 @@
     "preferApprovedCache": true,
     "allowUnapprovedMediaInLiveGameplay": false,
     "allowStaticZoomAsFinalVideo": false,
-    "unexpectedChoiceStrategy": "reuse-approved-or-safe-neutral-fallback-while-preparing-new-candidate"
+    "unexpectedChoiceStrategy": "reuse-approved-or-safe-neutral-fallback-while-preparing-new-candidate",
+    "sceneRouting": {
+      "inputs": [
+        "current place",
+        "time of day",
+        "recent player action",
+        "recent messages",
+        "relationship level",
+        "trust",
+        "chemistry",
+        "official/engaged/married state",
+        "children state",
+        "recent memories and events"
+      ],
+      "routes": [
+        "message-only",
+        "visio",
+        "lucas-solo-drama",
+        "couple-drama",
+        "family-drama",
+        "environment-beat"
+      ],
+      "physicalCoPresenceRequiredForCoupleDrama": true,
+      "neverInventLucasPhysicalPresence": true,
+      "preferSilenceOverWrongScene": true
+    }
   },
   "video": {
     "finalMode": "true_video_required",
