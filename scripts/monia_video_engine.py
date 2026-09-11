@@ -26,6 +26,11 @@ class CharacterProfile:
     canon_url: str
     prompt: str
     negative: str
+    width: int
+    height: int
+    aspect_ratio: str
+    duration: int
+    output_name: str
 
 
 LUCAS = CharacterProfile(
@@ -49,6 +54,44 @@ LUCAS = CharacterProfile(
         "ear holes, gauges, piercings, earrings, deformed ears, woman, second person, extra hands, talking, open mouth, "
         "cartoon, illustration, text, subtitles, title, watermark, UI, jitter, morphing, identity drift"
     ),
+    width=960,
+    height=544,
+    aspect_ratio="16:9 (Landscape)",
+    duration=3,
+    output_name="intro-lucas-candidate-desktop.mp4",
+)
+
+LUCAS_VISIO_TEST1 = CharacterProfile(
+    key="lucas-visio-test1",
+    canon_url=f"{SITE}/resources/monia/canon/lucas/reference.jpg",
+    prompt=(
+        "Create a brand-new photorealistic live-action video-call shot of Lucas for Marion & Lucas. "
+        "The supplied still image is identity reference only, never a motion source and never a clip to copy. "
+        "Invent a new moment and new movement while preserving Lucas exactly: same facial geometry, eye spacing, "
+        "nose, lips, jaw, cheekbones, hairline, dark wavy hair with a few natural strands, brown-hazel eyes, "
+        "short stubble and olive skin. Lucas has absolutely no tattoos and no facial scar. "
+        "Vertical 9:16 phone-video-call composition, chest-up framing with his complete face clearly visible, "
+        "not an extreme close-up and never only a fragment of his face. Lucas is alone in a believable warm home "
+        "interior different from the reference background, wearing a plain black shirt with a clean visible neck. "
+        "He feels like a real person currently on a live video call: subtle breathing, one natural irregular blink, "
+        "a tiny glance briefly away from the screen and back toward the camera, then a very small relaxed head movement "
+        "and restrained closed-mouth micro-expression. He does not speak in this identity test. The camera is stable "
+        "like a phone resting naturally. Natural skin texture, realistic eyes, realistic micro-movements, soft warm light. "
+        "This must be a newly generated scene, not a replay, trace, crop, reenactment or near-copy of any source video."
+    ),
+    negative=(
+        "source-video replay, copied motion, identical source framing, identical source background, different man, "
+        "changed identity, generic male model, beauty filter, altered jaw, altered eyes, altered nose, altered mouth, "
+        "altered hairline, tattoo, tattoos, body ink, facial scar, nose scar, cropped face, partial face, extreme close-up, "
+        "ear holes, gauges, piercings, earrings, deformed ears, second person, extra person, extra hands, talking, open mouth, "
+        "lip movement, cartoon, illustration, text, subtitles, title, watermark, UI overlay, jitter, morphing, identity drift, "
+        "plastic skin, frozen face, looped gesture, dramatic camera movement"
+    ),
+    width=576,
+    height=1024,
+    aspect_ratio="9:16 (Portrait)",
+    duration=4,
+    output_name="visio-lucas-test1-candidate.mp4",
 )
 
 MARION = CharacterProfile(
@@ -64,11 +107,16 @@ MARION = CharacterProfile(
         "different woman, changed identity, generic model face, beauty filter, distorted face, cartoon, "
         "illustration, text, subtitles, title, watermark, UI, jitter, morphing, identity drift"
     ),
+    width=960,
+    height=544,
+    aspect_ratio="16:9 (Landscape)",
+    duration=3,
+    output_name="intro-marion-candidate-desktop.mp4",
 )
 
-PROFILES = {p.key: p for p in (LUCAS, MARION)}
+PROFILES = {p.key: p for p in (LUCAS, LUCAS_VISIO_TEST1, MARION)}
 
-# Zero-cost policy: MonIA may only use these free community GPU endpoints.
+# MonIA owns the orchestration and candidate/approval policy. The compute adapter stays hidden behind this engine.
 FREE_WAN_PROVIDERS = tuple(worker.WAN_PROVIDERS)
 FREE_LTX_SPACE = worker.LTX_SPACE
 
@@ -80,7 +128,7 @@ def _download_canon(profile: CharacterProfile, target: Path) -> None:
         raise RuntimeError(f"Canon {profile.key} is too small")
     image = Image.open(io.BytesIO(response.content)).convert("RGB")
     image.load()
-    ratio = 768 / 1024
+    ratio = profile.width / profile.height
     source_ratio = image.width / image.height
     if source_ratio > ratio:
         width = round(image.height * ratio)
@@ -90,7 +138,7 @@ def _download_canon(profile: CharacterProfile, target: Path) -> None:
         height = round(image.width / ratio)
         top = max(0, (image.height - height) // 2)
         image = image.crop((0, top, image.width, top + height))
-    image.resize((768, 1024), Image.Resampling.LANCZOS).save(target, "PNG", optimize=True)
+    image.resize((profile.width, profile.height), Image.Resampling.LANCZOS).save(target, "PNG", optimize=True)
 
 
 def _run_ltx(profile: CharacterProfile, source: Path, target: Path) -> str:
@@ -106,7 +154,7 @@ def _run_ltx(profile: CharacterProfile, source: Path, target: Path) -> str:
     data = upload.json()
     uploaded = data[0] if isinstance(data, list) else (data.get("files") or [data.get("path")])[0]
     if not uploaded:
-        raise RuntimeError("LTX accepted upload but returned no reference path")
+        raise RuntimeError("video compute accepted upload but returned no reference path")
 
     payload = {
         "task_type": "i2v",
@@ -114,10 +162,10 @@ def _run_ltx(profile: CharacterProfile, source: Path, target: Path) -> str:
         "start_image": uploaded,
         "negative_prompt": profile.negative,
         "resolution": "544p",
-        "aspect_ratio": "16:9 (Landscape)",
-        "width": 960,
-        "height": 544,
-        "duration": 3,
+        "aspect_ratio": profile.aspect_ratio,
+        "width": profile.width,
+        "height": profile.height,
+        "duration": profile.duration,
         "fps": "24fps",
         "seed": -1,
         "zero_gpu_duration": 55,
@@ -133,7 +181,7 @@ def _run_ltx(profile: CharacterProfile, source: Path, target: Path) -> str:
     submit.raise_for_status()
     event_id = submit.json().get("event_id")
     if not event_id:
-        raise RuntimeError("LTX GPU job not created")
+        raise RuntimeError("MonIA video job not created")
 
     response = session.get(
         f"{FREE_LTX_SPACE}/gradio_api/call/run/{quote(str(event_id), safe='')}",
@@ -150,7 +198,7 @@ def _run_ltx(profile: CharacterProfile, source: Path, target: Path) -> str:
             elif line.startswith("data:"):
                 data_line = line.split(":", 1)[1].strip()
         if event == "error":
-            raise RuntimeError(data_line or "LTX rejected generation")
+            raise RuntimeError(data_line or "MonIA video compute rejected generation")
         if event == "complete" and data_line:
             errors: list[str] = []
             for candidate in worker.deep_candidates(json.loads(data_line)):
@@ -160,8 +208,8 @@ def _run_ltx(profile: CharacterProfile, source: Path, target: Path) -> str:
                         return worker.LTX_LABEL
                 except Exception as exc:
                     errors.append(str(exc))
-            raise RuntimeError("No LTX video recovered: " + " | ".join(errors[-3:]))
-    raise RuntimeError("Incomplete LTX response")
+            raise RuntimeError("No generated video recovered: " + " | ".join(errors[-3:]))
+    raise RuntimeError("Incomplete video compute response")
 
 
 def _wan_child(space: str, label: str, profile: CharacterProfile, source: str, target: str, queue) -> None:
@@ -171,8 +219,8 @@ def _wan_child(space: str, label: str, profile: CharacterProfile, source: str, t
         result = client.predict(
             profile.prompt,
             handle_file(source),
-            1024,
-            576,
+            profile.width,
+            profile.height,
             33,
             20,
             5,
@@ -188,7 +236,7 @@ def _wan_child(space: str, label: str, profile: CharacterProfile, source: str, t
                     return
             except Exception as exc:
                 errors.append(str(exc))
-        raise RuntimeError("No Wan video recovered: " + " | ".join(errors[-3:]))
+        raise RuntimeError("No generated video recovered: " + " | ".join(errors[-3:]))
     except Exception as exc:
         queue.put((False, str(exc)))
 
@@ -217,10 +265,10 @@ def _run_wan(profile: CharacterProfile, source: Path, target: Path) -> str:
     raise RuntimeError(" | ".join(errors))
 
 
-def generate_candidate(character: str) -> tuple[Path, str]:
-    profile = PROFILES[character]
-    source = WORK_DIR / f"{character}-canon.png"
-    target = WORK_DIR / f"intro-{character}-candidate-desktop.mp4"
+def generate_candidate(profile_key: str) -> tuple[Path, str]:
+    profile = PROFILES[profile_key]
+    source = WORK_DIR / f"{profile_key}-canon.png"
+    target = WORK_DIR / profile.output_name
     _download_canon(profile, source)
     target.unlink(missing_ok=True)
 
@@ -228,13 +276,13 @@ def generate_candidate(character: str) -> tuple[Path, str]:
     try:
         provider = _run_ltx(profile, source, target)
     except Exception as exc:
-        errors.append(f"{worker.LTX_LABEL}: {exc}")
+        errors.append(f"primary: {exc}")
         target.unlink(missing_ok=True)
         try:
             provider = _run_wan(profile, source, target)
         except Exception as wexc:
             errors.append(str(wexc))
-            raise RuntimeError("No free MonIA provider available: " + " | ".join(errors)) from wexc
+            raise RuntimeError("No MonIA video compute available: " + " | ".join(errors)) from wexc
 
     if not worker.looks_like_video(target):
         raise RuntimeError("Generated candidate is not a valid video")
@@ -254,13 +302,13 @@ def publish_candidate(path: Path) -> str:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="MonIA zero-cost video engine")
+    parser = argparse.ArgumentParser(description="MonIA video engine")
     parser.add_argument("--character", choices=sorted(PROFILES), required=True)
     parser.add_argument("--publish-candidate", action="store_true")
     args = parser.parse_args()
 
     path, provider = generate_candidate(args.character)
-    print(f"MONIA character={args.character} provider={provider} output={path} bytes={path.stat().st_size}")
+    print(f"MONIA profile={args.character} compute={provider} output={path} bytes={path.stat().st_size}")
     if args.publish_candidate:
         url = publish_candidate(path)
         print(f"MONIA candidate={url}")
