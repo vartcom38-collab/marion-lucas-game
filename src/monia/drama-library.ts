@@ -3,7 +3,7 @@ import { CANON_DRAMA_ATLAS_CELLS, type DramaAtlasCrop } from './drama-atlas';
 
 export type DramaBrickKind = 'video' | 'image';
 export type DramaBrickMood = 'neutral' | 'tender' | 'playful' | 'worried' | 'hurt' | 'angry' | 'intense' | 'quiet';
-export type DramaBrickShot = 'extreme-close' | 'close' | 'medium-close' | 'medium' | 'two-shot' | 'detail';
+export type DramaBrickShot = 'extreme-close' | 'close' | 'medium-close' | 'medium' | 'wide' | 'full' | 'two-shot' | 'detail';
 
 export type MonIADramaBrick = {
   id: string;
@@ -65,7 +65,7 @@ export const MONIA_DRAMA_LIBRARY: MonIADramaBrick[] = [
   },
   {
     id: 'apartment-nimes-wide', src: '/resources/appartement-nimes.png', kind: 'image', actors: [],
-    locationTags: ['appartement','nîmes','nimes','home'], moods: ['neutral','quiet','tender'], shotTags: ['medium','two-shot','detail'],
+    locationTags: ['appartement','nîmes','nimes','home'], moods: ['neutral','quiet','tender'], shotTags: ['medium','wide','two-shot','detail'],
     loopable: true, dialogueSafe: false, reactionSafe: false, weight: 8,
   },
 ];
@@ -113,7 +113,7 @@ export function findDramaBricks(input: {
       if (brick.canonValidated) score += 8;
       if (brick.packId && preferredPacks.includes(brick.packId)) score += 18 - preferredPacks.indexOf(brick.packId) * 5;
       if (brick.interactionTags?.some(tag => wantedInteractions.includes(tag.replace('-', ' ')))) score += 8;
-      if (!brick.actors.length) score += input.shotSize === 'detail' || input.shotSize === 'two-shot' ? 5 : 0;
+      if (!brick.actors.length) score += input.shotSize === 'detail' || input.shotSize === 'two-shot' || input.shotSize === 'wide' ? 5 : 0;
       for (const actor of wantedActors) if (actors.includes(actor)) score += 14;
       if (brick.shotTags.includes(input.shotSize)) score += 8;
       if (brick.moods.includes(mood)) score += 10;
