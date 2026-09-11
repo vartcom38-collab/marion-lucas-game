@@ -1,4 +1,4 @@
-name: MonIA Lucas V3
+name: MonIA Lucas Visio Test 1
 
 on:
   workflow_dispatch:
@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 jobs:
-  generate-lucas:
+  generate-lucas-visio:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -19,19 +19,19 @@ jobs:
       INFOMANIAK_FTP_USER: ${{ secrets.INFOMANIAK_FTP_USER }}
       INFOMANIAK_FTP_PASSWORD: ${{ secrets.INFOMANIAK_FTP_PASSWORD }}
       HF_TOKEN: ${{ secrets.HF_TOKEN }}
-      LUCAS_DRIVE_FILE_ID: "1b3cf_bsQ-t2Hex1MsGpr5dq1JdEoaK-h"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+
       - name: Install ffmpeg
         run: sudo apt-get update -qq && sudo apt-get install -y ffmpeg
-      - name: Install free MonIA dependencies
+
+      - name: Install MonIA video dependencies
         run: python -m pip install --disable-pip-version-check gradio_client pillow requests
-      - name: Build Lucas canon strictly from the real source video
-        run: python -m scripts.monia_lucas_canon_from_video
-      - name: Validate Lucas canon
+
+      - name: Validate stored Lucas canon still
         run: |
           python - <<'PY'
           import io
@@ -42,20 +42,25 @@ jobs:
           r=requests.get(url, timeout=30, headers={'Cache-Control':'no-cache','Pragma':'no-cache'})
           r.raise_for_status()
           if len(r.content) < 2048:
-              raise SystemExit('Lucas canon is missing or too small')
+              raise SystemExit('Lucas canon still is missing or too small')
           im=Image.open(io.BytesIO(r.content)); im.load()
-          print(f'Lucas canon valid: {im.width}x{im.height}, {len(r.content)} bytes')
+          if im.width < 256 or im.height < 256:
+              raise SystemExit(f'Lucas canon still resolution too small: {im.width}x{im.height}')
+          print(f'Lucas canon still valid: {im.width}x{im.height}, {len(r.content)} bytes')
+          print('No source video is downloaded or used by this visio test.')
           PY
-      - name: Generate fresh Lucas candidate with MonIA zero-cost engine
-        run: python -m scripts.monia_video_engine --character lucas --publish-candidate
-      - name: Verify Lucas candidate publicly
+
+      - name: Generate brand-new Lucas visio candidate from still identity reference
+        run: python -m scripts.monia_video_engine --character lucas-visio-test1 --publish-candidate
+
+      - name: Verify new Lucas visio candidate publicly
         run: |
           python - <<'PY'
           import requests
-          url='https://marion-lucas.marionbolomey.fr/resources/monia/generated/intro-lucas-candidate-desktop.mp4?run=${{ github.run_id }}'
+          url='https://marion-lucas.marionbolomey.fr/resources/monia/generated/visio-lucas-test1-candidate.mp4?run=${{ github.run_id }}'
           r=requests.get(url, timeout=30, headers={'Range':'bytes=0-63','Cache-Control':'no-cache','Accept':'video/*,*/*'})
           ok=r.status_code in (200,206) and len(r.content)>=16 and (b'ftyp' in r.content[:32] or r.content.startswith(b'RIFF') or r.content.startswith(b'\x1aE\xdf\xa3'))
-          print(f'candidatePublicVerification={ok} status={r.status_code} bytes={len(r.content)}')
+          print(f'visioCandidatePublicVerification={ok} status={r.status_code} bytes={len(r.content)}')
           if not ok:
-              raise SystemExit('Lucas candidate public video verification failed')
+              raise SystemExit('Lucas visio candidate public verification failed')
           PY
