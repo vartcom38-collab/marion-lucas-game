@@ -1,0 +1,117 @@
+{
+  "version": 1,
+  "status": "locked",
+  "principle": "generation -> candidate -> validation -> live",
+  "gameplay": {
+    "playerNeverSeesGenerationMechanics": true,
+    "preferApprovedCache": true,
+    "allowUnapprovedMediaInLiveGameplay": false,
+    "allowStaticZoomAsFinalVideo": false,
+    "unexpectedChoiceStrategy": "reuse-approved-or-safe-neutral-fallback-while-preparing-new-candidate"
+  },
+  "video": {
+    "finalMode": "true_video_required",
+    "targetSceneSeconds": [12, 60],
+    "shotSeconds": [1.5, 8],
+    "continuity": [
+      "same canonical face",
+      "same age",
+      "same hairstyle within scene",
+      "same wardrobe within scene unless story explicitly changes it",
+      "same geography and lighting continuity"
+    ],
+    "requiredHumanMotion": [
+      "breathing",
+      "blinking",
+      "gaze shifts",
+      "subtle head movement",
+      "posture changes",
+      "natural hand timing",
+      "body weight shifts"
+    ]
+  },
+  "lucas": {
+    "identity": "locked official Lucas canon",
+    "noTattoo": true,
+    "noFacialScar": true,
+    "noLookalikeDrift": true,
+    "performanceReferencesAreMotionOnly": true,
+    "approvedMotionDomains": [
+      "close facial reactions",
+      "full-body stance and walk",
+      "shoulder line and weight shifts",
+      "protective presence",
+      "contained romantic tension",
+      "gentle physical contact",
+      "family protective handling"
+    ]
+  },
+  "marion": {
+    "identity": "locked official Marion canon",
+    "playerAgency": true,
+    "neverDecideForPlayer": true
+  },
+  "sceneGrammar": {
+    "allowedShots": [
+      "extreme-close",
+      "close",
+      "medium-close",
+      "medium",
+      "full",
+      "wide",
+      "two-shot",
+      "detail"
+    ],
+    "romance": [
+      "distance",
+      "eye contact",
+      "breath",
+      "pauses",
+      "restrained touch",
+      "lean-in",
+      "posture",
+      "silence"
+    ],
+    "family": [
+      "protective stance",
+      "natural carrying",
+      "supportive hand placement",
+      "stable body balance",
+      "quiet eye contact"
+    ],
+    "forbiddenShortcuts": [
+      "Ken Burns still-image motion",
+      "source-video replay disguised as generation",
+      "identity replacement from motion reference actor",
+      "unapproved candidate auto-published to gameplay"
+    ]
+  },
+  "visio": {
+    "states": [
+      "listening",
+      "speaking",
+      "reaction",
+      "thinking",
+      "silence"
+    ],
+    "differentEachCall": true,
+    "contextSensitive": [
+      "mood",
+      "place",
+      "time of day",
+      "relationship",
+      "recent beat",
+      "outfit",
+      "background",
+      "lighting"
+    ],
+    "missingApprovedStateBehavior": "neutral-call-ui-without-unapproved-video"
+  },
+  "storySafety": {
+    "noFutureSpoilers": true,
+    "noInventedMajorTwists": true,
+    "noInfidelity": true,
+    "noForcedPlayerEmotion": true,
+    "microDramaMustFollowExistingContext": true
+  }
+}
