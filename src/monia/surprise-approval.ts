@@ -22,6 +22,7 @@ export type SurpriseCandidateFacts={
   location:boolean;
   motion:boolean;
   canon:boolean;
+  qualityVerified?:boolean;
   usesNewIdentityMethod?:boolean;
   usesNewVoiceIdentity?:boolean;
   usesNewIntimateGrammar?:boolean;
@@ -77,11 +78,30 @@ export function activateSurpriseMode(){
 
 export function deactivateSurpriseMode(){const state=readSurpriseTrust();state.mode='calibration';state.updatedAt=Date.now();writeSurpriseTrust(state);return state}
 
+function routeRequirements(route:string){
+  const r=route.toLowerCase();
+  const duo=r.includes('couple')||r.includes('family')||r.includes('duo');
+  const lucas=r.includes('lucas')||duo||r.includes('visio');
+  const marion=r.includes('marion')||duo;
+  return{duo,lucas,marion};
+}
+
 export function surpriseGate(candidate:SurpriseCandidateFacts){
   const state=readSurpriseTrust();
+  const req=routeRequirements(candidate.route);
   const newDomain=Boolean(candidate.usesNewIdentityMethod||candidate.usesNewVoiceIdentity||candidate.usesNewIntimateGrammar||candidate.usesNewFamilyGrammar||candidate.usesNewBackendBehavior);
-  const allChecks=Boolean(candidate.completeAssembly&&candidate.lucasIdentity&&candidate.marionIdentity&&candidate.continuity&&candidate.wardrobe&&candidate.location&&candidate.motion&&candidate.canon);
+  const identitiesOk=(!req.lucas||candidate.lucasIdentity)&&(!req.marion||candidate.marionIdentity);
+  const allChecks=Boolean(candidate.qualityVerified!==false&&candidate.completeAssembly&&identitiesOk&&candidate.continuity&&candidate.wardrobe&&candidate.location&&candidate.motion&&candidate.canon);
+  const trustOk=Boolean(
+    (!req.lucas||state.trusted['lucas-identity'])&&
+    (!req.marion||state.trusted['marion-identity'])&&
+    (!req.duo||state.trusted['duo-identity'])&&
+    state.trusted['motion-language']&&
+    state.trusted['scene-continuity']&&
+    state.trusted['assembled-video']
+  );
   if(state.mode!=='surprise')return{decision:'human-review' as const,reason:'calibration-mode',state};
+  if(!trustOk)return{decision:'human-review' as const,reason:'route-domain-not-trusted',state};
   if(newDomain)return{decision:'human-review' as const,reason:'new-untrusted-domain',state};
   if(!allChecks)return{decision:'human-review' as const,reason:'quality-gate-failed',state};
   return{decision:'monia-approved' as const,reason:'trusted-domain-quality-gate-passed',state};
