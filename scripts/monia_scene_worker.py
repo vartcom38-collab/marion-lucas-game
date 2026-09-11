@@ -4,6 +4,8 @@ import argparse
 import io
 import json
 import re
+import shutil
+import subprocess
 from dataclasses import asdict
 from pathlib import Path
 from typing import Any
@@ -160,6 +162,58 @@ def _generate(profile: CharacterProfile, scene_anchor: dict[str, Any] | None = N
     return target, provider
 
 
+def _run_ffmpeg(args: list[str]) -> None:
+    if not shutil.which("ffmpeg"):
+        raise RuntimeError("ffmpeg is required to assemble MonIA scene candidates")
+    proc = subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", *args], capture_output=True, text=True)
+    if proc.returncode != 0:
+        raise RuntimeError((proc.stderr or proc.stdout or "ffmpeg failed").strip())
+
+
+def _assemble_candidate(job: dict[str, Any], result: dict[str, Any]) -> Path:
+    ready = [s for s in result.get("shots") or [] if s.get("status") == "candidate-ready" and s.get("path")]
+    if not ready or len(ready) != len(result.get("shots") or []):
+        raise RuntimeError("Scene assembly requires every planned shot to be candidate-ready")
+
+    width, height, _ = _dimensions(str(job.get("format") or "16:9"))
+    job_slug = _slug(str(job.get("id") or "scene"))
+    norm_dir = SCENE_DIR / f"{job_slug}-normalized"
+    norm_dir.mkdir(parents=True, exist_ok=True)
+    normalized: list[Path] = []
+
+    for index, item in enumerate(ready):
+        source = Path(str(item["path"]))
+        target = norm_dir / f"{index + 1:02d}.mp4"
+        _run_ffmpeg([
+            "-i", str(source),
+            "-an",
+            "-vf", f"scale={width}:{height}:force_original_aspect_ratio=decrease,pad={width}:{height}:(ow-iw)/2:(oh-ih)/2,fps=24,format=yuv420p",
+            "-c:v", "libx264",
+            "-preset", "medium",
+            "-crf", "18",
+            "-movflags", "+faststart",
+            str(target),
+        ])
+        if not worker.looks_like_video(target):
+            raise RuntimeError(f"Normalized scene shot {index + 1} is not a valid video")
+        normalized.append(target)
+
+    concat_file = norm_dir / "concat.txt"
+    concat_file.write_text("\n".join(f"file '{p.resolve().as_posix()}'" for p in normalized) + "\n", encoding="utf-8")
+    scene_path = SCENE_DIR / f"scene-{job_slug}-candidate.mp4"
+    _run_ffmpeg([
+        "-f", "concat",
+        "-safe", "0",
+        "-i", str(concat_file),
+        "-c", "copy",
+        "-movflags", "+faststart",
+        str(scene_path),
+    ])
+    if not worker.looks_like_video(scene_path):
+        raise RuntimeError("Assembled MonIA scene candidate is not a valid video")
+    return scene_path
+
+
 def run_job(job_path: Path, publish: bool) -> dict[str, Any]:
     job = json.loads(job_path.read_text(encoding="utf-8"))
     if job.get("autoPublish") is not False or job.get("approvalRequired") is not True:
@@ -206,6 +260,20 @@ def run_job(job_path: Path, publish: bool) -> dict[str, Any]:
     failed = sum(s == "failed" for s in statuses)
     if ready and not blocked and not failed:
         result["status"] = "candidate-ready"
+        try:
+            scene_path = _assemble_candidate(job, result)
+            result["assembledCandidate"] = {
+                "status": "candidate-ready",
+                "path": str(scene_path),
+                "bytes": scene_path.stat().st_size,
+                "approvalRequired": True,
+                "autoPublish": False,
+            }
+            if publish:
+                result["assembledCandidate"]["candidateUrl"] = publish_candidate(scene_path)
+        except Exception as exc:
+            result["status"] = "candidate-clips-ready-assembly-failed"
+            result["assemblyError"] = str(exc)
     elif ready:
         result["status"] = "candidate-partial"
     elif blocked and not failed:
@@ -222,7 +290,7 @@ def run_job(job_path: Path, publish: bool) -> dict[str, Any]:
 def main() -> None:
     parser = argparse.ArgumentParser(description="MonIA continuity-safe scene shot worker")
     parser.add_argument("--job", type=Path, required=True, help="Path to exported SceneGenerationJob JSON")
-    parser.add_argument("--publish-candidates", action="store_true", help="Upload candidate clips to MonIA generated storage; never approves them")
+    parser.add_argument("--publish-candidates", action="store_true", help="Upload candidate clips and assembled candidate to MonIA generated storage; never approves them")
     args = parser.parse_args()
     result = run_job(args.job, args.publish_candidates)
     print(json.dumps(result, ensure_ascii=False))
