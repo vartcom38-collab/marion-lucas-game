@@ -1,5 +1,6 @@
 import { monia } from './runtime';
 import type { MonIADirectorResult } from './director';
+import { routeSceneFromGameState } from './scene-context-router';
 
 const SAVE_KEY = 'marion-lucas-save-v4';
 const STATE_KEY = 'monia-auto-scene-state-v1';
@@ -13,6 +14,10 @@ type LooseSave = {
   trust?: number;
   chemistry?: number;
   metLucas?: boolean;
+  official?: boolean;
+  engaged?: boolean;
+  married?: boolean;
+  children?: number;
   memories?: string[];
   eventHistory?: string[];
   messages?: Message[];
@@ -99,7 +104,7 @@ function buildSignal(save: LooseSave) {
   const pool = [...recentMessages, ...recentEvents, ...recentMemories];
   const strong = pool.filter(meaningfulEvent).slice(0, 6);
   const latest = pool.slice(0, 8);
-  return { strong, latest };
+  return { strong, latest, recentMessages, recentEvents, recentMemories };
 }
 
 function signature(save: LooseSave) {
@@ -120,7 +125,7 @@ function shouldConsider(save: LooseSave, state: AutoState) {
   const day = Number(save.day || 0);
   const now = day * 1440 + minutes(save.time);
   const last = state.lastSceneDay * 1440 + state.lastSceneMinute;
-  if (state.lastSceneDay >= 0 && now - last < 360) return false; // max about one spontaneous scene per 6 in-game hours
+  if (state.lastSceneDay >= 0 && now - last < 360) return false;
 
   return true;
 }
@@ -137,9 +142,10 @@ function sceneScore(save: LooseSave, state: AutoState) {
   return { score, strong, latest, band };
 }
 
-function sceneSnapshot(result: MonIADirectorResult, save: LooseSave) {
+function sceneSnapshot(result: MonIADirectorResult, save: LooseSave, route: ReturnType<typeof routeSceneFromGameState>) {
   return JSON.stringify({
     channel: 'scene',
+    route,
     emotion: result.emotion,
     scene: result.scene,
     source: result.source,
@@ -164,8 +170,26 @@ async function evaluate() {
   state.lastRelationshipBand = Math.max(state.lastRelationshipBand, assessment.band);
   writeState(state);
 
-  // Deliberately high threshold: silence is better than an artificial scene.
   if (assessment.score < 7) return;
+
+  const signal = buildSignal(save);
+  const route = routeSceneFromGameState({
+    place: save.place,
+    time: save.time,
+    relationship: save.relationship,
+    trust: save.trust,
+    chemistry: save.chemistry,
+    official: save.official,
+    engaged: save.engaged,
+    married: save.married,
+    children: save.children,
+    recentMessages: signal.recentMessages,
+    recentEvents: signal.recentEvents,
+    memories: signal.recentMemories,
+  });
+
+  // Do not force a cinematic scene when the live state does not justify one.
+  if (route.route === 'message-only') return;
 
   evaluating = true;
   try {
@@ -182,7 +206,7 @@ async function evaluate() {
         time: save.time || '00:00',
         day: Number(save.day || 0),
         recentAction: 'Un moment important vient réellement de se produire dans la partie.',
-        activeObjective: 'Proposer uniquement une micro-scène de réaction ou de continuité immédiate, jamais un nouveau tournant de scénario.',
+        activeObjective: `Préparer uniquement une continuité immédiate compatible avec la route ${route.route}; aucun nouveau tournant de scénario.`,
         relationship: relationLabel(save.relationship),
         memories: [...memoryLines, ...assessment.strong, ...assessment.latest].slice(0, 12),
         recentEvents: (save.eventHistory || []).slice(-8),
@@ -192,6 +216,11 @@ async function evaluate() {
           'Lucas reste absolument fidèle.',
           'La scène doit seulement mettre en valeur une conséquence immédiate de faits déjà présents dans le contexte.',
           'Ne jamais décider à la place de Marion.',
+          'Ne jamais inventer la présence physique de Lucas.',
+          `Route média imposée par l’état réel: ${route.route}.`,
+          `Co-présence physique confirmée: ${route.physicalCoPresence ? 'oui' : 'non'}.`,
+          `Grammaire de plans préférée: ${route.preferredShotGrammar.join(', ') || 'aucune'}.`,
+          `Niveau de proximité autorisé par le contexte: ${route.intimacyLevel}.`,
           'Si le contexte ne suffit pas, rester sur un moment subtil et quotidien.',
           'Durée courte, émotion crédible, dialogue bref.',
         ],
@@ -202,7 +231,8 @@ async function evaluate() {
     const fresh = readSave();
     if (!fresh) return;
     const flags = fresh.flags || (fresh.flags = {});
-    flags.moniaLastDirector = sceneSnapshot({ ...result, channel: 'scene' }, fresh);
+    flags.moniaSceneRoute = JSON.stringify(route);
+    flags.moniaLastDirector = sceneSnapshot({ ...result, channel: 'scene' }, fresh, route);
     fresh.messages = fresh.messages || [];
     fresh.messages.unshift({
       from: 'Lucas',
@@ -232,4 +262,4 @@ window.setInterval(() => { void evaluate(); }, 2400);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) void evaluate(); });
 window.setTimeout(() => { void evaluate(); }, 1800);
 
-console.info('[MonIA] Intelligent contextual scene triggers active');
+console.info('[MonIA] Intelligent contextual scene routing active');
