@@ -51,8 +51,9 @@ export async function planMonIAContent(need:MonIAContentNeed):Promise<MonIAConte
     `CANON=${JSON.stringify(context.canon)}`,
     `MEMOIRES=${JSON.stringify(context.memories)}`,
     `REGLES=${JSON.stringify(context.rules)}`,
-    context.motion.length?`MOUVEMENT_LUCAS=${JSON.stringify(context.motion)}`:'',
-    context.motion.length?'Les références de mouvement servent uniquement à la gestuelle, au rythme et aux micro-réactions. Ne jamais copier le visage, le corps-identité, la tenue, les tatouages, cicatrices ou l’apparence d’un co-acteur. Le visage canon de Lucas reste prioritaire.':'',
+    context.motion.length?`PERFORMANCE_LUCAS=${JSON.stringify(context.motion)}`:'',
+    context.motion.length?'Pour Lucas, le visage et l’identité canon restent absolus. Les références masculines peuvent en revanche informer fortement la silhouette générale, la carrure, la posture, la démarche, le placement des épaules, la manière de se pencher, porter, protéger, toucher et occuper l’espace quand elles correspondent au Lucas validé. Elles servent aussi à la gestuelle, au rythme, au regard, aux pauses et aux micro-réactions. Ne jamais importer l’identité d’un autre homme, un tatouage, une cicatrice, une tenue distinctive ou l’identité/apparence d’une co-actrice. Une femme présente dans une référence n’est jamais Marion par défaut: elle sert seulement au blocking, au contact ou à la chorégraphie relationnelle, sauf canon Marion explicite.':'',
+    'Pour les scènes de couple, privilégier une tension crédible construite par la distance, le regard, les silences, le souffle, les mains et le timing plutôt que par des gestes exagérés. Les scènes intimes restent non explicites.',
     'Ne crée du nouveau contenu que si aucun asset approuvé suffisamment adapté n’existe.',
     'Toute sortie média nouvellement générée reste candidate jusqu’à validation explicite; jamais de publication directe dans le gameplay.'
   ].filter(Boolean).join('\n');
