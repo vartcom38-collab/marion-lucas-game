@@ -18,6 +18,9 @@ const actorSlots = (actor: 'Marion' | 'Lucas'): DramaPackSlot[] => [
   { id:`${actor.toLowerCase()}-quiet-reaction`,actor,shot:'close',mood:'quiet',purpose:'silence, écoute, réaction sans dialogue',priority:1,minimum:2 },
   { id:`${actor.toLowerCase()}-worried-close`,actor,shot:'close',mood:'worried',purpose:'inquiétude légère, attente, doute',priority:1,minimum:2,dialogueSafe:true },
   { id:`${actor.toLowerCase()}-intense-close`,actor,shot:'close',mood:'intense',purpose:'tension émotionnelle, regard soutenu',priority:1,minimum:2,dialogueSafe:true },
+  { id:`${actor.toLowerCase()}-body-medium`,actor,shot:'medium',mood:'neutral',purpose:'posture, épaules, mains, changement d’appui et présence corporelle',priority:1,minimum:2 },
+  { id:`${actor.toLowerCase()}-full-presence`,actor,shot:'full',mood:'neutral',purpose:'silhouette plein pied, marche courte, entrée/sortie et occupation naturelle de l’espace',priority:1,minimum:2 },
+  { id:`${actor.toLowerCase()}-wide-presence`,actor,shot:'wide',mood:'quiet',purpose:'personnage inscrit dans le lieu, déplacement ou pause corporelle lisible',priority:2,minimum:1 },
   { id:`${actor.toLowerCase()}-hurt-close`,actor,shot:'close',mood:'hurt',purpose:'blessure émotionnelle / vexation retenue',priority:2,minimum:2,dialogueSafe:true },
   { id:`${actor.toLowerCase()}-angry-medium`,actor,shot:'medium-close',mood:'angry',purpose:'agacement ou colère sans surjeu',priority:2,minimum:1,dialogueSafe:true },
   { id:`${actor.toLowerCase()}-playful-close`,actor,shot:'close',mood:'playful',purpose:'sourire, taquinerie, légèreté',priority:2,minimum:2,dialogueSafe:true },
@@ -25,15 +28,24 @@ const actorSlots = (actor: 'Marion' | 'Lucas'): DramaPackSlot[] => [
   { id:`${actor.toLowerCase()}-extreme-reaction`,actor,shot:'extreme-close',mood:'intense',purpose:'micro-réaction forte dans les yeux / souffle',priority:3,minimum:1 },
 ];
 
-export const MONIA_DRAMA_PACK_V1: DramaPackSlot[] = [
+export const MONIA_DRAMA_PACK_V2: DramaPackSlot[] = [
   ...actorSlots('Marion'),
   ...actorSlots('Lucas'),
   { id:'both-neutral-two-shot',actor:'Both',shot:'two-shot',mood:'neutral',purpose:'présence commune neutre dans le même espace',priority:1,minimum:2 },
   { id:'both-tender-two-shot',actor:'Both',shot:'two-shot',mood:'tender',purpose:'proximité affectueuse sans action scénaristique majeure',priority:1,minimum:2 },
-  { id:'both-intense-two-shot',actor:'Both',shot:'two-shot',mood:'intense',purpose:'tension / distance / confrontation douce',priority:2,minimum:2 },
+  { id:'both-tender-medium',actor:'Both',shot:'medium',mood:'tender',purpose:'main dans la main, bras protecteur, proximité ou contact doux lisible',priority:1,minimum:2 },
+  { id:'both-intense-two-shot',actor:'Both',shot:'two-shot',mood:'intense',purpose:'tension / distance / confrontation douce',priority:1,minimum:2 },
+  { id:'both-intimate-medium',actor:'Both',shot:'medium',mood:'intense',purpose:'lean-in, toucher du visage, pause avant baiser, tension intime non explicite',priority:2,minimum:2 },
+  { id:'both-full-blocking',actor:'Both',shot:'full',mood:'neutral',purpose:'marche ensemble, arrivée, séparation de distance ou placement corporel complet',priority:2,minimum:1 },
+  { id:'lucas-family-protective-medium',actor:'Lucas',shot:'medium',mood:'tender',purpose:'présence protectrice avec enfant, portage ou maintien doux adapté à l’âge',priority:2,minimum:1 },
+  { id:'lucas-family-protective-full',actor:'Lucas',shot:'full',mood:'quiet',purpose:'marche avec enfant, portage sécurisé, posture de père calme',priority:3,minimum:1 },
   { id:'environment-home',actor:'Environment',shot:'medium',mood:'quiet',purpose:'respiration appartement / lieu sans personnage',priority:1,minimum:2 },
+  { id:'environment-wide',actor:'Environment',shot:'wide',mood:'quiet',purpose:'plan d’établissement du lieu avant ou après une scène corporelle',priority:1,minimum:2 },
   { id:'environment-detail',actor:'Environment',shot:'detail',mood:'neutral',purpose:'insert décor / objet / téléphone / fenêtre',priority:2,minimum:3 },
 ];
+
+// Compatibilité avec les écrans/audits existants.
+export const MONIA_DRAMA_PACK_V1 = MONIA_DRAMA_PACK_V2;
 
 function actorMatches(slot: DramaPackSlot, actors: string[]) {
   if (slot.actor === 'Environment') return actors.length === 0;
@@ -42,7 +54,7 @@ function actorMatches(slot: DramaPackSlot, actors: string[]) {
 }
 
 export function auditDramaPack() {
-  const slots = MONIA_DRAMA_PACK_V1.map(slot => {
+  const slots = MONIA_DRAMA_PACK_V2.map(slot => {
     const matching = MONIA_DRAMA_LIBRARY.filter(brick =>
       actorMatches(slot, brick.actors) &&
       brick.shotTags.includes(slot.shot) &&
@@ -61,7 +73,7 @@ export function auditDramaPack() {
   const covered = slots.reduce((sum, slot) => sum + Math.min(slot.available, slot.minimum), 0);
   const priority1 = slots.filter(slot => slot.priority === 1);
   return {
-    version: 'v1',
+    version: 'v2',
     required,
     covered,
     coverage: required ? Math.round((covered / required) * 100) : 0,
