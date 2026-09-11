@@ -2,6 +2,7 @@ import './surprise-approval';
 import './surprise-player';
 import './surprise-aftermath';
 import './early-game-phone-guard';
+import './iphone-shell';
 import { MARION_LUCAS_PROFILE, narrationPrompt, type MonIACompactContext } from './profile';
 import { moniaStorage } from './storage';
 import { askMonIAServerBrain } from './server-brain';
