@@ -1,28 +1,48 @@
 import { consumeSurpriseScene, isSurpriseDeliveryContextValid, peekNextSurpriseScene, type SurpriseDelivery } from './surprise-delivery';
 
 const OVERLAY_ID='moniaSurpriseScenePlayer';
+const SAVE_KEY='marion-lucas-save-v4';
+const AUTO_COOLDOWN_MS=45000;
 let playing=false;
+let lastPlaybackFinishedAt=0;
+let lastSaveSignature='';
+let queuedOpportunity=false;
 
-function routeAllowedNow(delivery:SurpriseDelivery){
+function readSave(){
   try{
-    const raw=localStorage.getItem('marion-lucas-save-v4');
-    if(!raw)return isSurpriseDeliveryContextValid(delivery);
-    const save=JSON.parse(raw) as {metLucas?:boolean;flags?:Record<string,unknown>};
-    if(!save.metLucas)return false;
-    if(save.flags?.moniaSmsPending)return false;
-    return isSurpriseDeliveryContextValid(delivery);
-  }catch{return isSurpriseDeliveryContextValid(delivery)}
+    const raw=localStorage.getItem(SAVE_KEY);
+    return raw?JSON.parse(raw) as {day?:number;time?:string;place?:string;relationship?:number;messages?:Array<{from?:string;text?:string}>;eventHistory?:string[];metLucas?:boolean;flags?:Record<string,unknown>}:null;
+  }catch{return null}
 }
 
-function canPresent(){
+function saveSignature(){
+  const save=readSave();
+  if(!save)return'';
+  const message=save.messages?.[0];
+  const event=save.eventHistory?.[save.eventHistory.length-1]||'';
+  return `${save.day||0}|${save.time||''}|${save.place||''}|${save.relationship||0}|${message?.from||''}:${message?.text||''}|${event}`.slice(0,900);
+}
+
+function routeAllowedNow(delivery:SurpriseDelivery){
+  const save=readSave();
+  if(save){
+    if(!save.metLucas)return false;
+    if(save.flags?.moniaSmsPending)return false;
+  }
+  return isSurpriseDeliveryContextValid(delivery);
+}
+
+function canPresent(auto=false){
   if(playing||document.hidden)return false;
   if(document.getElementById(OVERLAY_ID))return false;
   if(document.getElementById('moniaDramaScene')||document.getElementById('moniaSceneOffer'))return false;
+  if(auto&&lastPlaybackFinishedAt&&Date.now()-lastPlaybackFinishedAt<AUTO_COOLDOWN_MS)return false;
   return true;
 }
 
 function closeOverlay(root:HTMLElement){
   playing=false;
+  lastPlaybackFinishedAt=Date.now();
   root.remove();
   window.dispatchEvent(new CustomEvent('monia:surprise-playback-ended'));
 }
@@ -31,6 +51,7 @@ function renderScene(delivery:SurpriseDelivery){
   if(!canPresent())return false;
   if(!routeAllowedNow(delivery))return false;
   playing=true;
+  queuedOpportunity=false;
   const root=document.createElement('div');
   root.id=OVERLAY_ID;
   root.setAttribute('role','dialog');
@@ -77,22 +98,48 @@ export function playNextApprovedSurpriseScene(route?:string){
 }
 
 function tryAutoPlay(route?:string){
-  window.setTimeout(()=>{void playNextApprovedSurpriseScene(route)},450);
+  if(!canPresent(true))return false;
+  const next=peekNextSurpriseScene(route);
+  if(!next||!routeAllowedNow(next))return false;
+  return renderScene(next);
+}
+
+function signalOpportunity(route?:string){
+  queuedOpportunity=true;
+  window.setTimeout(()=>{
+    if(!queuedOpportunity)return;
+    void tryAutoPlay(route);
+  },650);
 }
 
 window.addEventListener('monia:surprise-scene-ready',(event)=>{
   const route=String((event as CustomEvent<{route?:string}>).detail?.route||'');
-  tryAutoPlay(route||undefined);
+  signalOpportunity(route||undefined);
 });
-window.addEventListener('monia:surprise-playback-ended',()=>tryAutoPlay());
-window.addEventListener('focus',()=>tryAutoPlay());
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)tryAutoPlay()});
+window.addEventListener('monia:surprise-scene-opportunity',(event)=>{
+  const route=String((event as CustomEvent<{route?:string}>).detail?.route||'');
+  signalOpportunity(route||undefined);
+});
+document.addEventListener('visibilitychange',()=>{
+  if(!document.hidden){
+    lastSaveSignature=saveSignature();
+  }
+});
 
-tryAutoPlay();
+lastSaveSignature=saveSignature();
+window.setInterval(()=>{
+  if(document.hidden||playing)return;
+  const nextSignature=saveSignature();
+  if(!nextSignature||nextSignature===lastSaveSignature)return;
+  lastSaveSignature=nextSignature;
+  signalOpportunity();
+},1800);
 
 declare global{
   interface Window{
     __moniaPlayNextSurpriseScene?:(route?:string)=>boolean;
+    __moniaSignalSurpriseOpportunity?:(route?:string)=>void;
   }
 }
 window.__moniaPlayNextSurpriseScene=playNextApprovedSurpriseScene;
+window.__moniaSignalSurpriseOpportunity=signalOpportunity;
