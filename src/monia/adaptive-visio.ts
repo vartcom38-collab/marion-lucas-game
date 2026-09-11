@@ -56,7 +56,8 @@ export function buildAdaptiveLucasVisioPrompt(context:LucasVisioContext){
 
   return [
     'Photorealistic live smartphone video-call candidate featuring the exact canonical Lucas identity.',
-    'Lucas identity is fixed: preserve the approved face geometry, eyes, eyebrows, nose, mouth, jaw, hair, stubble, skin tone and age continuity. Lucas has no tattoos and no facial scar.',
+    'Lucas identity is fixed: preserve the approved face geometry, very light green-gray/hazel eyes, eyebrows, nose, mouth, jaw, dark wavy hair, stubble, skin tone and age continuity. Lucas has no tattoos and no facial scar.',
+    'Preserve the approved Lucas physical presence as well: masculine athletic-natural build, grounded shoulders, believable neck/chest proportions and calm contained posture. Male motion references may guide silhouette, posture, body mechanics and spatial presence when compatible with the canon, but must never replace Lucas identity.',
     `STATE: ${stateDirection[context.state]}.`,
     `MOOD: ${moodDirection[mood]}.`,
     scene,
@@ -65,10 +66,11 @@ export function buildAdaptiveLucasVisioPrompt(context:LucasVisioContext){
     `LIGHTING: ${variation.lighting}.`,
     `SCENE VARIATION: ${variation.background}.`,
     `MICRO ACTION: ${variation.microAction}.`,
-    `MOTION LANGUAGE: ${motion.join(' | ')}`,
+    `PERFORMANCE LANGUAGE: ${motion.join(' | ')}`,
     'Every visio must adapt naturally to current story context, time, place, relationship, recent events and emotion. Do not reuse one identical expression, pose, background, lighting setup or rhythm for every call.',
-    'Motion references are gesture/timing references only. Never copy any reference actor or co-actor identity, face, body identity, wardrobe, tattoos, scars or distinctive appearance.',
+    'Reference videos may inform Lucas body mechanics, posture, walking/leaning/contact style, gesture timing, gaze, pauses and micro-reactions. Never import another actor identity, another face, tattoos, scars, distinctive wardrobe or the identity/appearance of a co-actor. A woman in a reference is not Marion unless Marion canon is explicitly supplied.',
     'Keep smartphone-call realism: front-camera framing, tiny handheld imperfections, natural breathing, irregular blink rhythm, subtle eye-line changes, realistic skin and lighting.',
+    'For romantic/intimate beats, use contained chemistry through distance, eye contact, breathing, hand placement and micro-pauses; keep it non-explicit and natural.',
     'No identity drift, no morphing, no exaggerated mouth motion, no robotic blink rhythm, no text, no subtitles, no watermark, no fake zoom.'
   ].filter(Boolean).join(' ');
 }
