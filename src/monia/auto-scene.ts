@@ -7,6 +7,7 @@ import { queueDramaPlan } from './scene-generation-queue';
 
 const SAVE_KEY = 'marion-lucas-save-v4';
 const STATE_KEY = 'monia-auto-scene-state-v1';
+const SURPRISE_AFTERGLOW_GAME_MINUTES = 90;
 
 type Message = { from: string; text: string; day: number; read: boolean };
 type LooseSave = {
@@ -76,6 +77,10 @@ function minutes(time = '00:00') {
   return (Number.isFinite(h) ? h : 0) * 60 + (Number.isFinite(m) ? m : 0);
 }
 
+function gameMinute(save: LooseSave) {
+  return Number(save.day || 0) * 1440 + minutes(save.time);
+}
+
 function relationBand(value = 0) {
   if (value >= 70) return 4;
   if (value >= 45) return 3;
@@ -116,15 +121,25 @@ function signature(save: LooseSave) {
   return `${save.day || 0}|${save.time || ''}|${save.place || ''}|${save.relationship || 0}|${msg?.from || ''}:${msg?.text || ''}|${event}`.slice(0, 700);
 }
 
+function inSurpriseAfterglow(save: LooseSave) {
+  const raw = save.flags?.moniaSurpriseLastPlaybackGameMinute;
+  if (raw === undefined || raw === null || raw === '') return false;
+  const last = Number(raw);
+  if (!Number.isFinite(last)) return false;
+  const age = gameMinute(save) - last;
+  return age >= 0 && age < SURPRISE_AFTERGLOW_GAME_MINUTES;
+}
+
 function shouldConsider(save: LooseSave, state: AutoState) {
   if (!save.metLucas) return false;
   if (document.hidden) return false;
-  if (document.getElementById('moniaDramaScene') || document.getElementById('moniaSceneOffer')) return false;
+  if (document.getElementById('moniaDramaScene') || document.getElementById('moniaSceneOffer') || document.getElementById('moniaSurpriseScenePlayer')) return false;
   if (save.flags?.moniaSmsPending) return false;
+  if (save.flags?.moniaCinematicActive === true) return false;
+  if (inSurpriseAfterglow(save)) return false;
   const sig = signature(save);
   if (!sig || sig === state.signature) return false;
-  const day = Number(save.day || 0);
-  const now = day * 1440 + minutes(save.time);
+  const now = gameMinute(save);
   const last = state.lastSceneDay * 1440 + state.lastSceneMinute;
   if (state.lastSceneDay >= 0 && now - last < 360) return false;
   return true;
@@ -341,6 +356,12 @@ async function evaluate() {
 
 window.setInterval(() => { void evaluate(); }, 2400);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) void evaluate(); });
+window.addEventListener('monia:game-state-after-surprise', () => {
+  const save = readSave();
+  const state = readState();
+  if (save) state.signature = signature(save);
+  writeState(state);
+});
 window.setTimeout(() => { void evaluate(); }, 1800);
 
 console.info('[MonIA] Intelligent contextual routing + continuity-safe candidate queue active');
