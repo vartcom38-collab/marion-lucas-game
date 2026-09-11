@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import io
 import json
 import re
 from dataclasses import asdict
@@ -8,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 import requests
+from PIL import Image
 
 from scripts.monia_video_engine import (
     CharacterProfile,
@@ -44,15 +46,50 @@ def _dimensions(fmt: str) -> tuple[int, int, str]:
     return 960, 544, "16:9 (Landscape)"
 
 
-def _download_reference(url: str, target: Path) -> None:
+def _download_reference(url: str) -> bytes:
     response = requests.get(url, timeout=30, headers={"Cache-Control": "no-cache"})
     response.raise_for_status()
-    target.write_bytes(response.content)
-    if target.stat().st_size < 2048:
+    if len(response.content) < 2048:
         raise RuntimeError("Scene reference is too small")
+    return response.content
 
 
-def _profile_for_shot(job: dict[str, Any], shot: dict[str, Any], index: int) -> CharacterProfile:
+def _crop_anchor(anchor: dict[str, Any], target: Path, width: int, height: int) -> None:
+    if anchor.get("status") != "validated":
+        raise RuntimeError("Scene anchor rejected: only validated anchors may guide multi-character generation")
+    actors = {str(a).lower() for a in anchor.get("actors") or []}
+    if not {"lucas", "marion"}.issubset(actors):
+        raise RuntimeError("Scene anchor rejected: validated Marion + Lucas identities are both required")
+    url = str(anchor.get("sourceUrl") or "").strip()
+    crop = anchor.get("crop") or {}
+    if not url:
+        raise RuntimeError("Scene anchor rejected: sourceUrl missing")
+    raw = _download_reference(url)
+    image = Image.open(io.BytesIO(raw)).convert("RGB")
+    x = max(0.0, min(1.0, float(crop.get("x", 0))))
+    y = max(0.0, min(1.0, float(crop.get("y", 0))))
+    w = max(0.01, min(1.0 - x, float(crop.get("width", 1))))
+    h = max(0.01, min(1.0 - y, float(crop.get("height", 1))))
+    left = round(x * image.width)
+    top = round(y * image.height)
+    right = max(left + 1, round((x + w) * image.width))
+    bottom = max(top + 1, round((y + h) * image.height))
+    image = image.crop((left, top, right, bottom))
+
+    target_ratio = width / height
+    source_ratio = image.width / image.height
+    if source_ratio > target_ratio:
+        crop_w = round(image.height * target_ratio)
+        left = max(0, (image.width - crop_w) // 2)
+        image = image.crop((left, 0, left + crop_w, image.height))
+    elif source_ratio < target_ratio:
+        crop_h = round(image.width / target_ratio)
+        top = max(0, (image.height - crop_h) // 2)
+        image = image.crop((0, top, image.width, top + crop_h))
+    image.resize((width, height), Image.Resampling.LANCZOS).save(target, "PNG", optimize=True)
+
+
+def _profile_for_shot(job: dict[str, Any], shot: dict[str, Any], index: int) -> tuple[CharacterProfile, dict[str, Any] | None]:
     width, height, aspect = _dimensions(str(job.get("format") or "16:9"))
     focus_actor = str(shot.get("focusActor") or "Lucas")
     prompt = str(shot.get("prompt") or "").strip()
@@ -79,13 +116,13 @@ def _profile_for_shot(job: dict[str, Any], shot: dict[str, Any], index: int) -> 
     output_name = f"scene-{_slug(str(job.get('id') or 'job'))}-{index + 1:02d}-{_slug(str(shot.get('id') or index + 1))}.mp4"
 
     actors = [str(a) for a in shot.get("actors") or []]
-    explicit_reference = str(shot.get("referenceUrl") or job.get("sceneAnchorUrl") or "").strip()
-    if len(actors) > 1 and not explicit_reference:
+    scene_anchor = shot.get("sceneAnchor") or job.get("sceneAnchor")
+    if len(actors) > 1 and not scene_anchor:
         raise RuntimeError(
-            "multi-character shot requires a validated sceneAnchorUrl/referenceUrl so Marion and Lucas identities are both anchored"
+            "multi-character shot requires a validated MonIA sceneAnchor so Marion and Lucas identities are both anchored"
         )
 
-    canon_url = explicit_reference or _actor_canon(focus_actor)
+    canon_url = _actor_canon(focus_actor)
     return CharacterProfile(
         key=f"scene-{_slug(str(job.get('id') or 'job'))}-{index + 1}",
         canon_url=canon_url,
@@ -96,13 +133,16 @@ def _profile_for_shot(job: dict[str, Any], shot: dict[str, Any], index: int) -> 
         aspect_ratio=aspect,
         duration=duration,
         output_name=output_name,
-    )
+    ), scene_anchor
 
 
-def _generate(profile: CharacterProfile) -> tuple[Path, str]:
+def _generate(profile: CharacterProfile, scene_anchor: dict[str, Any] | None = None) -> tuple[Path, str]:
     source = SCENE_DIR / f"{profile.key}-reference.png"
     target = SCENE_DIR / profile.output_name
-    _download_canon(profile, source)
+    if scene_anchor:
+        _crop_anchor(scene_anchor, source, profile.width, profile.height)
+    else:
+        _download_canon(profile, source)
     target.unlink(missing_ok=True)
     errors: list[str] = []
     try:
@@ -131,6 +171,7 @@ def run_job(job_path: Path, publish: bool) -> dict[str, Any]:
         "status": "candidate-processing",
         "approvalRequired": True,
         "autoPublish": False,
+        "sceneAnchor": job.get("sceneAnchor"),
         "shots": [],
     }
 
@@ -141,20 +182,21 @@ def run_job(job_path: Path, publish: bool) -> dict[str, Any]:
             "status": "processing",
         }
         try:
-            profile = _profile_for_shot(job, shot, index)
-            path, compute = _generate(profile)
+            profile, scene_anchor = _profile_for_shot(job, shot, index)
+            path, compute = _generate(profile, scene_anchor)
             item.update({
                 "status": "candidate-ready",
                 "compute": compute,
                 "path": str(path),
                 "bytes": path.stat().st_size,
                 "profile": asdict(profile),
+                "sceneAnchorId": scene_anchor.get("id") if scene_anchor else None,
             })
             if publish:
                 item["candidateUrl"] = publish_candidate(path)
         except Exception as exc:
             message = str(exc)
-            item["status"] = "blocked-reference" if "sceneAnchorUrl/referenceUrl" in message else "failed"
+            item["status"] = "blocked-reference" if "sceneAnchor" in message else "failed"
             item["error"] = message
         result["shots"].append(item)
 
