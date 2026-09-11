@@ -1,3 +1,4 @@
+import './surprise-aftermath';
 import { consumeSurpriseScene, isSurpriseDeliveryContextValid, peekNextSurpriseScene, type SurpriseDelivery } from './surprise-delivery';
 
 const OVERLAY_ID='moniaSurpriseScenePlayer';
