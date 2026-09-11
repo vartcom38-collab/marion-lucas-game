@@ -3,6 +3,7 @@ import type { MonIADirectorResult } from './director';
 import { routeSceneFromGameState } from './scene-context-router';
 import { planDrama } from './drama-planner';
 import { setLucasVisioContext } from './visio-state-media';
+import { queueDramaPlan } from './scene-generation-queue';
 
 const SAVE_KEY = 'marion-lucas-save-v4';
 const STATE_KEY = 'monia-auto-scene-state-v1';
@@ -120,15 +121,12 @@ function shouldConsider(save: LooseSave, state: AutoState) {
   if (document.hidden) return false;
   if (document.getElementById('moniaDramaScene') || document.getElementById('moniaSceneOffer')) return false;
   if (save.flags?.moniaSmsPending) return false;
-
   const sig = signature(save);
   if (!sig || sig === state.signature) return false;
-
   const day = Number(save.day || 0);
   const now = day * 1440 + minutes(save.time);
   const last = state.lastSceneDay * 1440 + state.lastSceneMinute;
   if (state.lastSceneDay >= 0 && now - last < 360) return false;
-
   return true;
 }
 
@@ -145,14 +143,7 @@ function sceneScore(save: LooseSave, state: AutoState) {
 }
 
 function sceneSnapshot(result: MonIADirectorResult, save: LooseSave, route: ReturnType<typeof routeSceneFromGameState>) {
-  return JSON.stringify({
-    channel: 'scene',
-    route,
-    emotion: result.emotion,
-    scene: result.scene,
-    source: result.source,
-    at: `${save.day || 0}:${save.time || '00:00'}:auto:${Date.now()}`,
-  });
+  return JSON.stringify({ channel: 'scene', route, emotion: result.emotion, scene: result.scene, source: result.source, at: `${save.day || 0}:${save.time || '00:00'}:auto:${Date.now()}` });
 }
 
 function visioMood(result: MonIADirectorResult) {
@@ -176,13 +167,7 @@ function timeOfDay(time = '12:00') {
   return 'night';
 }
 
-async function prepareMediaRoute(
-  save: LooseSave,
-  route: ReturnType<typeof routeSceneFromGameState>,
-  result: MonIADirectorResult,
-  memoryLines: string[],
-  assessment: ReturnType<typeof sceneScore>,
-) {
+async function prepareMediaRoute(save: LooseSave, route: ReturnType<typeof routeSceneFromGameState>, result: MonIADirectorResult, memoryLines: string[], assessment: ReturnType<typeof sceneScore>) {
   const fresh = readSave();
   if (!fresh) return;
   const flags = fresh.flags || (fresh.flags = {});
@@ -195,34 +180,19 @@ async function prepareMediaRoute(
       relationship: relationLabel(save.relationship),
       recentBeat: assessment.strong[0] || assessment.latest[0] || result.text || result.spokenText || '',
     });
-    flags.moniaPendingMediaIntent = JSON.stringify({
-      status: 'context-ready',
-      route: 'visio',
-      approvedOnlyInLive: true,
-      candidateGenerationAllowedOnlyInReview: true,
-      at: Date.now(),
-    });
+    flags.moniaPendingMediaIntent = JSON.stringify({ status: 'context-ready', route: 'visio', approvedOnlyInLive: true, candidateGenerationAllowedOnlyInReview: true, at: Date.now() });
     writeSave(fresh);
     return;
   }
 
   if (route.route === 'environment-beat') {
-    flags.moniaPendingMediaIntent = JSON.stringify({
-      status: 'approved-cache-only',
-      route: 'environment-beat',
-      preferredShots: route.preferredShotGrammar,
-      at: Date.now(),
-    });
+    flags.moniaPendingMediaIntent = JSON.stringify({ status: 'approved-cache-only', route: 'environment-beat', preferredShots: route.preferredShotGrammar, at: Date.now() });
     writeSave(fresh);
     return;
   }
 
   const actors = route.route === 'lucas-solo-drama' ? ['Lucas'] : ['Lucas', 'Marion'];
-  const premise = [
-    result.scene?.action || '',
-    result.spokenText || result.text || '',
-    ...assessment.strong.slice(0, 3),
-  ].filter(Boolean).join(' · ');
+  const premise = [result.scene?.action || '', result.spokenText || result.text || '', ...assessment.strong.slice(0, 3)].filter(Boolean).join(' · ');
 
   const plan = await planDrama({
     title: route.route === 'family-drama' ? 'Moment familial' : route.route === 'couple-drama' ? 'Moment Marion & Lucas' : 'Moment Lucas',
@@ -254,23 +224,12 @@ async function prepareMediaRoute(
     renderMode: 'true_video_required',
   }, true);
 
+  const job = queueDramaPlan(plan, route.route, actors);
   const latest = readSave();
   if (!latest) return;
   const latestFlags = latest.flags || (latest.flags = {});
-  latestFlags.moniaPendingDramaPlan = JSON.stringify({
-    status: 'candidate-plan',
-    route,
-    plan,
-    approvalRequired: true,
-    generatedMediaMayNotAutoPublish: true,
-    at: Date.now(),
-  });
-  latestFlags.moniaPendingMediaIntent = JSON.stringify({
-    status: 'candidate-plan-ready',
-    route: route.route,
-    shots: plan.shots.map(s => ({ id: s.id, shotSize: s.shotSize, focusActor: s.focusActor, duration: s.duration })),
-    at: Date.now(),
-  });
+  latestFlags.moniaPendingDramaPlan = JSON.stringify({ status: 'candidate-plan', route, plan, generationJobId: job.id, continuityKey: job.continuityKey, approvalRequired: true, generatedMediaMayNotAutoPublish: true, at: Date.now() });
+  latestFlags.moniaPendingMediaIntent = JSON.stringify({ status: 'candidate-shots-queued', route: route.route, generationJobId: job.id, continuityKey: job.continuityKey, shots: job.shots.map(s => ({ id: s.id, shotSize: s.shotSize, focusActor: s.focusActor, duration: s.duration, status: s.status })), at: Date.now() });
   writeSave(latest);
 }
 
@@ -290,7 +249,6 @@ async function evaluate() {
   state.signature = signature(save);
   state.lastRelationshipBand = Math.max(state.lastRelationshipBand, assessment.band);
   writeState(state);
-
   if (assessment.score < 7) return;
 
   const signal = buildSignal(save);
@@ -308,7 +266,6 @@ async function evaluate() {
     recentEvents: signal.recentEvents,
     memories: signal.recentMemories,
   });
-
   if (route.route === 'message-only') return;
 
   evaluating = true;
@@ -354,12 +311,7 @@ async function evaluate() {
     flags.moniaSceneRoute = JSON.stringify(route);
     flags.moniaLastDirector = sceneSnapshot({ ...result, channel: 'scene' }, fresh, route);
     fresh.messages = fresh.messages || [];
-    fresh.messages.unshift({
-      from: 'Lucas',
-      text: `🎬 ${result.text || result.spokenText || 'Le moment se prolonge.'}`,
-      day: Number(fresh.day || 0),
-      read: true,
-    });
+    fresh.messages.unshift({ from: 'Lucas', text: `🎬 ${result.text || result.spokenText || 'Le moment se prolonge.'}`, day: Number(fresh.day || 0), read: true });
     if (result.memory) {
       fresh.memories = fresh.memories || [];
       fresh.memories.unshift(result.memory);
@@ -371,12 +323,7 @@ async function evaluate() {
       const latest = readSave();
       if (!latest) return;
       const latestFlags = latest.flags || (latest.flags = {});
-      latestFlags.moniaPendingMediaIntent = JSON.stringify({
-        status: 'planning-error',
-        route: route.route,
-        error: error instanceof Error ? error.message : String(error),
-        at: Date.now(),
-      });
+      latestFlags.moniaPendingMediaIntent = JSON.stringify({ status: 'planning-error', route: route.route, error: error instanceof Error ? error.message : String(error), at: Date.now() });
       writeSave(latest);
     });
 
@@ -396,4 +343,4 @@ window.setInterval(() => { void evaluate(); }, 2400);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) void evaluate(); });
 window.setTimeout(() => { void evaluate(); }, 1800);
 
-console.info('[MonIA] Intelligent contextual scene routing + candidate planning active');
+console.info('[MonIA] Intelligent contextual routing + continuity-safe candidate queue active');
