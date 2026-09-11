@@ -14,83 +14,22 @@ export type LucasMotionProfile={
  * explicitly needs generic partner blocking; Marion always uses her own canon.
  */
 export const LUCAS_MOTION_LANGUAGE:LucasMotionProfile[]=[
-  {
-    id:'restrained-protective-close',
-    tags:['protective','close_proximity','tension','car','two_person','body_presence'],
-    aliases:['protecteur','proche','tension','voiture','duo','carrure','presence'],
-    direction:'Lucas keeps the torso steady and protective, shoulders controlled, gaze fixed then briefly lowered; one restrained hand/arm movement toward the other person, small jaw tension, natural breathing, no theatrical flailing. Preserve the approved Lucas face while allowing the male reference to guide torso balance, shoulder carriage and masculine physical presence.',
-    avoid:['copy_reference_identity','copy_coactor_identity','copy_tattoos','copy_wardrobe','overacting','aggressive_grabbing']
-  },
-  {
-    id:'private-soft-reaction',
-    tags:['tender','reaction','listening','micro_expression','closeup','face_similarity_secondary'],
-    aliases:['tendre','reaction','ecoute','visio','regard','sourire'],
-    direction:'Lucas listens before reacting: eyes move first, then a tiny head turn; expression softens slowly, restrained half-smile or exhale, subtle brow movement and realistic blink timing. If the male reference is visually close to Lucas, use it only as a secondary guide for expression mechanics and angle; Lucas canon controls identity.',
-    avoid:['copy_reference_identity','copy_coactor_identity','fixed_smile','robotic_blink','exaggerated_nod']
-  },
-  {
-    id:'formal-room-presence',
-    tags:['formal','standing','social_scene','composed','reaction','body_presence'],
-    aliases:['formel','debout','public','reception','calme','compose','posture'],
-    direction:'Lucas has a calm grounded presence in a social room: upright but relaxed posture, economical turns of the head, measured eye contact, hands mostly still, short reaction beats before speaking or moving. Male reference footage may guide stance, weight distribution, gait and shoulder posture without transferring identity.',
-    avoid:['copy_reference_identity','copy_coactor_identity','copy_wardrobe','runway_pose','constant_motion']
-  },
-  {
-    id:'everyday-table-behaviour',
-    tags:['everyday','table','eating','domestic','natural','body_presence'],
-    aliases:['quotidien','repas','manger','maison','domestique','naturel'],
-    direction:'Use ordinary unscripted timing: glance to the other person, look down to the object or food, small hand movement, swallow/breathe, return gaze; actions overlap slightly rather than happening one by one like animation cues. Preserve believable torso and arm mechanics from male references where useful.',
-    avoid:['copy_reference_identity','copy_coactor_identity','copy_props_exactly','mechanical_sequence','perfect_symmetry']
-  },
-  {
-    id:'quiet-emotional-care',
-    tags:['care','quiet','tender','close_proximity','hand_contact','body_presence'],
-    aliases:['soin','rassurer','doux','silence','contact','reconfort'],
-    direction:'Lucas approaches slowly and checks the other person with his eyes before touching; hand contact is careful and light, fingers settle naturally, posture softens, gaze alternates between face and contact point, emotion stays contained. Use male-reference body mechanics for reach, shoulder position and hand placement; ignore the co-actor identity.',
-    avoid:['copy_reference_identity','copy_coactor_identity','copy_tattoos','sexualized_motion','forceful_contact','melodramatic_crying']
-  },
-  {
-    id:'intimate-proximity-with-restraint',
-    tags:['romantic','tender','intimate','proximity','chemistry','body_presence'],
-    aliases:['romantique','tendre','intime','proximite','chimie','amoureux'],
-    direction:'Build chemistry through distance changes rather than big gestures: small lean-in, pause, eye contact, breath, slight head angle and hand placement that remains gentle; hold micro-pauses so the moment feels human and not choreographed. The male reference may guide body silhouette, lean-in mechanics, hand placement and physical tension, while Lucas canon remains the face/identity authority.',
-    avoid:['copy_reference_identity','copy_coactor_identity','copy_tattoos','explicit_sexual_action','instant_kiss_loop','overacting']
-  },
-  {
-    id:'cinematic-reaction-rhythm',
-    tags:['cinematic','reaction','closeup','tension','dialogue'],
-    aliases:['cinematique','reaction','gros plan','tension','dialogue','silence'],
-    direction:'Reaction rhythm should read before dialogue: 0.3–1.0s observation beat, small eye change, breath or jaw release, then speech/action. Preserve uneven human timing and occasional stillness.',
-    avoid:['copy_reference_identity','copy_coactor_identity','constant_head_motion','rubbery_mouth','perfectly_timed_blinks']
-  },
-  {
-    id:'face-touch-tender-approach',
-    tags:['romantic','face_touch','tender','approach','close_proximity','chemistry','body_presence'],
-    aliases:['caresse visage','toucher visage','approche','tendre','proximite','romantique'],
-    direction:'For a tender face-contact beat, Lucas closes distance slowly, checks consent through eye contact and a micro-pause, lifts the hand without sudden acceleration, settles fingertips lightly near cheek or jaw, then keeps the body still enough for the emotion to read. Male references may guide arm path, hand approach, torso distance and timing; co-actor identity is discarded.',
-    avoid:['copy_reference_identity','copy_coactor_identity','copy_tattoos','forceful_face_grab','instant_contact','sexualized_motion']
-  },
-  {
-    id:'protective-parent-child-calm',
-    tags:['family','child','protective','care','parent_child','gentle','body_presence'],
-    aliases:['famille','enfant','pere','protecteur','doux','porter enfant','parent'],
-    direction:'With a child, Lucas moves with slower acceleration and stable support: torso turns before the arms, hands secure without squeezing, gaze checks the child frequently, posture stays protective and calm, and transitions avoid abrupt or playful jolts unless explicitly requested. Male reference footage may guide how he carries, supports, walks with or settles a child; child identity is never copied.',
-    avoid:['copy_reference_identity','copy_child_identity','copy_coactor_identity','unsafe_child_motion','rough_handling','adult_romantic_gesture']
-  },
-  {
-    id:'emotion-object-reaction',
-    tags:['emotion','object','gift','reaction','closeup','quiet'],
-    aliases:['emotion','objet','cadeau','reaction','gros plan','souvenir'],
-    direction:'When an object carries emotion, Lucas looks to it first, pauses, lets the eyes and breath change before the hands move, touches or turns the object with small precise motion, then returns gaze to the other person. The object should support the reaction rather than trigger exaggerated acting.',
-    avoid:['copy_reference_identity','copy_prop_exactly','copy_coactor_identity','overacting','constant_fidgeting','instant_smile']
-  },
-  {
-    id:'contained-formal-tension',
-    tags:['formal','tension','public','standing','controlled','social_scene','body_presence'],
-    aliases:['formel','tension contenue','public','debout','controle','social'],
-    direction:'In a formal or public tense moment, Lucas stays physically economical: weight shifts subtly, chin and eyes lead attention changes, hands remain controlled, breath and jaw carry tension, and any step toward another person is deliberate rather than aggressive. Male reference footage may guide stance, gait and full-body tension.',
-    avoid:['copy_reference_identity','copy_coactor_identity','copy_wardrobe','pacing','aggressive_posture','theatrical_gestures']
-  }
+  {id:'restrained-protective-close',tags:['protective','close_proximity','tension','car','two_person','body_presence'],aliases:['protecteur','proche','tension','voiture','duo','carrure','presence'],direction:'Lucas keeps the torso steady and protective, shoulders controlled, gaze fixed then briefly lowered; one restrained hand/arm movement toward the other person, small jaw tension, natural breathing, no theatrical flailing. Preserve the approved Lucas face while allowing the male reference to guide torso balance, shoulder carriage and masculine physical presence.',avoid:['copy_reference_identity','copy_coactor_identity','copy_tattoos','copy_wardrobe','overacting','aggressive_grabbing']},
+  {id:'private-soft-reaction',tags:['tender','reaction','listening','micro_expression','closeup','face_similarity_secondary'],aliases:['tendre','reaction','ecoute','visio','regard','sourire'],direction:'Lucas listens before reacting: eyes move first, then a tiny head turn; expression softens slowly, restrained half-smile or exhale, subtle brow movement and realistic blink timing. If the male reference is visually close to Lucas, use it only as a secondary guide for expression mechanics and angle; Lucas canon controls identity.',avoid:['copy_reference_identity','copy_coactor_identity','fixed_smile','robotic_blink','exaggerated_nod']},
+  {id:'formal-room-presence',tags:['formal','standing','social_scene','composed','reaction','body_presence'],aliases:['formel','debout','public','reception','calme','compose','posture'],direction:'Lucas has a calm grounded presence in a social room: upright but relaxed posture, economical turns of the head, measured eye contact, hands mostly still, short reaction beats before speaking or moving. Male reference footage may guide stance, weight distribution, gait and shoulder posture without transferring identity.',avoid:['copy_reference_identity','copy_coactor_identity','copy_wardrobe','runway_pose','constant_motion']},
+  {id:'everyday-table-behaviour',tags:['everyday','table','eating','domestic','natural','body_presence'],aliases:['quotidien','repas','manger','maison','domestique','naturel'],direction:'Use ordinary unscripted timing: glance to the other person, look down to the object or food, small hand movement, swallow/breathe, return gaze; actions overlap slightly rather than happening one by one like animation cues. Preserve believable torso and arm mechanics from male references where useful.',avoid:['copy_reference_identity','copy_coactor_identity','copy_props_exactly','mechanical_sequence','perfect_symmetry']},
+  {id:'quiet-emotional-care',tags:['care','quiet','tender','close_proximity','hand_contact','body_presence'],aliases:['soin','rassurer','doux','silence','contact','reconfort'],direction:'Lucas approaches slowly and checks the other person with his eyes before touching; hand contact is careful and light, fingers settle naturally, posture softens, gaze alternates between face and contact point, emotion stays contained. Use male-reference body mechanics for reach, shoulder position and hand placement; ignore the co-actor identity.',avoid:['copy_reference_identity','copy_coactor_identity','copy_tattoos','sexualized_motion','forceful_contact','melodramatic_crying']},
+  {id:'intimate-proximity-with-restraint',tags:['romantic','tender','intimate','proximity','chemistry','body_presence'],aliases:['romantique','tendre','intime','proximite','chimie','amoureux'],direction:'Build chemistry through distance changes rather than big gestures: small lean-in, pause, eye contact, breath, slight head angle and hand placement that remains gentle; hold micro-pauses so the moment feels human and not choreographed. The male reference may guide body silhouette, lean-in mechanics, hand placement and physical tension, while Lucas canon remains the face/identity authority.',avoid:['copy_reference_identity','copy_coactor_identity','copy_tattoos','explicit_sexual_action','instant_kiss_loop','overacting']},
+  {id:'cinematic-reaction-rhythm',tags:['cinematic','reaction','closeup','tension','dialogue'],aliases:['cinematique','reaction','gros plan','tension','dialogue','silence'],direction:'Reaction rhythm should read before dialogue: 0.3–1.0s observation beat, small eye change, breath or jaw release, then speech/action. Preserve uneven human timing and occasional stillness.',avoid:['copy_reference_identity','copy_coactor_identity','constant_head_motion','rubbery_mouth','perfectly_timed_blinks']},
+  {id:'face-touch-tender-approach',tags:['romantic','face_touch','tender','approach','close_proximity','chemistry','body_presence'],aliases:['caresse visage','toucher visage','approche','tendre','proximite','romantique'],direction:'For a tender face-contact beat, Lucas closes distance slowly, checks consent through eye contact and a micro-pause, lifts the hand without sudden acceleration, settles fingertips lightly near cheek or jaw, then keeps the body still enough for the emotion to read. Male references may guide arm path, hand approach, torso distance and timing; co-actor identity is discarded.',avoid:['copy_reference_identity','copy_coactor_identity','copy_tattoos','forceful_face_grab','instant_contact','sexualized_motion']},
+  {id:'protective-parent-child-calm',tags:['family','child','protective','care','parent_child','gentle','body_presence'],aliases:['famille','enfant','pere','protecteur','doux','porter enfant','parent'],direction:'With a child, Lucas moves with slower acceleration and stable support: torso turns before the arms, hands secure without squeezing, gaze checks the child frequently, posture stays protective and calm, and transitions avoid abrupt or playful jolts unless explicitly requested. Male reference footage may guide how he carries, supports, walks with or settles a child; child identity is never copied.',avoid:['copy_reference_identity','copy_child_identity','copy_coactor_identity','unsafe_child_motion','rough_handling','adult_romantic_gesture']},
+  {id:'emotion-object-reaction',tags:['emotion','object','gift','reaction','closeup','quiet'],aliases:['emotion','objet','cadeau','reaction','gros plan','souvenir'],direction:'When an object carries emotion, Lucas looks to it first, pauses, lets the eyes and breath change before the hands move, touches or turns the object with small precise motion, then returns gaze to the other person. The object should support the reaction rather than trigger exaggerated acting.',avoid:['copy_reference_identity','copy_prop_exactly','copy_coactor_identity','overacting','constant_fidgeting','instant_smile']},
+  {id:'contained-formal-tension',tags:['formal','tension','public','standing','controlled','social_scene','body_presence'],aliases:['formel','tension contenue','public','debout','controle','social'],direction:'In a formal or public tense moment, Lucas stays physically economical: weight shifts subtly, chin and eyes lead attention changes, hands remain controlled, breath and jaw carry tension, and any step toward another person is deliberate rather than aggressive. Male reference footage may guide stance, gait and full-body tension.',avoid:['copy_reference_identity','copy_coactor_identity','copy_wardrobe','pacing','aggressive_posture','theatrical_gestures']},
+  {id:'urgent-tender-kiss-recovery',tags:['romantic','kiss','face_touch','intense','protective','post_kiss_reaction','two_person'],aliases:['baiser','embrasser','visage entre les mains','intense','protecteur','apres baiser'],direction:'Lucas may move with contained urgency, bringing both hands toward the partner’s face or jaw with controlled pressure, closing distance decisively, then visibly softening after the kiss or contact. Keep the transition from intensity to care readable through breath, gaze and a slight release of the shoulders. Never copy the reference identity; Lucas canon remains absolute.',avoid:['copy_reference_identity','copy_coactor_identity','forceful_face_grab','explicit_sexual_action','violent_contact','kiss_loop']},
+  {id:'close-dialogue-bedside-tension',tags:['close_dialogue','reclined','lean_over','near_kiss','micro_smile','intimate','dialogue'],aliases:['dialogue proche','allonge','se pencher','presque baiser','micro sourire','tension intime'],direction:'In a close reclined conversation, Lucas leans in gradually rather than collapsing the distance at once. Let eye contact, a small smile, breath and pauses do most of the work. Keep one stable support point through arm or torso so the body feels physically believable, and preserve subtle back-and-forth distance changes before any contact.',avoid:['copy_reference_identity','copy_coactor_identity','hovering_unrealistically','instant_kiss','overacting','explicit_sexual_action']},
+  {id:'public-flirt-approach',tags:['public','flirt','standing','approach','playful','social_scene','chemistry'],aliases:['flirt public','debout','approche laterale','taquin','regard joueur','chimie sociale'],direction:'Lucas approaches in a social setting with calm confidence: a measured side-step or half-turn, relaxed shoulders, brief eye contact away then back, restrained smile and a respectful stopping distance. Chemistry should come from timing and proximity, not exaggerated posing.',avoid:['copy_reference_identity','copy_coactor_identity','runway_pose','aggressive_cornering','constant_smirk','copy_wardrobe']},
+  {id:'formal-romantic-hand-kiss',tags:['formal','romantic','hand_kiss','gentle_contact','ceremonial','elegant','body_presence'],aliases:['baiser main','main embrassee','romance formelle','geste elegant','ceremonial'],direction:'For a formal romantic hand-kiss, Lucas supports the hand lightly, lowers his head and torso with controlled posture rather than yanking the hand upward, pauses briefly before contact, then rises while returning eye contact. The gesture stays elegant, gentle and non-performative.',avoid:['copy_reference_identity','copy_coactor_identity','forceful_hand_pull','theatrical_bow','sexualized_motion','copy_jewelry']},
+  {id:'romantic-travel-life-montage',tags:['travel','couple','outdoor','walking','hand_in_hand','embrace','playful','table','environment','montage'],aliases:['voyage','couple','marcher main dans la main','montagne','neige','restaurant','montage romantique'],direction:'For travel/life montage beats, vary scale and tempo: wide establishing movement, medium shared walk or hand-hold, spontaneous playful reaction, close emotional beat, then calm shared activity such as conversation at a table. Keep interactions imperfect and natural, with changing gaze directions and small asymmetries rather than repeated romantic poses.',avoid:['copy_reference_identity','copy_coactor_identity','perfect_pose_sequence','same_gesture_every_shot','music_video_overacting','copy_location_exactly']}
 ];
 
 function norm(v:string){return v.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim()}
