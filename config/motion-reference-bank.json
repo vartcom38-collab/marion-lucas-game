@@ -1,5 +1,5 @@
 {
-  "version": 5,
+  "version": 6,
   "status": "locked",
   "policy": {
     "motion_reference_only": false,
@@ -39,7 +39,8 @@
     {"id":"motion-user-20260911-b","source_file_label":"ScreenRecording_09-11-2026 15-58-24_1.mp4","asset_status":"motion-profile-extracted","motion_profile":"close-dialogue-bedside-tension","tags":["motion_reference","face_similarity_secondary","male_body_reference","close_dialogue","reclined_blocking","lean_over","eye_contact","micro_smile","pause_before_speech","near_kiss_tension","natural_breathing","non_explicit","do_not_copy_identity","ignore_female_identity"]},
     {"id":"motion-user-20260911-c","source_file_label":"ScreenRecording_09-11-2026 15-59-56_1.mp4","asset_status":"motion-profile-extracted","motion_profile":"public-flirt-approach","tags":["motion_reference","face_similarity_secondary","male_body_reference","public_scene","standing_close","approach_from_side","playful_eye_contact","restrained_smile","social_tension","elegant_blocking","do_not_copy_identity","ignore_female_identity"]},
     {"id":"motion-user-20260911-d","source_file_label":"ScreenRecording_09-11-2026 16-03-51_1.mp4","asset_status":"motion-profile-extracted","motion_profile":"formal-romantic-hand-kiss","tags":["motion_reference","male_body_reference","formal_romance","hand_kiss","gentle_hand_support","bowing_motion","measured_approach","ceremonial_presence","elegant_posture","closeup_hand_contact","non_explicit","do_not_copy_identity","ignore_female_identity"]},
-    {"id":"motion-user-20260911-e","source_file_label":"ScreenRecording_09-11-2026 17-09-50_1.mp4","asset_status":"motion-profile-extracted","motion_profile":"romantic-travel-life-montage","tags":["motion_reference","face_similarity_secondary","male_body_reference","couple_travel","outdoor_blocking","walking_hand_in_hand","embrace","playful_snow_reaction","table_conversation","shared_gaze","soft_face_touch","environment_transition","wide_to_close_rhythm","do_not_copy_identity","ignore_female_identity"]}
+    {"id":"motion-user-20260911-e","source_file_label":"ScreenRecording_09-11-2026 17-09-50_1.mp4","asset_status":"motion-profile-extracted","motion_profile":"romantic-travel-life-montage","tags":["motion_reference","face_similarity_secondary","male_body_reference","couple_travel","outdoor_blocking","walking_hand_in_hand","embrace","playful_snow_reaction","table_conversation","shared_gaze","soft_face_touch","environment_transition","wide_to_close_rhythm","do_not_copy_identity","ignore_female_identity"]},
+    {"id":"motion-user-20260911-f","source_file_label":"ScreenRecording_09-11-2026 20-09-50_1.mp4","asset_status":"motion-profile-extracted","motion_profile":"domestic-dialogue-contained-tension","tags":["motion_reference","face_similarity_secondary","male_body_reference","domestic_scene","seated_dialogue","standing_dialogue","side_by_side_blocking","closeup_reaction","measured_head_turn","contained_tension","listening_before_reply","subtle_lean","warm_interior","do_not_copy_identity","ignore_female_identity","ignore_tattoos"]}
   ],
   "future_child_motion_bands": ["baby", "toddler", "young_child", "older_child", "teen"]
 }
