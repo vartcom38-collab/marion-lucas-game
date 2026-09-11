@@ -86,6 +86,22 @@ function routeRequirements(route:string){
   return{duo,lucas,marion};
 }
 
+export function learnSurpriseTrustFromHumanApproval(candidate:SurpriseCandidateFacts){
+  const state=readSurpriseTrust();
+  const req=routeRequirements(candidate.route);
+  if(req.lucas&&candidate.lucasIdentity)state.trusted['lucas-identity']=true;
+  if(req.marion&&candidate.marionIdentity)state.trusted['marion-identity']=true;
+  if(req.duo&&candidate.lucasIdentity&&candidate.marionIdentity)state.trusted['duo-identity']=true;
+  if(candidate.motion)state.trusted['motion-language']=true;
+  if(candidate.continuity&&candidate.wardrobe&&candidate.location)state.trusted['scene-continuity']=true;
+  if(candidate.completeAssembly&&candidate.canon)state.trusted['assembled-video']=true;
+  if(DOMAINS.every(k=>Boolean(state.trusted[k])))state.mode='surprise';
+  state.updatedAt=Date.now();
+  writeSurpriseTrust(state);
+  window.dispatchEvent(new CustomEvent('monia:surprise-calibration-learned',{detail:{route:candidate.route,state}}));
+  return state;
+}
+
 export function surpriseGate(candidate:SurpriseCandidateFacts){
   const state=readSurpriseTrust();
   const req=routeRequirements(candidate.route);
@@ -113,9 +129,11 @@ declare global{
     __moniaTrustSurpriseDomain?:(domain:SurpriseTrustDomain,trusted?:boolean)=>SurpriseTrustState;
     __moniaActivateSurpriseMode?:()=>SurpriseTrustState;
     __moniaDeactivateSurpriseMode?:()=>SurpriseTrustState;
+    __moniaLearnSurpriseTrust?:(candidate:SurpriseCandidateFacts)=>SurpriseTrustState;
   }
 }
 window.__moniaSurpriseTrust=readSurpriseTrust;
 window.__moniaTrustSurpriseDomain=trustSurpriseDomain;
 window.__moniaActivateSurpriseMode=activateSurpriseMode;
 window.__moniaDeactivateSurpriseMode=deactivateSurpriseMode;
+window.__moniaLearnSurpriseTrust=learnSurpriseTrustFromHumanApproval;
