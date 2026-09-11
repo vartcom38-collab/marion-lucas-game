@@ -1,5 +1,5 @@
 import { moniaCreativeVault } from './creative-vault';
-import { surpriseGate, type SurpriseCandidateFacts } from './surprise-approval';
+import { learnSurpriseTrustFromHumanApproval, surpriseGate, type SurpriseCandidateFacts } from './surprise-approval';
 
 const CANDIDATE_KEY='monia-assembled-scene-candidate-v1';
 const REVIEW_KEY='monia-assembled-scene-review-v1';
@@ -142,7 +142,19 @@ export async function approveAssembledScene(candidateId:string,notes=''){
   if(!candidate||candidate.id!==candidateId)throw new Error('Assembled scene candidate not found');
   if(!review||review.candidateId!==candidateId)throw new Error('Review missing for assembled scene');
   if(!allChecksPass(review))throw new Error('All assembled-scene review checks must pass before approval');
-  return registerApprovedAsset(candidate,review,'atomic-whole-scene',notes);
+  const asset=await registerApprovedAsset(candidate,review,'atomic-whole-scene',notes);
+  const facts=factsFromCandidate(candidate);
+  facts.lucasIdentity=review.checks.lucasIdentity;
+  facts.marionIdentity=review.checks.marionIdentity;
+  facts.continuity=review.checks.continuity;
+  facts.wardrobe=review.checks.wardrobe;
+  facts.location=review.checks.location;
+  facts.motion=review.checks.motion;
+  facts.canon=review.checks.canon;
+  facts.completeAssembly=review.checks.completeAssembly;
+  const trust=learnSurpriseTrustFromHumanApproval(facts);
+  window.dispatchEvent(new CustomEvent('monia:surprise-mode-progress',{detail:{candidateId,route:candidate.route,trust}}));
+  return asset;
 }
 
 export async function rejectAssembledScene(candidateId:string,notes=''){
