@@ -1,6 +1,8 @@
 import { monia } from './runtime';
 import type { MonIADirectorResult } from './director';
 import { routeSceneFromGameState } from './scene-context-router';
+import { planDrama } from './drama-planner';
+import { setLucasVisioContext } from './visio-state-media';
 
 const SAVE_KEY = 'marion-lucas-save-v4';
 const STATE_KEY = 'monia-auto-scene-state-v1';
@@ -153,6 +155,125 @@ function sceneSnapshot(result: MonIADirectorResult, save: LooseSave, route: Retu
   });
 }
 
+function visioMood(result: MonIADirectorResult) {
+  const e = `${result.emotion || ''} ${result.text || ''} ${result.spokenText || ''}`.toLowerCase();
+  if (/tendre|warm|soft|affect|amour/.test(e)) return 'tender' as const;
+  if (/taquin|playful|sourire|léger/.test(e)) return 'playful' as const;
+  if (/inquiet|worried|peur/.test(e)) return 'worried' as const;
+  if (/bless|hurt/.test(e)) return 'hurt' as const;
+  if (/distant|froid/.test(e)) return 'distant' as const;
+  if (/intense|tension|désir/.test(e)) return 'intense' as const;
+  if (/soulag|relieved/.test(e)) return 'relieved' as const;
+  return 'neutral' as const;
+}
+
+function timeOfDay(time = '12:00') {
+  const h = Number(time.slice(0, 2));
+  if (h < 6) return 'late night';
+  if (h < 12) return 'morning';
+  if (h < 18) return 'afternoon';
+  if (h < 22) return 'evening';
+  return 'night';
+}
+
+async function prepareMediaRoute(
+  save: LooseSave,
+  route: ReturnType<typeof routeSceneFromGameState>,
+  result: MonIADirectorResult,
+  memoryLines: string[],
+  assessment: ReturnType<typeof sceneScore>,
+) {
+  const fresh = readSave();
+  if (!fresh) return;
+  const flags = fresh.flags || (fresh.flags = {});
+
+  if (route.route === 'visio') {
+    setLucasVisioContext({
+      mood: visioMood(result),
+      place: placeLabels[save.place || ''] || save.place || 'Lieu actuel',
+      timeOfDay: timeOfDay(save.time),
+      relationship: relationLabel(save.relationship),
+      recentBeat: assessment.strong[0] || assessment.latest[0] || result.text || result.spokenText || '',
+    });
+    flags.moniaPendingMediaIntent = JSON.stringify({
+      status: 'context-ready',
+      route: 'visio',
+      approvedOnlyInLive: true,
+      candidateGenerationAllowedOnlyInReview: true,
+      at: Date.now(),
+    });
+    writeSave(fresh);
+    return;
+  }
+
+  if (route.route === 'environment-beat') {
+    flags.moniaPendingMediaIntent = JSON.stringify({
+      status: 'approved-cache-only',
+      route: 'environment-beat',
+      preferredShots: route.preferredShotGrammar,
+      at: Date.now(),
+    });
+    writeSave(fresh);
+    return;
+  }
+
+  const actors = route.route === 'lucas-solo-drama' ? ['Lucas'] : ['Lucas', 'Marion'];
+  const premise = [
+    result.scene?.action || '',
+    result.spokenText || result.text || '',
+    ...assessment.strong.slice(0, 3),
+  ].filter(Boolean).join(' · ');
+
+  const plan = await planDrama({
+    title: route.route === 'family-drama' ? 'Moment familial' : route.route === 'couple-drama' ? 'Moment Marion & Lucas' : 'Moment Lucas',
+    context: {
+      speaker: 'Marion',
+      place: placeLabels[save.place || ''] || save.place || 'Lieu actuel',
+      time: save.time || '00:00',
+      day: Number(save.day || 0),
+      recentAction: `Continuité immédiate routée: ${route.route}`,
+      activeObjective: 'Préparer un storyboard candidat cohérent avec la partie, sans publication automatique.',
+      relationship: relationLabel(save.relationship),
+      memories: [...memoryLines, ...assessment.strong, ...assessment.latest].slice(0, 12),
+      recentEvents: (save.eventHistory || []).slice(-8),
+      rules: [
+        `Route imposée: ${route.route}.`,
+        `Co-présence physique confirmée: ${route.physicalCoPresence ? 'oui' : 'non'}.`,
+        `Niveau de proximité: ${route.intimacyLevel}.`,
+        `Plans préférés: ${route.preferredShotGrammar.join(', ')}.`,
+        'Lucas conserve son identité canon officielle; aucune référence de mouvement ne remplace son visage.',
+        'Toute femme de référence sert seulement au blocking et au contact; Marion conserve son propre canon.',
+        'Générer un plan candidat uniquement; jamais de média non approuvé en live.',
+      ],
+    },
+    premise: premise || 'Réaction immédiate subtile au contexte déjà établi.',
+    actors,
+    targetDuration: route.route === 'family-drama' ? 32 : 26,
+    format: '16:9',
+    availableMedia: ['lucas-intro.mp4', 'appartement-nimes.png'],
+    renderMode: 'true_video_required',
+  }, true);
+
+  const latest = readSave();
+  if (!latest) return;
+  const latestFlags = latest.flags || (latest.flags = {});
+  latestFlags.moniaPendingDramaPlan = JSON.stringify({
+    status: 'candidate-plan',
+    route,
+    plan,
+    approvalRequired: true,
+    generatedMediaMayNotAutoPublish: true,
+    at: Date.now(),
+  });
+  latestFlags.moniaPendingMediaIntent = JSON.stringify({
+    status: 'candidate-plan-ready',
+    route: route.route,
+    shots: plan.shots.map(s => ({ id: s.id, shotSize: s.shotSize, focusActor: s.focusActor, duration: s.duration })),
+    at: Date.now(),
+  });
+  writeSave(latest);
+}
+
 let evaluating = false;
 async function evaluate() {
   if (evaluating) return;
@@ -188,7 +309,6 @@ async function evaluate() {
     memories: signal.recentMemories,
   });
 
-  // Do not force a cinematic scene when the live state does not justify one.
   if (route.route === 'message-only') return;
 
   evaluating = true;
@@ -247,11 +367,25 @@ async function evaluate() {
     }
     writeSave(fresh);
 
+    await prepareMediaRoute(fresh, route, result, memoryLines, assessment).catch(error => {
+      const latest = readSave();
+      if (!latest) return;
+      const latestFlags = latest.flags || (latest.flags = {});
+      latestFlags.moniaPendingMediaIntent = JSON.stringify({
+        status: 'planning-error',
+        route: route.route,
+        error: error instanceof Error ? error.message : String(error),
+        at: Date.now(),
+      });
+      writeSave(latest);
+    });
+
     const done = readState();
-    done.lastSceneDay = Number(fresh.day || 0);
-    done.lastSceneMinute = minutes(fresh.time);
-    done.lastRelationshipBand = Math.max(done.lastRelationshipBand, relationBand(fresh.relationship));
-    done.signature = signature(fresh);
+    const finalSave = readSave() || fresh;
+    done.lastSceneDay = Number(finalSave.day || 0);
+    done.lastSceneMinute = minutes(finalSave.time);
+    done.lastRelationshipBand = Math.max(done.lastRelationshipBand, relationBand(finalSave.relationship));
+    done.signature = signature(finalSave);
     writeState(done);
   } finally {
     evaluating = false;
@@ -262,4 +396,4 @@ window.setInterval(() => { void evaluate(); }, 2400);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) void evaluate(); });
 window.setTimeout(() => { void evaluate(); }, 1800);
 
-console.info('[MonIA] Intelligent contextual scene routing active');
+console.info('[MonIA] Intelligent contextual scene routing + candidate planning active');
