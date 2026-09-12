@@ -99,8 +99,12 @@ jobs:
           require(drama_manifest.get('policy',{}).get('auto_publish_live') is False, 'generated media never mutates the locked live manifest')
 
           motion = json.loads(Path('dist/config/motion-reference-bank.json').read_text(encoding='utf-8'))
-          require(motion.get('policy',{}).get('motion_reference_only') is True, 'motion bank is motion-only')
-          require(motion.get('policy',{}).get('copy_identity') is False, 'motion bank cannot copy identity')
+          policy = motion.get('policy',{})
+          require(policy.get('copy_identity') is False, 'motion bank cannot copy identity')
+          require(policy.get('copy_face') is False, 'motion bank cannot copy face identity')
+          require(policy.get('copy_body_identity') is False, 'motion bank cannot copy body identity')
+          require(policy.get('character_canon_has_priority') is True, 'character canon keeps priority over references')
+          require(policy.get('lucas_face_canon_required') is True, 'Lucas face canon remains required')
           require(any('carrying_child' in r.get('tags',[]) for r in motion.get('references',[])), 'parent-child carrying motion reference registered')
 
           index = Path('index.html').read_text(encoding='utf-8')
@@ -173,7 +177,7 @@ jobs:
 
           manifest = json.loads(Path('dist/config/monia-visio-approved.json').read_text(encoding='utf-8'))
           require(manifest.get('status') == 'locked' and bool(manifest.get('fallback')), 'locked visio manifest has fallback')
-          print('Vite build is deployable: gameplay-authoritative surprise Drama can use guarded Kaggle pairs without mutating canon; Visio, motion-only references, previous-frame continuity and local voice infrastructure remain locked.')
+          print('Vite build is deployable: gameplay-authoritative surprise Drama can use guarded Kaggle pairs without mutating canon; Visio, identity-safe motion/body references, previous-frame continuity and local voice infrastructure remain locked.')
           PY
 
 # Validation rerun after migrating AppDeploy binary assets.
