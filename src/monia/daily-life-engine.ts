@@ -1,0 +1,64 @@
+const SAVE_KEY='marion-lucas-save-v4';
+
+type CalendarItem={day?:number;time?:string;owner?:string;title?:string;note?:string;place?:string};
+type Message={from?:string;text?:string;read?:boolean;day?:number};
+type Save={day?:number;time?:string;place?:string;metLucas?:boolean;official?:boolean;relationship?:number;trust?:number;chemistry?:number;stress?:number;energy?:number;messages?:Message[];calendar?:CalendarItem[];flags?:Record<string,unknown>;eventHistory?:string[]};
+
+export type DayPhase='early-morning'|'morning'|'midday'|'afternoon'|'evening'|'night';
+export type DailyDirectionKind='obligation'|'relationship'|'self'|'travel'|'social'|'rest'|'free';
+export type DailyDirection={id:string;label:string;kind:DailyDirectionKind;intent:string;weight:number;minutes:number;source:string};
+export type DailyLifeSnapshot={
+  day:number;time:string;phase:DayPhase;place:string;
+  narrative:string;
+  directions:DailyDirection[];
+  obligations:Array<{title:string;owner:string;time?:string;place?:string}>;
+  freeActions:{phone:true;map:true;wardrobe:true;journal:true;customIntent:true};
+  pacing:{mode:'quiet'|'balanced'|'active'|'high-stakes';surpriseAllowance:0|1|2;reason:string};
+  seeds:Array<{id:string;due:boolean;hidden:true;kind:string}>;
+};
+
+function read():Save|null{try{const raw=localStorage.getItem(SAVE_KEY);return raw?JSON.parse(raw) as Save:null}catch{return null}}
+function n(v:unknown,f=0){const x=Number(v);return Number.isFinite(x)?x:f}
+function mins(t?:string){const [h,m]=String(t||'09:00').split(':').map(Number);return (h||0)*60+(m||0)}
+function phase(t:string):DayPhase{const m=mins(t);return m<420?'early-morning':m<720?'morning':m<840?'midday':m<1080?'afternoon':m<1320?'evening':'night'}
+function todayCalendar(s:Save){const d=n(s.day,1);return (s.calendar||[]).filter(i=>n(i.day)===d)}
+function upcomingToday(s:Save){const now=mins(s.time);return todayCalendar(s).filter(i=>!i.time||mins(i.time)>=now-15).sort((a,b)=>mins(a.time)-mins(b.time))}
+function recentHighEvent(s:Save){return (s.eventHistory||[]).slice(-6).some(e=>/cinematic|surprise|proposal|birth|injury|accident|corrida-result|media-crisis/i.test(e))}
+function unread(s:Save){return [...(s.messages||[])].reverse().find(m=>m.read===false&&m.text)}
+function samePlaceWithLucas(s:Save){return !!s.official&&/home|madrid|finca|estate|hotel|family/i.test(String(s.place||''))}
+function push(list:DailyDirection[],v:DailyDirection){if(!list.some(x=>x.id===v.id))list.push(v)}
+
+function obligations(s:Save){return upcomingToday(s).slice(0,4).map(i=>({title:String(i.title||'Rendez-vous'),owner:String(i.owner||'Marion'),time:i.time,place:i.place}))}
+function pacing(s:Save):DailyLifeSnapshot['pacing']{
+  const stress=n(s.stress),energy=n(s.energy,100),high=recentHighEvent(s),items=upcomingToday(s).length;
+  if(high||stress>=80)return{mode:'quiet',surpriseAllowance:0,reason:'Un événement fort ou un niveau de stress élevé demande de laisser respirer la vie.'};
+  if(energy<28)return{mode:'quiet',surpriseAllowance:0,reason:'La fatigue doit réduire la densité narrative et privilégier les moments simples.'};
+  if(items>=3)return{mode:'active',surpriseAllowance:1,reason:'La journée est déjà chargée; une seule surprise légère ou moyenne suffit.'};
+  if(stress>=55)return{mode:'balanced',surpriseAllowance:1,reason:'Le directeur garde du rythme sans empiler les événements.'};
+  return{mode:'balanced',surpriseAllowance:2,reason:'La journée a assez d’espace pour laisser émerger de l’inattendu.'};
+}
+function plantedSeeds(s:Save){const f=s.flags||{};const day=n(s.day,1);const keys=['proposalSeedDay','surpriseTripSeedDay','giftSeedDay','mediaSeedDay','careerSeedDay','familySeedDay'];return keys.filter(k=>n(f[k],0)>0).map(k=>({id:k,due:day>=n(f[k]),hidden:true as const,kind:k.replace('SeedDay','')}));}
+function narrative(s:Save,p:DayPhase,obs:ReturnType<typeof obligations>){const u=unread(s);if(u)return `${String(u.from||'Quelqu’un')} t’a écrit. Tu peux regarder maintenant, ou continuer ce que tu fais.`;if(obs[0]){const when=obs[0].time?` à ${obs[0].time}`:'';return `La journée continue${when ? ` avec quelque chose de prévu${when}` : ''}. Tu peux suivre ton agenda, bifurquer, ou prendre du temps pour toi.`;}if(p==='morning')return'La journée est encore largement ouverte. Rien n’oblige à choisir entre avancer et prendre son temps.';if(p==='afternoon')return'L’après-midi peut encore changer de direction. Tes projets, Lucas et le reste du monde continuent chacun de leur côté.';if(p==='evening')return'La journée ralentit. Tu peux rentrer, sortir, appeler quelqu’un, retrouver Lucas ou garder la soirée pour toi.';if(p==='night')return'La nuit laisse moins de choses urgentes et davantage de place aux choix personnels.';return'Le moment est ouvert. Tu peux suivre ce qui se présente ou décider autre chose.'}
+
+function directions(s:Save,p:DayPhase):DailyDirection[]{
+  const out:DailyDirection[]=[];const obs=upcomingToday(s);const u=unread(s);const energy=n(s.energy,100);const stress=n(s.stress);const f=s.flags||{};
+  if(u)push(out,{id:'read-message',label:`Lire ${String(u.from||'le message')}`,kind:'social',intent:'open-latest-message',weight:100,minutes:5,source:'messages'});
+  const own=obs.find(i=>String(i.owner||'Marion').toLowerCase()==='marion');if(own)push(out,{id:'own-obligation',label:own.title||'Aller à mon rendez-vous',kind:'obligation',intent:'follow-calendar',weight:95,minutes:60,source:'calendar'});
+  const lucas=obs.find(i=>String(i.owner||'').toLowerCase()==='lucas');if(lucas&&s.official)push(out,{id:'lucas-day',label:/corrida|arène|arena/i.test(`${lucas.title||''} ${lucas.note||''}`)?'Voir ce que je fais autour de la journée de Lucas':'Accompagner Lucas un moment',kind:'relationship',intent:'open-lucas-day',weight:82,minutes:45,source:'lucas-calendar'});
+  if(s.metLucas&&samePlaceWithLucas(s)&&n(s.relationship)>=35&&n(s.trust)>=28&&n(s.chemistry)>=30&&stress<85&&energy>18)push(out,{id:'private-time',label:'Passer un moment rien qu’avec Lucas',kind:'relationship',intent:'open-intimacy-choice',weight:p==='evening'||p==='night'?76:46,minutes:60,source:'intimacy-window'});
+  if(s.metLucas&&!samePlaceWithLucas(s))push(out,{id:'contact-lucas',label:'Prendre des nouvelles de Lucas',kind:'relationship',intent:'open-phone-lucas',weight:62,minutes:10,source:'distance'});
+  if(energy<35||stress>65)push(out,{id:'rest',label:'Ralentir un peu',kind:'rest',intent:'rest',weight:78,minutes:45,source:'state'});
+  else if(p==='morning')push(out,{id:'start-day',label:'Commencer tranquillement la journée',kind:'self',intent:'morning-routine',weight:65,minutes:30,source:'phase'});
+  else if(p==='afternoon')push(out,{id:'go-out',label:'Sortir faire quelque chose',kind:'travel',intent:'open-map',weight:58,minutes:90,source:'phase'});
+  else if(p==='evening')push(out,{id:'evening-open',label:'Décider de ma soirée',kind:'free',intent:'evening-options',weight:55,minutes:90,source:'phase'});
+  if(f.toreroTravelChoiceDay&&n(f.toreroTravelChoiceDay)===n(s.day,1))push(out,{id:'travel-choice',label:'Continuer selon mon choix pour la tournée de Lucas',kind:'travel',intent:'continue-torero-travel',weight:72,minutes:90,source:'torero-travel'});
+  push(out,{id:'custom-intent',label:'Faire autre chose…',kind:'free',intent:'custom-intent',weight:25,minutes:30,source:'player-freedom'});
+  return out.sort((a,b)=>b.weight-a.weight).slice(0,5);
+}
+
+export function getDailyLifeSnapshot():DailyLifeSnapshot|null{const s=read();if(!s)return null;const time=String(s.time||'09:00');const p=phase(time);const obs=obligations(s);return{day:Math.max(1,n(s.day,1)),time,phase:p,place:String(s.place||'home'),narrative:narrative(s,p,obs),directions:directions(s,p),obligations:obs,freeActions:{phone:true,map:true,wardrobe:true,journal:true,customIntent:true},pacing:pacing(s),seeds:plantedSeeds(s)};}
+
+export function interpretFreeIntent(text:string){const t=text.trim().toLowerCase();if(!t)return{kind:'unknown',intent:'',allowed:false};if(/appel|appeler|téléphone|telephone|sms|message|visio/.test(t))return{kind:'phone',intent:text,allowed:true};if(/aller|partir|plage|ville|restaurant|café|cafe|voyage|promen/.test(t))return{kind:'travel',intent:text,allowed:true};if(/lucas|ensemble|retrouver|moment à deux|moment a deux/.test(t))return{kind:'relationship',intent:text,allowed:true};if(/robe|tenue|shopping|coiffeur|spa|sport|lire|musique|cuisiner/.test(t))return{kind:'self',intent:text,allowed:true};return{kind:'free',intent:text,allowed:true};}
+
+declare global{interface Window{__moniaDailyLife?:()=>DailyLifeSnapshot|null;__moniaInterpretFreeIntent?:(text:string)=>{kind:string;intent:string;allowed:boolean}}}
+window.__moniaDailyLife=getDailyLifeSnapshot;window.__moniaInterpretFreeIntent=interpretFreeIntent;
