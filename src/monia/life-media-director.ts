@@ -19,6 +19,7 @@ import './world-map-experience';
 import './seasonal-wardrobe-atmosphere';
 import './living-ambient-motion';
 import './place-ambient-signature';
+import { getContextualMemoryResonance } from './contextual-memory-resonance';
 import { getLifeDirectorSnapshot } from './life-director';
 import { getLucasDailyAvailability } from './lucas-daily-availability';
 import { routeSceneFromGameState, type MonIASceneRoute } from './scene-context-router';
@@ -88,6 +89,8 @@ export function planLifeMedia():LifeMediaOpportunity[]{
   const out:LifeMediaOpportunity[]=[];
   const unread=(s.messages||[]).find(m=>m.read===false&&m.text);
   if(unread)out.push({id:'unread-message',channel:'message',route:'message-only',priority:100,eligible:true,approvalRequired:false,surpriseSafe:true,reason:'Un message réel existe déjà dans la sauvegarde.'});
+  const resonance=getContextualMemoryResonance();
+  if(resonance)out.push({id:resonance.id,channel:'ambient',route:'environment-beat',priority:34,eligible:true,approvalRequired:false,surpriseSafe:true,reason:`${resonance.narrative} Le souvenir reste une résonance du présent : aucun flashback automatique et aucune ancienne scène n’est rejouée.`});
   if(s.metLucas&&snapshot.surpriseBudget.call){const canCall=lucasAvailability?.canCallNow!==false;out.push({id:'lucas-call-window',channel:'call',route:'visio',priority:lucasAvailability?.contactWeight||58,eligible:canCall,approvalRequired:false,surpriseSafe:true,reason:lucasAvailability?.reason||'Lucas est connu et un appel spontané peut être proposé ou initié librement.'});}
   if(s.metLucas&&snapshot.surpriseBudget.cinematic){
     const route=routeDecision.route;
