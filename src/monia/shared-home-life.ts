@@ -1,6 +1,7 @@
 import { getLucasHomeRhythm } from './lucas-home-rhythm';
 import { getMarionHomeRhythm } from './marion-home-rhythm';
 import { getAnnualLifeProfile, annualBeatAllowed, annualWeight } from './annual-life-variation';
+import { getCoupleRoutine } from './couple-routine-evolution';
 
 const SAVE_KEY='marion-lucas-save-v4';
 type Save={day?:number;time?:string;place?:string;official?:boolean;relationship?:number;trust?:number;energy?:number;stress?:number;flags?:Record<string,unknown>};
@@ -16,6 +17,10 @@ export function getSharedHomeBeat():SharedHomeBeat|null{
   if(lucas.activity==='sleeping'||lucas.activity==='out'||lucas.activity==='training'||lucas.activity==='working'||lucas.activity==='with-cuadrilla')return null;
   if(marion.activity==='sleeping')return null;
   const now=mins(s.time),day=n(s.day,1),rel=n(s.relationship),trust=n(s.trust),energy=n(s.energy,70),stress=n(s.stress);if(rel<25||trust<18)return null;
+
+  const routine=getCoupleRoutine();
+  if(routine&&routine.state!=='faded')return{id:routine.id,label:routine.label,intent:routine.intent,kind:'relationship',weight:routine.weight,minutes:routine.minutes,narrative:routine.narrative,ordinary:true,romanceRequired:false};
+
   const annual=getAnnualLifeProfile();const candidates:SharedHomeBeat[]=[];
   const add=(b:SharedHomeBeat,cooldownYears=1)=>{if(annualBeatAllowed(`shared-home:${b.id}`,{cooldownYears}))candidates.push(b)};
   if(now>=420&&now<720)add({id:'same-room-morning',label:'Rester chacun dans notre truc, ensemble',intent:'shared-home-quiet',kind:'relationship',weight:annualWeight('home',58),minutes:35,narrative:'Ils sont dans la même maison sans avoir besoin de fabriquer un moment. Chacun avance à son rythme, avec l’autre simplement là.',ordinary:true,romanceRequired:false});
