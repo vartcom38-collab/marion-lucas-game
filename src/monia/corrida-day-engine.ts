@@ -68,7 +68,7 @@ export function getCorridaDayBeat():CorridaDayBeat|null{
   return pick(candidates,`${year}:${n(s.day,1)}:${phase}:${city}:${Math.floor(now/45)}`);
 }
 
-export function consumeCorridaDayBeat(id:string){const beat=getCorridaDayBeat();if(!beat||beat.id!==id)return false;markAnnualBeat(`corrida-day:${id}`);const s=read();if(!s)return false;s.eventHistory=[...(s.eventHistory||[]),`corrida-day:${beat.phase}:${id}`].slice(-260);localStorage.setItem(SAVE_KEY,JSON.stringify(s));window.dispatchEvent(new CustomEvent('monia:save-changed',{detail:{key:SAVE_KEY}}));return true}
+export function consumeCorridaDayBeat(id:string){const beat=getCorridaDayBeat();if(!beat||beat.id!==id)return false;if(!markAnnualBeat(`corrida-day:${id}`))return false;const s=read();if(!s)return false;s.eventHistory=[...(s.eventHistory||[]),`corrida-day:${beat.phase}:${id}`].slice(-260);localStorage.setItem(SAVE_KEY,JSON.stringify(s));window.dispatchEvent(new CustomEvent('monia:save-changed',{detail:{key:SAVE_KEY}}));return true}
 
 declare global{interface Window{__moniaCorridaDay?:()=>CorridaDayBeat|null;__moniaConsumeCorridaDay?:(id:string)=>boolean}}
 window.__moniaCorridaDay=getCorridaDayBeat;window.__moniaConsumeCorridaDay=consumeCorridaDayBeat;
