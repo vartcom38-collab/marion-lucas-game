@@ -43,7 +43,7 @@ export function getSocialOutingBeat():SocialOutingBeat|null{
   if(!out.length)return null;return out[hash(`social-outing-pick:${day}:${Math.floor(now/90)}:${presence?.state||'none'}:${stage?.stage||'none'}`)%out.length];
 }
 
-export function consumeSocialOutingBeat(id:string){const s=read();if(!s)return false;const key=id.replace(/^social-outing-/,'');markAnnualBeat(`social-outing:${key}`);recordSocialConnection(key);s.eventHistory=[...(s.eventHistory||[]),`social-outing:${key}`].slice(-300);try{localStorage.setItem(SAVE_KEY,JSON.stringify(s));window.dispatchEvent(new CustomEvent('monia:save-changed',{detail:{key:SAVE_KEY}}));return true}catch{return false}}
+export function consumeSocialOutingBeat(id:string){const s=read();if(!s)return false;const key=id.replace(/^social-outing-/,'');s.eventHistory=[...(s.eventHistory||[]),`social-outing:${key}`].slice(-300);try{localStorage.setItem(SAVE_KEY,JSON.stringify(s));markAnnualBeat(`social-outing:${key}`);recordSocialConnection(key);window.dispatchEvent(new CustomEvent('monia:save-changed',{detail:{key:SAVE_KEY}}));return true}catch{return false}}
 
 declare global{interface Window{__moniaSocialOuting?:()=>SocialOutingBeat|null;__moniaConsumeSocialOuting?:(id:string)=>boolean}}
 window.__moniaSocialOuting=getSocialOutingBeat;window.__moniaConsumeSocialOuting=consumeSocialOutingBeat;
