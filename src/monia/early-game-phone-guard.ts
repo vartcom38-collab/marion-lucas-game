@@ -22,6 +22,7 @@ function readSave():Save|null{
 }
 function writeSave(save:Save){try{localStorage.setItem(SAVE_KEY,JSON.stringify(save))}catch{/* optional */}}
 function minutes(t:string){const [h,m]=String(t||'09:00').split(':').map(Number);return(h||0)*60+(m||0)}
+function refreshPhone(){window.dispatchEvent(new CustomEvent('marion:phone-refresh'))}
 
 function alreadyPastInvite(save:Save){
   const events=(save.eventHistory||[]).join(' ').toLowerCase();
@@ -50,7 +51,7 @@ export function ensureMarineDayOneInvite(){
   if(alreadyPastInvite(save)){
     flags[MARKER]=true;
     ensureDayOneContext(save);
-    writeSave(save);
+    writeSave(save);refreshPhone();
     return false;
   }
 
@@ -59,7 +60,7 @@ export function ensureMarineDayOneInvite(){
   ensureDayOneContext(save);
   if(existing){
     flags[MARKER]=true;
-    writeSave(save);
+    writeSave(save);refreshPhone();
     return false;
   }
   if(flags[MARKER]===true)return false;
@@ -69,6 +70,7 @@ export function ensureMarineDayOneInvite(){
   flags[MARKER]=true;
   flags.moniaSmsPending=true;
   writeSave(save);
+  refreshPhone();
   window.dispatchEvent(new CustomEvent('monia:phone-message-seeded',{detail:{from:'Marine',day:Number(save.day||1),refresh:true}}));
   window.dispatchEvent(new Event('storage'));
   return true;
