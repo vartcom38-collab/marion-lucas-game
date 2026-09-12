@@ -34,7 +34,7 @@ function intimacyOverlay(){
 
 function routeFreeText(text:string,kind:string){
   const t=text.toLowerCase();
-  if(kind==='phone'||/appel|appeler|visio|sms|message|téléphone|telephone/.test(t)){
+  if(kind==='phone'||kind==='social'||/marine|appel|appeler|visio|sms|message|téléphone|telephone/.test(t)){
     if(/appel|appeler|visio/.test(t)&&/lucas/.test(t))return openLucasCall();
     return openPhone(/agenda/.test(t)?'agenda':'messages');
   }
