@@ -1,7 +1,8 @@
 import './world-map-experience.css';
+import { createTravelPlan } from './travel-continuity-engine';
 
 const SAVE_KEY='marion-lucas-save-v4';
-type Save={day?:number;place?:string;metLucas?:boolean;flags?:Record<string,unknown>;memories?:string[]};
+type Save={day?:number;time?:string;place?:string;metLucas?:boolean;flags?:Record<string,unknown>;memories?:string[]};
 
 const POSITION:Record<string,[number,number]>={
   home:[22,67],nimes:[35,52],cafe:[48,65],arenes:[57,39],station:[72,60],
@@ -10,7 +11,7 @@ const POSITION:Record<string,[number,number]>={
 
 function read():Save|null{try{const raw=localStorage.getItem(SAVE_KEY);return raw?JSON.parse(raw) as Save:null}catch{return null}}
 function esc(v:string){return v.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]||c))}
-function placeId(tile:HTMLButtonElement,index:number){return tile.dataset.place||`place-${index}`}
+function placeId(tile:HTMLButtonElement,index:number){return tile.dataset.place||tile.dataset.destination||tile.dataset.id||`place-${index}`}
 function tileData(tile:HTMLButtonElement,index:number){
   const id=placeId(tile,index);const img=tile.querySelector<HTMLImageElement>('img')?.src||'';const title=tile.querySelector('strong')?.textContent?.trim()||id;const sub=tile.querySelector('span')?.textContent?.trim()||'';const meta=tile.querySelector('small')?.textContent?.trim()||'';return{id,img,title,sub,meta,tile};
 }
@@ -36,7 +37,7 @@ function build(panel:HTMLElement){
     map.querySelectorAll('.moniaMapPin').forEach(x=>x.classList.toggle('is-selected',x===pin));
     const preview=map.querySelector<HTMLElement>('.moniaMapPreview');if(preview)preview.innerHTML=`<div class="moniaMapPreviewPhoto">${entry.img?`<img src="${entry.img}" alt="">`:''}</div><div><span>${id===save.place?'MAINTENANT':'DESTINATION'}</span><strong>${esc(entry.title)}</strong><small>${esc(entry.sub)}</small><p>${esc(entry.meta||'Accessible')}</p>${id===save.place?'<em>Tu es déjà ici.</em>':`<button type="button" data-travel-confirm="${esc(id)}">Y aller</button>`}</div>`;
   }));
-  map.addEventListener('click',e=>{const b=(e.target as HTMLElement).closest<HTMLButtonElement>('[data-travel-confirm]');if(!b)return;const target=data.find(x=>x.id===b.dataset.travelConfirm);target?.tile.click()});
+  map.addEventListener('click',e=>{const b=(e.target as HTMLElement).closest<HTMLButtonElement>('[data-travel-confirm]');if(!b)return;const target=data.find(x=>x.id===b.dataset.travelConfirm);const fresh=read();if(!target||!fresh)return;const plan=createTravelPlan({owner:'Marion',from:String(fresh.place||current?.title||'Nîmes'),to:target.title,departDay:Number(fresh.day||1),departTime:String(fresh.time||'09:00'),source:'choice'});const preview=map.querySelector<HTMLElement>('.moniaMapPreview');if(plan&&preview){preview.innerHTML=`<div class="moniaMapPreviewPhoto">${target.img?`<img src="${target.img}" alt="">`:''}</div><div><span>TRAJET PRÉVU</span><strong>${esc(target.title)}</strong><small>Départ ${esc(plan.departTime)} · arrivée ${esc(plan.arrivalTime)}</small><p>Le déplacement fait maintenant partie de la journée. Marion n’apparaîtra sur place qu’à son arrivée.</p></div>`;window.dispatchEvent(new CustomEvent('monia:daily-intent',{detail:{intent:'travel-planned',plan}}));}else if(!plan){target.tile.click();}});
 }
 function enhance(){document.querySelectorAll<HTMLElement>('.worldGalleryPanel').forEach(build)}
-const observer=new MutationObserver(enhance);observer.observe(document.documentElement,{childList:true,subtree:true});window.addEventListener('storage',e=>{if(!e.key||e.key===SAVE_KEY)enhance()});setTimeout(enhance,150);
+const observer=new MutationObserver(enhance);observer.observe(document.documentElement,{childList:true,subtree:true});window.addEventListener('storage',e=>{if(!e.key||e.key===SAVE_KEY)enhance()});window.addEventListener('monia:save-changed',enhance);setTimeout(enhance,150);
