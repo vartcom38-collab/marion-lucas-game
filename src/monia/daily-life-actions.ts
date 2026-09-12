@@ -2,6 +2,7 @@ import { getDailyLifeSnapshot, interpretFreeIntent, type DailyDirection } from '
 import { markSpontaneousLifeBeat } from './spontaneous-life-engine';
 import { consumeDynamicPlanChange } from './dynamic-plan-change-engine';
 import { recordSpainContactMoment } from './spain-social-circle';
+import { recordSpainPlaceMoment } from './spain-familiar-life';
 
 const SAVE_KEY='marion-lucas-save-v4';
 
@@ -48,11 +49,20 @@ function handleSpainSocial(direction:DailyDirection){
   return false;
 }
 
+function handleSpainRoutine(direction:DailyDirection){
+  const match=direction.id.match(/spain-routine-(?:discover|routine)-(.+)$/);if(!match)return false;
+  const placeId=match[1];recordSpainPlaceMoment(placeId);
+  const s=read();if(s){addMinutes(s,Math.max(25,direction.minutes||45));note(s,`spain-familiar-place:${placeId}`);write(s);}
+  dispatch(direction.intent,{source:'spain-familiar-place',placeId,direction});
+  return true;
+}
+
 export function executeDailyDirection(id:string):DailyActionResult{
   const direction=currentDirection(id);if(!direction)return{ok:false,intent:id,handledBy:'bridge',minutes:0,message:'Cette direction n’est plus disponible.'};
   if(direction.source==='spontaneous-life'&&direction.id.startsWith('spontaneous-'))markSpontaneousLifeBeat(direction.id.replace('spontaneous-',''));
   if(direction.source==='dynamic-plan-change'&&direction.id.startsWith('planchange-'))consumeDynamicPlanChange(direction.id.replace('planchange-',''));
   if(direction.source==='spain-life'&&handleSpainSocial(direction))return{ok:true,intent:direction.intent,handledBy:'bridge',minutes:direction.minutes||0};
+  if(direction.source==='spain-life'&&handleSpainRoutine(direction))return{ok:true,intent:direction.intent,handledBy:'bridge',minutes:direction.minutes||0};
   return bridge(direction);
 }
 
