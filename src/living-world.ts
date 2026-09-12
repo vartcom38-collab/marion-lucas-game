@@ -1,10 +1,10 @@
 import './livingWorld.css';
+import './monia/place-ambient-signature';
 
 const SAVE_KEY='marion-lucas-save-v4';
 let mounted:HTMLElement|null=null;
 let canvas:HTMLCanvasElement|null=null;
 let ctx:CanvasRenderingContext2D|null=null;
-let ambientVideo:HTMLVideoElement|null=null;
 let raf=0;
 let contextTimer=0;
 let activePlace='';
@@ -135,47 +135,6 @@ function draw(game:HTMLElement,now:number){
   }
 }
 
-function ensureVideo(game:HTMLElement){
-  const existing=game.querySelector<HTMLVideoElement>('.livingWorldVideo');
-  if(existing){ambientVideo=existing;return existing}
-  const video=document.createElement('video');
-  video.className='livingWorldVideo';
-  video.muted=true;
-  video.loop=true;
-  video.playsInline=true;
-  video.autoplay=!reducedMotion;
-  video.preload=lowPower?'none':'metadata';
-  video.setAttribute('aria-hidden','true');
-  game.prepend(video);
-  ambientVideo=video;
-  return video;
-}
-
-function loadPlaceVideo(game:HTMLElement,place:string){
-  const video=ensureVideo(game);
-  if(video.dataset.place===place)return;
-  video.dataset.place=place;
-  video.classList.remove('is-ready');
-  video.pause();
-  video.removeAttribute('src');
-  video.load();
-  if(reducedMotion)return;
-  const src=`./resources/living/${encodeURIComponent(place)}.mp4`;
-  const onReady=()=>{
-    video.classList.add('is-ready');
-    if(!document.hidden)void video.play().catch(()=>undefined);
-  };
-  const onError=()=>{
-    video.classList.remove('is-ready');
-    video.removeAttribute('src');
-    video.load();
-  };
-  video.oncanplay=onReady;
-  video.onerror=onError;
-  video.src=src;
-  video.load();
-}
-
 function syncContext(game:HTMLElement){
   refreshSaveCache();
   const save=cachedSave;
@@ -187,7 +146,8 @@ function syncContext(game:HTMLElement){
   game.dataset.livingTime=part;
   for(const name of ['matin','jour','soir','nuit'])game.classList.toggle(`part-${name}`,part===name);
   for(const name of ['home','city','arena','country','travel'])game.classList.toggle(`living-${name}`,kind===name);
-  if(activePlace!==place){activePlace=place;loadPlaceVideo(game,place);seedParticles(game)}
+  if(activePlace!==place){activePlace=place;seedParticles(game)}
+  window.__moniaRefreshPlaceAmbient?.();
 }
 
 function install(game:HTMLElement){
@@ -198,20 +158,11 @@ function install(game:HTMLElement){
   if(contextTimer)window.clearInterval(contextTimer);
   ensureCanvas(game);
   ensureAtmosphere(game);
-  ensureVideo(game);
   game.classList.add('livingWorld');
   syncContext(game);
   contextTimer=window.setInterval(()=>syncContext(game),2200);
   lastFrame=0;
   raf=requestAnimationFrame(t=>draw(game,t));
-}
-
-function releaseVideo(){
-  if(!ambientVideo)return;
-  ambientVideo.pause();
-  ambientVideo.removeAttribute('src');
-  ambientVideo.load();
-  ambientVideo=null;
 }
 
 function scan(){
@@ -224,7 +175,6 @@ function scan(){
     raf=0;
     if(contextTimer)window.clearInterval(contextTimer);
     contextTimer=0;
-    releaseVideo();
     canvas?.remove();
     canvas=null;ctx=null;
     particles=[];
@@ -234,10 +184,10 @@ function scan(){
 window.addEventListener('resize',()=>{const game=document.querySelector<HTMLElement>('.game');if(game){resize(game);seedParticles(game)}});
 window.addEventListener('storage',e=>{if(e.key===SAVE_KEY&&mounted)syncContext(mounted)});
 document.addEventListener('visibilitychange',()=>{
-  if(document.hidden){cancelAnimationFrame(raf);raf=0;ambientVideo?.pause()}
-  else if(mounted){refreshSaveCache();lastFrame=0;if(!raf)raf=requestAnimationFrame(t=>draw(mounted as HTMLElement,t));if(!reducedMotion)void ambientVideo?.play().catch(()=>undefined)}
+  if(document.hidden){cancelAnimationFrame(raf);raf=0}
+  else if(mounted){refreshSaveCache();lastFrame=0;if(!raf)raf=requestAnimationFrame(t=>draw(mounted as HTMLElement,t))}
 });
 new MutationObserver(scan).observe(document.getElementById('app')||document.documentElement,{childList:true,subtree:true});
 scan();
 
-console.info('[World] Living world renderer optimized for lower heat and fewer frame/storage costs');
+console.info('[World] Living atmosphere active; place video playback is delegated to the single media layer');
