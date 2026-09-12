@@ -1,5 +1,6 @@
 import { getFranceSpainState } from './france-spain-life-transition';
 import { getSpainSocialOpportunities } from './spain-social-circle';
+import { getSpainRoutineOpportunities } from './spain-familiar-life';
 
 const SAVE_KEY='marion-lucas-save-v4';
 
@@ -24,7 +25,11 @@ export function getSpainLifeSnapshot():SpainLifeSnapshot|null{
   const independentLifeOpen=stage==='rooted'||sinceArrival>=4;
 
   if(stage==='arriving')directions.push({id:'spain-bearings',label:'Prendre mes repères sans me presser',intent:'open-map',kind:'self',weight:74,minutes:60,reason:'Une arrivée doit laisser de la place à l’observation avant de remplir l’agenda.'});
-  if(homeRoutineOpen&&energy>30)directions.push({id:'spain-routine',label:'Créer un peu ma routine ici',intent:'custom-intent',kind:'home',weight:58,minutes:75,reason:'L’Espagne devient un quotidien, pas seulement un décor autour de Lucas.'});
+  if(homeRoutineOpen&&energy>30){
+    const routines=getSpainRoutineOpportunities();
+    if(routines.length){for(const item of routines.slice(0,2))directions.push({id:`spain-routine-${item.id}`,label:item.label,intent:item.intent,kind:'home',weight:item.weight,minutes:item.minutes,reason:item.reason});}
+    else directions.push({id:'spain-routine',label:'Créer un peu ma routine ici',intent:'custom-intent',kind:'home',weight:58,minutes:75,reason:'L’Espagne devient un quotidien, pas seulement un décor autour de Lucas.'});
+  }
   if(socialOpen&&m>=660&&m<1260&&stress<75){
     const social=getSpainSocialOpportunities();
     if(social.length){for(const item of social.slice(0,2))directions.push({id:`spain-social-${item.id}`,label:item.label,intent:item.intent,kind:'social',weight:item.weight,minutes:item.minutes,reason:item.reason});}
