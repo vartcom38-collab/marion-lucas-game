@@ -1,5 +1,6 @@
 import './wedding-journey-engine';
 import './pregnancy-journey-engine';
+import { getLifeAgeSnapshot } from './life-age-engine';
 
 const SAVE_KEY='marion-lucas-save-v4';
 
@@ -11,11 +12,10 @@ export type LifeTimelineSnapshot={day:number;marionAge:number;lucasAge:number;er
 
 function readSave():Save|null{try{const raw=localStorage.getItem(SAVE_KEY);return raw?JSON.parse(raw) as Save:null}catch{return null}}
 function n(v:unknown,fallback=0){const x=Number(v);return Number.isFinite(x)?x:fallback}
-function age(base:number,day:number){return base+Math.floor(Math.max(0,day-1)/365)}
 function eraFor(a:number):LifeEra{return a<25?'early-adult':a<35?'building':a<50?'established':a<65?'midlife':'later-life'}
 
 export function getLifeTimeline():LifeTimelineSnapshot|null{
-  const s=readSave();if(!s)return null;const day=Math.max(1,n(s.day,1));const ma=age(n(s.marionAge,20),day),la=age(n(s.lucasAge,22),day),f=s.flags||(s.flags={});const rel=n(s.relationship),trust=n(s.trust),children=n(s.children),career=n(s.careerLevel,1),visibility=n(s.visibility);
+  const s=readSave();if(!s)return null;const ages=getLifeAgeSnapshot(s),day=ages.day,ma=ages.marionAge,la=ages.lucasAge,f=s.flags||(s.flags={});const rel=n(s.relationship),trust=n(s.trust),children=n(s.children),career=n(s.careerLevel,1),visibility=n(s.visibility);
   const windows:TimelineWindow[]=[];
   const push=(w:TimelineWindow)=>windows.push(w);
   const officialDay=n(f.officialDay,day),engagedDay=n(f.engagedDay,day),marriedDay=n(f.marriedDay,day);
