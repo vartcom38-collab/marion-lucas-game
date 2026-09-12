@@ -1,3 +1,4 @@
+import './property-life';
 import { getLifeAgeSnapshot } from './life-age-engine';
 
 const SAVE_KEY='marion-lucas-save-v4';
