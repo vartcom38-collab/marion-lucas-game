@@ -176,7 +176,9 @@ jobs:
           require(any(Path('dist/assets').glob('piper-tts-web-*.js')), 'Piper bundle exists')
 
           manifest = json.loads(Path('dist/config/monia-visio-approved.json').read_text(encoding='utf-8'))
-          require(manifest.get('status') == 'locked' and bool(manifest.get('fallback')), 'locked visio manifest has fallback')
+          require(manifest.get('status') == 'locked', 'visio manifest is locked')
+          require(manifest.get('fallback') is None, 'visio has no unapproved fallback')
+          require(all(v is None for v in manifest.get('states',{}).values()), 'visio has no unapproved state clip')
           print('Vite build is deployable: gameplay-authoritative surprise Drama can use guarded Kaggle pairs without mutating canon; Visio, identity-safe motion/body references, previous-frame continuity and local voice infrastructure remain locked.')
           PY
 
