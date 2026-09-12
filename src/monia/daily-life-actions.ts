@@ -1,5 +1,6 @@
 import { getDailyLifeSnapshot, interpretFreeIntent, type DailyDirection } from './daily-life-engine';
 import { markSpontaneousLifeBeat } from './spontaneous-life-engine';
+import { consumeDynamicPlanChange } from './dynamic-plan-change-engine';
 
 const SAVE_KEY='marion-lucas-save-v4';
 
@@ -42,6 +43,7 @@ function bridge(direction:DailyDirection):DailyActionResult{
 export function executeDailyDirection(id:string):DailyActionResult{
   const direction=currentDirection(id);if(!direction)return{ok:false,intent:id,handledBy:'bridge',minutes:0,message:'Cette direction n’est plus disponible.'};
   if(direction.source==='spontaneous-life'&&direction.id.startsWith('spontaneous-'))markSpontaneousLifeBeat(direction.id.replace('spontaneous-',''));
+  if(direction.source==='dynamic-plan-change'&&direction.id.startsWith('planchange-'))consumeDynamicPlanChange(direction.id.replace('planchange-',''));
   return bridge(direction);
 }
 
