@@ -1,3 +1,6 @@
+import './wedding-journey-engine';
+import './pregnancy-journey-engine';
+
 const SAVE_KEY='marion-lucas-save-v4';
 
 type Save={day?:number;marionAge?:number;lucasAge?:number;official?:boolean;engaged?:boolean;married?:boolean;children?:number;relationship?:number;trust?:number;careerLevel?:number;visibility?:number;flags?:Record<string,unknown>;eventHistory?:string[]};
