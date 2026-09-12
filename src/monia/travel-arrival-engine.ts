@@ -1,22 +1,13 @@
 import { getTravelContinuity, finishTravelPlan, type TravelPlan } from './travel-continuity-engine';
 import { getLucasPresence } from './lucas-presence-engine';
+import { getPlaceReturnMoment, markPlaceReturn } from './place-return-life';
 
 const SAVE_KEY='marion-lucas-save-v4';
 type Message={from?:string;text?:string;read?:boolean;day?:number};
 type Save={day?:number;time?:string;place?:string;energy?:number;stress?:number;official?:boolean;messages?:Message[];eventHistory?:string[];flags?:Record<string,unknown>};
 
 export type ArrivalKind='homecoming'|'hotel'|'new-city'|'taurine-stop'|'airport-transfer'|'local';
-export type TravelArrivalMoment={
-  id:string;
-  kind:ArrivalKind;
-  title:string;
-  narrative:string;
-  actions:Array<{id:string;label:string;minutes:number;energy:number;stress:number}>;
-  luggage:boolean;
-  checkIn:boolean;
-  cuadrillaSeparate:boolean;
-  messageCue?:'lucas'|'marine';
-};
+export type TravelArrivalMoment={id:string;kind:ArrivalKind;title:string;narrative:string;actions:Array<{id:string;label:string;minutes:number;energy:number;stress:number}>;luggage:boolean;checkIn:boolean;cuadrillaSeparate:boolean;messageCue?:'lucas'|'marine';returnAfterAbsence?:{days:number;tone:string;meaningful:boolean};};
 
 function read():Save|null{try{const raw=localStorage.getItem(SAVE_KEY);return raw?JSON.parse(raw) as Save:null}catch{return null}}
 function n(v:unknown,f=0){const x=Number(v);return Number.isFinite(x)?x:f}
@@ -34,52 +25,15 @@ export function getTravelArrivalMoment():TravelArrivalMoment|null{
   const s=read();if(!s)return null;const plan=getTravelContinuity();if(!plan||!(plan.state==='arriving'||plan.state==='staying'))return null;
   const f=s.flags||{};const key=`travelArrivalMomentDone:${plan.id}`;if(f[key]===true)return null;
   const taurine=isArenaTrip(plan),home=isHome(plan.to)&&!isHotel(plan.to),hotel=isHotel(plan.to)||(!home&&taurine),local=norm(plan.from)===norm(plan.to);
-  let kind:ArrivalKind=local?'local':home?'homecoming':hotel?(taurine?'taurine-stop':'hotel'):plan.mode==='flight'?'airport-transfer':'new-city';
-  const variants={
-    homecoming:[
-      'Le retour se fait sans cérémonie. Les affaires peuvent attendre quelques minutes; retrouver ses repères suffit déjà.',
-      'La porte se referme derrière eux et le rythme retombe enfin. Il reste les sacs, la douche, quelque chose à boire… et le plaisir simple d’être rentrés.',
-      'À la maison, le voyage se défait doucement: chaussures posées, téléphone branché, sacs encore fermés. Rien ne presse.'
-    ],
-    hotel:[
-      'L’arrivée à l’hôtel coupe la route en deux. Check-in, clés, valises: après ça seulement la journée peut reprendre autrement.',
-      'Quelques minutes de couloir, une chambre inconnue, les sacs posés au pied du lit. Le voyage est fini, mais pas encore digéré.',
-      'La chambre devient leur base pour quelques heures ou quelques jours. D’abord poser les affaires; ensuite seulement penser à la suite.'
-    ],
-    'taurine-stop':[
-      'Lucas arrive avec son rythme de corrida. La cuadrilla suit séparément avec le camion et le matériel; chacun prend ses marques avant que la journée professionnelle ne reprenne.',
-      'La voiture de Lucas arrive d’abord ou presque. Le camion de la cuadrilla suit son propre timing avec le matériel. À l’hôtel, tout le monde se disperse quelques instants.',
-      'Fin de route pour cette étape. Lucas rejoint l’hôtel pendant que la cuadrilla gère son arrivée à part. Le calme avant l’arène ne dure jamais très longtemps.'
-    ],
-    'airport-transfer':[
-      'Après l’avion, il reste encore le transfert et les bagages. L’arrivée réelle commence seulement une fois la porte de la voiture refermée.',
-      'Valises récupérées, téléphone rallumé, transfert lancé. Le voyage change de rythme mais n’est pas tout à fait terminé.',
-      'L’aéroport reste derrière. Quelques kilomètres encore avant de pouvoir poser les affaires et vraiment arriver.'
-    ],
-    'new-city':[
-      'La ville est là, mais rien n’est encore familier. Il faut d’abord poser les sacs et comprendre où l’on est avant de décider du reste.',
-      'Nouvelle étape, nouvelles rues. Les valises rappellent qu’on vient juste d’arriver; le reste viendra après.',
-      'Le trajet se termine dans un décor qui n’a pas encore ses habitudes. Un peu de temps suffit pour prendre ses premiers repères.'
-    ],
-    local:['Le petit trajet est terminé. La journée peut reprendre presque sans coupure.']
-  } as const;
-  const list=variants[kind];const narrative=list[hash(`${plan.id}:${kind}`)%list.length];
-  const actions=home?
-    [{id:'unpack-later',label:'Poser les affaires et souffler',minutes:20,energy:5,stress:-7},{id:'shower-reset',label:'Prendre une douche et se changer',minutes:35,energy:8,stress:-8},{id:'unpack-now',label:'Défaire les valises tout de suite',minutes:30,energy:-2,stress:-4}]:
-    hotel||taurine?
-    [{id:'check-in',label:'Faire le check-in et monter les valises',minutes:25,energy:-2,stress:-3},{id:'room-reset',label:'S’installer un peu dans la chambre',minutes:35,energy:6,stress:-6},{id:'quick-turnaround',label:'Poser les sacs et repartir vite',minutes:12,energy:-3,stress:2}]:
-    [{id:'take-bearings',label:'Prendre quelques repères',minutes:30,energy:1,stress:-3},{id:'pause-first',label:'Faire une pause avant de ressortir',minutes:30,energy:7,stress:-6}];
+  const kind:ArrivalKind=local?'local':home?'homecoming':hotel?(taurine?'taurine-stop':'hotel'):plan.mode==='flight'?'airport-transfer':'new-city';
+  const variants={homecoming:['Le retour se fait sans cérémonie. Les affaires peuvent attendre quelques minutes; retrouver ses repères suffit déjà.','La porte se referme derrière eux et le rythme retombe enfin. Il reste les sacs, la douche, quelque chose à boire… et le plaisir simple d’être rentrés.','À la maison, le voyage se défait doucement: chaussures posées, téléphone branché, sacs encore fermés. Rien ne presse.'],hotel:['L’arrivée à l’hôtel coupe la route en deux. Check-in, clés, valises: après ça seulement la journée peut reprendre autrement.','Quelques minutes de couloir, une chambre inconnue, les sacs posés au pied du lit. Le voyage est fini, mais pas encore digéré.','La chambre devient leur base pour quelques heures ou quelques jours. D’abord poser les affaires; ensuite seulement penser à la suite.'],'taurine-stop':['Lucas arrive avec son rythme de corrida. La cuadrilla suit séparément avec le camion et le matériel; chacun prend ses marques avant que la journée professionnelle ne reprenne.','La voiture de Lucas arrive d’abord ou presque. Le camion de la cuadrilla suit son propre timing avec le matériel. À l’hôtel, tout le monde se disperse quelques instants.','Fin de route pour cette étape. Lucas rejoint l’hôtel pendant que la cuadrilla gère son arrivée à part. Le calme avant l’arène ne dure jamais très longtemps.'],'airport-transfer':['Après l’avion, il reste encore le transfert et les bagages. L’arrivée réelle commence seulement une fois la porte de la voiture refermée.','Valises récupérées, téléphone rallumé, transfert lancé. Le voyage change de rythme mais n’est pas tout à fait terminé.','L’aéroport reste derrière. Quelques kilomètres encore avant de pouvoir poser les affaires et vraiment arriver.'],'new-city':['La ville est là, mais rien n’est encore familier. Il faut d’abord poser les sacs et comprendre où l’on est avant de décider du reste.','Nouvelle étape, nouvelles rues. Les valises rappellent qu’on vient juste d’arriver; le reste viendra après.','Le trajet se termine dans un décor qui n’a pas encore ses habitudes. Un peu de temps suffit pour prendre ses premiers repères.'],local:['Le petit trajet est terminé. La journée peut reprendre presque sans coupure.']} as const;
+  const list=variants[kind];let narrative=list[hash(`${plan.id}:${kind}`)%list.length];const returnMoment=!local?getPlaceReturnMoment(plan.to):null;if(returnMoment)narrative=`${narrative} ${returnMoment.narrative}`;
+  const actions=home?[{id:'unpack-later',label:'Poser les affaires et souffler',minutes:20,energy:5,stress:-7},{id:'shower-reset',label:'Prendre une douche et se changer',minutes:35,energy:8,stress:-8},{id:'unpack-now',label:'Défaire les valises tout de suite',minutes:30,energy:-2,stress:-4}]:hotel||taurine?[{id:'check-in',label:'Faire le check-in et monter les valises',minutes:25,energy:-2,stress:-3},{id:'room-reset',label:'S’installer un peu dans la chambre',minutes:35,energy:6,stress:-6},{id:'quick-turnaround',label:'Poser les sacs et repartir vite',minutes:12,energy:-3,stress:2}]:[{id:'take-bearings',label:'Prendre quelques repères',minutes:30,energy:1,stress:-3},{id:'pause-first',label:'Faire une pause avant de ressortir',minutes:30,energy:7,stress:-6}];
   const presence=getLucasPresence();let messageCue:TravelArrivalMoment['messageCue'];if(plan.owner==='Marion'&&!presence?.together&&s.official)messageCue='lucas';else if(!isNimes(plan.to)&&n(s.day,1)>1)messageCue='marine';
-  return{id:`arrival-${plan.id}`,kind,title:home?'De retour':taurine?'Étape de tournée':hotel?'Arrivée à l’hôtel':'Arrivée',narrative,actions,luggage:!local,checkIn:hotel||taurine,cuadrillaSeparate:taurine,messageCue};
+  return{id:`arrival-${plan.id}`,kind,title:returnMoment?.absenceDays&&returnMoment.absenceDays>=365?'De retour après longtemps':home?'De retour':taurine?'Étape de tournée':hotel?'Arrivée à l’hôtel':'Arrivée',narrative,actions,luggage:!local,checkIn:hotel||taurine,cuadrillaSeparate:taurine,messageCue,returnAfterAbsence:returnMoment?{days:returnMoment.absenceDays,tone:returnMoment.tone,meaningful:returnMoment.meaningful}:undefined};
 }
 
-export function resolveTravelArrival(actionId:string){
-  const s=read();const moment=getTravelArrivalMoment();const plan=getTravelContinuity();if(!s||!moment||!plan)return false;const action=moment.actions.find(a=>a.id===actionId);if(!action)return false;
-  addMinutes(s,action.minutes);s.energy=Math.max(0,Math.min(100,n(s.energy,70)+action.energy));s.stress=Math.max(0,Math.min(100,n(s.stress)+action.stress));const f=s.flags||(s.flags={});f[`travelArrivalMomentDone:${plan.id}`]=true;f.lastArrivalKind=moment.kind;f.lastArrivalDay=n(s.day,1);f.lastArrivalPlace=plan.to;if(moment.cuadrillaSeparate)f.cuadrillaArrivedSeparately=true;
-  if(moment.messageCue==='lucas'&&!(s.messages||[]).some(m=>m.read===false&&norm(m.from)==='lucas'))s.messages=[...(s.messages||[]),{from:'Lucas',text:'Bien arrivée ? Écris-moi quand tu es posée.',read:false,day:n(s.day,1)}];
-  if(moment.messageCue==='marine'&&!(s.messages||[]).some(m=>m.read===false&&norm(m.from)==='marine'))s.messages=[...(s.messages||[]),{from:'Marine',text:'Alors, bien arrivée ? 🙂',read:false,day:n(s.day,1)}];
-  note(s,`travel-arrival-moment:${moment.kind}:${actionId}`);write(s);finishTravelPlan();return true;
-}
+export function resolveTravelArrival(actionId:string){const s=read();const moment=getTravelArrivalMoment();const plan=getTravelContinuity();if(!s||!moment||!plan)return false;const action=moment.actions.find(a=>a.id===actionId);if(!action)return false;addMinutes(s,action.minutes);s.energy=Math.max(0,Math.min(100,n(s.energy,70)+action.energy));s.stress=Math.max(0,Math.min(100,n(s.stress)+action.stress));const f=s.flags||(s.flags={});f[`travelArrivalMomentDone:${plan.id}`]=true;f.lastArrivalKind=moment.kind;f.lastArrivalDay=n(s.day,1);f.lastArrivalPlace=plan.to;if(moment.cuadrillaSeparate)f.cuadrillaArrivedSeparately=true;if(moment.returnAfterAbsence){f.lastReturnAbsenceDays=moment.returnAfterAbsence.days;f.lastReturnTone=moment.returnAfterAbsence.tone;}if(moment.messageCue==='lucas'&&!(s.messages||[]).some(m=>m.read===false&&norm(m.from)==='lucas'))s.messages=[...(s.messages||[]),{from:'Lucas',text:'Bien arrivée ? Écris-moi quand tu es posée.',read:false,day:n(s.day,1)}];if(moment.messageCue==='marine'&&!(s.messages||[]).some(m=>m.read===false&&norm(m.from)==='marine'))s.messages=[...(s.messages||[]),{from:'Marine',text:'Alors, bien arrivée ? 🙂',read:false,day:n(s.day,1)}];note(s,`travel-arrival-moment:${moment.kind}:${actionId}`);write(s);if(moment.returnAfterAbsence)markPlaceReturn(plan.to);finishTravelPlan();return true}
 
 declare global{interface Window{__moniaTravelArrival?:()=>TravelArrivalMoment|null;__moniaResolveTravelArrival?:(id:string)=>boolean}}
 window.__moniaTravelArrival=getTravelArrivalMoment;window.__moniaResolveTravelArrival=resolveTravelArrival;
