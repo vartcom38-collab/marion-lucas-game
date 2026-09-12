@@ -1,10 +1,11 @@
 import { getAnnualLifeProfile, annualBeatAllowed, annualWeight } from './annual-life-variation';
 import { getTravelArrivalMoment } from './travel-arrival-engine';
+import { getCorridaDayBeat, consumeCorridaDayBeat } from './corrida-day-engine';
 
 const SAVE_KEY='marion-lucas-save-v4';
 type CalendarItem={day?:number;time?:string;owner?:string;title?:string;note?:string;place?:string};
 type Save={day?:number;time?:string;place?:string;official?:boolean;relationship?:number;stress?:number;energy?:number;calendar?:CalendarItem[];flags?:Record<string,unknown>;eventHistory?:string[]};
-export type FeriaHotelBeat={id:string;label:string;intent:string;kind:'relationship'|'social'|'rest'|'self';weight:number;minutes:number;narrative:string;city:string;phase:'arrival'|'pre-corrida'|'post-corrida'|'off-day';};
+export type FeriaHotelBeat={id:string;label:string;intent:string;kind:'relationship'|'social'|'rest'|'self'|'travel';weight:number;minutes:number;narrative:string;city:string;phase:'arrival'|'pre-corrida'|'post-corrida'|'off-day'|'corrida-day';};
 
 function read():Save|null{try{const raw=localStorage.getItem(SAVE_KEY);return raw?JSON.parse(raw) as Save:null}catch{return null}}
 function n(v:unknown,f=0){const x=Number(v);return Number.isFinite(x)?x:f}
@@ -17,7 +18,10 @@ function phase(s:Save,items:CalendarItem[]):FeriaHotelBeat['phase']{const arriva
 function pick<T>(xs:T[],seed:string){return xs.length?xs[hash(seed)%xs.length]:null}
 
 export function getFeriaHotelBeat():FeriaHotelBeat|null{
- const s=read();if(!s||!s.official)return null;const items=todays(s);const p=String(s.place||'');const hotel=/hotel|hôtel/i.test(p);if(!items.length&&!hotel)return null;
+ const s=read();if(!s||!s.official)return null;
+ const corrida=getCorridaDayBeat();
+ if(corrida)return{id:`corrida-${corrida.id}`,label:corrida.label,intent:corrida.intent,kind:corrida.kind,weight:corrida.weight+8,minutes:corrida.minutes,narrative:corrida.narrative,city:corrida.city,phase:'corrida-day'};
+ const items=todays(s);const p=String(s.place||'');const hotel=/hotel|hôtel/i.test(p);if(!items.length&&!hotel)return null;
  const ph=phase(s,items),c=city(items[0],p),year=getAnnualLifeProfile()?.lifeYear||1;const seed=`${year}:${n(s.day,1)}:${ph}:${c}`;const energy=n(s.energy,70),stress=n(s.stress);
  const candidates:FeriaHotelBeat[]=[];
  const add=(b:FeriaHotelBeat,cooldownYears=2)=>{if(annualBeatAllowed(`feria-hotel:${b.id}`,{cooldownYears}))candidates.push(b)};
@@ -41,7 +45,7 @@ export function getFeriaHotelBeat():FeriaHotelBeat|null{
  return pick(candidates,seed);
 }
 
-export function consumeFeriaHotelBeat(id:string){const s=read();if(!s)return false;const year=getAnnualLifeProfile()?.lifeYear||1;s.eventHistory=[...(s.eventHistory||[]),`annual-beat:${year}:feria-hotel:${id}`].slice(-260);localStorage.setItem(SAVE_KEY,JSON.stringify(s));window.dispatchEvent(new CustomEvent('monia:save-changed',{detail:{key:SAVE_KEY}}));return true}
+export function consumeFeriaHotelBeat(id:string){if(id.startsWith('corrida-'))return consumeCorridaDayBeat(id.replace(/^corrida-/,''));const s=read();if(!s)return false;const year=getAnnualLifeProfile()?.lifeYear||1;s.eventHistory=[...(s.eventHistory||[]),`annual-beat:${year}:feria-hotel:${id}`].slice(-260);localStorage.setItem(SAVE_KEY,JSON.stringify(s));window.dispatchEvent(new CustomEvent('monia:save-changed',{detail:{key:SAVE_KEY}}));return true}
 
 declare global{interface Window{__moniaFeriaHotelLife?:()=>FeriaHotelBeat|null;__moniaConsumeFeriaHotelBeat?:(id:string)=>boolean}}
 window.__moniaFeriaHotelLife=getFeriaHotelBeat;window.__moniaConsumeFeriaHotelBeat=consumeFeriaHotelBeat;
