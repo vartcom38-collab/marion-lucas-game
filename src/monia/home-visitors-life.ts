@@ -1,6 +1,7 @@
 import { getAnnualLifeProfile, annualBeatAllowed, annualWeight } from './annual-life-variation';
 import { getHomeLifeEvolution } from './home-life-evolution';
 import { getMarineState } from './secondary-character-life';
+import { getExtendedFamilyBeat } from './extended-family-life';
 
 const SAVE_KEY='marion-lucas-save-v4';
 type Save={day?:number;time?:string;place?:string;official?:boolean;married?:boolean;children?:number;relationship?:number;trust?:number;stress?:number;energy?:number;flags?:Record<string,unknown>;eventHistory?:string[]};
@@ -20,9 +21,12 @@ export function getHomeVisitorBeat():HomeVisitorBeat|null{
   const evolution=getHomeLifeEvolution();if(!evolution)return null;
   const energy=n(s.energy,70),stress=n(s.stress);if(energy<28||stress>82)return null;
   const h=s.eventHistory||[];const annual=getAnnualLifeProfile();const day=n(s.day,1),slot=Math.floor(now/120),seed=hash(`home-visitor:${day}:${slot}:${evolution.mode}`)%100;
-  const recentVisits=recent(h,/home-visitor|family-visit|friend-visit|marine-home-visit|guest/i,45);
+  const recentVisits=recent(h,/home-visitor|family-visit|friend-visit|marine-home-visit|guest|extended-family/i,45);
   const gate=Math.max(8,Math.min(54,Math.round((evolution.guestWeight+(annual?.socialBias||50))/4)-recentVisits*6));
   if(seed>=gate)return null;
+
+  const extended=getExtendedFamilyBeat();
+  if(extended&&hash(`extended-family-priority:${day}:${slot}`)%100<58)return{id:`extended-${extended.id}`,kind:'family',label:extended.label,intent:extended.intent,weight:extended.weight,minutes:extended.minutes,narrative:extended.narrative,planned:extended.kind==='family-meal'||extended.kind==='stay-over',ordinary:true};
 
   const candidates:HomeVisitorBeat[]=[];
   const add=(b:HomeVisitorBeat,cooldownYears=1)=>{if(annualBeatAllowed(`home-visitor:${b.id}`,{cooldownYears}))candidates.push(b)};
