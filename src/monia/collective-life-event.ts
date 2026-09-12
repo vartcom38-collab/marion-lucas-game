@@ -1,6 +1,7 @@
 import { getAnnualLifeProfile, annualBeatAllowed, annualWeight, markAnnualBeat } from './annual-life-variation';
 import { getCloseCircleMembers } from './close-circle-life';
 import { getChildcareSnapshot } from './childcare-life';
+import { recordSharedMemory } from './shared-memory-life';
 
 const SAVE_KEY='marion-lucas-save-v4';
 type Save={day?:number;time?:string;children?:number;official?:boolean;married?:boolean;energy?:number;stress?:number;flags?:Record<string,unknown>;eventHistory?:string[]};
@@ -27,6 +28,6 @@ export function getCollectiveLifeMoment():CollectiveMoment|null{
   if(kind==='children-gathering')return{id:'collective-children',kind,label:'Partager un moment avec les proches autour des enfants',intent:'collective-life:children',weight:annualWeight('home',72),minutes:160,narrative:'Les enfants peuvent naturellement créer des moments collectifs avec les proches. Cela n’empêche jamais Marion et Lucas de garder aussi leurs sorties d’adultes grâce à la nounou et aux solutions de garde.',...common};
   return{id:'collective-close-holiday',kind,label:'Partir quelques jours avec des proches',intent:'collective-life:holiday',weight:annualWeight('travel',66),minutes:240,narrative:'Très ponctuellement, leur cercle proche peut partager quelques jours avec eux. Ce type de séjour reste exceptionnel afin que les vacances à deux, en famille ou séparément gardent aussi leur place.',...common};
 }
-export function consumeCollectiveLifeMoment(id:string){const s=read();if(!s)return false;const key=id.replace(/^collective-life[:-]?/,'');s.eventHistory=[...(s.eventHistory||[]),`collective-life:${key}:${n(s.day,1)}`].slice(-340);try{localStorage.setItem(SAVE_KEY,JSON.stringify(s));markAnnualBeat(`collective-life:${key}`);window.dispatchEvent(new CustomEvent('monia:save-changed',{detail:{key:SAVE_KEY}}));return true}catch{return false}}
+export function consumeCollectiveLifeMoment(id:string){const s=read();if(!s)return false;const key=id.replace(/^collective-life[:-]?/,'');s.eventHistory=[...(s.eventHistory||[]),`collective-life:${key}:${n(s.day,1)}`].slice(-340);try{localStorage.setItem(SAVE_KEY,JSON.stringify(s));markAnnualBeat(`collective-life:${key}`);recordSharedMemory(`collective-life:${key}`);window.dispatchEvent(new CustomEvent('monia:save-changed',{detail:{key:SAVE_KEY}}));return true}catch{return false}}
 declare global{interface Window{__moniaCollectiveLife?:()=>CollectiveMoment|null;__moniaConsumeCollectiveLife?:(id:string)=>boolean}}
 window.__moniaCollectiveLife=getCollectiveLifeMoment;window.__moniaConsumeCollectiveLife=consumeCollectiveLifeMoment;
