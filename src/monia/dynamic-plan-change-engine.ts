@@ -1,3 +1,5 @@
+import { getMarineState, materializeMarineInvitation } from './secondary-character-life';
+
 const SAVE_KEY='marion-lucas-save-v4';
 
 type CalendarItem={day?:number;time?:string;owner?:string;title?:string;note?:string;place?:string};
@@ -30,8 +32,9 @@ export function getDynamicPlanChange():PlanChange|null{
     const next=lucasItems.find(i=>!i.time||mins(i.time)>=m-20);
     if(next)list.push({id:'lucas-schedule',kind:'lucas-schedule',label:'Le programme de Lucas vient de bouger',detail:`${String(next.title||'Un engagement')} peut modifier ce que vous aviez imaginé pour aujourd’hui.`,intent:'open-lucas-day',weight:78,minutes:10,source:'calendar',expiresAt:nowKey(s)+240});
   }
-  if(day>1&&!hasUnreadFrom(s,'Marine')&&ready(s,'marine-last-minute',36)&&m>=660&&m<=1170){
-    list.push({id:'marine-last-minute',kind:'invitation',label:'Marine propose quelque chose au dernier moment',detail:'Tu peux voir son message, accepter, décliner ou simplement continuer ta journée.',intent:'open-phone',weight:67,minutes:10,source:'social-circle',expiresAt:nowKey(s)+180});
+  const marine=getMarineState();
+  if(day>1&&marine?.canInvite&&!hasUnreadFrom(s,'Marine')&&ready(s,'marine-last-minute',36)&&m>=660&&m<=1170){
+    list.push({id:'marine-last-minute',kind:'invitation',label:'Marine propose quelque chose au dernier moment',detail:'Marine est à Nîmes. Si Marion est encore en ville et que Marine est libre, elles peuvent se voir spontanément.',intent:'open-phone',weight:67,minutes:10,source:'social-circle',expiresAt:nowKey(s)+180});
   }
   if(items.some(i=>String(i.owner||'').toLowerCase()==='marion')&&ready(s,'appointment-shift',48)&&m>=540&&m<=1080){
     list.push({id:'appointment-shift',kind:'delay',label:'Un rendez-vous peut changer d’horaire',detail:'Ton planning n’est pas gravé dans le marbre. Tu peux vérifier ton agenda avant de décider.',intent:'follow-calendar',weight:63,minutes:5,source:'calendar',expiresAt:nowKey(s)+150});
@@ -47,11 +50,7 @@ export function getDynamicPlanChange():PlanChange|null{
 }
 
 function materialize(s:Save,id:string){
-  if(id==='marine-last-minute'){
-    const messages=s.messages||(s.messages=[]);
-    const text='Tu fais quoi là ? Si t’es libre, on peut se voir un peu. Rien de prévu, juste comme ça 🙂';
-    if(!messages.some(m=>m.from==='Marine'&&m.text===text)){messages.unshift({from:'Marine',text,day:n(s.day,1),read:false});s.phoneUnread=n(s.phoneUnread)+1;}
-  }
+  if(id==='marine-last-minute')materializeMarineInvitation();
   if(id==='appointment-shift'){const f=s.flags||(s.flags={});f.calendarNeedsAttention=true;}
   if(id==='transport'){const f=s.flags||(s.flags={});f.travelNeedsReplan=true;}
   if(id==='lucas-schedule'){const f=s.flags||(s.flags={});f.lucasScheduleShiftedToday=true;}
