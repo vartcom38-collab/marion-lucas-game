@@ -1,4 +1,5 @@
 import { getAnnualLifeProfile, annualBeatAllowed, annualWeight, markAnnualBeat } from './annual-life-variation';
+import { careerRecoveryFactor } from './lucas-career-evolution';
 
 const SAVE_KEY='marion-lucas-save-v4';
 type CalendarItem={day?:number;time?:string;owner?:string;title?:string;note?:string;place?:string};
@@ -25,7 +26,8 @@ export function ensureCorridaAftermath():CorridaAftermath|null{
   const day=n(s.day,1),city=cityOf(c,s),year=getAnnualLifeProfile()?.lifeYear||1,seed=hash(`${year}:${day}:${city}:${String(c.title||'corrida')}`);
   const sport:CorridaSportResult=(['triumph','solid','mixed','difficult'] as const)[seed%4];
   const physicalRoll=(seed>>5)%100;const physical:CorridaPhysicalState=physicalRoll<68?'fine':physicalRoll<88?'sore':physicalRoll<97?'bruised':'minor-cut';
-  const fatigue=physical==='fine'?12+(seed%9):physical==='sore'?21+(seed%8):physical==='bruised'?28+(seed%7):34+(seed%8);
+  const rawFatigue=physical==='fine'?12+(seed%9):physical==='sore'?21+(seed%8):physical==='bruised'?28+(seed%7):34+(seed%8);
+  const fatigue=Math.max(8,Math.min(48,Math.round(rawFatigue*careerRecoveryFactor())));
   const mediaRoll=(seed>>9)%100;const media:CorridaMediaLevel=sport==='triumph'?(mediaRoll<30?'light':'busy'):mediaRoll<62?'quiet':mediaRoll<90?'light':'busy';
   const nextDay:CorridaAftermath['nextDay']=physical==='minor-cut'||fatigue>=32?'rest':media==='busy'?'media':((seed>>13)%100)<28?'travel':'normal';
   const result:CorridaAftermath={id:`corrida-${day}-${hash(city).toString(36)}`,day,city,sport,physical,fatigue,media,nextDay,created:true};
