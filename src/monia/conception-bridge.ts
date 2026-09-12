@@ -30,12 +30,19 @@ export function resolveConceptionWindow():ConceptionResult{
     f.pregnancyTestEarliestDay=day+10;
     s.eventHistory=[...(s.eventHistory||[]),'pregnancy-possible-hidden'].slice(-160);
     write(s);
+    window.dispatchEvent(new CustomEvent('monia:pregnancy-possibility-hidden',{detail:{day,testEarliestDay:day+10}}));
     return{checked:true,possible:true,conceived:true,reason:'Une grossesse devient possible mais reste inconnue du joueur.',nextCheckDay:day+10};
   }
   f.nextConceptionWindowDay=day+1;
   write(s);
   return{checked:true,possible:true,conceived:false,reason:'Cette fenêtre n’a pas conduit à une grossesse.'};
 }
+
+function maybeResolve(){if(conceptionMayRoll())resolveConceptionWindow()}
+window.setTimeout(maybeResolve,1200);
+window.setInterval(maybeResolve,3200);
+window.addEventListener('monia:intimacy-complete',maybeResolve);
+window.addEventListener('monia:game-state-after-surprise',maybeResolve);
 
 declare global{interface Window{__moniaResolveConceptionWindow?:()=>ConceptionResult}}
 window.__moniaResolveConceptionWindow=resolveConceptionWindow;
