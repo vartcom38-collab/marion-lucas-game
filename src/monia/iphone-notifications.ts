@@ -1,5 +1,6 @@
 import './iphone-notifications.css';
 import './iphone-lockscreen';
+import './life-narrative-ui';
 
 const SAVE_KEY='marion-lucas-save-v4';
 
