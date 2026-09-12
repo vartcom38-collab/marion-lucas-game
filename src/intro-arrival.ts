@@ -1,4 +1,5 @@
 import './introArrival.css';
+import './monia/early-game-phone-guard';
 
 const APP_ID='app';
 const ARRIVAL_ARM='marion-lucas-intro-arrival-armed-v1';
@@ -71,6 +72,7 @@ function finish(main:HTMLElement,veil:HTMLElement,caption:HTMLElement){
   main.classList.remove('introArrivalActive','introArrivalBreathe','introArrivalHud','introArrivalControls');
   veil.remove();caption.remove();arrivalRunning=false;disarm();
   patchSave({firstPlayableArrivalSeen:true});
+  window.__moniaEnsureMarineDayOneInvite?.();
   armFirstControlNudge();
   window.dispatchEvent(new CustomEvent('monia-intro-arrival-complete',{detail:{place:'home',playable:true}}));
   window.dispatchEvent(new CustomEvent('marion-home-first-control'));
