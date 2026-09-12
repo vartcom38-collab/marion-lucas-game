@@ -2,7 +2,7 @@ const SAVE_KEY='marion-lucas-save-v4';
 
 type CalendarItem={day?:number;time?:string;owner?:string;title?:string;note?:string;place?:string};
 type Message={from?:string;text?:string;read?:boolean;day?:number};
-type Save={day?:number;time?:string;place?:string;metLucas?:boolean;official?:boolean;stress?:number;energy?:number;messages?:Message[];calendar?:CalendarItem[];flags?:Record<string,unknown>;eventHistory?:string[]};
+type Save={day?:number;time?:string;place?:string;metLucas?:boolean;official?:boolean;stress?:number;energy?:number;phoneUnread?:number;messages?:Message[];calendar?:CalendarItem[];flags?:Record<string,unknown>;eventHistory?:string[]};
 
 export type PlanChangeKind='invitation'|'delay'|'cancelled'|'transport'|'lucas-schedule'|'social';
 export type PlanChange={id:string;kind:PlanChangeKind;label:string;detail:string;intent:string;weight:number;minutes:number;source:string;expiresAt:number};
@@ -46,7 +46,18 @@ export function getDynamicPlanChange():PlanChange|null{
   if(!list.length)return null;return list.sort((a,b)=>b.weight-a.weight)[hash(`${day}-${slot}-${place}-choice`)%list.length]||null;
 }
 
-export function consumeDynamicPlanChange(id:string){const s=read();if(!s)return false;const f=s.flags||(s.flags={});f[`planchange:${id}`]=nowKey(s);f.lastPlanChange=id;f.lastPlanChangeAt=nowKey(s);write(s);return true}
+function materialize(s:Save,id:string){
+  if(id==='marine-last-minute'){
+    const messages=s.messages||(s.messages=[]);
+    const text='Tu fais quoi là ? Si t’es libre, on peut se voir un peu. Rien de prévu, juste comme ça 🙂';
+    if(!messages.some(m=>m.from==='Marine'&&m.text===text)){messages.unshift({from:'Marine',text,day:n(s.day,1),read:false});s.phoneUnread=n(s.phoneUnread)+1;}
+  }
+  if(id==='appointment-shift'){const f=s.flags||(s.flags={});f.calendarNeedsAttention=true;}
+  if(id==='transport'){const f=s.flags||(s.flags={});f.travelNeedsReplan=true;}
+  if(id==='lucas-schedule'){const f=s.flags||(s.flags={});f.lucasScheduleShiftedToday=true;}
+}
+
+export function consumeDynamicPlanChange(id:string){const s=read();if(!s)return false;const f=s.flags||(s.flags={});f[`planchange:${id}`]=nowKey(s);f.lastPlanChange=id;f.lastPlanChangeAt=nowKey(s);materialize(s,id);write(s);return true}
 
 declare global{interface Window{__moniaDynamicPlanChange?:()=>PlanChange|null;__moniaConsumePlanChange?:(id:string)=>boolean}}
 window.__moniaDynamicPlanChange=getDynamicPlanChange;window.__moniaConsumePlanChange=consumeDynamicPlanChange;
