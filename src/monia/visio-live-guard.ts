@@ -1,4 +1,6 @@
+import './visio-live-guard.css';
 import { moniaCreativeVault, type MonIAAsset } from './creative-vault';
+import { ensureMonIAAssetBootstrap } from './asset-bootstrap';
 
 const BLOCKED_HINTS=['candidate','intro-lucas','generated/intro-lucas'];
 
@@ -10,6 +12,7 @@ function isLiveSafe(asset:MonIAAsset){
   return !!url&&!BLOCKED_HINTS.some(x=>url.includes(x));
 }
 async function approvedLucasVisio(){
+  await ensureMonIAAssetBootstrap().catch(()=>undefined);
   const assets=await moniaCreativeVault.approvedAssets({kind:'visio',actor:'Lucas'}).catch(()=>[]);
   return assets.find(isLiveSafe)||null;
 }
@@ -20,9 +23,10 @@ function neutralize(video:HTMLVideoElement){
 }
 function apply(video:HTMLVideoElement,asset:MonIAAsset|null){
   if(!asset){neutralize(video);return}
-  video.style.display='';video.src=asset.url;video.muted=true;video.loop=true;video.playsInline=true;video.closest('.callPoster,.callLive')?.querySelector('.moniaNeutralVisio')?.remove();
+  if(video.src!==new URL(asset.url,location.href).href)video.src=asset.url;
+  video.style.display='';video.muted=true;video.loop=true;video.playsInline=true;video.closest('.callPoster,.callLive')?.querySelector('.moniaNeutralVisio')?.remove();
   if(video.autoplay)void video.play().catch(()=>undefined);
-  void moniaCreativeVault.markUsed(asset.id).catch(()=>undefined);
+  if(video.dataset.moniaAsset!==asset.id){video.dataset.moniaAsset=asset.id;void moniaCreativeVault.markUsed(asset.id).catch(()=>undefined)}
 }
 let cached:MonIAAsset|null|undefined;
 async function secureAll(){
