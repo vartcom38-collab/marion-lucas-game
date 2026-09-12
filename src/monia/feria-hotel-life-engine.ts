@@ -1,5 +1,5 @@
 import { getAnnualLifeProfile, annualBeatAllowed, annualWeight } from './annual-life-variation';
-import { getTravelArrivalSnapshot } from './travel-arrival-engine';
+import { getTravelArrivalMoment } from './travel-arrival-engine';
 
 const SAVE_KEY='marion-lucas-save-v4';
 type CalendarItem={day?:number;time?:string;owner?:string;title?:string;note?:string;place?:string};
@@ -13,11 +13,11 @@ function hash(v:string){let h=2166136261;for(let i=0;i<v.length;i++){h^=v.charCo
 function isTaurine(i:CalendarItem){return String(i.owner||'').toLowerCase()==='lucas'&&/corrida|feria|toros|arène|arena|plaza|tentadero/i.test(`${i.title||''} ${i.note||''}`)}
 function city(i:CalendarItem|undefined,place:string){return String(i?.place||place||'la ville').replace(/^hotel\s+/i,'').trim()||'la ville'}
 function todays(s:Save){return(s.calendar||[]).filter(i=>n(i.day)===n(s.day,1)&&isTaurine(i))}
-function phase(s:Save,items:CalendarItem[]):FeriaHotelBeat['phase']{const arrival=getTravelArrivalSnapshot();if(arrival?.active)return'arrival';const now=mins(s.time),next=items.filter(i=>i.time&&mins(i.time)>=now).sort((a,b)=>mins(a.time)-mins(b.time))[0];const past=items.filter(i=>i.time&&mins(i.time)<now).sort((a,b)=>mins(b.time)-mins(a.time))[0];if(next&&mins(next.time)-now<=360)return'pre-corrida';if(past&&now-mins(past.time)<=300)return'post-corrida';return'off-day'}
+function phase(s:Save,items:CalendarItem[]):FeriaHotelBeat['phase']{const arrival=getTravelArrivalMoment();if(arrival)return'arrival';const now=mins(s.time),next=items.filter(i=>i.time&&mins(i.time)>=now).sort((a,b)=>mins(a.time)-mins(b.time))[0];const past=items.filter(i=>i.time&&mins(i.time)<now).sort((a,b)=>mins(b.time)-mins(a.time))[0];if(next&&mins(next.time)-now<=360)return'pre-corrida';if(past&&now-mins(past.time)<=300)return'post-corrida';return'off-day'}
 function pick<T>(xs:T[],seed:string){return xs.length?xs[hash(seed)%xs.length]:null}
 
 export function getFeriaHotelBeat():FeriaHotelBeat|null{
- const s=read();if(!s||!s.official)return null;const items=todays(s);const p=String(s.place||'');const hotel=/hotel/i.test(p);if(!items.length&&!hotel)return null;
+ const s=read();if(!s||!s.official)return null;const items=todays(s);const p=String(s.place||'');const hotel=/hotel|hôtel/i.test(p);if(!items.length&&!hotel)return null;
  const ph=phase(s,items),c=city(items[0],p),year=getAnnualLifeProfile()?.lifeYear||1;const seed=`${year}:${n(s.day,1)}:${ph}:${c}`;const energy=n(s.energy,70),stress=n(s.stress);
  const candidates:FeriaHotelBeat[]=[];
  const add=(b:FeriaHotelBeat,cooldownYears=2)=>{if(annualBeatAllowed(`feria-hotel:${b.id}`,{cooldownYears}))candidates.push(b)};
