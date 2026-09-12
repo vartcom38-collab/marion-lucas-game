@@ -3,6 +3,7 @@ import './torero-travel-life';
 import './travel-continuity-engine';
 import './travel-arrival-engine';
 import './annual-life-variation';
+import './taurine-career-season';
 import './social-economy-life';
 import './conception-bridge';
 import './weekly-life-planner';
