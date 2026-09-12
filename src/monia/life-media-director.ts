@@ -4,6 +4,7 @@ import './social-economy-life';
 import './conception-bridge';
 import './weekly-life-planner';
 import './taurine-world-network';
+import './narrative-ui';
 import { getLifeDirectorSnapshot } from './life-director';
 import { routeSceneFromGameState, type MonIASceneRoute } from './scene-context-router';
 import { buildAdaptiveLucasVisioPrompt, type LucasVisioMood } from './adaptive-visio';
