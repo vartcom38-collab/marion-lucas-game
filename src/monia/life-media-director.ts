@@ -1,6 +1,7 @@
 import './intimacy-life-layer';
 import './torero-travel-life';
 import './travel-continuity-engine';
+import './annual-life-variation';
 import './social-economy-life';
 import './conception-bridge';
 import './weekly-life-planner';
