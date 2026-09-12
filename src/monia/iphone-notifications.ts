@@ -13,7 +13,7 @@ function readSave():SaveShape{
 
 function latestUnread(){
   const save=readSave();
-  const list=[...(save.messages||[])].reverse();
+  const list=[...(save.messages||[])];
   return list.find(m=>m&&m.read===false&&m.text)||null;
 }
 
@@ -53,6 +53,7 @@ document.addEventListener('click',event=>{
     event.preventDefault();
     event.stopPropagation();
     messages.click();
+    window.setTimeout(()=>window.dispatchEvent(new CustomEvent('monia:open-latest-thread')),80);
   }
 },true);
 
