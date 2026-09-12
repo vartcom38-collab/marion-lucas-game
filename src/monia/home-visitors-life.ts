@@ -2,6 +2,7 @@ import { getAnnualLifeProfile, annualBeatAllowed, annualWeight } from './annual-
 import { getHomeLifeEvolution } from './home-life-evolution';
 import { getMarineState } from './secondary-character-life';
 import { getExtendedFamilyBeat } from './extended-family-life';
+import { getCloseCircleMoment } from './close-circle-life';
 
 const SAVE_KEY='marion-lucas-save-v4';
 type Save={day?:number;time?:string;place?:string;official?:boolean;married?:boolean;children?:number;relationship?:number;trust?:number;stress?:number;energy?:number;flags?:Record<string,unknown>;eventHistory?:string[]};
@@ -21,9 +22,12 @@ export function getHomeVisitorBeat():HomeVisitorBeat|null{
   const evolution=getHomeLifeEvolution();if(!evolution)return null;
   const energy=n(s.energy,70),stress=n(s.stress);if(energy<28||stress>82)return null;
   const h=s.eventHistory||[];const annual=getAnnualLifeProfile();const day=n(s.day,1),slot=Math.floor(now/120),seed=hash(`home-visitor:${day}:${slot}:${evolution.mode}`)%100;
-  const recentVisits=recent(h,/home-visitor|family-visit|friend-visit|marine-home-visit|guest|extended-family/i,45);
+  const recentVisits=recent(h,/home-visitor|family-visit|friend-visit|marine-home-visit|guest|extended-family|close-circle/i,45);
   const gate=Math.max(8,Math.min(54,Math.round((evolution.guestWeight+(annual?.socialBias||50))/4)-recentVisits*6));
   if(seed>=gate)return null;
+
+  const close=getCloseCircleMoment();
+  if(close&&(close.kind==='home-visit'||close.kind==='meal'||close.kind==='children'||close.kind==='birthday')&&hash(`close-circle-home:${day}:${slot}`)%100<62)return{id:`close-${close.id}`,kind:'friend',label:close.label,intent:close.intent,weight:close.weight,minutes:close.minutes,narrative:close.narrative,planned:close.kind==='birthday'||close.kind==='meal',ordinary:true};
 
   const extended=getExtendedFamilyBeat();
   if(extended&&hash(`extended-family-priority:${day}:${slot}`)%100<58)return{id:`extended-${extended.id}`,kind:'family',label:extended.label,intent:extended.intent,weight:extended.weight,minutes:extended.minutes,narrative:extended.narrative,planned:extended.kind==='family-meal'||extended.kind==='stay-over',ordinary:true};
