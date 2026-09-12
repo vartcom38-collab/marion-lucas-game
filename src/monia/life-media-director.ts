@@ -9,6 +9,7 @@ import './gameplay-intent-router';
 import './iphone-conversations';
 import './visio-live-guard';
 import './immersion-cleanup';
+import './world-map-experience';
 import { getLifeDirectorSnapshot } from './life-director';
 import { routeSceneFromGameState, type MonIASceneRoute } from './scene-context-router';
 import { buildAdaptiveLucasVisioPrompt, type LucasVisioMood } from './adaptive-visio';
