@@ -3,10 +3,11 @@ import { getMarionHomeRhythm } from './marion-home-rhythm';
 import { getAnnualLifeProfile, annualBeatAllowed, annualWeight } from './annual-life-variation';
 import { getCoupleRoutine } from './couple-routine-evolution';
 import { getHomeLifeEvolution } from './home-life-evolution';
+import { getHomeVisitorBeat } from './home-visitors-life';
 
 const SAVE_KEY='marion-lucas-save-v4';
 type Save={day?:number;time?:string;place?:string;official?:boolean;relationship?:number;trust?:number;energy?:number;stress?:number;flags?:Record<string,unknown>};
-export type SharedHomeBeat={id:string;label:string;intent:string;kind:'relationship'|'self'|'rest';weight:number;minutes:number;narrative:string;ordinary:true;romanceRequired:false};
+export type SharedHomeBeat={id:string;label:string;intent:string;kind:'relationship'|'self'|'rest'|'social';weight:number;minutes:number;narrative:string;ordinary:true;romanceRequired:false};
 
 function read():Save|null{try{const raw=localStorage.getItem(SAVE_KEY);return raw?JSON.parse(raw) as Save:null}catch{return null}}
 function n(v:unknown,f=0){const x=Number(v);return Number.isFinite(x)?x:f}
@@ -19,6 +20,9 @@ export function getSharedHomeBeat():SharedHomeBeat|null{
   if(marion.activity==='sleeping')return null;
   const now=mins(s.time),day=n(s.day,1),rel=n(s.relationship),trust=n(s.trust),energy=n(s.energy,70),stress=n(s.stress);if(rel<25||trust<18)return null;
   const homeLife=getHomeLifeEvolution();
+
+  const visitor=getHomeVisitorBeat();
+  if(visitor)return{id:`visitor-${visitor.id}`,label:visitor.label,intent:visitor.intent,kind:'social',weight:visitor.weight,minutes:visitor.minutes,narrative:visitor.narrative,ordinary:true,romanceRequired:false};
 
   const routine=getCoupleRoutine();
   if(routine&&routine.state!=='faded')return{id:routine.id,label:routine.label,intent:routine.intent,kind:'relationship',weight:routine.weight+Math.round((homeLife?.homeWeight||50)/12),minutes:routine.minutes,narrative:routine.narrative,ordinary:true,romanceRequired:false};
