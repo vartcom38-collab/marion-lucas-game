@@ -1,4 +1,5 @@
 import { getDailyLifeSnapshot, interpretFreeIntent, type DailyDirection } from './daily-life-engine';
+import { markSpontaneousLifeBeat } from './spontaneous-life-engine';
 
 const SAVE_KEY='marion-lucas-save-v4';
 
@@ -26,6 +27,7 @@ function bridge(direction:DailyDirection):DailyActionResult{
     case 'continue-torero-travel':
     case 'open-phone-lucas':
     case 'open-latest-message':
+    case 'open-phone':
     case 'open-map':
     case 'evening-options':
     case 'open-intimacy-choice':
@@ -39,6 +41,7 @@ function bridge(direction:DailyDirection):DailyActionResult{
 
 export function executeDailyDirection(id:string):DailyActionResult{
   const direction=currentDirection(id);if(!direction)return{ok:false,intent:id,handledBy:'bridge',minutes:0,message:'Cette direction n’est plus disponible.'};
+  if(direction.source==='spontaneous-life'&&direction.id.startsWith('spontaneous-'))markSpontaneousLifeBeat(direction.id.replace('spontaneous-',''));
   return bridge(direction);
 }
 
