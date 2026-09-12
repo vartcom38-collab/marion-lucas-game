@@ -1,0 +1,12 @@
+const SAVE_KEY='marion-lucas-save-v4';
+type CalendarItem={day?:number;owner?:string;title?:string;note?:string};
+type Save={day?:number;place?:string;official?:boolean;relationship?:number;trust?:number;energy?:number;calendar?:CalendarItem[];flags?:Record<string,unknown>};
+export type ToreroTravelChoice='follow'|'stay-home'|'join-later'|'own-plans';
+export type ToreroTravelSnapshot={active:boolean;runLength:number;cities:string[];choiceOpen:boolean;choices:Array<{id:ToreroTravelChoice;label:string;effect:string}>;};
+function read():Save|null{try{const raw=localStorage.getItem(SAVE_KEY);return raw?JSON.parse(raw) as Save:null}catch{return null}}
+function taurine(i:CalendarItem){return i.owner==='Lucas'&&/corrida|feria|toros|arène|arena|entraînement|deplacement|déplacement/i.test(`${i.title||''} ${i.note||''}`)}
+function cityOf(i:CalendarItem){const raw=`${i.title||''} ${i.note||''}`;const m=raw.match(/(?:à|a|·)\s*([A-ZÀ-Ý][A-Za-zÀ-ÿ\- ]{2,28})/);return m?.[1]?.trim()||'Déplacement professionnel'}
+export function getToreroTravelSnapshot():ToreroTravelSnapshot|null{const s=read();if(!s)return null;const day=Number(s.day||1);const upcoming=(s.calendar||[]).filter(i=>taurine(i)&&Number(i.day||0)>=day&&Number(i.day||0)<=day+6).sort((a,b)=>Number(a.day)-Number(b.day));const cities=[...new Set(upcoming.map(cityOf))];const active=upcoming.length>=2;return{active,runLength:upcoming.length,cities,choiceOpen:!!s.official&&upcoming.length>0,choices:[{id:'follow',label:'L’accompagner sur la tournée',effect:'Marion partage davantage la vie taurine, les hôtels, trajets et arènes.'},{id:'stay-home',label:'Rester à la maison',effect:'Marion garde sa propre semaine, ses rendez-vous et sa liberté.'},{id:'join-later',label:'Le rejoindre plus tard',effect:'Les deux vies continuent séparément avant les retrouvailles.'},{id:'own-plans',label:'Garder mes propres projets',effect:'Le jeu privilégie les engagements personnels déjà prévus.'}]};}
+export function chooseToreroTravel(choice:ToreroTravelChoice){const s=read();if(!s)return false;const f=s.flags||(s.flags={});f.toreroTravelChoice=choice;f.toreroTravelChoiceDay=Number(s.day||1);if(choice==='follow')f.travelWithLucas=true;if(choice==='stay-home'||choice==='own-plans')f.travelWithLucas=false;localStorage.setItem(SAVE_KEY,JSON.stringify(s));return true}
+declare global{interface Window{__moniaToreroTravel?:()=>ToreroTravelSnapshot|null;__moniaChooseToreroTravel?:(c:ToreroTravelChoice)=>boolean}}
+window.__moniaToreroTravel=getToreroTravelSnapshot;window.__moniaChooseToreroTravel=chooseToreroTravel;
