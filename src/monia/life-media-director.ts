@@ -12,6 +12,7 @@ import './immersion-cleanup';
 import './world-map-experience';
 import './seasonal-wardrobe-atmosphere';
 import './living-ambient-motion';
+import './place-ambient-signature';
 import { getLifeDirectorSnapshot } from './life-director';
 import { routeSceneFromGameState, type MonIASceneRoute } from './scene-context-router';
 import { buildAdaptiveLucasVisioPrompt, type LucasVisioMood } from './adaptive-visio';
