@@ -1,4 +1,5 @@
 import { getFranceSpainState } from './france-spain-life-transition';
+import { getSpainSocialOpportunities } from './spain-social-circle';
 
 const SAVE_KEY='marion-lucas-save-v4';
 
@@ -24,7 +25,11 @@ export function getSpainLifeSnapshot():SpainLifeSnapshot|null{
 
   if(stage==='arriving')directions.push({id:'spain-bearings',label:'Prendre mes repères sans me presser',intent:'open-map',kind:'self',weight:74,minutes:60,reason:'Une arrivée doit laisser de la place à l’observation avant de remplir l’agenda.'});
   if(homeRoutineOpen&&energy>30)directions.push({id:'spain-routine',label:'Créer un peu ma routine ici',intent:'custom-intent',kind:'home',weight:58,minutes:75,reason:'L’Espagne devient un quotidien, pas seulement un décor autour de Lucas.'});
-  if(socialOpen&&m>=660&&m<1260&&stress<75)directions.push({id:'spain-social',label:'Voir ce qui se passe autour de moi',intent:'open-phone',kind:'social',weight:52,minutes:60,reason:'Le nouveau cercle social peut s’ouvrir progressivement sans forcer une amitié instantanée.'});
+  if(socialOpen&&m>=660&&m<1260&&stress<75){
+    const social=getSpainSocialOpportunities();
+    if(social.length){for(const item of social.slice(0,2))directions.push({id:`spain-social-${item.id}`,label:item.label,intent:item.intent,kind:'social',weight:item.weight,minutes:item.minutes,reason:item.reason});}
+    else directions.push({id:'spain-social',label:'Voir ce qui se passe autour de moi',intent:'open-map',kind:'social',weight:48,minutes:60,reason:'Le nouveau cercle social s’ouvre progressivement, sans forcer une amitié instantanée.'});
+  }
   if(s.metLucas&&s.official)directions.push({id:'spain-lucas-life',label:'Voir comment s’organise la journée de Lucas ici',intent:'open-lucas-day',kind:'taurine',weight:61,minutes:45,reason:'La carrière de Lucas structure une partie de la vie espagnole sans absorber toute celle de Marion.'});
   if(independentLifeOpen&&energy>40)directions.push({id:'spain-own-life',label:'Faire quelque chose qui n’appartient qu’à moi',intent:'custom-intent',kind:'self',weight:64,minutes:90,reason:'Marion doit pouvoir construire une vie indépendante en Espagne.'});
   if(stage==='rooted')directions.push({id:'spain-home',label:'M’occuper un peu de ma vie ici',intent:'open-map',kind:'home',weight:45,minutes:60,reason:'Une vie installée produit des habitudes, des courses, des rendez-vous et des lieux familiers.'});
