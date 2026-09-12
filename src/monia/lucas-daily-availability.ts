@@ -1,6 +1,7 @@
 import { getLucasPresence } from './lucas-presence-engine';
 import { getTaurineCareerPressure } from './taurine-career-pressure-engine';
 import { getLucasCareerEvolution } from './lucas-career-evolution';
+import { getLucasHomeRhythm } from './lucas-home-rhythm';
 
 const SAVE_KEY='marion-lucas-save-v4';
 type Save={day?:number;time?:string;official?:boolean;relationship?:number;trust?:number;flags?:Record<string,unknown>;eventHistory?:string[]};
@@ -15,26 +16,30 @@ function clamp(v:number,min:number,max:number){return Math.max(min,Math.min(max,
 function hash(v:string){let h=2166136261;for(let i=0;i<v.length;i++){h^=v.charCodeAt(i);h=Math.imul(h,16777619)}return Math.abs(h>>>0)}
 
 export function getLucasDailyAvailability():LucasDailyAvailability|null{
-  const s=read();if(!s)return null;const presence=getLucasPresence();if(!presence)return null;const pressure=getTaurineCareerPressure();const career=getLucasCareerEvolution();const now=mins(s.time);const rel=n(s.relationship),trust=n(s.trust);const seed=hash(`${n(s.day,1)}:${Math.floor(now/90)}:${pressure?.level||'none'}`);
+  const s=read();if(!s)return null;const presence=getLucasPresence();if(!presence)return null;const pressure=getTaurineCareerPressure();const career=getLucasCareerEvolution();const home=getLucasHomeRhythm();const now=mins(s.time);const rel=n(s.relationship),trust=n(s.trust);const seed=hash(`${n(s.day,1)}:${Math.floor(now/90)}:${pressure?.level||'none'}`);
   let availability:LucasContactAvailability='normal';
-  if(presence.state==='traveling')availability='later';
+  if(home&&home.activity==='sleeping')availability='later';
+  else if(home&&!home.interruptible)availability='limited';
+  else if(presence.state==='traveling')availability='later';
   else if(presence.state==='working')availability=pressure?.level==='peak'?'later':'limited';
   else if(pressure?.level==='peak')availability='limited';
   else if(pressure?.level==='low'&&rel>=45)availability='easy';
 
   let tone:LucasDailyTone='normal';
-  if((pressure?.restPriority||0)>=78)tone='drained';
+  if(home?.activity==='resting'||(pressure?.restPriority||0)>=78)tone='drained';
+  else if(home&&(home.activity==='working'||home.activity==='training'||home.activity==='with-cuadrilla'))tone='focused';
   else if(presence.state==='working'||pressure?.level==='high'||pressure?.level==='peak')tone='focused';
   else if((pressure?.privateLifePriority||0)>=72&&rel>=55&&trust>=45)tone=(seed%3===0?'quiet':'tender');
   else if(career?.phase==='selective'||career?.phase==='veteran')tone='quiet';
 
-  const canMessageNow=presence.reachableByPhone!==false;
-  const canCallNow=canMessageNow&&availability!=='later'&&!(presence.state==='working'&&availability==='limited');
-  const privateBase=presence.privateTimePossible?64:0;
-  const privateTimeWeight=presence.privateTimePossible?clamp(privateBase+Math.round((pressure?.privateLifePriority||50)/6)-Math.round((pressure?.restPriority||0)/9),28,88):0;
+  const canMessageNow=presence.reachableByPhone!==false&&home?.activity!=='sleeping';
+  const canCallNow=canMessageNow&&availability!=='later'&&!(presence.state==='working'&&availability==='limited')&&(home?.contactNatural!==false);
+  const privatePossible=home?home.privateTimePossible:presence.privateTimePossible;
+  const privateBase=privatePossible?64:0;
+  const privateTimeWeight=privatePossible?clamp(privateBase+Math.round((pressure?.privateLifePriority||50)/6)-Math.round((pressure?.restPriority||0)/9),28,88):0;
   const contactBase=availability==='easy'?72:availability==='normal'?60:availability==='limited'?43:28;
   const contactWeight=clamp(contactBase+(tone==='tender'?7:0)+(tone==='drained'?-5:0),20,82);
-  const reason=availability==='later'?'Lucas est pris par un déplacement ou un moment professionnel qui rend un appel immédiat peu naturel.':availability==='limited'?'Lucas reste joignable, mais sa disponibilité est réduite par son rythme professionnel.':tone==='drained'?'Lucas est présent mais très fatigué; les échanges courts et calmes sont plus naturels.':tone==='tender'?'La pression extérieure retombe assez pour laisser davantage de place au couple.':'Lucas reste disponible sans que sa carrière disparaisse du contexte.';
+  const reason=home&&!home.interruptible?home.label:home?.activity==='resting'?home.label:availability==='later'?'Lucas est pris par un déplacement ou un moment professionnel qui rend un appel immédiat peu naturel.':availability==='limited'?'Lucas reste joignable, mais sa disponibilité est réduite par son rythme professionnel.':tone==='drained'?'Lucas est présent mais très fatigué; les échanges courts et calmes sont plus naturels.':tone==='tender'?'La pression extérieure retombe assez pour laisser davantage de place au couple.':'Lucas reste disponible sans que sa carrière disparaisse du contexte.';
   return{availability,tone,canCallNow,canMessageNow,privateTimeWeight,contactWeight,reason};
 }
 
