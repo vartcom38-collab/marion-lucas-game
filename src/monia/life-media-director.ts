@@ -4,6 +4,7 @@ import './travel-continuity-engine';
 import './travel-arrival-engine';
 import './annual-life-variation';
 import './taurine-career-season';
+import './taurine-career-pressure-engine';
 import './social-economy-life';
 import './conception-bridge';
 import './weekly-life-planner';
