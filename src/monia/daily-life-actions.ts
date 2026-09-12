@@ -7,6 +7,7 @@ import { resolveTravelArrival } from './travel-arrival-engine';
 import { consumeFeriaHotelBeat } from './feria-hotel-life-engine';
 import { consumeSocialOutingBeat } from './social-outing-life';
 import { applyCurrentPlaceHistory } from './place-history-life';
+import { getLongStayRoutine, resolveLongStayRoutine } from './long-stay-routine-life';
 
 const SAVE_KEY='marion-lucas-save-v4';
 
@@ -25,58 +26,22 @@ function bridge(direction:DailyDirection):DailyActionResult{
   const s=read();if(!s)return{ok:false,intent:direction.intent,handledBy:'bridge',minutes:0,message:'Aucune partie active.'};
   const mins=direction.minutes||0;
   switch(direction.intent){
-    case 'rest':
-      addMinutes(s,mins);s.energy=Math.min(100,n(s.energy,70)+14);s.stress=Math.max(0,n(s.stress)-10);note(s,'daily-rest');write(s);dispatch('state-changed',{source:'rest'});return{ok:true,intent:direction.intent,handledBy:'bridge',minutes:mins};
-    case 'morning-routine':
-      addMinutes(s,mins);s.energy=Math.min(100,n(s.energy,70)+4);note(s,'daily-morning-routine');write(s);dispatch('state-changed',{source:'morning-routine'});return{ok:true,intent:direction.intent,handledBy:'bridge',minutes:mins};
-    case 'follow-calendar':
-    case 'open-lucas-day':
-    case 'continue-torero-travel':
-    case 'open-phone-lucas':
-    case 'open-latest-message':
-    case 'open-phone':
-    case 'open-map':
-    case 'evening-options':
-    case 'open-intimacy-choice':
-      dispatch(direction.intent,{direction});return{ok:true,intent:direction.intent,handledBy:'game',minutes:0};
-    case 'custom-intent':
-      dispatch('open-custom-intent',{direction});return{ok:true,intent:direction.intent,handledBy:'player',minutes:0};
-    default:
-      dispatch(direction.intent,{direction});return{ok:true,intent:direction.intent,handledBy:'game',minutes:0};
+    case 'rest':addMinutes(s,mins);s.energy=Math.min(100,n(s.energy,70)+14);s.stress=Math.max(0,n(s.stress)-10);note(s,'daily-rest');write(s);dispatch('state-changed',{source:'rest'});return{ok:true,intent:direction.intent,handledBy:'bridge',minutes:mins};
+    case 'morning-routine':addMinutes(s,mins);s.energy=Math.min(100,n(s.energy,70)+4);note(s,'daily-morning-routine');write(s);dispatch('state-changed',{source:'morning-routine'});return{ok:true,intent:direction.intent,handledBy:'bridge',minutes:mins};
+    case 'follow-calendar':case 'open-lucas-day':case 'continue-torero-travel':case 'open-phone-lucas':case 'open-latest-message':case 'open-phone':case 'open-map':case 'evening-options':case 'open-intimacy-choice':dispatch(direction.intent,{direction});return{ok:true,intent:direction.intent,handledBy:'game',minutes:0};
+    case 'custom-intent':dispatch('open-custom-intent',{direction});return{ok:true,intent:direction.intent,handledBy:'player',minutes:0};
+    default:dispatch(direction.intent,{direction});return{ok:true,intent:direction.intent,handledBy:'game',minutes:0};
   }
 }
 
-function handleSpainSocial(direction:DailyDirection){
-  const id=direction.id;
-  const meet=id.match(/^spain-spain-social-meet-(.+)$/);if(meet){recordSpainContactMoment(meet[1],'meet');const s=read();if(s){addMinutes(s,Math.max(30,direction.minutes||60));note(s,`spain-social-meet:${meet[1]}`);write(s,true);}dispatch('state-changed',{source:'spain-social-meet',contactId:meet[1]});return true;}
-  const contact=id.match(/^spain-spain-social-contact-(.+)$/);if(contact){recordSpainContactMoment(contact[1],'talk');dispatch('open-phone',{source:'spain-social-contact',contactId:contact[1]});return true;}
-  return false;
-}
-
-function handleSpainRoutine(direction:DailyDirection){
-  const match=direction.id.match(/spain-routine-(?:discover|routine)-(.+)$/);if(!match)return false;
-  const placeId=match[1];recordSpainPlaceMoment(placeId);
-  const s=read();if(s){addMinutes(s,Math.max(25,direction.minutes||45));note(s,`spain-familiar-place:${placeId}`);write(s,true);}
-  dispatch(direction.intent,{source:'spain-familiar-place',placeId,direction});
-  return true;
-}
-
-function handleTravelArrival(direction:DailyDirection){
-  const match=direction.id.match(/^arrival-(.+)$/);if(!match)return false;
-  const ok=resolveTravelArrival(match[1]);if(ok){const s=read();if(s)write(s);dispatch('state-changed',{source:'travel-arrival',actionId:match[1]});}return ok;
-}
-
-function handleSocialOuting(direction:DailyDirection){
-  if(direction.source!=='social-outing-life')return false;
-  const s=read();if(!s)return false;consumeSocialOutingBeat(direction.id);
-  const mode=direction.intent.split(':')[1]||'social';const mins=Math.max(30,direction.minutes||75);addMinutes(s,mins);
-  s.energy=Math.max(0,n(s.energy,70)-(mode==='marion-solo'||mode==='separate-plans'?8:6));
-  s.stress=Math.max(0,n(s.stress)-(mode==='taurine-with-lucas'?0:4));
-  note(s,`social-outing-choice:${mode}`);write(s,true);dispatch('state-changed',{source:'social-outing',mode,direction});return true;
-}
+function handleSpainSocial(direction:DailyDirection){const id=direction.id;const meet=id.match(/^spain-spain-social-meet-(.+)$/);if(meet){recordSpainContactMoment(meet[1],'meet');const s=read();if(s){addMinutes(s,Math.max(30,direction.minutes||60));note(s,`spain-social-meet:${meet[1]}`);write(s,true);}dispatch('state-changed',{source:'spain-social-meet',contactId:meet[1]});return true;}const contact=id.match(/^spain-spain-social-contact-(.+)$/);if(contact){recordSpainContactMoment(contact[1],'talk');dispatch('open-phone',{source:'spain-social-contact',contactId:contact[1]});return true;}return false;}
+function handleSpainRoutine(direction:DailyDirection){const match=direction.id.match(/spain-routine-(?:discover|routine)-(.+)$/);if(!match)return false;const placeId=match[1];recordSpainPlaceMoment(placeId);const s=read();if(s){addMinutes(s,Math.max(25,direction.minutes||45));note(s,`spain-familiar-place:${placeId}`);write(s,true);}dispatch(direction.intent,{source:'spain-familiar-place',placeId,direction});return true;}
+function handleTravelArrival(direction:DailyDirection){const match=direction.id.match(/^arrival-(.+)$/);if(!match)return false;const ok=resolveTravelArrival(match[1]);if(ok){const s=read();if(s)write(s);dispatch('state-changed',{source:'travel-arrival',actionId:match[1]});}return ok;}
+function handleSocialOuting(direction:DailyDirection){if(direction.source!=='social-outing-life')return false;const s=read();if(!s)return false;consumeSocialOutingBeat(direction.id);const mode=direction.intent.split(':')[1]||'social';const mins=Math.max(30,direction.minutes||75);addMinutes(s,mins);s.energy=Math.max(0,n(s.energy,70)-(mode==='marion-solo'||mode==='separate-plans'?8:6));s.stress=Math.max(0,n(s.stress)-(mode==='taurine-with-lucas'?0:4));note(s,`social-outing-choice:${mode}`);write(s,true);dispatch('state-changed',{source:'social-outing',mode,direction});return true;}
 
 export function executeDailyDirection(id:string):DailyActionResult{
-  const direction=currentDirection(id);if(!direction)return{ok:false,intent:id,handledBy:'bridge',minutes:0,message:'Cette direction n’est plus disponible.'};
+  const direction=currentDirection(id);
+  if(!direction){const stay=getLongStayRoutine();if(stay?.id===id&&resolveLongStayRoutine(id)){dispatch('state-changed',{source:'long-stay-routine',kind:stay.kind});return{ok:true,intent:stay.intent,handledBy:'bridge',minutes:stay.minutes};}return{ok:false,intent:id,handledBy:'bridge',minutes:0,message:'Cette direction n’est plus disponible.'};}
   if(direction.source==='spontaneous-life'&&direction.id.startsWith('spontaneous-'))markSpontaneousLifeBeat(direction.id.replace('spontaneous-',''));
   if(direction.source==='dynamic-plan-change'&&direction.id.startsWith('planchange-'))consumeDynamicPlanChange(direction.id.replace('planchange-',''));
   if(direction.source==='feria-hotel-life'&&direction.id.startsWith('feria-hotel-'))consumeFeriaHotelBeat(direction.id.replace('feria-hotel-',''));
@@ -87,13 +52,7 @@ export function executeDailyDirection(id:string):DailyActionResult{
   return bridge(direction);
 }
 
-export function executeFreeIntent(text:string):DailyActionResult{
-  const parsed=interpretFreeIntent(text);if(!parsed.allowed)return{ok:false,intent:text,handledBy:'player',minutes:0,message:'Écris ce que Marion a envie de faire.'};
-  const s=read();if(s){const f=s.flags||(s.flags={});f.lastFreeIntent=text.trim().slice(0,220);f.lastFreeIntentDay=n(s.day,1);f.lastFreeIntentTime=String(s.time||'09:00');write(s,/restaurant|café|cafe|plage|arène|arena|feria|maison|finca|voyage|sortie|soirée|soiree/i.test(text));}
-  dispatch('free-intent',{text:text.trim(),kind:parsed.kind});
-  return{ok:true,intent:text.trim(),handledBy:'player',minutes:0};
-}
+export function executeFreeIntent(text:string):DailyActionResult{const parsed=interpretFreeIntent(text);if(!parsed.allowed)return{ok:false,intent:text,handledBy:'player',minutes:0,message:'Écris ce que Marion a envie de faire.'};const s=read();if(s){const f=s.flags||(s.flags={});f.lastFreeIntent=text.trim().slice(0,220);f.lastFreeIntentDay=n(s.day,1);f.lastFreeIntentTime=String(s.time||'09:00');write(s,/restaurant|café|cafe|plage|arène|arena|feria|maison|finca|voyage|sortie|soirée|soiree/i.test(text));}dispatch('free-intent',{text:text.trim(),kind:parsed.kind});return{ok:true,intent:text.trim(),handledBy:'player',minutes:0};}
 
 declare global{interface Window{__moniaExecuteDailyDirection?:(id:string)=>DailyActionResult;__moniaExecuteFreeIntent?:(text:string)=>DailyActionResult}}
-window.__moniaExecuteDailyDirection=executeDailyDirection;
-window.__moniaExecuteFreeIntent=executeFreeIntent;
+window.__moniaExecuteDailyDirection=executeDailyDirection;window.__moniaExecuteFreeIntent=executeFreeIntent;
