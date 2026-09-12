@@ -1,6 +1,7 @@
 import { getDailyLifeSnapshot, interpretFreeIntent, type DailyDirection } from './daily-life-engine';
 import { markSpontaneousLifeBeat } from './spontaneous-life-engine';
 import { consumeDynamicPlanChange } from './dynamic-plan-change-engine';
+import { recordSpainContactMoment } from './spain-social-circle';
 
 const SAVE_KEY='marion-lucas-save-v4';
 
@@ -8,7 +9,7 @@ type Save={day?:number;time?:string;place?:string;stress?:number;energy?:number;
 export type DailyActionResult={ok:boolean;intent:string;handledBy:'bridge'|'game'|'player';minutes:number;message?:string};
 
 function read():Save|null{try{const raw=localStorage.getItem(SAVE_KEY);return raw?JSON.parse(raw) as Save:null}catch{return null}}
-function write(s:Save){localStorage.setItem(SAVE_KEY,JSON.stringify(s));window.dispatchEvent(new StorageEvent('storage',{key:SAVE_KEY,newValue:JSON.stringify(s)}));}
+function write(s:Save){localStorage.setItem(SAVE_KEY,JSON.stringify(s));window.dispatchEvent(new CustomEvent('monia:save-changed',{detail:{key:SAVE_KEY}}));window.dispatchEvent(new Event('storage'));}
 function n(v:unknown,f=0){const x=Number(v);return Number.isFinite(x)?x:f}
 function addMinutes(s:Save,minutes:number){const [h,m]=String(s.time||'09:00').split(':').map(Number);let total=(h||0)*60+(m||0)+Math.max(0,minutes);while(total>=1440){total-=1440;s.day=n(s.day,1)+1;}s.time=`${String(Math.floor(total/60)).padStart(2,'0')}:${String(total%60).padStart(2,'0')}`;}
 function note(s:Save,event:string){s.eventHistory=[...(s.eventHistory||[]),event].slice(-180)}
@@ -40,10 +41,18 @@ function bridge(direction:DailyDirection):DailyActionResult{
   }
 }
 
+function handleSpainSocial(direction:DailyDirection){
+  const id=direction.id;
+  const meet=id.match(/^spain-spain-social-meet-(.+)$/);if(meet){recordSpainContactMoment(meet[1],'meet');const s=read();if(s){addMinutes(s,Math.max(30,direction.minutes||60));note(s,`spain-social-meet:${meet[1]}`);write(s);}dispatch('state-changed',{source:'spain-social-meet',contactId:meet[1]});return true;}
+  const contact=id.match(/^spain-spain-social-contact-(.+)$/);if(contact){recordSpainContactMoment(contact[1],'talk');dispatch('open-phone',{source:'spain-social-contact',contactId:contact[1]});return true;}
+  return false;
+}
+
 export function executeDailyDirection(id:string):DailyActionResult{
   const direction=currentDirection(id);if(!direction)return{ok:false,intent:id,handledBy:'bridge',minutes:0,message:'Cette direction n’est plus disponible.'};
   if(direction.source==='spontaneous-life'&&direction.id.startsWith('spontaneous-'))markSpontaneousLifeBeat(direction.id.replace('spontaneous-',''));
   if(direction.source==='dynamic-plan-change'&&direction.id.startsWith('planchange-'))consumeDynamicPlanChange(direction.id.replace('planchange-',''));
+  if(direction.source==='spain-life'&&handleSpainSocial(direction))return{ok:true,intent:direction.intent,handledBy:'bridge',minutes:direction.minutes||0};
   return bridge(direction);
 }
 
