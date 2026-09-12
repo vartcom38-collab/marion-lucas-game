@@ -88,8 +88,10 @@ function normalizePrimaryForCohabitation(state:PropertyState,s:Save|null){
   const f=s?.flags||{};
   const movedToMadrid=Boolean(f.livingWithLucas||f.movedToMadrid||f.cohabitingMadrid);
   if(!movedToMadrid||hasJointFinca(state))return state;
+  const madrid=state.owned.find(p=>p.id==='lucas-madrid-house');
+  if(madrid?.use==='primary')return state;
   for(const p of state.owned){if(p.use==='primary')p.use='available'}
-  const madrid=state.owned.find(p=>p.id==='lucas-madrid-house');if(madrid)madrid.use='primary';
+  if(madrid)madrid.use='primary';
   return state;
 }
 function offerId(index:number,seed:number){return`property-${index}-${seed%997}`}
@@ -98,11 +100,11 @@ function availableOffers(state:PropertyState,s:Save|null){
   const offset=(state.offerSeed+Math.floor(dayOf(s)/21))%CATALOG.length;
   const ordered=CATALOG.map((_,i)=>CATALOG[(i+offset)%CATALOG.length]);
   const filtered=firstJoint?ordered.filter(o=>o.firstHomeEligible):ordered;
-  return filtered.slice(0,firstJoint?4:6).map((o,i)=>({...o,id:offerId(CATALOG.indexOf(o),state.offerSeed)}));
+  return filtered.slice(0,firstJoint?4:6).map(o=>({...o,id:offerId(CATALOG.indexOf(o),state.offerSeed)}));
 }
 
 export function getPropertyLifeSnapshot(){
-  const s=readSave();let state=readState();state=normalizePrimaryForCohabitation(state,s);writeState(state);
+  const s=readSave();let state=readState();const before=JSON.stringify(state);state=normalizePrimaryForCohabitation(state,s);if(JSON.stringify(state)!==before)writeState(state);
   return{
     searchOpen:state.searchOpen,
     searchReason:state.searchReason||null,
