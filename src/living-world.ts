@@ -1,5 +1,6 @@
 import './livingWorld.css';
 import './monia/place-ambient-signature';
+import './world-visual-resilience';
 
 const SAVE_KEY='marion-lucas-save-v4';
 let mounted:HTMLElement|null=null;
