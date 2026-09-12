@@ -5,6 +5,7 @@ import './travel-arrival-engine';
 import './annual-life-variation';
 import './taurine-career-season';
 import './taurine-career-pressure-engine';
+import './lucas-daily-availability';
 import './social-economy-life';
 import './conception-bridge';
 import './weekly-life-planner';
@@ -19,6 +20,7 @@ import './seasonal-wardrobe-atmosphere';
 import './living-ambient-motion';
 import './place-ambient-signature';
 import { getLifeDirectorSnapshot } from './life-director';
+import { getLucasDailyAvailability } from './lucas-daily-availability';
 import { routeSceneFromGameState, type MonIASceneRoute } from './scene-context-router';
 import { buildAdaptiveLucasVisioPrompt, type LucasVisioMood } from './adaptive-visio';
 
@@ -56,7 +58,7 @@ function readSave():Save|null{try{const raw=localStorage.getItem(SAVE_KEY);retur
 function n(v:unknown,fallback=0){const x=Number(v);return Number.isFinite(x)?x:fallback}
 function recentText(s:Save){return [...(s.messages||[]).slice(0,8).map(m=>m.text||''),...(s.eventHistory||[]).slice(-8),...(s.memories||[]).slice(0,8)].join(' · ')}
 function relationLabel(s:Save){const r=n(s.relationship);return r>=70?'très proche':r>=45?'proche':r>=20?'en rapprochement':'encore réservé'}
-function moodFor(s:Save):LucasVisioMood{const stress=n(s.stress),r=n(s.relationship),t=n(s.trust);if(stress>70)return'worried';if(r>=60&&t>=45)return'tender';if(n(s.chemistry)>=60)return'playful';return'neutral'}
+function moodFor(s:Save):LucasVisioMood{const availability=getLucasDailyAvailability();if(availability?.tone==='tender')return'tender';if(availability?.tone==='drained')return'worried';if(availability?.tone==='quiet')return'neutral';const stress=n(s.stress),r=n(s.relationship),t=n(s.trust);if(stress>70)return'worried';if(r>=60&&t>=45)return'tender';if(n(s.chemistry)>=60&&availability?.tone!=='focused')return'playful';return'neutral'}
 
 function hiddenReadiness(s:Save):HiddenLifeReadiness{
   const day=Math.max(1,n(s.day,1));
@@ -78,7 +80,7 @@ function hiddenReadiness(s:Save):HiddenLifeReadiness{
 
 export function planLifeMedia():LifeMediaOpportunity[]{
   const s=readSave();const snapshot=getLifeDirectorSnapshot();if(!s||!snapshot)return[];
-  const haystack=recentText(s);
+  const haystack=recentText(s);const lucasAvailability=getLucasDailyAvailability();
   const routeDecision=routeSceneFromGameState({
     place:s.place,time:s.time,relationship:n(s.relationship),trust:n(s.trust),chemistry:n(s.chemistry),official:!!s.official,engaged:!!s.engaged,married:!!s.married,children:n(s.children),
     recentMessages:(s.messages||[]).slice(0,6).map(m=>m.text||''),recentEvents:(s.eventHistory||[]).slice(-6),memories:(s.memories||[]).slice(0,6)
@@ -86,15 +88,15 @@ export function planLifeMedia():LifeMediaOpportunity[]{
   const out:LifeMediaOpportunity[]=[];
   const unread=(s.messages||[]).find(m=>m.read===false&&m.text);
   if(unread)out.push({id:'unread-message',channel:'message',route:'message-only',priority:100,eligible:true,approvalRequired:false,surpriseSafe:true,reason:'Un message réel existe déjà dans la sauvegarde.'});
-  if(s.metLucas&&snapshot.surpriseBudget.call)out.push({id:'lucas-call-window',channel:'call',route:'visio',priority:58,eligible:true,approvalRequired:false,surpriseSafe:true,reason:'Lucas est connu et un appel spontané peut être proposé ou initié librement.'});
+  if(s.metLucas&&snapshot.surpriseBudget.call){const canCall=lucasAvailability?.canCallNow!==false;out.push({id:'lucas-call-window',channel:'call',route:'visio',priority:lucasAvailability?.contactWeight||58,eligible:canCall,approvalRequired:false,surpriseSafe:true,reason:lucasAvailability?.reason||'Lucas est connu et un appel spontané peut être proposé ou initié librement.'});}
   if(s.metLucas&&snapshot.surpriseBudget.cinematic){
     const route=routeDecision.route;
     if(route!=='message-only'&&route!=='visio')out.push({id:'contextual-cinematic',channel:'cinematic',route,priority:72,eligible:true,approvalRequired:true,surpriseSafe:true,reason:routeDecision.reason});
   }
   if(s.metLucas&&snapshot.surpriseBudget.voice)out.push({id:'voice-candidate',channel:'voice',route:'message-only',priority:45,eligible:false,approvalRequired:true,surpriseSafe:false,reason:'Canal réservé jusqu’à validation d’une voix Lucas naturelle et stable.'});
   if(s.metLucas){
-    const visioPrompt=buildAdaptiveLucasVisioPrompt({state:'speaking',mood:moodFor(s),place:String(s.place||''),timeOfDay:String(s.time||''),relationship:relationLabel(s),recentBeat:haystack.slice(-420)});
-    out.push({id:'adaptive-visio',channel:'visio',route:'visio',priority:66,eligible:true,approvalRequired:true,surpriseSafe:true,reason:'La visio est adaptée au lieu, à l’heure, à la relation et au contexte récent.',prompt:visioPrompt});
+    const visioPrompt=buildAdaptiveLucasVisioPrompt({state:'speaking',mood:moodFor(s),place:String(s.place||''),timeOfDay:String(s.time||''),relationship:relationLabel(s),recentBeat:`${haystack.slice(-320)} · ${lucasAvailability?.reason||''}`.slice(-420)});
+    out.push({id:'adaptive-visio',channel:'visio',route:'visio',priority:lucasAvailability?.contactWeight||66,eligible:lucasAvailability?.canCallNow!==false,approvalRequired:true,surpriseSafe:true,reason:lucasAvailability?.reason||'La visio est adaptée au lieu, à l’heure, à la relation et au contexte récent.',prompt:visioPrompt});
   }
   return out.sort((a,b)=>b.priority-a.priority);
 }
