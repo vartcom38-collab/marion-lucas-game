@@ -1,31 +1,17 @@
 import './coupleMicroTensionDirector.css';
+import {acquireScene,releaseScene,sceneBlocked} from './scene-arbiter';
 
 type SaveLike={day:number;time:string;place:string;screen:string;metLucas:boolean;official:boolean;relationship:number;trust:number;chemistry:number;stress:number;memories:string[];flags:Record<string,boolean|number|string>;updatedAt:number};
-const SAVE_KEY='marion-lucas-save-v4';
+const SAVE_KEY='marion-lucas-save-v4',SCENE='couple-micro-tension';
 let open=false,timer=0;
 function read():SaveLike|null{try{return JSON.parse(localStorage.getItem(SAVE_KEY)||'null') as SaveLike|null}catch{return null}}
 function write(s:SaveLike){s.updatedAt=Date.now();localStorage.setItem(SAVE_KEY,JSON.stringify(s))}
 function mins(t:string){const [h,m]=String(t||'09:00').split(':').map(Number);return(h||0)*60+(m||0)}
 function addMemory(s:SaveLike,t:string){if(!Array.isArray(s.memories))s.memories=[];if(!s.memories.includes(t))s.memories.unshift(t);s.memories=s.memories.slice(0,100)}
-function blocked(){return Boolean(document.querySelector('#overlay.open,.eventOverlay,.incomingCallOverlay,.moniaDramaScene,#moniaSceneOffer,.lucasSharedRoutineVeil,.lucasReunionMoodVeil,.coupleMicroTensionVeil'))}
+function blocked(){return sceneBlocked(SCENE)||Boolean(document.querySelector('.coupleMicroTensionVeil'))}
 function eligible(s:SaveLike){if(!s.metLucas||!s.official||s.screen!=='game'||document.hidden||blocked())return false;if(!['finca','estate','madrid','family'].includes(s.place))return false;if(Number(s.flags.coupleMicroTensionDay||0)===s.day)return false;if(mins(s.time)<720||mins(s.time)>1320)return false;if(Number(s.relationship||0)<38)return false;return s.day%2===0||Boolean(s.flags.lucasWorkedLong)||Number(s.stress||0)>=34}
 function eventFor(s:SaveLike){const k=(s.day*19+Math.round(s.trust||0)+Math.round(s.stress||0))%4;if(Boolean(s.flags.lucasWorkedLong)&&k%2===0)return{tone:'late',k:'UN DÉCALAGE',t:'Il avait dit qu’il rentrerait plus tôt.',b:'Rien de grave. Juste assez pour que tu regardes l’heure une fois de trop.',a:'Ne rien en faire',c:'Lui dire que tu t’es inquiétée'};if(k===1)return{tone:'silence',k:'UN SILENCE',t:'Lucas est plus fermé que d’habitude.',b:'Il répond normalement, mais quelque chose dans son regard reste ailleurs.',a:'Respecter son silence',c:'Lui demander doucement'};if(k===2)return{tone:'pressure',k:'AUTOUR DE LUI',t:'Son téléphone n’arrête pas de vibrer.',b:'Travail, entourage, obligations. Tu sens à quel point son monde peut entrer dans la pièce avec lui.',a:'Le laisser gérer',c:'L’aider à décrocher cinq minutes'};return{tone:'misread',k:'UN PETIT RIEN',t:'Une phrase tombe un peu mal.',b:'Pas une dispute. Juste un ton, une fatigue, et cette impression brève de ne pas s’être compris.',a:'Laisser passer',c:'Revenir dessus calmement'}}
-function resolve(s:SaveLike,choice:'a'|'c',tone:string){
-  s.flags.coupleMicroTensionDay=s.day;s.flags.coupleMicroTensionTone=tone;s.flags.coupleMicroTensionChoice=choice;
-  if(choice==='a'){
-    const unresolved=Number(s.flags.coupleUnresolvedTensions||0)+1;s.flags.coupleUnresolvedTensions=unresolved;
-    s.flags.coupleRepairDueDay=s.day+1;
-    if(tone==='silence'||tone==='pressure')s.trust=Number(s.trust||0)+1;
-    else s.stress=Math.min(100,Number(s.stress||0)+1);
-    addMemory(s,'Une petite tension est restée en suspens au lieu d’être immédiatement réparée.');
-  }else{
-    s.flags.coupleRepairDueDay=s.day;
-    s.flags.coupleUnresolvedTensions=Math.max(0,Number(s.flags.coupleUnresolvedTensions||0)-1);
-    s.trust=Number(s.trust||0)+1;s.relationship=Number(s.relationship||0)+1;s.stress=Math.max(0,Number(s.stress||0)-1);
-    addMemory(s,'Vous avez choisi de revenir calmement sur un petit décalage du quotidien.');
-  }
-  write(s)
-}
-function show(s:SaveLike){const game=document.querySelector<HTMLElement>('main.game');if(!game||open||!eligible(s))return;open=true;const e=eventFor(s);const v=document.createElement('div');v.className=`coupleMicroTensionVeil ${e.tone}`;v.innerHTML=`<section class="coupleMicroTensionCard"><span>${e.k}</span><h2>${e.t}</h2><p>${e.b}</p><div><button id="microA" class="primary">${e.a}</button><button id="microC">${e.c}</button></div></section>`;game.appendChild(v);const close=()=>{v.classList.add('is-leaving');setTimeout(()=>{v.remove();open=false},260)};(v.querySelector('#microA') as HTMLButtonElement).onclick=()=>{const f=read();if(f)resolve(f,'a',e.tone);close()};(v.querySelector('#microC') as HTMLButtonElement).onclick=()=>{const f=read();if(f)resolve(f,'c',e.tone);close()}}
+function resolve(s:SaveLike,choice:'a'|'c',tone:string){s.flags.coupleMicroTensionDay=s.day;s.flags.coupleMicroTensionTone=tone;s.flags.coupleMicroTensionChoice=choice;if(choice==='a'){s.flags.coupleUnresolvedTensions=Number(s.flags.coupleUnresolvedTensions||0)+1;s.flags.coupleRepairDueDay=s.day+1;if(tone==='silence'||tone==='pressure')s.trust=Number(s.trust||0)+1;else s.stress=Math.min(100,Number(s.stress||0)+1);addMemory(s,'Une petite tension est restée en suspens au lieu d’être immédiatement réparée.')}else{s.flags.coupleRepairDueDay=s.day;s.flags.coupleUnresolvedTensions=Math.max(0,Number(s.flags.coupleUnresolvedTensions||0)-1);s.trust=Number(s.trust||0)+1;s.relationship=Number(s.relationship||0)+1;s.stress=Math.max(0,Number(s.stress||0)-1);addMemory(s,'Vous avez choisi de revenir calmement sur un petit décalage du quotidien.')}write(s)}
+function show(s:SaveLike){const game=document.querySelector<HTMLElement>('main.game');if(!game||open||!eligible(s)||!acquireScene(SCENE,45000))return;open=true;const e=eventFor(s);const v=document.createElement('div');v.className=`coupleMicroTensionVeil ${e.tone}`;v.innerHTML=`<section class="coupleMicroTensionCard"><span>${e.k}</span><h2>${e.t}</h2><p>${e.b}</p><div><button id="microA" class="primary">${e.a}</button><button id="microC">${e.c}</button></div></section>`;game.appendChild(v);const close=()=>{v.classList.add('is-leaving');setTimeout(()=>{v.remove();open=false;releaseScene(SCENE)},260)};(v.querySelector('#microA') as HTMLButtonElement).onclick=()=>{const f=read();if(f)resolve(f,'a',e.tone);close()};(v.querySelector('#microC') as HTMLButtonElement).onclick=()=>{const f=read();if(f)resolve(f,'c',e.tone);close()}}
 function arm(){const s=read();if(!s||!eligible(s)){if(timer)clearTimeout(timer);timer=0;return}if(timer||open)return;timer=window.setTimeout(()=>{timer=0;const f=read();if(f)show(f)},12000+((s.day*71+Math.round(s.stress||0))%9000))}
-window.addEventListener('storage',arm);document.addEventListener('visibilitychange',()=>{if(!document.hidden)arm()});new MutationObserver(arm).observe(document.documentElement,{childList:true,subtree:true});window.setInterval(arm,9000);arm();console.info('[Romance] micro tensions now leave soft consequences when left unresolved');
+window.addEventListener('storage',arm);window.addEventListener('marion:scene-lease',arm);document.addEventListener('visibilitychange',()=>{if(!document.hidden)arm()});new MutationObserver(arm).observe(document.documentElement,{childList:true,subtree:true});window.setInterval(arm,9000);arm();console.info('[Romance] micro tensions now use the shared scene arbiter');
