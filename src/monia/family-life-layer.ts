@@ -1,3 +1,5 @@
+import { getLifeAgeSnapshot } from './life-age-engine';
+
 const SAVE_KEY='marion-lucas-save-v4';
 
 type Save={day?:number;marionAge?:number;lucasAge?:number;married?:boolean;children?:number;relationship?:number;trust?:number;flags?:Record<string,unknown>;eventHistory?:string[]};
@@ -14,13 +16,12 @@ export type FamilyOpportunity={
 
 function readSave():Save|null{try{const raw=localStorage.getItem(SAVE_KEY);return raw?JSON.parse(raw) as Save:null}catch{return null}}
 function n(v:unknown,fallback=0){const x=Number(v);return Number.isFinite(x)?x:fallback}
-function ageAt(s:Save,key:'marionAge'|'lucasAge',fallback:number){return n(s[key],fallback)+Math.floor(Math.max(0,n(s.day,1)-1)/365)}
 
 export function getFamilyLifeOpportunity():FamilyOpportunity|null{
   const s=readSave();if(!s)return null;
   const f=s.flags||(s.flags={});const day=Math.max(1,n(s.day,1));
   const state=String(f.familyState||'closed') as FamilyState;
-  const relationship=n(s.relationship),trust=n(s.trust),marionAge=ageAt(s,'marionAge',20);
+  const relationship=n(s.relationship),trust=n(s.trust),marionAge=getLifeAgeSnapshot(s).marionAge;
   if(!s.married&&state==='closed')return{state:'closed',eligible:false,surpriseEligible:false,reason:'Le projet familial reste fermé tant que le couple ne l’a pas réellement ouvert.'};
   if(state==='closed')return{state:'thinking',eligible:true,surpriseEligible:false,reason:'Le sujet peut être évoqué sans imposer de décision.'};
   if(state==='thinking')return{state:'thinking',eligible:relationship>=58&&trust>=52,surpriseEligible:false,reason:'Le couple peut choisir d’essayer, de patienter ou de ne pas vouloir d’enfant.'};
