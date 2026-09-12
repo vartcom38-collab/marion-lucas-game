@@ -1,11 +1,12 @@
 import { getAnnualLifeProfile, annualBeatAllowed, annualWeight, markAnnualBeat } from './annual-life-variation';
 import { getLucasPresence } from './lucas-presence-engine';
 import { getFriendshipEvolution } from './friendship-life-evolution';
+import { getSocialLifeStage } from './social-life-stage';
 
 const SAVE_KEY='marion-lucas-save-v4';
-type Save={day?:number;time?:string;place?:string;official?:boolean;metLucas?:boolean;stress?:number;energy?:number;visibility?:number;flags?:Record<string,unknown>;eventHistory?:string[]};
+type Save={day?:number;time?:string;place?:string;official?:boolean;metLucas?:boolean;married?:boolean;children?:number;stress?:number;energy?:number;visibility?:number;flags?:Record<string,unknown>;eventHistory?:string[]};
 export type SocialOutingMode='with-lucas'|'marion-solo'|'join-later'|'leave-early'|'separate-plans';
-export type SocialOutingKind='restaurant'|'friends'|'taurine-event'|'casual-evening'|'invitation';
+export type SocialOutingKind='restaurant'|'friends'|'taurine-event'|'casual-evening'|'invitation'|'family-friendly'|'day-social';
 export type SocialOutingBeat={id:string;kind:SocialOutingKind;mode:SocialOutingMode;label:string;intent:string;weight:number;minutes:number;narrative:string;lucasRequired:boolean;marionAutonomy:true;};
 
 function read():Save|null{try{const raw=localStorage.getItem(SAVE_KEY);return raw?JSON.parse(raw) as Save:null}catch{return null}}
@@ -16,10 +17,10 @@ function recent(h:string[],re:RegExp,limit=100){return h.slice(-limit).filter(e=
 
 export function getSocialOutingBeat():SocialOutingBeat|null{
   const s=read();if(!s)return null;const now=mins(s.time),day=n(s.day,1),energy=n(s.energy,70),stress=n(s.stress),h=s.eventHistory||[];
-  if(now<660||now>1380||energy<28||stress>82)return null;
-  const annual=getAnnualLifeProfile(),presence=getLucasPresence();
+  if(now<600||now>1380||energy<28||stress>82)return null;
+  const annual=getAnnualLifeProfile(),presence=getLucasPresence(),stage=getSocialLifeStage();
   const recentOutings=recent(h,/social-outing|restaurant-outing|taurine-social|friends-evening/i,80);
-  const socialBias=annual?.socialBias||50;const gate=Math.max(7,Math.min(44,Math.round(socialBias/2)-recentOutings*5));
+  const socialBias=annual?.socialBias||50;const stageEnergy=stage?.socialEnergy||50;const gate=Math.max(7,Math.min(50,Math.round((socialBias+stageEnergy)/4)-recentOutings*5));
   if(hash(`social-outing-gate:${day}:${Math.floor(now/120)}`)%100>=gate)return null;
   const out:SocialOutingBeat[]=[];
   const add=(b:SocialOutingBeat,cooldownYears=1)=>{if(annualBeatAllowed(`social-outing:${b.id}`,{cooldownYears}))out.push(b)};
@@ -27,13 +28,17 @@ export function getSocialOutingBeat():SocialOutingBeat|null{
   const marine=getFriendshipEvolution('marine',62);
   const spainFriends=['alba','ines','clara'].map(id=>getFriendshipEvolution(id,28)).filter(Boolean);
   const hasFriend=Boolean((marine?.meetingWeight||0)>=46||spainFriends.some(f=>(f?.meetingWeight||0)>=44));
+  const late=now>=1200;const kids=n(s.children);
 
-  if(lucasTogether)add({id:'simple-dinner-together',kind:'restaurant',mode:'with-lucas',label:'Sortir dîner quelque part avec Lucas',intent:'social-outing:with-lucas',weight:annualWeight('couple',61),minutes:110,narrative:'Ils peuvent sortir dîner sans que ce soit un rendez-vous exceptionnel : juste changer d’air, manger quelque part et laisser la soirée suivre son cours.',lucasRequired:true,marionAutonomy:true},2);
-  if(hasFriend)add({id:'own-friends-evening',kind:'friends',mode:'marion-solo',label:'Voir du monde de mon côté',intent:'social-outing:marion-solo',weight:annualWeight('social',64),minutes:120,narrative:'Marion peut avoir sa propre soirée, retrouver une amie ou accepter une invitation sans que Lucas soit automatiquement inclus.',lucasRequired:false,marionAutonomy:true},1);
-  if(s.official&&visible>=6&&lucasReachable)add({id:'taurine-invitation',kind:'taurine-event',mode:lucasTogether?'with-lucas':'join-later',label:lucasTogether?'Accompagner Lucas à une invitation du milieu taurin':'Rejoindre Lucas plus tard si j’en ai envie',intent:lucasTogether?'social-outing:taurine-with-lucas':'social-outing:join-later',weight:annualWeight('social',57),minutes:130,narrative:'Une invitation liée au milieu taurin peut entrer dans leur soirée, mais Marion garde le choix d’y aller avec Lucas, de le rejoindre plus tard ou de faire autre chose.',lucasRequired:true,marionAutonomy:true},1);
-  if(lucasTogether)add({id:'leave-before-lucas',kind:'invitation',mode:'leave-early',label:'Venir un moment puis rentrer avant Lucas',intent:'social-outing:leave-early',weight:annualWeight('social',52),minutes:75,narrative:'Marion peut accompagner Lucas un moment puis rentrer avant lui. Leur couple n’oblige pas leurs soirées à commencer et finir exactement au même moment.',lucasRequired:true,marionAutonomy:true},2);
-  if(lucasTogether||lucasReachable)add({id:'separate-evening',kind:'casual-evening',mode:'separate-plans',label:'Faire chacun notre soirée',intent:'social-outing:separate-plans',weight:annualWeight('self',55),minutes:105,narrative:'Ils peuvent très bien avoir deux programmes différents ce soir. Chacun garde sa vie, puis ils se retrouvent plus tard ou le lendemain.',lucasRequired:false,marionAutonomy:true},2);
-  if(!out.length)return null;return out[hash(`social-outing-pick:${day}:${Math.floor(now/90)}:${presence?.state||'none'}`)%out.length];
+  if(lucasTogether)add({id:'simple-dinner-together',kind:'restaurant',mode:'with-lucas',label:stage?.stage==='mature-couple'?'Sortir dîner tranquillement avec Lucas':'Sortir dîner quelque part avec Lucas',intent:'social-outing:with-lucas',weight:annualWeight('couple',Math.round((stage?.coupleWeight||61)*0.9)),minutes:stage?.stage==='young-family'?85:110,narrative:stage?.stage==='young-family'?'Ils peuvent sortir dîner à deux sans transformer ça en grande soirée : quelque chose de simple, compatible avec une vie de famille, puis rentrer.':'Ils peuvent sortir dîner sans que ce soit un rendez-vous exceptionnel : juste changer d’air, manger quelque part et laisser la soirée suivre son cours.',lucasRequired:true,marionAutonomy:true},2);
+  if(hasFriend)add({id:'own-friends-evening',kind:'friends',mode:'marion-solo',label:stage?.stage==='young-family'?'Voir une amie sans faire une grosse soirée':'Voir du monde de mon côté',intent:'social-outing:marion-solo',weight:annualWeight('social',Math.round((stage?.friendWeight||64)*0.92)),minutes:stage?.stage==='young-family'?90:120,narrative:'Marion peut avoir sa propre vie sociale, retrouver une amie ou accepter une invitation sans que Lucas soit automatiquement inclus.',lucasRequired:false,marionAutonomy:true},1);
+  if(s.official&&visible>=6&&lucasReachable)add({id:'taurine-invitation',kind:'taurine-event',mode:lucasTogether?'with-lucas':'join-later',label:lucasTogether?'Accompagner Lucas à une invitation du milieu taurin':'Rejoindre Lucas plus tard si j’en ai envie',intent:lucasTogether?'social-outing:taurine-with-lucas':'social-outing:join-later',weight:annualWeight('social',Math.round((stage?.formalEventWeight||57)*0.9)),minutes:stage?.stage==='young-family'?100:130,narrative:'Une invitation liée au milieu taurin peut entrer dans leur soirée, mais Marion garde le choix d’y aller avec Lucas, de le rejoindre plus tard ou de faire autre chose.',lucasRequired:true,marionAutonomy:true},1);
+  if(lucasTogether&&!late)add({id:'leave-before-lucas',kind:'invitation',mode:'leave-early',label:'Venir un moment puis rentrer avant Lucas',intent:'social-outing:leave-early',weight:annualWeight('social',Math.round((stage?.familyFriendlyWeight||52)*0.76)),minutes:75,narrative:'Marion peut accompagner Lucas un moment puis rentrer avant lui. Leur couple n’oblige pas leurs soirées à commencer et finir exactement au même moment.',lucasRequired:true,marionAutonomy:true},2);
+  if(lucasTogether||lucasReachable)add({id:'separate-evening',kind:'casual-evening',mode:'separate-plans',label:'Faire chacun notre soirée',intent:'social-outing:separate-plans',weight:annualWeight('self',stage?.stage==='early-adult'?62:55),minutes:105,narrative:'Ils peuvent très bien avoir deux programmes différents ce soir. Chacun garde sa vie, puis ils se retrouvent plus tard ou le lendemain.',lucasRequired:false,marionAutonomy:true},2);
+  if(kids>0&&!late)add({id:'family-friendly-outing',kind:'family-friendly',mode:lucasTogether?'with-lucas':'marion-solo',label:lucasTogether?'Sortir un peu tous ensemble':'Faire une sortie simple de mon côté',intent:lucasTogether?'social-outing:family-with-lucas':'social-outing:family-solo',weight:annualWeight('home',stage?.familyFriendlyWeight||68),minutes:95,narrative:'Avec les enfants, sortir ne veut pas forcément dire organiser une grosse soirée : un repas, une promenade, un endroit vivant puis retour à la maison peuvent suffire.',lucasRequired:false,marionAutonomy:true},1);
+  if(!late&&(stage?.stage==='mature-couple'||stage?.stage==='family-years'))add({id:'day-social',kind:'day-social',mode:'with-lucas',label:'Voir du monde plus tôt dans la journée',intent:'social-outing:day-social',weight:annualWeight('social',Math.round((stage?.friendWeight||54)*0.9)),minutes:100,narrative:'À cette période de leur vie, une partie de la vie sociale se joue aussi plus tôt : déjeuner, café long, visite ou événement en journée plutôt qu’une nuit entière dehors.',lucasRequired:false,marionAutonomy:true},2);
+  if(late&&(stage?.lateNightWeight||50)<35)return out.filter(x=>x.id!=='own-friends-evening'&&x.id!=='taurine-invitation')[0]||null;
+  if(!out.length)return null;return out[hash(`social-outing-pick:${day}:${Math.floor(now/90)}:${presence?.state||'none'}:${stage?.stage||'none'}`)%out.length];
 }
 
 export function consumeSocialOutingBeat(id:string){const s=read();if(!s)return false;const key=id.replace(/^social-outing-/,'');markAnnualBeat(`social-outing:${key}`);s.eventHistory=[...(s.eventHistory||[]),`social-outing:${key}`].slice(-260);try{localStorage.setItem(SAVE_KEY,JSON.stringify(s));window.dispatchEvent(new CustomEvent('monia:save-changed',{detail:{key:SAVE_KEY}}));return true}catch{return false}}
