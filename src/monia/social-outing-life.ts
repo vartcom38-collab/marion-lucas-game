@@ -3,6 +3,7 @@ import { getLucasPresence } from './lucas-presence-engine';
 import { getFriendshipEvolution } from './friendship-life-evolution';
 import { getSocialLifeStage } from './social-life-stage';
 import { getSocialConnectionFollowUp, recordSocialConnection } from './social-connection-continuity';
+import { getSocialBondState, markSocialBondMoment } from './social-bond-emergence';
 
 const SAVE_KEY='marion-lucas-save-v4';
 type Save={day?:number;time?:string;place?:string;official?:boolean;metLucas?:boolean;married?:boolean;children?:number;stress?:number;energy?:number;visibility?:number;flags?:Record<string,unknown>;eventHistory?:string[]};
@@ -32,7 +33,7 @@ export function getSocialOutingBeat():SocialOutingBeat|null{
   const late=now>=1200;const kids=n(s.children);
 
   const followUp=getSocialConnectionFollowUp();
-  if(followUp)add({id:followUp.id,kind:followUp.kind==='taurine-network'?'taurine-event':'invitation',mode:followUp.kind==='couple-circle'&&lucasTogether?'with-lucas':'marion-solo',label:followUp.label,intent:followUp.intent,weight:followUp.weight,minutes:followUp.minutes,narrative:followUp.narrative,lucasRequired:followUp.kind==='couple-circle'||followUp.kind==='taurine-network',marionAutonomy:true},1);
+  if(followUp){const bond=getSocialBondState(followUp.threadId);const important=bond?.tier==='important'||bond?.tier==='inner-circle';add({id:followUp.id,kind:followUp.kind==='taurine-network'?'taurine-event':'invitation',mode:followUp.kind==='couple-circle'&&lucasTogether?'with-lucas':'marion-solo',label:important?'Revoir quelqu’un qui compte maintenant':followUp.label,intent:followUp.intent,weight:followUp.weight+(important?10:0),minutes:followUp.minutes,narrative:important?'Ce lien a pris de la place naturellement au fil du temps. Ce n’est plus seulement une connaissance de soirée : cette personne commence vraiment à compter dans leur vie sociale, sans que le jeu l’ait décidé à l’avance.':followUp.narrative,lucasRequired:followUp.kind==='couple-circle'||followUp.kind==='taurine-network',marionAutonomy:true},1);}
   if(lucasTogether)add({id:'simple-dinner-together',kind:'restaurant',mode:'with-lucas',label:stage?.stage==='mature-couple'?'Sortir dîner tranquillement avec Lucas':'Sortir dîner quelque part avec Lucas',intent:'social-outing:with-lucas',weight:annualWeight('couple',Math.round((stage?.coupleWeight||61)*0.9)),minutes:stage?.stage==='young-family'?85:110,narrative:'Ils peuvent sortir dîner sans que ce soit un rendez-vous exceptionnel : juste changer d’air, manger quelque part et laisser la soirée suivre son cours.',lucasRequired:true,marionAutonomy:true},2);
   if(hasFriend)add({id:'own-friends-evening',kind:'friends',mode:'marion-solo',label:'Voir du monde de mon côté',intent:'social-outing:marion-solo',weight:annualWeight('social',Math.round((stage?.friendWeight||64)*0.92)),minutes:120,narrative:'Marion peut avoir sa propre vie sociale, retrouver une amie ou accepter une invitation sans que Lucas soit automatiquement inclus.',lucasRequired:false,marionAutonomy:true},1);
   if(s.official&&visible>=6&&lucasReachable)add({id:'taurine-invitation',kind:'taurine-event',mode:lucasTogether?'with-lucas':'join-later',label:lucasTogether?'Accompagner Lucas à une invitation du milieu taurin':'Rejoindre Lucas plus tard si j’en ai envie',intent:lucasTogether?'social-outing:taurine-with-lucas':'social-outing:join-later',weight:annualWeight('social',Math.round((stage?.formalEventWeight||57)*0.9)),minutes:130,narrative:'Une invitation liée au milieu taurin peut entrer dans leur soirée, mais Marion garde le choix d’y aller avec Lucas, de le rejoindre plus tard ou de faire autre chose.',lucasRequired:true,marionAutonomy:true},1);
@@ -43,7 +44,7 @@ export function getSocialOutingBeat():SocialOutingBeat|null{
   if(!out.length)return null;return out[hash(`social-outing-pick:${day}:${Math.floor(now/90)}:${presence?.state||'none'}:${stage?.stage||'none'}`)%out.length];
 }
 
-export function consumeSocialOutingBeat(id:string){const s=read();if(!s)return false;const key=id.replace(/^social-outing-/,'');s.eventHistory=[...(s.eventHistory||[]),`social-outing:${key}`].slice(-300);try{localStorage.setItem(SAVE_KEY,JSON.stringify(s));markAnnualBeat(`social-outing:${key}`);recordSocialConnection(key);window.dispatchEvent(new CustomEvent('monia:save-changed',{detail:{key:SAVE_KEY}}));return true}catch{return false}}
+export function consumeSocialOutingBeat(id:string){const s=read();if(!s)return false;const key=id.replace(/^social-outing-/,'');s.eventHistory=[...(s.eventHistory||[]),`social-outing:${key}`].slice(-300);try{localStorage.setItem(SAVE_KEY,JSON.stringify(s));markAnnualBeat(`social-outing:${key}`);recordSocialConnection(key);const follow=id.match(/^followup-(.+)$/);if(follow)markSocialBondMoment(follow[1]);window.dispatchEvent(new CustomEvent('monia:save-changed',{detail:{key:SAVE_KEY}}));return true}catch{return false}}
 
 declare global{interface Window{__moniaSocialOuting?:()=>SocialOutingBeat|null;__moniaConsumeSocialOuting?:(id:string)=>boolean}}
 window.__moniaSocialOuting=getSocialOutingBeat;window.__moniaConsumeSocialOuting=consumeSocialOutingBeat;
