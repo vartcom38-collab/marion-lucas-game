@@ -9,7 +9,7 @@ type SaveLike={
 };
 
 const SAVE_KEY='marion-lucas-save-v4';
-const RELOAD_GUARD='marion-day-one-seed-reload-v1';
+const RELOAD_GUARD='marion-day-one-seed-reload-v2';
 let escalationOpen=false;
 let rendezvousOpen=false;
 let companionMomentOpen=false;
@@ -25,18 +25,26 @@ function nowStamp(s:SaveLike){return s.day*1440+mins(s.time)}
 function remember(s:SaveLike,text:string){if(!Array.isArray(s.memories))s.memories=[];if(!s.memories.includes(text))s.memories.unshift(text);s.memories=s.memories.slice(0,40)}
 
 function seedDayOne(s:SaveLike){
-  if(s.flags.dayOneSocialSeeded)return false;
-  s.flags.dayOneSocialSeeded=true;
-  s.flags.dayOneThread='marine_invite';
-  s.messages.unshift({from:'Marine',text:'Tu vas pas passer ta matinée enfermée 😭 Allez viens. Je suis vers les arènes. On prend un café ?',day:1,read:false});
-  s.phoneUnread=Math.max(0,Number(s.phoneUnread||0))+1;
+  const invite='Tu vas pas passer ta matinée enfermée 😭 Allez viens. Je suis vers les arènes. On prend un café ?';
+  const existing=s.messages.some(m=>m.from==='Marine'&&(/vers les arènes.*café/i.test(m.text)||m.text===invite));
+  let changed=false;
+  if(!s.flags.dayOneSocialSeeded){s.flags.dayOneSocialSeeded=true;changed=true}
+  if(!s.flags.dayOneThread){s.flags.dayOneThread='marine_invite';changed=true}
+  if(!existing){s.messages.unshift({from:'Marine',text:invite,day:1,read:false});s.phoneUnread=Math.max(0,Number(s.phoneUnread||0))+1;changed=true}
   if(!s.calendar.some(i=>i.day===1&&i.title==='Retrouver Marine près des arènes')){
-    s.calendar.push({owner:'Marion',title:'Retrouver Marine près des arènes',day:1,note:'Elle t’a écrit ce matin. La ville commence déjà à bouger.'});
+    s.calendar.push({owner:'Marion',title:'Retrouver Marine près des arènes',day:1,note:'Elle t’a écrit ce matin. Tu peux la rejoindre quand tu veux.'});changed=true
   }
-  s.flags.phoneToast='Marine|Je suis vers les arènes ☕';
-  s.flags.phoneToastAt=nowStamp(s);
-  write(s);
-  return true;
+  if(!s.flags.phoneToast){s.flags.phoneToast='Marine|Je suis vers les arènes ☕';s.flags.phoneToastAt=nowStamp(s);changed=true}
+  if(changed)write(s);
+  return changed;
+}
+
+function refreshAfterSeed(){
+  try{
+    if(sessionStorage.getItem(RELOAD_GUARD)==='1')return;
+    sessionStorage.setItem(RELOAD_GUARD,'1');
+    window.setTimeout(()=>location.reload(),40);
+  }catch{}
 }
 
 function syncFreshGame(){
@@ -44,14 +52,8 @@ function syncFreshGame(){
   if(!game)return;
   const s=read();
   if(!s||s.day!==1||!s.introSeen||s.metLucas||s.place!=='home')return;
-  if(seedDayOne(s)){
-    try{
-      if(sessionStorage.getItem(RELOAD_GUARD)!=='1'){
-        sessionStorage.setItem(RELOAD_GUARD,'1');
-        window.setTimeout(()=>location.reload(),40);
-      }
-    }catch{}
-  }
+  const changed=seedDayOne(s);
+  if(changed||s.flags.dayOneSocialSeeded)refreshAfterSeed();
 }
 
 function removeImpulse(){document.getElementById('dayOneImpulse')?.remove()}
@@ -89,7 +91,7 @@ function mountNimesArrival(s:SaveLike){
   game.classList.add('dayOneFirstNimes');
   const card=document.createElement('aside');
   card.id='dayOneNimesArrival';card.className='dayOneNimesArrival';
-  card.innerHTML='<span>NÎMES · PREMIERS PAS</span><strong>La ville est déjà en mouvement.</strong><small>Tu peux regarder autour de toi avant de décider quoi que ce soit.</small>';
+  card.innerHTML='<span>NÎMES · PREMIERS PAS</span><strong>La ville est déjà en mouvement.</strong><small>Marine est dans le secteur. Tu peux la rejoindre ou regarder un peu autour de toi.</small>';
   game.appendChild(card);
   if(nimesArrivalTimer)window.clearTimeout(nimesArrivalTimer);
   nimesArrivalTimer=window.setTimeout(()=>{
@@ -172,15 +174,15 @@ function showRendezvous(s:SaveLike){
   const game=document.querySelector<HTMLElement>('main.game');if(!game)return;
   rendezvousOpen=true;
   const veil=document.createElement('div');veil.className='dayOneCallVeil dayOneMeetVeil';
-  veil.innerHTML=`<section class="dayOneCallCard dayOneMeetCard"><span>NÎMES · AVEC MARINE</span><h2>Tu la retrouves naturellement.</h2><p>Marine arrive avec son énergie habituelle, te raconte trois choses à la fois et la ville reprend simplement autour de vous.</p><div><button id="dayOneMeet" class="primary">Marcher avec elle</button><button id="dayOneWander">Flâner encore un peu</button></div></section>`;
+  veil.innerHTML=`<section class="dayOneCallCard dayOneMeetCard"><span>NÎMES · AVEC MARINE</span><h2>Tu la retrouves naturellement.</h2><p>Vous prenez le café promis, marchez un moment et la conversation s’étire sans que tu regardes l’heure. La matinée avance parce que vous la vivez, pas parce que le jeu attend.</p><div><button id="dayOneMeet" class="primary">Continuer avec elle</button><button id="dayOneWander">Flâner encore un peu</button></div></section>`;
   game.appendChild(veil);
   const close=()=>{veil.remove();rendezvousOpen=false};
   (veil.querySelector('#dayOneWander') as HTMLButtonElement).onclick=()=>{const latest=read();if(latest){latest.flags.dayOneRendezvousSnoozeUntil=nowStamp(latest)+25;write(latest)}close()};
   (veil.querySelector('#dayOneMeet') as HTMLButtonElement).onclick=()=>{
     const latest=read();if(!latest){close();return}
     latest.flags.dayOneWithMarine=true;latest.flags.dayOneThread='marine_together';
-    const target=Math.max(mins(latest.time)+35,660);setMins(latest,target);
-    remember(latest,'Tu as retrouvé Marine dans Nîmes. Pendant un moment, la journée ressemblait encore à une journée ordinaire.');
+    const target=Math.max(mins(latest.time)+70,650);setMins(latest,target);
+    remember(latest,'Tu as retrouvé Marine dans Nîmes. Un café et une longue marche ont fait avancer la matinée naturellement.');
     write(latest);close();location.reload();
   };
 }
@@ -194,9 +196,10 @@ function scan(){
 }
 
 window.addEventListener('marion-home-first-control',()=>window.setTimeout(scan,260));
+window.addEventListener('monia:phone-message-seeded',()=>{scan();refreshAfterSeed()});
 window.addEventListener('storage',scan);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)scan()});
 window.setInterval(scan,4500);
 scan();
 
-console.info('[Day 1] Marine now walks as a living companion, not a static dialogue card');
+console.info('[Day 1] Marine now anchors a continuous morning instead of a hidden time gate');
