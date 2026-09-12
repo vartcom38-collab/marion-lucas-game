@@ -5,6 +5,7 @@ import './conception-bridge';
 import './weekly-life-planner';
 import './taurine-world-network';
 import './narrative-ui';
+import './gameplay-intent-router';
 import { getLifeDirectorSnapshot } from './life-director';
 import { routeSceneFromGameState, type MonIASceneRoute } from './scene-context-router';
 import { buildAdaptiveLucasVisioPrompt, type LucasVisioMood } from './adaptive-visio';
