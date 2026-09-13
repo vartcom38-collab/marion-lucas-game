@@ -1,8 +1,9 @@
 import './coupleDistanceContactDirector.css';
 import { getChildrenLife } from './monia/children-life';
 import { attachMediaToLatestMessage } from './monia/phone-media-messages';
+import { relationshipPhoneContactAllowed } from './relationship-phone-state';
 
-type Msg={from:string;text:string,day:number,read:boolean};
+type Msg={from:string;text:string,day:number,read:boolean,thread?:string};
 type SaveLike={day:number;time:string;place:string;screen:string;metLucas:boolean;official:boolean;relationship:number;trust:number;chemistry:number;stress:number;phoneUnread:number;messages:Msg[];memories:string[];flags:Record<string,boolean|number|string>;updatedAt:number};
 
 const SAVE_KEY='marion-lucas-save-v4';
@@ -18,6 +19,7 @@ function apart(s:SaveLike){return Boolean(s.flags.lucasAway)||Boolean(s.flags.lu
 
 function eligible(s:SaveLike){
   if(!s.metLucas||!s.official||s.screen!=='game'||document.hidden||blocked())return false;
+  if(!relationshipPhoneContactAllowed(s,'Lucas','message'))return false;
   if(!apart(s)||Boolean(s.flags.corridaLive))return false;
   if(Number(s.relationship||0)<50)return false;
   if(Number(s.flags.coupleDistanceContactDay||0)===s.day)return false;
@@ -50,7 +52,7 @@ function sceneFor(s:SaveLike){
 function show(s:SaveLike){
   if(active||!eligible(s))return;const game=document.querySelector<HTMLElement>('main.game');if(!game)return;
   active=true;const e=sceneFor(s);
-  s.messages=Array.isArray(s.messages)?s.messages:[];s.messages.unshift({from:'Lucas',text:e.text,day:s.day,read:false});
+  s.messages=Array.isArray(s.messages)?s.messages:[];s.messages.unshift({from:'Lucas',text:e.text,day:s.day,read:false,thread:'Lucas'});
   s.phoneUnread=Math.max(0,Number(s.phoneUnread||0))+1;
   s.flags.phoneToast=`Lucas|${e.text}`;s.flags.phoneToastAt=stamp(s);
   s.flags.coupleDistanceContactDay=s.day;s.flags.coupleDistanceContactLastDay=s.day;s.flags.coupleDistanceContactTone=e.tone;
