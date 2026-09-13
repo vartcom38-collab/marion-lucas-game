@@ -2,14 +2,15 @@ import './iphone-interactions.css';
 
 const SAVE_KEY='marion-lucas-save-v4';
 
-type SaveShape={phoneUnread?:number};
+type PhoneMessage={from?:string;read?:boolean};
+type SaveShape={phoneUnread?:number;messages?:PhoneMessage[]};
 
-function readUnread(){
+function readMessageUnread(){
   try{
     const raw=localStorage.getItem(SAVE_KEY);
     if(!raw)return 0;
     const save=JSON.parse(raw) as SaveShape;
-    return Math.max(0,Number(save.phoneUnread||0));
+    return (Array.isArray(save.messages)?save.messages:[]).filter(message=>message.from!=='Toi'&&!message.read).length;
   }catch{return 0}
 }
 
@@ -42,7 +43,7 @@ function wireProxy(phone:HTMLElement,selector:string,kind:'back'|'call'|'video')
 function unreadBadge(phone:HTMLElement){
   const app=phone.querySelector<HTMLElement>('.iphoneAppMessages');
   if(!app)return;
-  const count=readUnread();
+  const count=readMessageUnread();
   let badge=app.querySelector<HTMLElement>('.iphoneUnreadBadge');
   if(count<=0){badge?.remove();return}
   if(!badge){
@@ -51,6 +52,7 @@ function unreadBadge(phone:HTMLElement){
     badge.setAttribute('aria-label',`${count} message${count>1?'s':''} non lu${count>1?'s':''}`);
     app.append(badge);
   }
+  badge.setAttribute('aria-label',`${count} message${count>1?'s':''} non lu${count>1?'s':''}`);
   badge.textContent=count>99?'99+':String(count);
 }
 
