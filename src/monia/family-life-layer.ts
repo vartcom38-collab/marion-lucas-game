@@ -1,6 +1,8 @@
 import './property-life';
+import './postpartum-family-life';
 import { getLifeAgeSnapshot } from './life-age-engine';
 import { getPregnancyState, setPregnancyState } from './pregnancy-state';
+import { finalizeBirth } from './postpartum-family-life';
 
 const SAVE_KEY='marion-lucas-save-v4';
 
@@ -53,7 +55,7 @@ export function markFamilyDecision(decision:'open'|'try'|'wait'|'stop'|'pregnant
     localStorage.setItem(SAVE_KEY,JSON.stringify(s));
     if(decision==='try')setPregnancyState('trying',day);
     if(decision==='pregnant')setPregnancyState('confirmed',day);
-    if(decision==='postpartum')setPregnancyState('postpartum',day);
+    if(decision==='postpartum')return !!finalizeBirth({birthDay:day});
     window.dispatchEvent(new Event('storage'));return true
   }catch{return false}
 }
