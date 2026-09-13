@@ -1,4 +1,5 @@
 import './phonePleasant.css';
+import './relationship-phone-state';
 
 type SaveLike={day:number;phoneUnread:number;messages?:Array<{from:string;text:string;day:number;read:boolean}>;flags:Record<string,boolean|number|string>;updatedAt:number};
 const SAVE_KEY='marion-lucas-save-v4';
