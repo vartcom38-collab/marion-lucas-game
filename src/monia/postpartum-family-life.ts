@@ -12,10 +12,10 @@ function n(v:unknown,f=0){const x=Number(v);return Number.isFinite(x)?x:f}
 export function finalizeBirth(input:{birthDay?:number;name?:string;sex?:'girl'|'boy'|'unknown'}={}){
   const s=read();if(!s)return null;const f=s.flags||(s.flags={});const day=Math.max(1,n(input.birthDay,n(s.day,1)));
   const preg=getPregnancyState(s);if(preg?.state!=='confirmed'&&preg?.state!=='postpartum'&&!f.inLabor)return null;
-  const cycle=Math.max(1,preg?.cycle||n(f.pregnancyCycle,1));const existingKey=String(f.lastCanonicalBirthKey||'');const birthKey=`birth:cycle-${cycle}:${day}`;
-  if(existingKey===birthKey){const kids=getChildrenLife();return kids.find(k=>k.birthDay===day)||kids[kids.length-1]||null}
+  const cycle=Math.max(1,preg?.cycle||n(f.pregnancyCycle,1));const alreadyFinalized=n(f.lastCanonicalBirthCycle,0)===cycle;
+  if(alreadyFinalized){const kids=getChildrenLife();const childId=String(f.lastCanonicalBirthChildId||'');const canonicalDay=n(f.lastBirthDay,n(f.birthDay,day));return kids.find(k=>k.id===childId)||kids.find(k=>k.birthDay===canonicalDay)||kids[kids.length-1]||null}
   const child=registerChild({birthDay:day,name:input.name,sex:input.sex});if(!child)return null;
-  const fresh=read();if(!fresh)return child;const ff=fresh.flags||(fresh.flags={});ff.lastCanonicalBirthKey=birthKey;ff.lastCanonicalBirthCycle=cycle;ff.lastBirthDay=day;ff.inLabor=false;ff.postpartum=true;ff.familyState='postpartum';ff.postpartumStartDay=day;ff.postpartumRecoveryUntilDay=day+42;fresh.energy=Math.max(0,Math.min(100,n(fresh.energy,70)-18));fresh.stress=Math.max(0,Math.min(100,n(fresh.stress,30)+8));fresh.eventHistory=[...(fresh.eventHistory||[]),`canonical-birth:cycle-${cycle}:${child.id}:${day}`].slice(-420);write(fresh);setPregnancyState('postpartum',day);window.dispatchEvent(new CustomEvent('monia:birth-finalized',{detail:{childId:child.id,birthDay:day,cycle}}));return child
+  const fresh=read();if(!fresh)return child;const ff=fresh.flags||(fresh.flags={});ff.lastCanonicalBirthKey=`birth:cycle-${cycle}`;ff.lastCanonicalBirthCycle=cycle;ff.lastCanonicalBirthChildId=child.id;ff.lastBirthDay=day;ff.inLabor=false;ff.postpartum=true;ff.familyState='postpartum';ff.postpartumStartDay=day;ff.postpartumRecoveryUntilDay=day+42;fresh.energy=Math.max(0,Math.min(100,n(fresh.energy,70)-18));fresh.stress=Math.max(0,Math.min(100,n(fresh.stress,30)+8));fresh.eventHistory=[...(fresh.eventHistory||[]),`canonical-birth:cycle-${cycle}:${child.id}:${day}`].slice(-420);write(fresh);setPregnancyState('postpartum',day);window.dispatchEvent(new CustomEvent('monia:birth-finalized',{detail:{childId:child.id,birthDay:day,cycle}}));return child
 }
 
 export function getPostpartumRhythm():PostpartumRhythm{
