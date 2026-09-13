@@ -47,7 +47,6 @@ export function getFamilyLifeOpportunity():FamilyOpportunity|null{
 export function markFamilyDecision(decision:'open'|'try'|'wait'|'stop'|'pregnant'|'postpartum'|'parenting'){
   const s=readSave();if(!s)return false;const f=s.flags||(s.flags={});const day=Math.max(1,n(s.day,1));
   if(decision==='open')f.familyState='thinking';
-  if(decision==='try'){f.familyState='trying';f.familyTryingDay=day;f.familyNextCheckDay=day+28;}
   if(decision==='wait'){f.familyState='thinking';f.familyNextConversationDay=day+60;}
   if(decision==='stop'){f.familyState=n(s.children,0)>0?'parenting':'closed';f.familyChoiceStoppedDay=day;}
   if(decision==='parenting'){f.familyState='parenting';}
@@ -55,7 +54,10 @@ export function markFamilyDecision(decision:'open'|'try'|'wait'|'stop'|'pregnant
     localStorage.setItem(SAVE_KEY,JSON.stringify(s));
     if(decision==='parenting')setPregnancyState('none',day);
     if(decision==='open')setPregnancyState('none',day);
-    if(decision==='try')setPregnancyState('trying',day);
+    if(decision==='try'){
+      if(!setPregnancyState('trying',day))return false;
+      const fresh=readSave();if(fresh){const ff=fresh.flags||(fresh.flags={});ff.familyTryingDay=day;ff.familyNextCheckDay=day+28;localStorage.setItem(SAVE_KEY,JSON.stringify(fresh))}
+    }
     if(decision==='pregnant')setPregnancyState('confirmed',day);
     if(decision==='postpartum')return !!finalizeBirth({birthDay:day});
     window.dispatchEvent(new Event('storage'));return true
