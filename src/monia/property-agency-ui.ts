@@ -3,66 +3,31 @@ import { PROPERTY_VISUAL_ASSETS } from './property-visual-assets';
 import {
   getPropertyLifeSnapshot,
   shortlistProperty,
+  submitPropertyOffer,
+  acceptPropertyCounter,
   purchaseProperty,
   refreshPropertyOffers,
   setPrimaryProperty,
   sellProperty,
   type PropertyOffer,
   type PropertyRecord,
+  type PropertyNegotiation,
 } from './property-life';
 
 const VISIT_KEY='marion-lucas-property-visits-v1';
 type Visits={visited:Record<string,number>;selected?:string};
-
 type PropertyVisual={key:string;alt:string};
 const PROPERTY_VISUALS:Record<string,PropertyVisual[]>={
-  'Finca de chênes et pâtures':[
-    {key:'salamanca-finca-exterior',alt:'Finca en pierre entourée de pâtures près de Salamanque'},
-    {key:'salamanca-finca-patio',alt:'Patio et façade de la finca près de Salamanque'},
-    {key:'salamanca-finca-land',alt:'Terres et dépendances de la finca près de Salamanque'},
-  ],
-  'Finca blanche près de Tolède':[
-    {key:'toledo-finca-exterior',alt:'Finca blanche et oliviers près de Tolède'},
-    {key:'toledo-finca-patio',alt:'Patio lumineux de la finca près de Tolède'},
-    {key:'toledo-finca-olive',alt:'Oliviers et terrain autour de la finca près de Tolède'},
-  ],
-  'Domaine en Estrémadure':[
-    {key:'extremadura-estate-exterior',alt:'Ancien domaine rural en Estrémadure'},
-    {key:'extremadura-estate-courtyard',alt:'Cour et bâtiments du domaine en Estrémadure'},
-    {key:'extremadura-estate-land',alt:'Grandes terres du domaine en Estrémadure'},
-  ],
-  'Maison andalouse avec terres':[
-    {key:'jerez-finca-exterior',alt:'Maison andalouse avec terres près de Jerez'},
-    {key:'jerez-finca-courtyard',alt:'Cour intérieure de la maison andalouse'},
-    {key:'jerez-finca-land',alt:'Terres et vignobles autour de la maison andalouse'},
-  ],
-  'Appartement ancien à Séville':[
-    {key:'sevilla-flat-courtyard',alt:'Patio andalou de la résidence à Séville'},
-    {key:'sevilla-flat-street',alt:'Façade ancienne de la résidence à Séville'},
-    {key:'sevilla-flat-living',alt:'Salon élégant ouvert sur le patio à Séville'},
-  ],
-  'Appartement lumineux à Valence':[
-    {key:'valencia-flat-living',alt:'Appartement lumineux ouvert sur la mer à Valence'},
-    {key:'valencia-flat-terrace',alt:'Terrasse de l’appartement à Valence'},
-    {key:'valencia-flat-view',alt:'Vue mer au coucher du soleil depuis l’appartement à Valence'},
-  ],
-  'Appartement Belle Époque à Saint-Sébastien':[
-    {key:'basque-coast-exterior',alt:'Résidence Belle Époque face à la baie de Saint-Sébastien'},
-    {key:'basque-coast-living',alt:'Salon lumineux avec vue sur la baie de Saint-Sébastien'},
-    {key:'basque-coast-terrace',alt:'Terrasse au coucher du soleil sur la baie de Saint-Sébastien'},
-  ],
-  'Maison méditerranéenne':[
-    {key:'soller-house-exterior',alt:'Maison méditerranéenne en pierre à Sóller'},
-    {key:'soller-house-terrace',alt:'Cour aux agrumes de la maison à Sóller'},
-    {key:'soller-house-interior',alt:'Salon méditerranéen de la maison à Sóller'},
-  ],
-  'Maison ancienne à Gérone':[
-    {key:'girona-townhouse-exterior',alt:'Maison ancienne dans la vieille ville de Gérone'},
-    {key:'girona-townhouse-interior',alt:'Salon rénové de la maison à Gérone'},
-    {key:'girona-townhouse-terrace',alt:'Terrasse dominant la vieille ville de Gérone'},
-  ],
+  'Finca de chênes et pâtures':[{key:'salamanca-finca-exterior',alt:'Finca en pierre entourée de pâtures près de Salamanque'},{key:'salamanca-finca-patio',alt:'Patio et façade de la finca près de Salamanque'},{key:'salamanca-finca-land',alt:'Terres et dépendances de la finca près de Salamanque'}],
+  'Finca blanche près de Tolède':[{key:'toledo-finca-exterior',alt:'Finca blanche et oliviers près de Tolède'},{key:'toledo-finca-patio',alt:'Patio lumineux de la finca près de Tolède'},{key:'toledo-finca-olive',alt:'Oliviers et terrain autour de la finca près de Tolède'}],
+  'Domaine en Estrémadure':[{key:'extremadura-estate-exterior',alt:'Ancien domaine rural en Estrémadure'},{key:'extremadura-estate-courtyard',alt:'Cour et bâtiments du domaine en Estrémadure'},{key:'extremadura-estate-land',alt:'Grandes terres du domaine en Estrémadure'}],
+  'Maison andalouse avec terres':[{key:'jerez-finca-exterior',alt:'Maison andalouse avec terres près de Jerez'},{key:'jerez-finca-courtyard',alt:'Cour intérieure de la maison andalouse'},{key:'jerez-finca-land',alt:'Terres et vignobles autour de la maison andalouse'}],
+  'Appartement ancien à Séville':[{key:'sevilla-flat-courtyard',alt:'Patio andalou de la résidence à Séville'},{key:'sevilla-flat-street',alt:'Façade ancienne de la résidence à Séville'},{key:'sevilla-flat-living',alt:'Salon élégant ouvert sur le patio à Séville'}],
+  'Appartement lumineux à Valence':[{key:'valencia-flat-living',alt:'Appartement lumineux ouvert sur la mer à Valence'},{key:'valencia-flat-terrace',alt:'Terrasse de l’appartement à Valence'},{key:'valencia-flat-view',alt:'Vue mer au coucher du soleil depuis l’appartement à Valence'}],
+  'Appartement Belle Époque à Saint-Sébastien':[{key:'basque-coast-exterior',alt:'Résidence Belle Époque face à la baie de Saint-Sébastien'},{key:'basque-coast-living',alt:'Salon lumineux avec vue sur la baie de Saint-Sébastien'},{key:'basque-coast-terrace',alt:'Terrasse au coucher du soleil sur la baie de Saint-Sébastien'}],
+  'Maison méditerranéenne':[{key:'soller-house-exterior',alt:'Maison méditerranéenne en pierre à Sóller'},{key:'soller-house-terrace',alt:'Cour aux agrumes de la maison à Sóller'},{key:'soller-house-interior',alt:'Salon méditerranéen de la maison à Sóller'}],
+  'Maison ancienne à Gérone':[{key:'girona-townhouse-exterior',alt:'Maison ancienne dans la vieille ville de Gérone'},{key:'girona-townhouse-interior',alt:'Salon rénové de la maison à Gérone'},{key:'girona-townhouse-terrace',alt:'Terrasse dominant la vieille ville de Gérone'}],
 };
-
 function readVisits():Visits{try{const raw=localStorage.getItem(VISIT_KEY);return raw?JSON.parse(raw) as Visits:{visited:{}}}catch{return{visited:{}}}}
 function writeVisits(v:Visits){try{localStorage.setItem(VISIT_KEY,JSON.stringify(v));window.dispatchEvent(new CustomEvent('monia:property-ui-changed'))}catch{}}
 function money(v:number){return new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(v)}
@@ -74,124 +39,29 @@ function visualsForTitle(title:string){return PROPERTY_VISUALS[title]||[]}
 function visualsFor(o:PropertyOffer){const found=visualsForTitle(o.title);return found.length?found:[{key:'property-generic',alt:o.title}]}
 function visualSrc(v:PropertyVisual){return PROPERTY_VISUAL_ASSETS[v.key]||`./resources/properties/${v.key}.webp`}
 function propertyImage(v:PropertyVisual,className='propertyPhotoImage'){return `<img class="${className}" src="${esc(visualSrc(v))}" alt="${esc(v.alt)}" loading="lazy" decoding="async">`}
-
-function visitImpressions(o:PropertyOffer){
-  const byTitle:Record<string,{marion:string;lucas:string}>={
-    'Finca de chênes et pâtures':{marion:'Marion aime le calme immédiat, la pierre et la sensation d’avoir de l’espace sans que la maison paraisse froide.',lucas:'Lucas regarde les pâtures, les dépendances et les accès. Il se projette facilement ici, mais mesure déjà tout ce que le domaine demanderait au quotidien.'},
-    'Finca blanche près de Tolède':{marion:'Marion revient plusieurs fois vers le patio et la lumière. La proximité de Madrid lui donne l’impression que ce changement pourrait rester simple à vivre.',lucas:'Lucas apprécie surtout la distance avec Madrid et l’organisation compacte du terrain. Pour lui, le lieu paraît facile à intégrer à leurs déplacements.'},
-    'Domaine en Estrémadure':{marion:'Marion est séduite par l’ampleur du lieu, mais elle remarque aussi son isolement et tout ce qu’il faudrait transformer pour qu’il devienne vraiment leur maison.',lucas:'Lucas voit immédiatement le potentiel des terres et des bâtiments. Il aime l’espace, tout en sachant que ce domaine demanderait du temps et une vraie organisation.'},
-    'Maison andalouse avec terres':{marion:'Marion est happée par la cour, la chaleur des murs blancs et la vie dehors. Elle imagine facilement des séjours longs ici, même si la distance change beaucoup leur rythme.',lucas:'Lucas observe les terres et la situation de la propriété. Il adore son caractère, mais pense déjà aux trajets et à ce que cela impliquerait quand son agenda se resserre.'},
-    'Appartement ancien à Séville':{marion:'Marion aime le patio et le fait de pouvoir sortir à pied dans la ville. Elle le voit davantage comme un lieu où respirer quelques jours que comme une résidence principale.',lucas:'Lucas aime le côté pratique et discret du pied-à-terre. Il vérifie surtout les accès, le stationnement et la facilité d’y venir entre deux déplacements.'},
-    'Appartement lumineux à Valence':{marion:'Marion se projette immédiatement sur la terrasse et dans cette lumière très différente de Madrid. Pour elle, ce serait un vrai lieu de coupure.',lucas:'Lucas apprécie la simplicité de l’appartement et le fait qu’il n’y ait presque rien à gérer. La distance lui paraît compatible avec un usage ponctuel.'},
-    'Appartement Belle Époque à Saint-Sébastien':{marion:'Marion adore la vue et l’élégance du lieu, mais elle se demande si elle ne tomberait pas surtout amoureuse du décor avant du quotidien réel.',lucas:'Lucas trouve l’appartement superbe et très facile à vivre. Il garde néanmoins un œil sur l’éloignement et sur la fréquence à laquelle ils pourraient vraiment en profiter.'},
-    'Maison méditerranéenne':{marion:'Marion est très sensible à la pierre, aux agrumes et au calme du patio. Le lieu lui donne immédiatement une sensation de parenthèse.',lucas:'Lucas aime la maison mais réfléchit davantage à la logistique d’une île. Pour lui, ce serait un vrai pied-à-terre de plaisir, pas un lieu pratique au quotidien.'},
-    'Maison ancienne à Gérone':{marion:'Marion aime le mélange entre vieille pierre, ville et terrasse. Elle trouve le lieu plus vivant qu’une maison isolée et facile à habiter sans tout organiser autour.',lucas:'Lucas apprécie la discrétion du bien et son caractère. Il regarde surtout comment Gérone s’insérerait dans leurs trajets et leurs périodes plus chargées.'},
-  };
-  return byTitle[o.title]||{marion:`Marion observe la lumière, les volumes et ce que leur quotidien pourrait devenir à ${o.city}.`,lucas:'Lucas regarde les accès, l’entretien et la façon dont ce bien pourrait s’intégrer à leur rythme de vie.'};
-}
-
-function ensureEntry(){
-  const snap=getPropertyLifeSnapshot();
-  const shouldShow=snap.searchOpen||snap.owned.some(p=>p.owner==='joint');
-  document.querySelectorAll<HTMLElement>('[data-property-entry]').forEach(el=>{if(!shouldShow)el.remove()});
-  if(!shouldShow||document.querySelector('[data-property-entry]'))return;
-  const nav=document.querySelector<HTMLElement>('.premiumNav');
-  if(!nav)return;
-  const b=document.createElement('button');b.type='button';b.dataset.propertyEntry='1';b.className='propertyNavEntry';b.title='Immobilier';b.setAttribute('aria-label','Immobilier');
-  b.innerHTML='<b aria-hidden="true">⌂</b><span>Immobilier</span>';
-  b.onclick=()=>openPanel();nav.appendChild(b);
-}
-
-function propertyCard(p:PropertyRecord){
-  const visuals=visualsForTitle(p.name),hero=visuals[0];
-  return `<article class="ownedProperty ${p.use==='primary'?'isPrimary':''}">
-    ${hero?`<div class="propertyPhoto ownedPropertyPhoto">${propertyImage(hero)}</div>`:''}
-    <div><small>${esc(kindLabel(p.kind))}</small><h3>${esc(p.name)}</h3><p>${esc(p.city)} · ${esc(p.region)}</p></div>
-    <strong>${esc(useLabel(p.use))}</strong>
-    <div class="propertyActions">
-      ${visuals.length?`<button data-owned-view="${esc(p.id)}">Revoir le bien</button>`:''}
-      ${p.use!=='primary'?`<button data-primary="${esc(p.id)}">Résidence principale</button>`:''}
-      ${p.owner==='joint'&&p.use!=='primary'?`<button data-sell="${esc(p.id)}">Revendre</button>`:''}
-    </div>
-  </article>`;
-}
-
-function offerCard(o:PropertyOffer,visited:boolean,shortlisted:boolean){
-  const facts=[`${o.bedrooms} chambres`,o.hectares?`${o.hectares} ha`:null].filter(Boolean).join(' · '),visuals=visualsFor(o),hero=visuals[0];
-  return `<article class="propertyOffer tone-${offerTone(o)} ${visited?'isVisited':''}">
-    <div class="propertyPhoto">${propertyImage(hero)}<i></i><span>${esc(o.city)}</span><em>${visuals.length} photos</em></div>
-    <div class="propertyOfferBody">
-      <div class="propertyOfferMeta"><small>${esc(kindLabel(o.kind))}</small><strong>${money(o.price)}</strong></div>
-      <h3>${esc(o.title)}</h3><p class="propertyRegion">${esc(o.city)} · ${esc(o.region)}</p>
-      <p>${esc(o.character)}</p><p class="propertyFacts">${esc(facts)}${facts?' · ':''}${esc(o.distanceNote)}</p>
-      <div class="propertyOfferActions">
-        <button data-shortlist="${esc(o.id)}">${shortlisted?'★ Favori':'☆ Favori'}</button>
-        <button data-visit="${esc(o.id)}">${visited?'Revoir le bien':'Organiser une visite'}</button>
-        <button data-buy="${esc(o.id)}" ${visited?'':'disabled'}>${visited?'Faire une offre':'Visite requise'}</button>
-      </div>
-    </div>
-  </article>`;
-}
-
+function visitImpressions(o:PropertyOffer){const byTitle:Record<string,{marion:string;lucas:string}>={
+'Finca de chênes et pâtures':{marion:'Marion aime le calme immédiat, la pierre et la sensation d’avoir de l’espace sans que la maison paraisse froide.',lucas:'Lucas regarde les pâtures, les dépendances et les accès. Il se projette facilement ici, mais mesure déjà tout ce que le domaine demanderait au quotidien.'},
+'Finca blanche près de Tolède':{marion:'Marion revient plusieurs fois vers le patio et la lumière. La proximité de Madrid lui donne l’impression que ce changement pourrait rester simple à vivre.',lucas:'Lucas apprécie surtout la distance avec Madrid et l’organisation compacte du terrain. Pour lui, le lieu paraît facile à intégrer à leurs déplacements.'},
+'Domaine en Estrémadure':{marion:'Marion est séduite par l’ampleur du lieu, mais elle remarque aussi son isolement et tout ce qu’il faudrait transformer pour qu’il devienne vraiment leur maison.',lucas:'Lucas voit immédiatement le potentiel des terres et des bâtiments. Il aime l’espace, tout en sachant que ce domaine demanderait du temps et une vraie organisation.'},
+'Maison andalouse avec terres':{marion:'Marion est happée par la cour, la chaleur des murs blancs et la vie dehors. Elle imagine facilement des séjours longs ici, même si la distance change beaucoup leur rythme.',lucas:'Lucas observe les terres et la situation de la propriété. Il adore son caractère, mais pense déjà aux trajets et à ce que cela impliquerait quand son agenda se resserre.'},
+'Appartement ancien à Séville':{marion:'Marion aime le patio et le fait de pouvoir sortir à pied dans la ville. Elle le voit davantage comme un lieu où respirer quelques jours que comme une résidence principale.',lucas:'Lucas aime le côté pratique et discret du pied-à-terre. Il vérifie surtout les accès et la facilité d’y venir entre deux déplacements.'},
+'Appartement lumineux à Valence':{marion:'Marion se projette immédiatement sur la terrasse et dans cette lumière très différente de Madrid. Pour elle, ce serait un vrai lieu de coupure.',lucas:'Lucas apprécie la simplicité de l’appartement et le fait qu’il n’y ait presque rien à gérer. La distance lui paraît compatible avec un usage ponctuel.'},
+'Appartement Belle Époque à Saint-Sébastien':{marion:'Marion adore la vue et l’élégance du lieu, mais elle se demande si elle ne tombe pas surtout amoureuse du décor avant du quotidien réel.',lucas:'Lucas trouve l’appartement superbe et très facile à vivre. Il garde néanmoins un œil sur l’éloignement.'},
+'Maison méditerranéenne':{marion:'Marion est très sensible à la pierre, aux agrumes et au calme du patio. Le lieu lui donne immédiatement une sensation de parenthèse.',lucas:'Lucas aime la maison mais réfléchit davantage à la logistique d’une île. Pour lui, ce serait un vrai pied-à-terre de plaisir.'},
+'Maison ancienne à Gérone':{marion:'Marion aime le mélange entre vieille pierre, ville et terrasse. Elle trouve le lieu vivant et facile à habiter.',lucas:'Lucas apprécie la discrétion du bien et son caractère. Il regarde surtout comment Gérone s’insérerait dans leurs trajets.'}};return byTitle[o.title]||{marion:`Marion observe la lumière, les volumes et ce que leur quotidien pourrait devenir à ${o.city}.`,lucas:'Lucas regarde les accès, l’entretien et la façon dont ce bien pourrait s’intégrer à leur rythme de vie.'}}
+function ensureEntry(){const snap=getPropertyLifeSnapshot(),shouldShow=snap.searchOpen||snap.owned.some(p=>p.owner==='joint');document.querySelectorAll<HTMLElement>('[data-property-entry]').forEach(el=>{if(!shouldShow)el.remove()});if(!shouldShow||document.querySelector('[data-property-entry]'))return;const nav=document.querySelector<HTMLElement>('.premiumNav');if(!nav)return;const b=document.createElement('button');b.type='button';b.dataset.propertyEntry='1';b.className='propertyNavEntry';b.title='Immobilier';b.setAttribute('aria-label','Immobilier');b.innerHTML='<b aria-hidden="true">⌂</b><span>Immobilier</span>';b.onclick=()=>openPanel();nav.appendChild(b)}
+function propertyCard(p:PropertyRecord){const visuals=visualsForTitle(p.name),hero=visuals[0];return `<article class="ownedProperty ${p.use==='primary'?'isPrimary':''}">${hero?`<div class="propertyPhoto ownedPropertyPhoto">${propertyImage(hero)}</div>`:''}<div><small>${esc(kindLabel(p.kind))}</small><h3>${esc(p.name)}</h3><p>${esc(p.city)} · ${esc(p.region)}</p></div><strong>${esc(useLabel(p.use))}</strong><div class="propertyActions">${visuals.length?`<button data-owned-view="${esc(p.id)}">Revoir le bien</button>`:''}${p.use!=='primary'?`<button data-primary="${esc(p.id)}">Résidence principale</button>`:''}${p.owner==='joint'&&p.use!=='primary'?`<button data-sell="${esc(p.id)}">Revendre</button>`:''}</div></article>`}
+function offerCard(o:PropertyOffer,visited:boolean,shortlisted:boolean,negotiation?:PropertyNegotiation){const facts=[`${o.bedrooms} chambres`,o.hectares?`${o.hectares} ha`:null].filter(Boolean).join(' · '),visuals=visualsFor(o),hero=visuals[0],status=negotiation?.status==='accepted'?'Offre acceptée':negotiation?.status==='countered'?'Contre-proposition reçue':'';return `<article class="propertyOffer tone-${offerTone(o)} ${visited?'isVisited':''}"><div class="propertyPhoto">${propertyImage(hero)}<i></i><span>${esc(o.city)}</span><em>${visuals.length} photos</em></div><div class="propertyOfferBody"><div class="propertyOfferMeta"><small>${esc(kindLabel(o.kind))}</small><strong>${money(o.price)}</strong></div><h3>${esc(o.title)}</h3><p class="propertyRegion">${esc(o.city)} · ${esc(o.region)}</p><p>${esc(o.character)}</p><p class="propertyFacts">${esc(facts)}${facts?' · ':''}${esc(o.distanceNote)}</p>${status?`<p class="propertyNegotiationStatus">${esc(status)}</p>`:''}<div class="propertyOfferActions"><button data-shortlist="${esc(o.id)}">${shortlisted?'★ Favori':'☆ Favori'}</button><button data-visit="${esc(o.id)}">${visited?'Revoir le bien':'Organiser une visite'}</button><button data-buy="${esc(o.id)}" ${visited?'':'disabled'}>${negotiation?.status==='accepted'?'Finaliser l’achat':negotiation?.status==='countered'?'Voir le contre-projet':visited?'Faire une offre':'Visite requise'}</button></div></div></article>`}
 function wireImageFallbacks(root:HTMLElement){root.querySelectorAll<HTMLImageElement>('.propertyPhotoImage,.propertyVisitHero,.propertyThumbImage').forEach(img=>img.onerror=()=>img.classList.add('isMissing'))}
-
-function renderPanel(root:HTMLElement){
-  const snap=getPropertyLifeSnapshot(),visits=readVisits();
-  const reason=snap.firstJointPurchasePending?'Chercher un lieu à eux':'Leur patrimoine immobilier';
-  root.innerHTML=`<div class="propertyAgencyBackdrop" data-close-property></div><section class="propertyAgencyPanel" role="dialog" aria-modal="true" aria-label="Immobilier">
-    <header><div><small>ESPAGNE · IMMOBILIER</small><h2>${esc(reason)}</h2><p>${snap.firstJointPurchasePending?'Comparer plusieurs régions, visiter, réfléchir à deux, puis décider.':'Résidence principale, pieds-à-terre et biens achetés au fil de leur vie.'}</p></div><button class="propertyClose" data-close-property aria-label="Fermer">×</button></header>
-    <div class="propertyAgencyContent">
-      <section class="propertyOwnedSection"><div class="propertySectionTitle"><span>Leurs biens</span><small>${snap.owned.length} actif${snap.owned.length>1?'s':''}</small></div><div class="propertyOwnedGrid">${snap.owned.map(propertyCard).join('')}</div></section>
-      ${snap.searchOpen?`<section class="propertyOffersSection"><div class="propertySectionTitle"><span>Offres à visiter</span><button data-refresh-property>Actualiser les offres</button></div><div class="propertyOfferGrid">${snap.offers.map(o=>offerCard(o,Boolean(visits.visited[o.id]),snap.shortlisted.includes(o.id))).join('')}</div></section>`:''}
-    </div>
-  </section>`;
-  wireImageFallbacks(root);
-  root.querySelectorAll<HTMLElement>('[data-close-property]').forEach(el=>el.onclick=()=>root.remove());
-  root.querySelectorAll<HTMLButtonElement>('[data-shortlist]').forEach(b=>b.onclick=()=>{shortlistProperty(b.dataset.shortlist||'');renderPanel(root)});
-  root.querySelectorAll<HTMLButtonElement>('[data-visit]').forEach(b=>b.onclick=()=>startVisit(root,b.dataset.visit||''));
-  root.querySelectorAll<HTMLButtonElement>('[data-buy]').forEach(b=>b.onclick=()=>confirmPurchase(root,b.dataset.buy||''));
-  root.querySelectorAll<HTMLButtonElement>('[data-owned-view]').forEach(b=>b.onclick=()=>openOwnedProperty(root,b.dataset.ownedView||''));
-  root.querySelectorAll<HTMLButtonElement>('[data-primary]').forEach(b=>b.onclick=()=>{setPrimaryProperty(b.dataset.primary||'');renderPanel(root)});
-  root.querySelectorAll<HTMLButtonElement>('[data-sell]').forEach(b=>b.onclick=()=>{if(confirm('Revendre ce bien secondaire ?')){sellProperty(b.dataset.sell||'');renderPanel(root)}});
-  root.querySelector<HTMLButtonElement>('[data-refresh-property]')?.addEventListener('click',()=>{refreshPropertyOffers();renderPanel(root)});
-}
-
-function startVisit(root:HTMLElement,id:string){
-  const snap=getPropertyLifeSnapshot(),o=snap.offers.find(x=>x.id===id);if(!o)return;
-  const visits=readVisits();visits.selected=id;writeVisits(visits);const visuals=visualsFor(o),hero=visuals[0],impressions=visitImpressions(o);
-  root.innerHTML=`<div class="propertyAgencyBackdrop"></div><section class="propertyVisit" role="dialog" aria-modal="true"><div class="propertyVisitMedia"><div class="propertyVisitVisual tone-${offerTone(o)}">${propertyImage(hero,'propertyVisitHero')}<i></i></div><div class="propertyVisitGallery">${visuals.map((v,i)=>`<button data-property-thumb="${i}" aria-label="Voir la photo ${i+1}">${propertyImage(v,'propertyThumbImage')}</button>`).join('')}</div></div><div class="propertyVisitText"><small>VISITE · ${esc(o.region.toUpperCase())}</small><h2>${esc(o.title)}</h2><p>${esc(o.character)}</p><p>${esc(o.distanceNote)}</p><div class="visitImpressions"><span>${esc(impressions.marion)}</span><span>${esc(impressions.lucas)}</span></div><div class="visitActions"><button data-leave>Continuer la recherche</button><button data-favorite>Garder en favori</button><button data-finish>Finir la visite</button></div></div></section>`;
-  const heroImg=root.querySelector<HTMLImageElement>('.propertyVisitHero');wireImageFallbacks(root);
-  root.querySelectorAll<HTMLButtonElement>('[data-property-thumb]').forEach(b=>b.onclick=()=>{const v=visuals[Number(b.dataset.propertyThumb||0)]||hero;if(heroImg){heroImg.src=visualSrc(v);heroImg.alt=v.alt;heroImg.classList.remove('isMissing')}});
-  root.querySelector<HTMLButtonElement>('[data-leave]')!.onclick=()=>renderPanel(root);
-  root.querySelector<HTMLButtonElement>('[data-favorite]')!.onclick=()=>{shortlistProperty(id);renderPanel(root)};
-  root.querySelector<HTMLButtonElement>('[data-finish]')!.onclick=()=>{const v=readVisits();v.visited[id]=Date.now();delete v.selected;writeVisits(v);renderPanel(root)};
-}
-
-function openOwnedProperty(root:HTMLElement,id:string){
-  const snap=getPropertyLifeSnapshot(),p=snap.history.find(x=>x.id===id);if(!p)return;const visuals=visualsForTitle(p.name);if(!visuals.length){renderPanel(root);return}const hero=visuals[0];
-  root.innerHTML=`<div class="propertyAgencyBackdrop"></div><section class="propertyVisit" role="dialog" aria-modal="true"><div class="propertyVisitMedia"><div class="propertyVisitVisual">${propertyImage(hero,'propertyVisitHero')}<i></i></div><div class="propertyVisitGallery">${visuals.map((v,i)=>`<button data-property-thumb="${i}" aria-label="Voir la photo ${i+1}">${propertyImage(v,'propertyThumbImage')}</button>`).join('')}</div></div><div class="propertyVisitText"><small>LEUR BIEN · ${esc(p.region.toUpperCase())}</small><h2>${esc(p.name)}</h2><p>${esc(p.city)} · ${esc(p.region)}</p><p>${esc(useLabel(p.use))}${p.purchasePrice?` · ${money(p.purchasePrice)}`:''}</p><div class="visitImpressions"><span>Ce lieu reste accessible depuis leur patrimoine, même lorsqu’il n’est pas leur résidence principale.</span><span>Les souvenirs, usages et évolutions du bien pourront s’y accumuler au fil de leur vie.</span></div><div class="visitActions"><button data-back-owned>Retour au patrimoine</button></div></div></section>`;
-  const heroImg=root.querySelector<HTMLImageElement>('.propertyVisitHero');wireImageFallbacks(root);
-  root.querySelectorAll<HTMLButtonElement>('[data-property-thumb]').forEach(b=>b.onclick=()=>{const v=visuals[Number(b.dataset.propertyThumb||0)]||hero;if(heroImg){heroImg.src=visualSrc(v);heroImg.alt=v.alt;heroImg.classList.remove('isMissing')}});
-  root.querySelector<HTMLButtonElement>('[data-back-owned]')!.onclick=()=>renderPanel(root);
-}
-
-function confirmPurchase(root:HTMLElement,id:string){
-  const snap=getPropertyLifeSnapshot(),o=snap.offers.find(x=>x.id===id);if(!o)return;
-  if(!readVisits().visited[id])return;
-  root.innerHTML=`<div class="propertyAgencyBackdrop"></div><section class="propertyDecision" role="dialog" aria-modal="true"><small>DÉCISION À DEUX</small><h2>${esc(o.title)}</h2><p>${money(o.price)} · ${esc(o.city)} · ${esc(o.region)}</p><p>Acheter ce bien ne les oblige pas à y déménager. Ils peuvent en faire leur résidence principale ou le garder comme autre propriété.</p><div><button data-cancel>Aucune décision maintenant</button><button data-secondary>Acheter comme autre résidence</button><button data-main>Acheter et s’y installer</button></div></section>`;
-  root.querySelector<HTMLButtonElement>('[data-cancel]')!.onclick=()=>renderPanel(root);
-  root.querySelector<HTMLButtonElement>('[data-secondary]')!.onclick=()=>{purchaseProperty(id,false);renderPanel(root)};
-  root.querySelector<HTMLButtonElement>('[data-main]')!.onclick=()=>{purchaseProperty(id,true);renderPanel(root)};
-}
-
-export function openPropertyAgency(){
-  let root=document.getElementById('moniaPropertyAgency');if(root)root.remove();
-  root=document.createElement('div');root.id='moniaPropertyAgency';root.className='moniaPropertyAgency';document.body.appendChild(root);renderPanel(root);
-}
+function renderPanel(root:HTMLElement){const snap=getPropertyLifeSnapshot(),visits=readVisits(),reason=snap.firstJointPurchasePending?'Chercher un lieu à eux':'Leur patrimoine immobilier',favoriteOffers=snap.offers.filter(o=>snap.shortlisted.includes(o.id));root.innerHTML=`<div class="propertyAgencyBackdrop" data-close-property></div><section class="propertyAgencyPanel" role="dialog" aria-modal="true" aria-label="Immobilier"><header><div><small>ESPAGNE · IMMOBILIER</small><h2>${esc(reason)}</h2><p>${snap.firstJointPurchasePending?'Comparer plusieurs régions, visiter, réfléchir à deux, puis décider.':'Résidence principale, pieds-à-terre et biens achetés au fil de leur vie.'}</p></div><button class="propertyClose" data-close-property aria-label="Fermer">×</button></header><div class="propertyAgencyContent"><section class="propertyOwnedSection"><div class="propertySectionTitle"><span>Leurs biens</span><small>${snap.owned.length} actif${snap.owned.length>1?'s':''}</small></div><div class="propertyOwnedGrid">${snap.owned.map(propertyCard).join('')}</div></section>${snap.searchOpen?`<section class="propertyOffersSection"><div class="propertySectionTitle"><span>Offres à visiter</span><div>${favoriteOffers.length>=2?'<button data-compare-property>Comparer nos favoris</button>':''}<button data-refresh-property>Actualiser les offres</button></div></div><div class="propertyOfferGrid">${snap.offers.map(o=>offerCard(o,Boolean(visits.visited[o.id]),snap.shortlisted.includes(o.id),snap.negotiations[o.id])).join('')}</div></section>`:''}</div></section>`;wireImageFallbacks(root);root.querySelectorAll<HTMLElement>('[data-close-property]').forEach(el=>el.onclick=()=>root.remove());root.querySelectorAll<HTMLButtonElement>('[data-shortlist]').forEach(b=>b.onclick=()=>{shortlistProperty(b.dataset.shortlist||'');renderPanel(root)});root.querySelectorAll<HTMLButtonElement>('[data-visit]').forEach(b=>b.onclick=()=>startVisit(root,b.dataset.visit||''));root.querySelectorAll<HTMLButtonElement>('[data-buy]').forEach(b=>b.onclick=()=>openNegotiation(root,b.dataset.buy||''));root.querySelectorAll<HTMLButtonElement>('[data-owned-view]').forEach(b=>b.onclick=()=>openOwnedProperty(root,b.dataset.ownedView||''));root.querySelectorAll<HTMLButtonElement>('[data-primary]').forEach(b=>b.onclick=()=>{setPrimaryProperty(b.dataset.primary||'');renderPanel(root)});root.querySelectorAll<HTMLButtonElement>('[data-sell]').forEach(b=>b.onclick=()=>{if(confirm('Revendre ce bien secondaire ?')){sellProperty(b.dataset.sell||'');renderPanel(root)}});root.querySelector<HTMLButtonElement>('[data-refresh-property]')?.addEventListener('click',()=>{refreshPropertyOffers();renderPanel(root)});root.querySelector<HTMLButtonElement>('[data-compare-property]')?.addEventListener('click',()=>openComparison(root))}
+function startVisit(root:HTMLElement,id:string){const snap=getPropertyLifeSnapshot(),o=snap.offers.find(x=>x.id===id);if(!o)return;const visits=readVisits();visits.selected=id;writeVisits(visits);const visuals=visualsFor(o),hero=visuals[0],impressions=visitImpressions(o);root.innerHTML=`<div class="propertyAgencyBackdrop"></div><section class="propertyVisit" role="dialog" aria-modal="true"><div class="propertyVisitMedia"><div class="propertyVisitVisual tone-${offerTone(o)}">${propertyImage(hero,'propertyVisitHero')}<i></i></div><div class="propertyVisitGallery">${visuals.map((v,i)=>`<button data-property-thumb="${i}" aria-label="Voir la photo ${i+1}">${propertyImage(v,'propertyThumbImage')}</button>`).join('')}</div></div><div class="propertyVisitText"><small>VISITE · ${esc(o.region.toUpperCase())}</small><h2>${esc(o.title)}</h2><p>${esc(o.character)}</p><p>${esc(o.distanceNote)}</p><div class="visitImpressions"><span><b>Marion</b> — ${esc(impressions.marion)}</span><span><b>Lucas</b> — ${esc(impressions.lucas)}</span></div><div class="visitActions"><button data-leave>Continuer la recherche</button><button data-favorite>Garder en favori</button><button data-finish>Finir la visite</button></div></div></section>`;const heroImg=root.querySelector<HTMLImageElement>('.propertyVisitHero');wireImageFallbacks(root);root.querySelectorAll<HTMLButtonElement>('[data-property-thumb]').forEach(b=>b.onclick=()=>{const v=visuals[Number(b.dataset.propertyThumb||0)]||hero;if(heroImg){heroImg.src=visualSrc(v);heroImg.alt=v.alt;heroImg.classList.remove('isMissing')}});root.querySelector<HTMLButtonElement>('[data-leave]')!.onclick=()=>renderPanel(root);root.querySelector<HTMLButtonElement>('[data-favorite]')!.onclick=()=>{shortlistProperty(id);renderPanel(root)};root.querySelector<HTMLButtonElement>('[data-finish]')!.onclick=()=>{const v=readVisits();v.visited[id]=Date.now();delete v.selected;writeVisits(v);renderPanel(root)}}
+function openComparison(root:HTMLElement){const snap=getPropertyLifeSnapshot(),visits=readVisits(),offers=snap.offers.filter(o=>snap.shortlisted.includes(o.id));if(offers.length<2){renderPanel(root);return}root.innerHTML=`<div class="propertyAgencyBackdrop"></div><section class="propertyDecision propertyCompare" role="dialog" aria-modal="true"><small>LEURS FAVORIS</small><h2>Comparer avant de décider</h2><div class="propertyCompareGrid">${offers.map(o=>{const i=visitImpressions(o);return `<article><h3>${esc(o.title)}</h3><p><strong>${money(o.price)}</strong> · ${esc(o.city)}</p><p>${o.hectares?`${o.hectares} ha · `:''}${o.bedrooms} chambres</p><p>${esc(o.distanceNote)}</p><small>${visits.visited[o.id]?'Visité':'Pas encore visité'}</small><p><b>Marion :</b> ${esc(i.marion)}</p><p><b>Lucas :</b> ${esc(i.lucas)}</p><button data-compare-open="${esc(o.id)}" ${visits.visited[o.id]?'':'disabled'}>Réfléchir à ce bien</button></article>`}).join('')}</div><div><button data-back-compare>Retour aux annonces</button></div></section>`;root.querySelector<HTMLButtonElement>('[data-back-compare]')!.onclick=()=>renderPanel(root);root.querySelectorAll<HTMLButtonElement>('[data-compare-open]').forEach(b=>b.onclick=()=>openNegotiation(root,b.dataset.compareOpen||''))}
+function openNegotiation(root:HTMLElement,id:string){const snap=getPropertyLifeSnapshot(),o=snap.offers.find(x=>x.id===id),n=snap.negotiations[id];if(!o||!readVisits().visited[id])return;if(n?.status==='accepted'){openPurchaseDecision(root,o,n);return}if(n?.status==='countered'){root.innerHTML=`<div class="propertyAgencyBackdrop"></div><section class="propertyDecision"><small>CONTRE-PROPOSITION</small><h2>${esc(o.title)}</h2><p>Votre offre était de ${money(n.proposedPrice)}. Le vendeur revient à <strong>${money(n.counterPrice||o.price)}</strong>.</p><div><button data-cancel>Continuer à réfléchir</button><button data-accept-counter>Accepter le contre-projet</button></div></section>`;root.querySelector<HTMLButtonElement>('[data-cancel]')!.onclick=()=>renderPanel(root);root.querySelector<HTMLButtonElement>('[data-accept-counter]')!.onclick=()=>{acceptPropertyCounter(id);openNegotiation(root,id)};return}root.innerHTML=`<div class="propertyAgencyBackdrop"></div><section class="propertyDecision"><small>OFFRE D’ACHAT</small><h2>${esc(o.title)}</h2><p>Prix affiché : <strong>${money(o.price)}</strong></p><p>Marion et Lucas peuvent sécuriser le bien au prix demandé, ou tenter une négociation.</p><div><button data-cancel>Aucune offre maintenant</button><button data-offer="firm">Négocier franchement</button><button data-offer="careful">Faire une offre prudente</button><button data-offer="asking">Proposer le prix demandé</button></div></section>`;root.querySelector<HTMLButtonElement>('[data-cancel]')!.onclick=()=>renderPanel(root);root.querySelectorAll<HTMLButtonElement>('[data-offer]').forEach(b=>b.onclick=()=>{submitPropertyOffer(id,(b.dataset.offer||'careful') as 'asking'|'careful'|'firm');openNegotiation(root,id)})}
+function openPurchaseDecision(root:HTMLElement,o:PropertyOffer,n:PropertyNegotiation){root.innerHTML=`<div class="propertyAgencyBackdrop"></div><section class="propertyDecision"><small>OFFRE ACCEPTÉE</small><h2>${esc(o.title)}</h2><p>Accord trouvé à <strong>${money(n.acceptedPrice||o.price)}</strong>.</p><p>Ils peuvent maintenant acheter sans déménager, ou faire de ce lieu leur résidence principale.</p><div><button data-cancel>Aucune décision maintenant</button><button data-secondary>Acheter comme autre résidence</button><button data-main>Acheter et s’y installer</button></div></section>`;root.querySelector<HTMLButtonElement>('[data-cancel]')!.onclick=()=>renderPanel(root);root.querySelector<HTMLButtonElement>('[data-secondary]')!.onclick=()=>{purchaseProperty(o.id,false);renderPanel(root)};root.querySelector<HTMLButtonElement>('[data-main]')!.onclick=()=>{purchaseProperty(o.id,true);renderPanel(root)}}
+function openOwnedProperty(root:HTMLElement,id:string){const snap=getPropertyLifeSnapshot(),p=snap.history.find(x=>x.id===id);if(!p)return;const visuals=visualsForTitle(p.name);if(!visuals.length){renderPanel(root);return}const hero=visuals[0];root.innerHTML=`<div class="propertyAgencyBackdrop"></div><section class="propertyVisit"><div class="propertyVisitMedia"><div class="propertyVisitVisual">${propertyImage(hero,'propertyVisitHero')}<i></i></div><div class="propertyVisitGallery">${visuals.map((v,i)=>`<button data-property-thumb="${i}">${propertyImage(v,'propertyThumbImage')}</button>`).join('')}</div></div><div class="propertyVisitText"><small>LEUR BIEN · ${esc(p.region.toUpperCase())}</small><h2>${esc(p.name)}</h2><p>${esc(p.city)} · ${esc(p.region)}</p><p>${esc(useLabel(p.use))}${p.purchasePrice?` · ${money(p.purchasePrice)}`:''}</p><div class="visitImpressions"><span>Ce lieu reste accessible depuis leur patrimoine, même lorsqu’il n’est pas leur résidence principale.</span><span>Les souvenirs, usages et évolutions du bien pourront s’y accumuler au fil de leur vie.</span></div><div class="visitActions"><button data-back-owned>Retour au patrimoine</button></div></div></section>`;const heroImg=root.querySelector<HTMLImageElement>('.propertyVisitHero');wireImageFallbacks(root);root.querySelectorAll<HTMLButtonElement>('[data-property-thumb]').forEach(b=>b.onclick=()=>{const v=visuals[Number(b.dataset.propertyThumb||0)]||hero;if(heroImg){heroImg.src=visualSrc(v);heroImg.alt=v.alt;heroImg.classList.remove('isMissing')}});root.querySelector<HTMLButtonElement>('[data-back-owned]')!.onclick=()=>renderPanel(root)}
+export function openPropertyAgency(){let root=document.getElementById('moniaPropertyAgency');if(root)root.remove();root=document.createElement('div');root.id='moniaPropertyAgency';root.className='moniaPropertyAgency';document.body.appendChild(root);renderPanel(root)}
 function openPanel(){openPropertyAgency()}
-
 let raf=0;function schedule(){cancelAnimationFrame(raf);raf=requestAnimationFrame(ensureEntry)}
 window.addEventListener('monia:property-changed',schedule as EventListener);window.addEventListener('monia:property-ui-changed',schedule as EventListener);window.addEventListener('storage',schedule);new MutationObserver(schedule).observe(document.body,{subtree:true,childList:true});schedule();
-
 declare global{interface Window{__moniaOpenPropertyAgency?:()=>void}}
 window.__moniaOpenPropertyAgency=openPropertyAgency;
