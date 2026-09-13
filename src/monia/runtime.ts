@@ -10,6 +10,7 @@ import './commitment-readiness';
 import './taurine-life-layer';
 import './media-life-layer';
 import './family-life-layer';
+import './property-agency-ui';
 import './life-timeline-engine';
 import './rare-life-events';
 import { MARION_LUCAS_PROFILE, narrationPrompt, type MonIACompactContext } from './profile';
