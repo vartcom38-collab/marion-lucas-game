@@ -33,5 +33,8 @@ export function getPostpartumRhythm():PostpartumRhythm{
   return{active,daysSinceBirth:days,phase,sleepPressure,travelFriction,outingFriction,reason}
 }
 
+function refreshPostpartumLifecycle(){try{getPostpartumRhythm()}catch{}}
+window.setTimeout(refreshPostpartumLifecycle,1500);window.addEventListener('storage',refreshPostpartumLifecycle);window.addEventListener('monia:statechange',refreshPostpartumLifecycle as EventListener);window.setInterval(refreshPostpartumLifecycle,45000);
+
 declare global{interface Window{__moniaFinalizeBirth?:(input?:{birthDay?:number;name?:string;sex?:'girl'|'boy'|'unknown'})=>unknown;__moniaPostpartumRhythm?:()=>PostpartumRhythm}}
 window.__moniaFinalizeBirth=finalizeBirth;window.__moniaPostpartumRhythm=getPostpartumRhythm;
