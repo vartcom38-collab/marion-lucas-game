@@ -2,6 +2,7 @@ import { moniaExperience, type MonIAMaterializedMedia } from './experience-runti
 import type { MonIAChannel, MonIADirectorResult } from './director';
 import { ensureMonIACanonBootstrap } from './canon-bootstrap';
 import { ensureMonIAAssetBootstrap } from './asset-bootstrap';
+import { getLucasCommunicationPolicy } from './lucas-presence-engine';
 
 const SAVE_KEY = 'marion-lucas-save-v4';
 const SETTINGS_KEY = 'marion-lucas-settings-v2';
@@ -102,7 +103,7 @@ function voiceMarkup(text: string) {
 
 function visioMarkup(result: MonIADirectorResult) {
   const scene = result.scene;
-  const detail = scene ? `${scene.location} · ${scene.action}` : 'Visio proposée par MonIA';
+  const detail = scene ? `${scene.location} · ${scene.action}` : 'Visio autorisée par le gameplay';
   return `<p>${safeHTML(result.text)}</p><button type="button" data-monia-visio class="moniaVisioLaunch">◇ Ouvrir la visio</button><small>${safeHTML(detail)}</small>`;
 }
 
@@ -111,7 +112,7 @@ function renderLiveReply(result: MonIADirectorResult) {
   if (!thread) return;
   const article = document.createElement('article');
   article.className = 'msg moniaDirectorReply';
-  const label = result.channel === 'voice' ? 'VOCAL IA LOCAL' : result.channel === 'visio' ? 'VISIO IA AUTONOME' : result.channel === 'video' ? 'VIDÉO IA AUTONOME' : 'MONIA LOCAL';
+  const label = result.channel === 'voice' ? 'VOCAL IA LOCAL' : result.channel === 'visio' ? 'VISIO AUTORISÉE PAR LE GAMEPLAY' : result.channel === 'video' ? 'VIDÉO IA AUTONOME' : 'MONIA LOCAL';
   const body = result.channel === 'voice'
     ? voiceMarkup(result.spokenText || result.text)
     : result.channel === 'visio'
@@ -173,6 +174,12 @@ function loadLastVisioMedia() {
 }
 
 function openVisio(result: MonIADirectorResult) {
+  const policy=getLucasCommunicationPolicy();
+  if(policy.mode!=='connect'){
+    closeVisio();
+    console.info('[MonIA visio] blocked by current Lucas presence/availability:',policy.label);
+    return;
+  }
   closeVisio();
   const scene = result.scene;
   const media = loadLastVisioMedia();
@@ -185,7 +192,7 @@ function openVisio(result: MonIADirectorResult) {
   const duration = Math.max(4, Math.min(30, scene?.duration || 8));
   const visual = media?.state === 'ready' && media.videoUrl
     ? `<video id="moniaVisioVideo" src="${safeHTML(media.videoUrl)}" autoplay muted loop playsinline style="width:100%;height:100%;object-fit:cover"></video>`
-    : `<div style="position:absolute;inset:0;display:grid;place-items:center;background:radial-gradient(circle at 50% 35%,#26211d,#090807 72%)"><div style="text-align:center;padding:28px;max-width:420px"><div style="font-size:2.2rem;margin-bottom:12px">◇</div><strong>Connexion vidéo en préparation</strong><p style="opacity:.72;line-height:1.45">MonIA prépare le meilleur média Lucas déjà validé ou un nouveau candidat hors du gameplay. Aucun clip non validé n’est montré en direct.</p></div></div>`;
+    : `<div style="position:absolute;inset:0;display:grid;place-items:center;background:radial-gradient(circle at 50% 35%,#26211d,#090807 72%)"><div style="text-align:center;padding:28px;max-width:420px"><div style="font-size:2.2rem;margin-bottom:12px">◇</div><strong>Connexion vidéo indisponible</strong><p style="opacity:.72;line-height:1.45">Aucun média Lucas non approuvé n’est affiché. La visio reste fermée tant qu’un clip validé n’est pas disponible.</p></div></div>`;
   overlay.innerHTML = `<div style="position:absolute;inset:0;overflow:hidden">${visual}<div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.42),transparent 35%,rgba(0,0,0,.68))"></div></div><div style="position:absolute;top:22px;left:24px;right:24px;display:flex;justify-content:space-between;align-items:flex-start;text-shadow:0 2px 12px #000"><div><small style="letter-spacing:.18em">VISIO · MONIA</small><h2 style="margin:.35rem 0 0;font-size:1.35rem">Lucas</h2><span style="opacity:.75;font-size:.82rem">${location}</span></div><button id="closeMoniaVisio" style="border:0;border-radius:999px;width:44px;height:44px;background:rgba(0,0,0,.52);color:#fff;font-size:24px;cursor:pointer">×</button></div><div style="position:absolute;left:24px;right:24px;bottom:24px;max-width:720px;margin:auto;background:rgba(12,10,9,.62);backdrop-filter:blur(12px);padding:18px 20px;border-radius:20px;border:1px solid rgba(255,255,255,.14)"><small style="opacity:.68">${framing} · ${duration}s · ${safeHTML(result.emotion)}</small><p style="font-size:1.08rem;line-height:1.45;margin:.55rem 0">${safeHTML(result.spokenText || result.text)}</p><span style="opacity:.65;font-size:.8rem">${action}</span><div style="display:flex;gap:10px;margin-top:14px"><button id="replayMoniaVoice" style="border:0;border-radius:999px;padding:10px 16px;cursor:pointer">▶ Réécouter</button><button id="endMoniaVisio" style="border:0;border-radius:999px;padding:10px 16px;background:#a33131;color:white;cursor:pointer">Raccrocher</button></div></div>`;
   document.body.appendChild(overlay);
   const close = () => closeVisio();
@@ -211,6 +218,8 @@ async function directLatestSms(text: string) {
   const prefs = readJSON(SETTINGS_KEY, { localAI: true, aiMode: 'auto' as 'auto' | 'light' | 'advanced' });
   const recent = save.messages?.slice(0, 6).map(m => `${m.from}: ${m.text.replace(/^\[\[(voice|photo):|\]\]$/g, '')}`) || [];
   const todayLucas = save.calendar?.filter(i => i.owner === 'Lucas' && i.day === save.day).map(i => `${i.title} · ${i.note}`) || [];
+  const askedChannel=requestedChannel(text);
+  const freeChannel=askedChannel==='visio'?undefined:askedChannel;
   const context = {
     speaker: 'Marion',
     place: placeLabels[save.place] || save.place,
@@ -227,17 +236,20 @@ async function directLatestSms(text: string) {
       'Répondre comme Lucas, pas comme un assistant.',
       'Respecter le lieu, l’heure, la relation et son agenda.',
       'Ne jamais écrire la réponse de Marion.',
+      'Un SMS libre ne peut jamais déclencher une visio de sa propre initiative.',
+      'Si Marion demande une visio par SMS, répondre naturellement en texte ; seul le gameplay peut ensuite autoriser l’ouverture vidéo.'
     ],
   };
 
   const experience = await moniaExperience.respond({
     actor: 'Lucas',
     playerText: text,
-    requestedChannel: requestedChannel(text),
+    requestedChannel: freeChannel,
     context,
     availableMedia: ['lucas-intro.mp4'],
   }, prefs.aiMode, prefs.localAI !== false);
-  const result = experience.response;
+  const rawResult=experience.response;
+  const result = (rawResult.channel==='visio'?{...rawResult,channel:'text'}:rawResult) as MonIADirectorResult;
 
   if (result.channel === 'visio') {
     try {
@@ -246,7 +258,7 @@ async function directLatestSms(text: string) {
     } catch { /* storage optional */ }
   }
 
-  if (experience.mediaPlan.visual.required) {
+  if (rawResult.channel!=='visio' && experience.mediaPlan.visual.required) {
     void moniaExperience.materialize(experience, {
       onImageState: (_state, detail) => console.info('[MonIA image]', detail || _state),
       onVideoState: (_state, detail) => console.info('[MonIA video]', detail || _state),
@@ -267,7 +279,7 @@ async function directLatestSms(text: string) {
     emotion: result.emotion,
     scene: result.scene,
     source: result.source,
-    mediaMode: experience.mediaPlan.mode,
+    mediaMode: rawResult.channel==='visio'?'blocked-free-visio':experience.mediaPlan.mode,
     framing: experience.mediaPlan.visual.framing,
     at: `${fresh.day}:${fresh.time}`,
   });
@@ -298,6 +310,8 @@ document.addEventListener('click', event => {
   if (visioButton) {
     event.preventDefault();
     event.stopPropagation();
+    const policy=getLucasCommunicationPolicy();
+    if(policy.mode!=='connect')return;
     const result = loadLastVisio();
     if (result) openVisio(result);
     return;
@@ -339,4 +353,4 @@ void Promise.all([
   ensureMonIAAssetBootstrap(),
 ]).catch(error=>console.warn('[MonIA] bootstrap coffre créatif incomplet',error));
 
-console.info('[MonIA] Autonomous director + media orchestration + creative vault active');
+console.info('[MonIA] gameplay-authorized visio + guarded media orchestration + creative vault active');
