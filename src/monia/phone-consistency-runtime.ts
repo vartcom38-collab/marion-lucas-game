@@ -1,3 +1,4 @@
+import './phone-media-ui-runtime';
 import {getLucasCommunicationPolicy} from './lucas-presence-engine';
 
 const SAVE_KEY='marion-lucas-save-v4';
@@ -26,4 +27,4 @@ function repair(){if(busy)return;const s=read();if(!s)return;busy=true;try{const
 
 window.addEventListener('marion:statechange',()=>window.setTimeout(repair,0));window.addEventListener('storage',repair);window.addEventListener('marion:phone-refresh',repair as EventListener);window.addEventListener('marion:phone-consistency',syncPhoneDom as EventListener);document.addEventListener('visibilitychange',()=>{if(!document.hidden)repair()});window.setInterval(repair,2500);repair();
 
-console.info('[Phone consistency] histories, unread counts and Lucas availability now share one phone state');
+console.info('[Phone consistency] histories, unread counts, media messages and Lucas availability now share one phone state');
