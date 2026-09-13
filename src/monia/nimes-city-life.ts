@@ -5,6 +5,13 @@ type Place='nimes'|'cafe'|'arenes'|'station';
 type Save={day?:number;time?:string;place?:string;screen?:string;energy?:number;stress?:number;relationship?:number;flags?:Record<string,unknown>};
 type Action={id:string;label:string;short:string;minutes:number;energy:number;stress:number;relationship:number};
 
+const VIEWS:Record<Place,string>={
+  nimes:'./resources/nimes/nimes-street.webp',
+  cafe:'./resources/nimes/nimes-cafe.webp',
+  arenes:'./resources/nimes/nimes-arenes.webp',
+  station:'./resources/nimes/nimes-station.webp',
+};
+
 const ACTIONS:Record<Place,Action[]>={
   nimes:[
     {id:'walk',label:'Marcher un peu dans le centre',short:'Marcher',minutes:35,energy:-2,stress:-3,relationship:0},
@@ -40,7 +47,7 @@ function remove(){document.getElementById('moniaNimesCityLife')?.remove()}
 
 export function doNimesCityAction(actionId:string){const s=read();if(!s||!isPlace(s.place))return false;const action=ACTIONS[s.place].find(a=>a.id===actionId);if(!action)return false;addMinutes(s,action.minutes);s.energy=clamp(Number(s.energy??70)+action.energy);s.stress=clamp(Number(s.stress??20)+action.stress);s.relationship=clamp(Number(s.relationship??50)+action.relationship);const f=s.flags||(s.flags={});f.lastNimesCityAction=`${s.place}:${action.id}`;return write(s)}
 
-function render(){const s=read();if(!active(s)){remove();return}const place=s!.place as Place;let root=document.getElementById('moniaNimesCityLife');if(!root){root=document.createElement('div');root.id='moniaNimesCityLife';root.className='nimesCityLife';host().appendChild(root)}root.dataset.place=place;root.dataset.period=period(s!.time);const actions=ACTIONS[place];root.innerHTML=`<div class="nimesCityAtmos"><i></i><i></i></div><div class="nimesCityActions">${actions.map(a=>`<button data-nimes-city-action="${a.id}" title="${a.label}"><b>${a.short}</b><small>${a.minutes} min</small></button>`).join('')}</div>`;root.querySelectorAll<HTMLButtonElement>('[data-nimes-city-action]').forEach(btn=>btn.onclick=e=>{e.stopPropagation();doNimesCityAction(btn.dataset.nimesCityAction||'')})}
+function render(){const s=read();if(!active(s)){remove();return}const place=s!.place as Place;let root=document.getElementById('moniaNimesCityLife');if(!root){root=document.createElement('div');root.id='moniaNimesCityLife';root.className='nimesCityLife';host().appendChild(root)}root.dataset.place=place;root.dataset.period=period(s!.time);root.style.backgroundImage=`url("${VIEWS[place]}")`;const actions=ACTIONS[place];root.innerHTML=`<div class="nimesCityAtmos"><i></i><i></i></div><div class="nimesCityActions">${actions.map(a=>`<button data-nimes-city-action="${a.id}" title="${a.label}"><b>${a.short}</b><small>${a.minutes} min</small></button>`).join('')}</div>`;root.querySelectorAll<HTMLButtonElement>('[data-nimes-city-action]').forEach(btn=>btn.onclick=e=>{e.stopPropagation();doNimesCityAction(btn.dataset.nimesCityAction||'')})}
 
 let raf=0;function schedule(){cancelAnimationFrame(raf);raf=requestAnimationFrame(render)}window.addEventListener('storage',schedule);window.addEventListener('monia:nimes-city-changed',schedule as EventListener);new MutationObserver(schedule).observe(document.body,{childList:true,subtree:true});schedule();
 
