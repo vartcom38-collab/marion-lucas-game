@@ -10,20 +10,19 @@ type SaveLike={
 };
 
 const SAVE_KEY='marion-lucas-save-v4';
-const RELOAD_GUARD='marion-day-one-seed-reload-v2';
 let escalationOpen=false;
 let rendezvousOpen=false;
 let companionMomentOpen=false;
 let nimesArrivalTimer=0;
 
-function read():SaveLike|null{
-  try{return JSON.parse(localStorage.getItem(SAVE_KEY)||'null') as SaveLike|null}catch{return null}
-}
-function write(s:SaveLike){s.updatedAt=Date.now();localStorage.setItem(SAVE_KEY,JSON.stringify(s));window.dispatchEvent(new Event('marion:social-presence-refresh'))}
+function read():SaveLike|null{try{return JSON.parse(localStorage.getItem(SAVE_KEY)||'null') as SaveLike|null}catch{return null}}
+function emitRefresh(){window.dispatchEvent(new Event('storage'));window.dispatchEvent(new CustomEvent('marion:day-one-refresh'));window.dispatchEvent(new CustomEvent('marion:social-presence-refresh'))}
+function write(s:SaveLike){s.updatedAt=Date.now();localStorage.setItem(SAVE_KEY,JSON.stringify(s));emitRefresh()}
 function mins(t:string){const [h,m]=String(t||'09:00').split(':').map(Number);return (h||0)*60+(m||0)}
 function setMins(s:SaveLike,total:number){total=((total%1440)+1440)%1440;s.time=`${String(Math.floor(total/60)).padStart(2,'0')}:${String(total%60).padStart(2,'0')}`}
 function nowStamp(s:SaveLike){return s.day*1440+mins(s.time)}
 function remember(s:SaveLike,text:string){if(!Array.isArray(s.memories))s.memories=[];if(!s.memories.includes(text))s.memories.unshift(text);s.memories=s.memories.slice(0,40)}
+function rerender(){window.requestAnimationFrame(()=>scan())}
 
 function seedDayOne(s:SaveLike){
   const invite='Tu vas pas passer ta matinée enfermée 😭 Allez viens. Je suis vers les arènes. On prend un café ?';
@@ -41,21 +40,12 @@ function seedDayOne(s:SaveLike){
   return changed;
 }
 
-function refreshAfterSeed(){
-  try{
-    if(sessionStorage.getItem(RELOAD_GUARD)==='1')return;
-    sessionStorage.setItem(RELOAD_GUARD,'1');
-    window.setTimeout(()=>location.reload(),40);
-  }catch{}
-}
-
 function syncFreshGame(){
   const game=document.querySelector('main.game.immersivePlayable');
   if(!game)return;
   const s=read();
   if(!s||s.day!==1||!s.introSeen||s.metLucas||s.place!=='home')return;
-  const changed=seedDayOne(s);
-  if(changed||s.flags.dayOneSocialSeeded)refreshAfterSeed();
+  if(seedDayOne(s))rerender();
 }
 
 function removeImpulse(){document.getElementById('dayOneImpulse')?.remove()}
@@ -97,11 +87,7 @@ function mountNimesArrival(s:SaveLike){
   card.innerHTML='<span>NÎMES · PREMIERS PAS</span><strong>La ville est déjà en mouvement.</strong><small>Marine est dans le secteur. Tu peux la rejoindre ou regarder un peu autour de toi.</small>';
   game.appendChild(card);
   if(nimesArrivalTimer)window.clearTimeout(nimesArrivalTimer);
-  nimesArrivalTimer=window.setTimeout(()=>{
-    card.classList.add('leaving');
-    game.classList.remove('dayOneFirstNimes');
-    window.setTimeout(()=>card.remove(),320);
-  },4200);
+  nimesArrivalTimer=window.setTimeout(()=>{card.classList.add('leaving');game.classList.remove('dayOneFirstNimes');window.setTimeout(()=>card.remove(),320)},4200);
 }
 
 function showEscalation(s:SaveLike){
@@ -122,7 +108,7 @@ function showEscalation(s:SaveLike){
     latest.flags.arrivalPlace='nimes';latest.flags.arrivalFrom='home';latest.flags.arrivalMinutes=15;latest.place='nimes';
     setMins(latest,mins(latest.time)+15);remember(latest,'Marine t’a sortie de chez toi presque sans te laisser le temps de réfléchir.');
     setSocialPresence('Marine',{status:'nearby',place:'nimes',source:'day-one-heading-out'},latest.day,latest.time);
-    write(latest);close();location.reload();
+    write(latest);close();rerender();
   };
 }
 
@@ -143,7 +129,7 @@ function showCompanionMoment(s:SaveLike){
   const veil=document.createElement('div');veil.className='dayOneCompanionMomentVeil';
   veil.innerHTML=`<section class="dayOneCompanionMoment"><span>EN MARCHANT · MARINE</span><p>${m.line}</p><blockquote>${m.quote}</blockquote><div><button data-marine-moment="a">${m.a}</button><button data-marine-moment="b">${m.b}</button></div></section>`;
   game.appendChild(veil);
-  const close=()=>{veil.classList.add('leaving');window.setTimeout(()=>{veil.remove();companionMomentOpen=false},220)};
+  const close=()=>{veil.classList.add('leaving');window.setTimeout(()=>{veil.remove();companionMomentOpen=false;rerender()},220)};
   veil.querySelectorAll<HTMLButtonElement>('[data-marine-moment]').forEach(btn=>btn.onclick=()=>{
     const latest=read();if(!latest){close();return}
     const tone=btn.dataset.marineMoment||'a';
@@ -153,7 +139,7 @@ function showCompanionMoment(s:SaveLike){
     setMins(latest,mins(latest.time)+(tone==='a'?9:11));
     recordSocialMoment('Marine',latest.day,latest.time,nowStamp(latest),tone);
     if(count===0)remember(latest,'Avec Marine, la première promenade dans Nîmes a pris le rythme d’une vraie matinée entre amies.');
-    write(latest);close();window.setTimeout(()=>location.reload(),240);
+    write(latest);close();
   });
 }
 
@@ -186,14 +172,14 @@ function showRendezvous(s:SaveLike){
   veil.innerHTML=`<section class="dayOneCallCard dayOneMeetCard"><span>NÎMES · AVEC MARINE</span><h2>Tu la retrouves naturellement.</h2><p>Vous prenez le café promis, marchez un moment et la conversation s’étire sans que tu regardes l’heure. La matinée avance parce que vous la vivez, pas parce que le jeu attend.</p><div><button id="dayOneMeet" class="primary">Continuer avec elle</button><button id="dayOneWander">Flâner encore un peu</button></div></section>`;
   game.appendChild(veil);
   const close=()=>{veil.remove();rendezvousOpen=false};
-  (veil.querySelector('#dayOneWander') as HTMLButtonElement).onclick=()=>{const latest=read();if(latest){const until=nowStamp(latest)+25;latest.flags.dayOneRendezvousSnoozeUntil=until;snoozeSocialContact('Marine',until,latest.day,latest.time);write(latest)}close()};
+  (veil.querySelector('#dayOneWander') as HTMLButtonElement).onclick=()=>{const latest=read();if(latest){const until=nowStamp(latest)+25;latest.flags.dayOneRendezvousSnoozeUntil=until;snoozeSocialContact('Marine',until,latest.day,latest.time);write(latest)}close();rerender()};
   (veil.querySelector('#dayOneMeet') as HTMLButtonElement).onclick=()=>{
     const latest=read();if(!latest){close();return}
     latest.flags.dayOneWithMarine=true;latest.flags.dayOneThread='marine_together';
     const target=Math.max(mins(latest.time)+70,650);setMins(latest,target);
     setSocialPresence('Marine',{status:'with-marion',place:latest.place,source:'day-one-meeting'},latest.day,latest.time);
     remember(latest,'Tu as retrouvé Marine dans Nîmes. Un café et une longue marche ont fait avancer la matinée naturellement.');
-    write(latest);close();location.reload();
+    write(latest);close();rerender();
   };
 }
 
@@ -207,11 +193,12 @@ function scan(){
 }
 
 window.addEventListener('marion-home-first-control',()=>window.setTimeout(scan,260));
-window.addEventListener('monia:phone-message-seeded',()=>{scan();refreshAfterSeed()});
+window.addEventListener('monia:phone-message-seeded',scan as EventListener);
 window.addEventListener('marion:social-presence-changed',scan as EventListener);
+window.addEventListener('marion:day-one-refresh',scan as EventListener);
 window.addEventListener('storage',scan);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)scan()});
 window.setInterval(scan,4500);
 scan();
 
-console.info('[Day 1] Marine continuity now uses canonical social presence with legacy save compatibility');
+console.info('[Day 1] Reactive Marine continuity active without page reloads');
