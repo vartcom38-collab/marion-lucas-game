@@ -69,7 +69,8 @@ function esc(v:string){return v.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','
 function offerTone(o:PropertyOffer){if(o.kind==='finca')return /Andalous/.test(o.region)?'south':/Estrém/.test(o.region)?'dry':/Tolède|Manche/.test(o.region)?'olive':'oak';if(o.kind==='coastal-home')return'coast';if(o.kind==='city-flat')return'city';return'green'}
 function kindLabel(kind:string){return kind==='finca'?'Finca':kind==='city-flat'?'Appartement':kind==='coastal-home'?'Maison côtière':kind==='country-home'?'Maison de campagne':kind==='apartment'?'Appartement':'Maison'}
 function useLabel(use:string){return use==='primary'?'Résidence principale':use==='secondary'?'Pied-à-terre':use==='available'?'Autre résidence':'Vendu'}
-function visualsFor(o:PropertyOffer){return PROPERTY_VISUALS[o.title]||[{key:'property-generic',alt:o.title}]}
+function visualsForTitle(title:string){return PROPERTY_VISUALS[title]||[]}
+function visualsFor(o:PropertyOffer){const found=visualsForTitle(o.title);return found.length?found:[{key:'property-generic',alt:o.title}]}
 function visualSrc(v:PropertyVisual){return `./resources/properties/${v.key}.webp`}
 function propertyImage(v:PropertyVisual,className='propertyPhotoImage'){return `<img class="${className}" src="${esc(visualSrc(v))}" alt="${esc(v.alt)}" loading="lazy" decoding="async">`}
 
@@ -86,11 +87,14 @@ function ensureEntry(){
 }
 
 function propertyCard(p:PropertyRecord){
+  const visuals=visualsForTitle(p.name),hero=visuals[0];
   return `<article class="ownedProperty ${p.use==='primary'?'isPrimary':''}">
+    ${hero?`<div class="ownedPropertyPhoto">${propertyImage(hero)}</div>`:''}
     <div><small>${esc(kindLabel(p.kind))}</small><h3>${esc(p.name)}</h3><p>${esc(p.city)} · ${esc(p.region)}</p></div>
     <strong>${esc(useLabel(p.use))}</strong>
     <div class="propertyActions">
-      ${p.use!=='primary'?`<button data-primary="${esc(p.id)}">En faire la résidence principale</button>`:''}
+      ${visuals.length?`<button data-owned-view="${esc(p.id)}">Revoir le bien</button>`:''}
+      ${p.use!=='primary'?`<button data-primary="${esc(p.id)}">Résidence principale</button>`:''}
       ${p.owner==='joint'&&p.use!=='primary'?`<button data-sell="${esc(p.id)}">Revendre</button>`:''}
     </div>
   </article>`;
@@ -113,6 +117,8 @@ function offerCard(o:PropertyOffer,visited:boolean,shortlisted:boolean){
   </article>`;
 }
 
+function wireImageFallbacks(root:HTMLElement){root.querySelectorAll<HTMLImageElement>('.propertyPhotoImage,.propertyVisitHero,.propertyThumbImage').forEach(img=>img.onerror=()=>img.classList.add('isMissing'))}
+
 function renderPanel(root:HTMLElement){
   const snap=getPropertyLifeSnapshot(),visits=readVisits();
   const reason=snap.firstJointPurchasePending?'Chercher un lieu à eux':'Leur patrimoine immobilier';
@@ -123,11 +129,12 @@ function renderPanel(root:HTMLElement){
       ${snap.searchOpen?`<section class="propertyOffersSection"><div class="propertySectionTitle"><span>Offres à visiter</span><button data-refresh-property>Actualiser les offres</button></div><div class="propertyOfferGrid">${snap.offers.map(o=>offerCard(o,Boolean(visits.visited[o.id]),snap.shortlisted.includes(o.id))).join('')}</div></section>`:''}
     </div>
   </section>`;
-  root.querySelectorAll<HTMLImageElement>('.propertyPhotoImage').forEach(img=>img.onerror=()=>img.classList.add('isMissing'));
+  wireImageFallbacks(root);
   root.querySelectorAll<HTMLElement>('[data-close-property]').forEach(el=>el.onclick=()=>root.remove());
   root.querySelectorAll<HTMLButtonElement>('[data-shortlist]').forEach(b=>b.onclick=()=>{shortlistProperty(b.dataset.shortlist||'');renderPanel(root)});
   root.querySelectorAll<HTMLButtonElement>('[data-visit]').forEach(b=>b.onclick=()=>startVisit(root,b.dataset.visit||''));
   root.querySelectorAll<HTMLButtonElement>('[data-buy]').forEach(b=>b.onclick=()=>confirmPurchase(root,b.dataset.buy||''));
+  root.querySelectorAll<HTMLButtonElement>('[data-owned-view]').forEach(b=>b.onclick=()=>openOwnedProperty(root,b.dataset.ownedView||''));
   root.querySelectorAll<HTMLButtonElement>('[data-primary]').forEach(b=>b.onclick=()=>{setPrimaryProperty(b.dataset.primary||'');renderPanel(root)});
   root.querySelectorAll<HTMLButtonElement>('[data-sell]').forEach(b=>b.onclick=()=>{if(confirm('Revendre ce bien secondaire ?')){sellProperty(b.dataset.sell||'');renderPanel(root)}});
   root.querySelector<HTMLButtonElement>('[data-refresh-property]')?.addEventListener('click',()=>{refreshPropertyOffers();renderPanel(root)});
@@ -137,12 +144,19 @@ function startVisit(root:HTMLElement,id:string){
   const snap=getPropertyLifeSnapshot(),o=snap.offers.find(x=>x.id===id);if(!o)return;
   const visits=readVisits();visits.selected=id;writeVisits(visits);const visuals=visualsFor(o),hero=visuals[0];
   root.innerHTML=`<div class="propertyAgencyBackdrop"></div><section class="propertyVisit" role="dialog" aria-modal="true"><div class="propertyVisitMedia"><div class="propertyVisitVisual tone-${offerTone(o)}">${propertyImage(hero,'propertyVisitHero')}<i></i></div><div class="propertyVisitGallery">${visuals.map((v,i)=>`<button data-property-thumb="${i}" aria-label="Voir la photo ${i+1}">${propertyImage(v,'propertyThumbImage')}</button>`).join('')}</div></div><div class="propertyVisitText"><small>VISITE · ${esc(o.region.toUpperCase())}</small><h2>${esc(o.title)}</h2><p>${esc(o.character)}</p><p>${esc(o.distanceNote)}</p><div class="visitImpressions"><span>Marion observe les volumes, la lumière et ce que la vie quotidienne pourrait devenir ici.</span><span>Lucas regarde surtout les accès, les terres et la façon dont le lieu pourrait s’intégrer à leur rythme.</span></div><div class="visitActions"><button data-leave>Continuer la recherche</button><button data-favorite>Garder en favori</button><button data-finish>Finir la visite</button></div></div></section>`;
-  const heroImg=root.querySelector<HTMLImageElement>('.propertyVisitHero');
-  root.querySelectorAll<HTMLImageElement>('.propertyVisitHero,.propertyThumbImage').forEach(img=>img.onerror=()=>img.classList.add('isMissing'));
+  const heroImg=root.querySelector<HTMLImageElement>('.propertyVisitHero');wireImageFallbacks(root);
   root.querySelectorAll<HTMLButtonElement>('[data-property-thumb]').forEach(b=>b.onclick=()=>{const v=visuals[Number(b.dataset.propertyThumb||0)]||hero;if(heroImg){heroImg.src=visualSrc(v);heroImg.alt=v.alt;heroImg.classList.remove('isMissing')}});
   root.querySelector<HTMLButtonElement>('[data-leave]')!.onclick=()=>renderPanel(root);
   root.querySelector<HTMLButtonElement>('[data-favorite]')!.onclick=()=>{shortlistProperty(id);renderPanel(root)};
   root.querySelector<HTMLButtonElement>('[data-finish]')!.onclick=()=>{const v=readVisits();v.visited[id]=Date.now();delete v.selected;writeVisits(v);renderPanel(root)};
+}
+
+function openOwnedProperty(root:HTMLElement,id:string){
+  const snap=getPropertyLifeSnapshot(),p=snap.history.find(x=>x.id===id);if(!p)return;const visuals=visualsForTitle(p.name);if(!visuals.length){renderPanel(root);return}const hero=visuals[0];
+  root.innerHTML=`<div class="propertyAgencyBackdrop"></div><section class="propertyVisit" role="dialog" aria-modal="true"><div class="propertyVisitMedia"><div class="propertyVisitVisual">${propertyImage(hero,'propertyVisitHero')}<i></i></div><div class="propertyVisitGallery">${visuals.map((v,i)=>`<button data-property-thumb="${i}" aria-label="Voir la photo ${i+1}">${propertyImage(v,'propertyThumbImage')}</button>`).join('')}</div></div><div class="propertyVisitText"><small>LEUR BIEN · ${esc(p.region.toUpperCase())}</small><h2>${esc(p.name)}</h2><p>${esc(p.city)} · ${esc(p.region)}</p><p>${esc(useLabel(p.use))}${p.purchasePrice?` · ${money(p.purchasePrice)}`:''}</p><div class="visitImpressions"><span>Ce lieu reste accessible depuis leur patrimoine, même lorsqu’il n’est pas leur résidence principale.</span><span>Les souvenirs, usages et évolutions du bien pourront s’y accumuler au fil de leur vie.</span></div><div class="visitActions"><button data-back-owned>Retour au patrimoine</button></div></div></section>`;
+  const heroImg=root.querySelector<HTMLImageElement>('.propertyVisitHero');wireImageFallbacks(root);
+  root.querySelectorAll<HTMLButtonElement>('[data-property-thumb]').forEach(b=>b.onclick=()=>{const v=visuals[Number(b.dataset.propertyThumb||0)]||hero;if(heroImg){heroImg.src=visualSrc(v);heroImg.alt=v.alt;heroImg.classList.remove('isMissing')}});
+  root.querySelector<HTMLButtonElement>('[data-back-owned]')!.onclick=()=>renderPanel(root);
 }
 
 function confirmPurchase(root:HTMLElement,id:string){
