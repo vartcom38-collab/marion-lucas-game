@@ -1,7 +1,8 @@
 import { getChildrenLife } from './children-life';
 
 const SAVE_KEY='marion-lucas-save-v4';
-type Save={day?:number;time?:string;place?:string;children?:number;flags?:Record<string,unknown>;eventHistory?:string[]};
+type PhoneMsg={from:string;text:string;day:number;read:boolean};
+type Save={day?:number;time?:string;place?:string;children?:number;phoneUnread?:number;messages?:PhoneMsg[];flags?:Record<string,unknown>;eventHistory?:string[]};
 export type NannyUpdateKind='message'|'photo'|'drawing'|'video-call-request';
 export type NannyUpdate={id:string;day:number;time:string;kind:NannyUpdateKind;childId?:string;text:string;mediaKey?:string;read:boolean};
 export type TrustedNannySnapshot={established:boolean;available:boolean;childrenCount:number;canTravel:boolean;canStayOvernight:boolean;canSendPhotos:boolean;canSendDrawings:boolean;canHostFamilyVisio:boolean;updates:NannyUpdate[]};
@@ -11,6 +12,9 @@ function write(s:Save){localStorage.setItem(SAVE_KEY,JSON.stringify(s));window.d
 function n(v:unknown,f=0){const x=Number(v);return Number.isFinite(x)?x:f}
 function updatesOf(s:Save){const raw=s.flags?.trustedNannyUpdates;return Array.isArray(raw)?raw as NannyUpdate[]:[]}
 function ensureEstablished(s:Save){const f=s.flags||(s.flags={});if(n(s.children,0)<=0)return false;if(f.childcareNannyDismissed===true)return false;if(f.childcareNannyEstablished!==true){f.childcareNannyEstablished=true;f.trustedNannyEstablishedDay=Math.max(1,n(s.day,1));f.trustedNannyReliable=true;return true}return false}
+function pushToPhone(s:Save,u:NannyUpdate){
+  const prefix=u.kind==='photo'?'📷 ':u.kind==='drawing'?'🖍️ ':u.kind==='video-call-request'?'📹 ':'';s.messages=Array.isArray(s.messages)?s.messages:[];s.messages.unshift({from:'Nounou',text:`${prefix}${u.text}`,day:u.day,read:false});s.phoneUnread=Math.max(0,n(s.phoneUnread,0))+1;const f=s.flags||(s.flags={});f.phoneToast=`Nounou|${prefix}${u.text}`;f.phoneToastAt=u.day*1440;
+}
 
 export function getTrustedNannySnapshot():TrustedNannySnapshot|null{
   const s=read();if(!s)return null;const changed=ensureEstablished(s);if(changed)write(s);const kids=getChildrenLife();const established=kids.length>0&&s.flags?.childcareNannyDismissed!==true;
@@ -24,7 +28,7 @@ export function queueTrustedNannyUpdate(kind:NannyUpdateKind,input:{childId?:str
   const childLabel=child?.name?.trim()||'le petit';
   const defaultText=kind==='photo'?`Petite photo de ${childLabel} pour vous rassurer. Tout va bien ici.`:kind==='drawing'?`${childLabel} a fait un dessin pour vous. Je vous le garde et je vous envoie une photo.`:kind==='video-call-request'?`${childLabel} est disponible si vous voulez faire un petit appel vidéo.`:`Tout va bien avec ${childLabel}. Je vous tiens au courant.`;
   const u:NannyUpdate={id,day,time,kind,childId:child?.id,text:input.text?.trim()||defaultText,mediaKey:input.mediaKey,read:false};const f=s.flags||(s.flags={});f.trustedNannyUpdates=[...updatesOf(s),u].slice(-120);f.trustedNannyLastUpdateDay=day;
-  s.eventHistory=[...(s.eventHistory||[]),`trusted-nanny-update:${kind}:${child?.id||'family'}:${day}`].slice(-520);if(changed)f.trustedNannyReliable=true;write(s);window.dispatchEvent(new CustomEvent('monia:nanny-update',{detail:u}));return u
+  pushToPhone(s,u);s.eventHistory=[...(s.eventHistory||[]),`trusted-nanny-update:${kind}:${child?.id||'family'}:${day}`].slice(-520);if(changed)f.trustedNannyReliable=true;write(s);window.dispatchEvent(new CustomEvent('monia:nanny-update',{detail:u}));return u
 }
 
 export function markTrustedNannyUpdateRead(id:string){const s=read();if(!s)return false;const f=s.flags||(s.flags={});const list=updatesOf(s);const i=list.findIndex(x=>x.id===id);if(i<0)return false;list[i]={...list[i],read:true};f.trustedNannyUpdates=list;write(s);return true}
