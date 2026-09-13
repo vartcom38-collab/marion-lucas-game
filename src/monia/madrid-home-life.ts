@@ -11,8 +11,17 @@ type Save={day?:number;time?:string;place?:string;screen?:string;energy?:number;
 type State={version:1;settledDay?:number;sharedMoments:number;spaceUses:Record<Space,number>};
 const DEFAULT:State={version:1,sharedMoments:0,spaceUses:{terrace:0,living:0,kitchen:0,bedroom:0,study:0}};
 
+const MADRID_VIEWS:Record<'hero'|Space,string>={
+  hero:'./resources/madrid/lucas-country-home-exterior.webp',
+  terrace:'./resources/madrid/lucas-country-home-exterior.webp',
+  living:'./resources/madrid/lucas-country-home-salon.webp',
+  kitchen:'./resources/madrid/lucas-country-home-kitchen.webp',
+  bedroom:'./resources/madrid/lucas-country-home-bedroom.webp',
+  study:'./resources/madrid/lucas-country-home-study.webp',
+};
+
 const ACTIONS={
-  terrace:{label:'Prendre l’air sur la terrasse',short:'Terrasse',minutes:35,energy:0,stress:-5,relationship:1},
+  terrace:{label:'Prendre l’air dehors',short:'Extérieur',minutes:35,energy:0,stress:-5,relationship:1},
   living:{label:'Se retrouver au salon',short:'Salon',minutes:45,energy:2,stress:-4,relationship:2},
   kitchen:{label:'Partager un repas à la maison',short:'Cuisine',minutes:70,energy:1,stress:-3,relationship:3},
   bedroom:{label:'Se retirer un moment',short:'Chambre',minutes:50,energy:4,stress:-5,relationship:2},
@@ -34,16 +43,18 @@ function madridMode(save=readSave()):MadridMode|null{
 }
 function active(){return Boolean(madridMode())}
 function esc(v:string){return v.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]||c))}
+function currentView(save:Save){const raw=save.flags?.lastMadridHomeSpace;return raw==='terrace'||raw==='living'||raw==='kitchen'||raw==='bedroom'||raw==='study'?raw:'hero'}
+function syncMadridVisual(){const save=readSave();if(!save||!madridMode(save))return;const key=currentView(save),src=MADRID_VIEWS[key];const photo=document.querySelector<HTMLImageElement>('img.worldPhoto,.worldPhoto img,img[data-world-photo]');if(photo&&photo.dataset.madridViewKey!==key){photo.dataset.madridViewKey=key;photo.src=src;photo.alt='Maison de Lucas près de Madrid'}const background=document.querySelector<HTMLElement>('.worldPhoto:not(img),.worldBackdrop,.worldSceneBackground');if(background&&background.dataset.madridViewKey!==key){background.dataset.madridViewKey=key;background.style.backgroundImage=`url("${src}")`}}
 
-export function enterLucasMadridHomeVisit(){const save=readSave();if(!save)return false;const f=save.flags||(save.flags={});f.visitingLucasMadrid=true;f.atLucasMadridHome=true;save.place='madrid';return writeSave(save)}
-export function leaveLucasMadridHomeVisit(){const save=readSave();if(!save)return false;const f=save.flags||(save.flags={});delete f.visitingLucasMadrid;delete f.atLucasMadridHome;delete f.madridHomeVisit;delete f.stayingWithLucasMadrid;return writeSave(save)}
+export function enterLucasMadridHomeVisit(){const save=readSave();if(!save)return false;const f=save.flags||(save.flags={});f.visitingLucasMadrid=true;f.atLucasMadridHome=true;delete f.lastMadridHomeSpace;save.place='madrid';return writeSave(save)}
+export function leaveLucasMadridHomeVisit(){const save=readSave();if(!save)return false;const f=save.flags||(save.flags={});delete f.visitingLucasMadrid;delete f.atLucasMadridHome;delete f.madridHomeVisit;delete f.stayingWithLucasMadrid;delete f.lastMadridHomeSpace;return writeSave(save)}
 
-export function doMadridHomeAction(space:Space){const save=readSave(),mode=madridMode(save);if(!save||!mode)return false;const state=readState();if(mode==='home'&&!state.settledDay)state.settledDay=Number(save.day||1);const a=ACTIONS[space];addMinutes(save,a.minutes);save.energy=clamp(Number(save.energy??70)+a.energy);save.stress=clamp(Number(save.stress??20)+a.stress);save.relationship=clamp(Number(save.relationship??50)+a.relationship);const f=save.flags||(save.flags={});f.lastMadridHomeSpace=space;f.madridHomeShared=true;state.sharedMoments++;state.spaceUses[space]=(state.spaceUses[space]||0)+1;writeState(state);writeSave(save);return true}
+export function doMadridHomeAction(space:Space){const save=readSave(),mode=madridMode(save);if(!save||!mode)return false;const state=readState();if(mode==='home'&&!state.settledDay)state.settledDay=Number(save.day||1);const a=ACTIONS[space];addMinutes(save,a.minutes);save.energy=clamp(Number(save.energy??70)+a.energy);save.stress=clamp(Number(save.stress??20)+a.stress);save.relationship=clamp(Number(save.relationship??50)+a.relationship);const f=save.flags||(save.flags={});f.lastMadridHomeSpace=space;f.madridHomeShared=true;state.sharedMoments++;state.spaceUses[space]=(state.spaceUses[space]||0)+1;writeState(state);writeSave(save);syncMadridVisual();return true}
 
 function contextual(save:Save):Space[]{const h=Number(String(save.time||'12:00').slice(0,2))||12;if(h<10)return['kitchen','terrace','living'];if(h<17)return['study','terrace','living'];if(h<21)return['kitchen','terrace','living'];return['living','bedroom','terrace']}
 function host(){return document.querySelector<HTMLElement>('.worldScene,.worldStage,.worldFrame,.gameWorld,.gameScene')||document.querySelector<HTMLElement>('#app')||document.body}
 function remove(){document.getElementById('moniaMadridHomeActions')?.remove()}
-function render(){const save=readSave(),mode=madridMode(save);if(!save||!mode||(save.screen&&save.screen!=='game')){remove();return}let root=document.getElementById('moniaMadridHomeActions');if(!root){root=document.createElement('div');root.id='moniaMadridHomeActions';root.className='madridHomeActions';host().appendChild(root)}const state=readState();const spaces=contextual(save);const label=mode==='visit'?'Chez Lucas':state.sharedMoments>=8?'Chez eux à Madrid':state.sharedMoments>=3?'Ils prennent leurs habitudes':'Chez Lucas';root.innerHTML=`<div class="madridHomeStatus"><span>${esc(label)}</span><small>${esc(String(save.time||''))}</small></div><div class="madridHomeButtons">${spaces.map(space=>`<button data-madrid-space="${space}" title="${esc(ACTIONS[space].label)}"><b>${esc(ACTIONS[space].short)}</b><small>${ACTIONS[space].minutes} min</small></button>`).join('')}</div>`;root.querySelectorAll<HTMLButtonElement>('[data-madrid-space]').forEach(btn=>btn.onclick=e=>{e.stopPropagation();if(doMadridHomeAction(btn.dataset.madridSpace as Space))render()})}
+function render(){const save=readSave(),mode=madridMode(save);if(!save||!mode||(save.screen&&save.screen!=='game')){remove();return}syncMadridVisual();let root=document.getElementById('moniaMadridHomeActions');if(!root){root=document.createElement('div');root.id='moniaMadridHomeActions';root.className='madridHomeActions';host().appendChild(root)}const state=readState();const spaces=contextual(save);const label=mode==='visit'?'Chez Lucas':state.sharedMoments>=8?'Chez eux près de Madrid':state.sharedMoments>=3?'Ils prennent leurs habitudes':'Chez Lucas';root.innerHTML=`<div class="madridHomeStatus"><span>${esc(label)}</span><small>${esc(String(save.time||''))}</small></div><div class="madridHomeButtons">${spaces.map(space=>`<button data-madrid-space="${space}" title="${esc(ACTIONS[space].label)}"><b>${esc(ACTIONS[space].short)}</b><small>${ACTIONS[space].minutes} min</small></button>`).join('')}</div>`;root.querySelectorAll<HTMLButtonElement>('[data-madrid-space]').forEach(btn=>btn.onclick=e=>{e.stopPropagation();if(doMadridHomeAction(btn.dataset.madridSpace as Space))render()})}
 
 let raf=0;function schedule(){cancelAnimationFrame(raf);raf=requestAnimationFrame(render)}window.addEventListener('storage',schedule);window.addEventListener('monia:property-changed',schedule as EventListener);window.addEventListener('monia:madrid-home-changed',schedule as EventListener);window.addEventListener('monia:visit-lucas-madrid-home',()=>{enterLucasMadridHomeVisit();schedule()});window.addEventListener('monia:leave-lucas-madrid-home',()=>{leaveLucasMadridHomeVisit();schedule()});new MutationObserver(schedule).observe(document.body,{childList:true,subtree:true});schedule();
 
