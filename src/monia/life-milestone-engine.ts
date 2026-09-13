@@ -17,6 +17,7 @@ function addUnique(list:string[]|undefined,text:string,max:number){const next=Ar
 function stageLabel(stage:ChildStage){return stage==='newborn'?'nouveau-né':stage==='baby'?'bébé':stage==='toddler'?'petite enfance':stage==='child'?'enfance':stage==='preteen'?'pré-adolescence':stage==='teen'?'adolescence':'âge adulte'}
 function childLabel(child:ChildLifeSnapshot){return child.name?.trim()||'Un enfant de la famille'}
 function crossedStages(from:ChildStage,to:ChildStage){const a=STAGES.indexOf(from),b=STAGES.indexOf(to);return a>=0&&b>a?STAGES.slice(a+1,b+1):[]}
+function sameStages(a:Record<string,ChildStage>,b:Record<string,ChildStage>){const ak=Object.keys(a),bk=Object.keys(b);return ak.length===bk.length&&ak.every(k=>a[k]===b[k])}
 
 export function syncLifeMilestones():LifeMilestoneSnapshot|null{
   if(syncing)return null;const s=read();if(!s)return null;syncing=true;
@@ -36,9 +37,12 @@ export function syncLifeMilestones():LifeMilestoneSnapshot|null{
 
     for(const child of children){const previous=observedStages[child.id];if(!previous)continue;for(const next of crossedStages(previous,child.stage)){const e=`child-stage:${child.id}:${next}`;events.push(e);s.memories=addUnique(s.memories,`${childLabel(child)} entre dans une nouvelle étape : ${stageLabel(next)}.`,80)}}
 
-    f.lifeMilestoneObservedDay=day;f.lifeMilestoneMarionAge=ages.marionAge;f.lifeMilestoneLucasAge=ages.lucasAge;f.lifeMilestoneChildStages=currentStages;f.lifeMilestoneSchema=1;
-    if(events.length){const history=Array.isArray(s.eventHistory)?s.eventHistory:[];for(const e of events){if(!history.includes(e))history.push(e)}s.eventHistory=history.slice(-420)}
-    s.updatedAt=Date.now();localStorage.setItem(SAVE_KEY,JSON.stringify(s));
+    const observationChanged=day!==observedDay||ages.marionAge!==observedMarion||ages.lucasAge!==observedLucas||!sameStages(currentStages,observedStages);
+    if(observationChanged||events.length){
+      f.lifeMilestoneObservedDay=day;f.lifeMilestoneMarionAge=ages.marionAge;f.lifeMilestoneLucasAge=ages.lucasAge;f.lifeMilestoneChildStages=currentStages;f.lifeMilestoneSchema=1;
+      if(events.length){const history=Array.isArray(s.eventHistory)?s.eventHistory:[];for(const e of events){if(!history.includes(e))history.push(e)}s.eventHistory=history.slice(-420)}
+      s.updatedAt=Date.now();localStorage.setItem(SAVE_KEY,JSON.stringify(s));
+    }
     if(events.length)window.dispatchEvent(new CustomEvent('monia:life-milestones',{detail:{day,events}}));
     return{day,initialized:true,marionAge:ages.marionAge,lucasAge:ages.lucasAge,childStages:currentStages,events,canonical:true};
   }finally{syncing=false}
