@@ -9,11 +9,26 @@ let lastPlaybackFinishedAt=0;
 let lastSaveSignature='';
 let queuedOpportunity=false;
 
+type PlayerSave={
+  day?:number;
+  time?:string;
+  place?:string;
+  relationship?:number;
+  messages?:Array<{from?:string;text?:string}>;
+  eventHistory?:string[];
+  metLucas?:boolean;
+  flags?:Record<string,unknown>;
+};
+
 function readSave(){
   try{
     const raw=localStorage.getItem(SAVE_KEY);
-    return raw?JSON.parse(raw) as {day?:number;time?:string;place?:string;relationship?:number;messages?:Array<{from?:string;text?:string}>;eventHistory?:string[];metLucas?:boolean;flags?:Record<string,unknown>}:null;
+    return raw?JSON.parse(raw) as PlayerSave:null;
   }catch{return null}
+}
+
+function writeSave(save:PlayerSave){
+  try{localStorage.setItem(SAVE_KEY,JSON.stringify(save))}catch{/* optional */}
 }
 
 function saveSignature(){
@@ -21,7 +36,35 @@ function saveSignature(){
   if(!save)return'';
   const message=save.messages?.[0];
   const event=save.eventHistory?.[save.eventHistory.length-1]||'';
-  return `${save.day||0}|${save.time||''}|${save.place||''}|${save.relationship||0}|${message?.from||''}:${message?.text||''}|${event}`.slice(0,900);
+  const cinematicRequest=String(save.flags?.gameplayCinematicRequestId||'');
+  return `${save.day||0}|${save.time||''}|${save.place||''}|${save.relationship||0}|${message?.from||''}:${message?.text||''}|${event}|cinematic:${cinematicRequest}`.slice(0,1000);
+}
+
+function gameplayCinematicAuthorized(delivery:SurpriseDelivery){
+  const save=readSave();
+  if(!save)return false;
+  const flags=save.flags||{};
+  const requestId=String(flags.gameplayCinematicRequestId||'').trim();
+  if(!requestId)return false;
+  const currentDay=Number(save.day||1);
+  const requestDay=Number(flags.gameplayCinematicRequestDay||currentDay);
+  if(!Number.isFinite(requestDay)||requestDay!==currentDay)return false;
+  const requestedRoute=String(flags.gameplayCinematicRoute||'').trim();
+  if(requestedRoute&&requestedRoute!==delivery.route)return false;
+  return true;
+}
+
+function clearGameplayCinematicRequest(){
+  const save=readSave();
+  if(!save?.flags)return;
+  const flags={...save.flags};
+  delete flags.gameplayCinematicRequestId;
+  delete flags.gameplayCinematicRequestDay;
+  delete flags.gameplayCinematicRoute;
+  delete flags.gameplayCinematicReason;
+  save.flags=flags;
+  writeSave(save);
+  window.dispatchEvent(new CustomEvent('monia:cinematic-request-consumed'));
 }
 
 function routeAllowedNow(delivery:SurpriseDelivery){
@@ -30,6 +73,11 @@ function routeAllowedNow(delivery:SurpriseDelivery){
     if(!save.metLucas)return false;
     if(save.flags?.moniaSmsPending)return false;
   }
+  // A visually approved scene is not enough to make it narratively valid.
+  // Full-screen cinematics require an explicit same-day gameplay request whose
+  // route matches the approved delivery. This prevents queued or stale media
+  // from appearing just because another piece of game state changed.
+  if(!gameplayCinematicAuthorized(delivery))return false;
   return isSurpriseDeliveryContextValid(delivery);
 }
 
@@ -74,7 +122,10 @@ function renderScene(delivery:SurpriseDelivery){
   const finish=(consume:boolean,reason:'ended'|'skipped'|'error')=>{
     if(finished)return;
     finished=true;
-    if(consume)consumeSurpriseScene(delivery.assetId);
+    if(consume){
+      consumeSurpriseScene(delivery.assetId);
+      clearGameplayCinematicRequest();
+    }
     window.dispatchEvent(new CustomEvent('monia:surprise-playback-result',{detail:{route:delivery.route,assetId:delivery.assetId,reason,consumed:consume}}));
     closeOverlay(root);
   };
