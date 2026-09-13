@@ -105,11 +105,9 @@ function guardLegacyLucasInitiative(save:SaveLike){
     return changed;
   }
   if(guardDay===day){
-    let changed=false;
-    if(Number(state.lucasPhoneInitiativeDay||0)===day){delete state.lucasPhoneInitiativeDay;changed=true}
+    if(Number(state.lucasPhoneInitiativeDay||0)===day)delete state.lucasPhoneInitiativeDay;
     delete state.relationshipPhoneSuppressedInitiativeDay;
-    changed=true;
-    return changed;
+    return true;
   }
   return false;
 }
@@ -117,8 +115,9 @@ function guardLegacyLucasInitiative(save:SaveLike){
 function sync(){
   if(syncing)return;
   const save=read();if(!save)return;
-  const changed=normalizeRelationshipPhoneThreads(save)|guardLegacyLucasInitiative(save);
-  if(!changed)return;
+  const threadsChanged=normalizeRelationshipPhoneThreads(save);
+  const guardChanged=guardLegacyLucasInitiative(save);
+  if(!threadsChanged&&!guardChanged)return;
   syncing=true;write(save);syncing=false;
 }
 
