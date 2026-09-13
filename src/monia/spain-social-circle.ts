@@ -1,4 +1,5 @@
 import { getFriendshipEvolution } from './friendship-life-evolution';
+import { isSpainPlace } from './spain-geography';
 
 const SAVE_KEY='marion-lucas-save-v4';
 
@@ -10,7 +11,6 @@ function read():Save|null{try{const raw=localStorage.getItem(SAVE_KEY);return ra
 function n(v:unknown,f=0){const x=Number(v);return Number.isFinite(x)?x:f}
 function mins(t?:string){const [h,m]=String(t||'09:00').split(':').map(Number);return(h||0)*60+(m||0)}
 function hash(s:string){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return Math.abs(h>>>0)}
-function inSpain(place:string){return /madrid|spain|espagne|finca|estate|family|sevill|andal|salam|hotel/i.test(place)}
 function daysInSpain(s:Save){const d=n(s.flags?.spainLifeOpenedDay,0);return d?Math.max(0,n(s.day,1)-d):0}
 function contactCloseness(s:Save,id:string){return Math.max(0,Math.min(100,n(s.flags?.[`spainContact:${id}:closeness`],0)))}
 function introduced(s:Save,id:string){return s.flags?.[`spainContact:${id}:introduced`]===true}
@@ -23,7 +23,7 @@ const CONTACTS:Array<{id:string;name:string;role:string;minDays:number}>=[
 ];
 
 export function getSpainContacts():SpainContact[]{
-  const s=read();if(!s||!inSpain(String(s.place||'')))return[];
+  const s=read();if(!s||!isSpainPlace(s.place))return[];
   const elapsed=daysInSpain(s);
   return CONTACTS.filter(c=>elapsed>=c.minDays||introduced(s,c.id)).map(c=>{
     const intro=introduced(s,c.id),raw=contactCloseness(s,c.id),friend=intro?getFriendshipEvolution(c.id,raw):null;const close=friend?.closeness??raw;const free=available(s,c.id,friend?.contactWeight||50);
@@ -32,7 +32,7 @@ export function getSpainContacts():SpainContact[]{
 }
 
 export function getSpainSocialOpportunities():SpainSocialOpportunity[]{
-  const s=read();if(!s||!inSpain(String(s.place||'')))return[];const elapsed=daysInSpain(s),out:SpainSocialOpportunity[]=[];
+  const s=read();if(!s||!isSpainPlace(s.place))return[];const elapsed=daysInSpain(s),out:SpainSocialOpportunity[]=[];
   const contacts=getSpainContacts();
   const newcomer=contacts.find(c=>!c.introduced);
   if(newcomer&&elapsed>=2)out.push({id:`meet-${newcomer.id}`,label:'Rester ouverte à une nouvelle rencontre',intent:'custom-intent',weight:50,minutes:60,contactId:newcomer.id,reason:'Le cercle espagnol se construit lentement, par rencontres ordinaires.'});
@@ -43,7 +43,7 @@ export function getSpainSocialOpportunities():SpainSocialOpportunity[]{
 }
 
 export function recordSpainContactMoment(id:string,kind:'meet'|'talk'|'invite'|'shared-time'){
-  const s=read();if(!s)return false;const f=s.flags||(s.flags={});const key=`spainContact:${id}:closeness`;if(kind==='meet')f[`spainContact:${id}:introduced`]=true;const gain=kind==='meet'?8:kind==='talk'?4:kind==='invite'?5:10;f[key]=Math.min(100,n(f[key],0)+gain);f[`spainContact:${id}:lastDay`]=n(s.day,1);s.eventHistory=[...(s.eventHistory||[]),`friendship:${id}:${kind}`].slice(-320);try{localStorage.setItem(SAVE_KEY,JSON.stringify(s));window.dispatchEvent(new CustomEvent('monia:save-changed',{detail:{key:SAVE_KEY}}));return true}catch{return false}
+  const s=read();if(!s||!isSpainPlace(s.place))return false;const f=s.flags||(s.flags={});const key=`spainContact:${id}:closeness`;if(kind==='meet')f[`spainContact:${id}:introduced`]=true;const gain=kind==='meet'?8:kind==='talk'?4:kind==='invite'?5:10;f[key]=Math.min(100,n(f[key],0)+gain);f[`spainContact:${id}:lastDay`]=n(s.day,1);s.eventHistory=[...(s.eventHistory||[]),`friendship:${id}:${kind}`].slice(-320);try{localStorage.setItem(SAVE_KEY,JSON.stringify(s));window.dispatchEvent(new CustomEvent('monia:save-changed',{detail:{key:SAVE_KEY}}));return true}catch{return false}
 }
 
 declare global{interface Window{__moniaSpainContacts?:()=>SpainContact[];__moniaSpainSocial?:()=>SpainSocialOpportunity[];__moniaRecordSpainContact?:(id:string,kind:'meet'|'talk'|'invite'|'shared-time')=>boolean}}
