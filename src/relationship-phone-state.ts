@@ -1,3 +1,5 @@
+import {getLucasCommunicationPolicy} from './monia/lucas-presence-engine';
+
 const SAVE_KEY='marion-lucas-save-v4';
 
 export type RelationshipPhoneContact='Marine'|'Lucas'|string;
@@ -11,10 +13,7 @@ function read():SaveLike|null{try{return JSON.parse(localStorage.getItem(SAVE_KE
 function write(save:SaveLike){save.updatedAt=Date.now();localStorage.setItem(SAVE_KEY,JSON.stringify(save));window.dispatchEvent(new CustomEvent('marion:statechange'))}
 function isContactName(value:string){return Boolean(value&&value!=='Toi')}
 function officialLucasCommunication():LucasCommunication|null{
-  try{
-    const runtime=window as Window&{__moniaLucasCommunication?:()=>LucasCommunication};
-    return runtime.__moniaLucasCommunication?.()||null;
-  }catch{return null}
+  try{return getLucasCommunicationPolicy() as LucasCommunication}catch{return null}
 }
 
 function nearestContact(messages:RelationshipPhoneMessage[],index:number){
