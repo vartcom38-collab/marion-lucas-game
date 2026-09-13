@@ -1,3 +1,5 @@
+import { getPregnancyState } from './pregnancy-state';
+
 const SAVE_KEY='marion-lucas-save-v4';
 
 type Save={day?:number;place?:string;children?:number;flags?:Record<string,unknown>;calendar?:Array<{owner?:string;title?:string;day?:number;note?:string}>};
@@ -9,23 +11,23 @@ function readSave():Save|null{try{const raw=localStorage.getItem(SAVE_KEY);retur
 function n(v:unknown,f=0){const x=Number(v);return Number.isFinite(x)?x:f}
 function flag(s:Save,key:string){return s.flags?.[key]}
 function yes(s:Save,key:string){return !!flag(s,key)}
-function gestation(s:Save){const start=n(flag(s,'pregnancyConfirmedDay'),0);return start?Math.max(0,n(s.day,1)-start):null}
 
 export function getPregnancyJourney():PregnancyJourney|null{
   const s=readSave();if(!s)return null;
-  const g=gestation(s);let stage:PregnancyStage='none';
-  if(yes(s,'pregnancyLoss'))stage='loss';
-  else if(yes(s,'postpartum'))stage='postpartum';
-  else if(yes(s,'inLabor'))stage='labor';
-  else if(yes(s,'pregnancyConfirmed'))stage=g!==null&&g<84?'first-trimester':g!==null&&g<189?'second-trimester':'third-trimester';
-  else if(yes(s,'pregnancyPossible'))stage='possible';
-  else if(yes(s,'tryingForBaby'))stage='trying';
+  const canonical=getPregnancyState(s);const confirmedDay=canonical?.confirmedDay||null;
+  const g=confirmedDay?Math.max(0,n(s.day,1)-confirmedDay):null;let stage:PregnancyStage='none';
+  if(canonical?.state==='loss')stage='loss';
+  else if(canonical?.state==='postpartum')stage='postpartum';
+  else if(yes(s,'inLabor')&&canonical?.state==='confirmed')stage='labor';
+  else if(canonical?.state==='confirmed')stage=g!==null&&g<84?'first-trimester':g!==null&&g<189?'second-trimester':'third-trimester';
+  else if(canonical?.state==='possible')stage='possible';
+  else if(canonical?.state==='trying')stage='trying';
 
   const d=(id:string,label:string,available:boolean,sensitive=false,surprise=false):PregnancyStep=>({id,label,available,done:yes(s,`preg_${id}_done`)||yes(s,`preg_${id}`),sensitive,surprise});
   const confirmed=stage==='first-trimester'||stage==='second-trimester'||stage==='third-trimester'||stage==='labor'||stage==='postpartum';
   const steps:PregnancyStep[]=[
     d('notice-signs','Remarquer un retard ou des signes possibles',stage==='possible',false,true),
-    d('test','Faire un test de grossesse',stage==='possible'||yes(s,'pregnancyPossible')),
+    d('test','Faire un test de grossesse',stage==='possible'),
     d('tell-lucas','Décider quand et comment l’annoncer à Lucas',confirmed,false,true),
     d('care-choice','Choisir le suivi médical / la maternité',confirmed),
     d('first-visit','Premier rendez-vous médical',confirmed),
