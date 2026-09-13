@@ -1,8 +1,9 @@
 {
-  "version": 1,
+  "version": 2,
   "status": "locked",
   "policy": {
     "approval_required_for_character_photos": true,
+    "child_media_requires_explicit_approval": true,
     "fresh_generation_is_candidate_only": true,
     "auto_publish_live": false,
     "generic_character_fallback_forbidden": true,
