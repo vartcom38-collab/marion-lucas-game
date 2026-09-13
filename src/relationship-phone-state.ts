@@ -8,11 +8,14 @@ type SaveLike={day?:number;time?:string;place?:string;metLucas?:boolean;phoneUnr
 type LucasCommunication={mode?:'local'|'connect'|'missed'|'unreachable';canCall?:boolean;canMessage?:boolean;responseDelayMinutes?:number;label?:string;reason?:string};
 
 let syncing=false;
+let knownMessageCounts:Map<string,number>|null=null;
 
 function read():SaveLike|null{try{return JSON.parse(localStorage.getItem(SAVE_KEY)||'null') as SaveLike|null}catch{return null}}
 function write(save:SaveLike){save.updatedAt=Date.now();localStorage.setItem(SAVE_KEY,JSON.stringify(save));window.dispatchEvent(new CustomEvent('marion:statechange'))}
 function flags(save:SaveLike){if(!save.flags)save.flags={};return save.flags}
 function isContactName(value:string){return Boolean(value&&value!=='Toi')}
+function messageKey(message:RelationshipPhoneMessage){return`${message.from}|${message.text}|${message.day}|${message.thread||''}`}
+function countMessages(messages:RelationshipPhoneMessage[]){const counts=new Map<string,number>();for(const message of messages){const key=messageKey(message);counts.set(key,(counts.get(key)||0)+1)}return counts}
 function officialLucasCommunication():LucasCommunication|null{
   try{return getLucasCommunicationPolicy() as LucasCommunication}catch{return null}
 }
@@ -91,6 +94,27 @@ export function relationshipPhoneContactAllowed(save:SaveLike,contact:string,cha
   return channel==='call'?availability.canCall:availability.canMessage;
 }
 
+function suppressFreshLocalLucasMessages(save:SaveLike){
+  const messages=Array.isArray(save.messages)?save.messages:[];
+  if(!knownMessageCounts){knownMessageCounts=countMessages(messages);return false}
+  if(lucasPhoneAvailability(save).reason!=='with-marion'){knownMessageCounts=countMessages(messages);return false}
+  const seen=new Map<string,number>();let removedUnread=0,removed=false;
+  save.messages=messages.filter(message=>{
+    const key=messageKey(message),occurrence=(seen.get(key)||0)+1;seen.set(key,occurrence);
+    const known=knownMessageCounts?.get(key)||0;
+    const isFresh=occurrence>known;
+    if(isFresh&&message.from==='Lucas'){
+      if(!message.read)removedUnread++;
+      removed=true;
+      return false;
+    }
+    return true;
+  });
+  if(removedUnread)save.phoneUnread=Math.max(0,Number(save.phoneUnread||0)-removedUnread);
+  knownMessageCounts=countMessages(save.messages||[]);
+  return removed;
+}
+
 function guardLegacyLucasInitiative(save:SaveLike){
   if(!save.metLucas)return false;
   const state=flags(save),day=Math.max(1,Number(save.day||1));
@@ -115,9 +139,11 @@ function guardLegacyLucasInitiative(save:SaveLike){
 function sync(){
   if(syncing)return;
   const save=read();if(!save)return;
+  const localMessageChanged=suppressFreshLocalLucasMessages(save);
   const threadsChanged=normalizeRelationshipPhoneThreads(save);
   const guardChanged=guardLegacyLucasInitiative(save);
-  if(!threadsChanged&&!guardChanged)return;
+  knownMessageCounts=countMessages(save.messages||[]);
+  if(!localMessageChanged&&!threadsChanged&&!guardChanged)return;
   syncing=true;write(save);syncing=false;
 }
 
