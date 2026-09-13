@@ -11,6 +11,7 @@ let syncing=false;
 
 function read():SaveLike|null{try{return JSON.parse(localStorage.getItem(SAVE_KEY)||'null') as SaveLike|null}catch{return null}}
 function write(save:SaveLike){save.updatedAt=Date.now();localStorage.setItem(SAVE_KEY,JSON.stringify(save));window.dispatchEvent(new CustomEvent('marion:statechange'))}
+function flags(save:SaveLike){if(!save.flags)save.flags={};return save.flags}
 function isContactName(value:string){return Boolean(value&&value!=='Toi')}
 function officialLucasCommunication():LucasCommunication|null{
   try{return getLucasCommunicationPolicy() as LucasCommunication}catch{return null}
@@ -74,10 +75,10 @@ export function lucasPhoneAvailability(save:SaveLike){
     if(official.mode==='unreachable')return{canMessage:official.canMessage!==false,canCall:false,replyDelay:'delayed' as const,reason:'unreachable'};
     return{canMessage:official.canMessage!==false,canCall:official.canCall!==false,replyDelay:'normal' as const,reason:'available'};
   }
-  const flags=save.flags||{};
-  const physicallyTogether=flags.lucasWithMarion===true||flags.lucasPresence==='with-marion'||flags.lucasPresenceState==='with-marion';
-  const working=flags.lucasBusy===true||flags.lucasPresence==='working'||flags.lucasPresenceState==='working';
-  const away=flags.lucasAway===true||flags.lucasTravelingWithoutMarion===true||flags.lucasPresence==='away'||flags.lucasPresenceState==='away'||flags.lucasPresence==='traveling'||flags.lucasPresenceState==='traveling';
+  const state=flags(save);
+  const physicallyTogether=state.lucasWithMarion===true||state.lucasPresence==='with-marion'||state.lucasPresenceState==='with-marion';
+  const working=state.lucasBusy===true||state.lucasPresence==='working'||state.lucasPresenceState==='working';
+  const away=state.lucasAway===true||state.lucasTravelingWithoutMarion===true||state.lucasPresence==='away'||state.lucasPresenceState==='away'||state.lucasPresence==='traveling'||state.lucasPresenceState==='traveling';
   if(physicallyTogether)return{canMessage:false,canCall:false,replyDelay:'none' as const,reason:'with-marion'};
   if(working)return{canMessage:true,canCall:true,replyDelay:'delayed' as const,reason:'working'};
   if(away)return{canMessage:true,canCall:true,replyDelay:'normal' as const,reason:'away'};
@@ -90,16 +91,41 @@ export function relationshipPhoneContactAllowed(save:SaveLike,contact:string,cha
   return channel==='call'?availability.canCall:availability.canMessage;
 }
 
+function guardLegacyLucasInitiative(save:SaveLike){
+  if(!save.metLucas)return false;
+  const state=flags(save),day=Math.max(1,Number(save.day||1));
+  const availability=lucasPhoneAvailability(save);
+  const shouldSuppress=availability.reason==='with-marion'||availability.reason==='unreachable';
+  const guardDay=Number(state.relationshipPhoneSuppressedInitiativeDay||0);
+  if(shouldSuppress){
+    if(Number(state.lucasPhoneInitiativeDay||0)===day&&guardDay!==day)return false;
+    let changed=false;
+    if(Number(state.lucasPhoneInitiativeDay||0)!==day){state.lucasPhoneInitiativeDay=day;changed=true}
+    if(guardDay!==day){state.relationshipPhoneSuppressedInitiativeDay=day;changed=true}
+    return changed;
+  }
+  if(guardDay===day){
+    let changed=false;
+    if(Number(state.lucasPhoneInitiativeDay||0)===day){delete state.lucasPhoneInitiativeDay;changed=true}
+    delete state.relationshipPhoneSuppressedInitiativeDay;
+    changed=true;
+    return changed;
+  }
+  return false;
+}
+
 function sync(){
   if(syncing)return;
   const save=read();if(!save)return;
-  if(!normalizeRelationshipPhoneThreads(save))return;
+  const changed=normalizeRelationshipPhoneThreads(save)|guardLegacyLucasInitiative(save);
+  if(!changed)return;
   syncing=true;write(save);syncing=false;
 }
 
 window.addEventListener('storage',sync);
 window.addEventListener('marion:statechange',sync as EventListener);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)sync()});
+window.setInterval(sync,1200);
 window.setTimeout(sync,0);
 
 declare global{interface Window{__marionRelationshipPhone?:{normalize:(save:SaveLike)=>boolean;availability:(save:SaveLike)=>ReturnType<typeof lucasPhoneAvailability>;contactAllowed:(save:SaveLike,contact:string,channel?:'message'|'call')=>boolean}}}
