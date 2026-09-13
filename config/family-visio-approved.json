@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "status": "locked",
+  "policy": {
+    "approval_required": true,
+    "fresh_generation_is_candidate_only": true,
+    "auto_publish_live": false,
+    "child_media_requires_explicit_approval": true
+  },
+  "entries": []
+}
