@@ -1,6 +1,7 @@
 import './living-social-runtime.css';
 import './taurine-life-layer';
 import './visio-phone-bridge';
+import './life-milestone-engine';
 import {getSocialPresence,setSocialPresence} from '../social-presence-state';
 import {getLucasPresence} from './lucas-presence-engine';
 
@@ -46,7 +47,7 @@ export function doLivingSocialMoment(actor:ActorId){const s=read();if(!s)return 
 
 function host(){return document.querySelector<HTMLElement>('main.game,.game,.worldStage,.worldScene')||null}
 function remove(){document.getElementById('livingSocialCue')?.remove();const world=document.querySelector<HTMLElement>('.worldScene,.worldStage,.worldFrame,.gameWorld,.gameScene');if(world){delete world.dataset.presentActor;delete world.dataset.sceneCast;delete world.dataset.lucasActivity}}
-function esc(v:string){return v.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]||c))}
+function esc(v:string){return v.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]||c))}
 function syncSceneCast(p:Presence|null){const world=document.querySelector<HTMLElement>('.worldScene,.worldStage,.worldFrame,.gameWorld,.gameScene');if(!world)return;const lucas=getLucasPresence();world.dataset.lucasActivity=lucas?.state||'unknown';if(!p){delete world.dataset.presentActor;delete world.dataset.sceneCast;return}if(p.id==='lucas'&&!lucas?.together){delete world.dataset.presentActor;delete world.dataset.sceneCast;return}world.dataset.presentActor=p.id;world.dataset.sceneCast=p.id==='lucas'?'marion,lucas':p.id==='marine'?'marion,marine':'marion,family'}
 function render(){const s=read();if(!s){remove();return}let changed=pruneImpossibleLucasMessages(s);if(maybeSeedAmbientMessage(s))changed=true;if(changed)write(s);const p=getLivingPresence(),h=host();syncSceneCast(p);if(!p||!h){remove();return}let root=document.getElementById('livingSocialCue');if(!root){root=document.createElement('aside');root.id='livingSocialCue';root.className='livingSocialCue';h.appendChild(root)}root.dataset.actor=p.id;root.innerHTML=`<button type="button" data-living-social="${p.id}"><span>${esc(p.name.toUpperCase())}</span><strong>${esc(p.label)}</strong><small>${esc(p.detail)}</small><em>${esc(p.action)} · ${p.minutes} min</em></button>`;const b=root.querySelector<HTMLButtonElement>('[data-living-social]');if(b)b.onclick=e=>{e.stopPropagation();if(doLivingSocialMoment(p.id))render()}}
 let timer=0;function schedule(){if(timer)window.clearTimeout(timer);timer=window.setTimeout(render,120)}
