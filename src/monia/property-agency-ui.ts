@@ -1,4 +1,5 @@
 import './property-agency-ui.css';
+import { PROPERTY_VISUAL_ASSETS } from './property-visual-assets';
 import {
   getPropertyLifeSnapshot,
   shortlistProperty,
@@ -71,7 +72,7 @@ function kindLabel(kind:string){return kind==='finca'?'Finca':kind==='city-flat'
 function useLabel(use:string){return use==='primary'?'Résidence principale':use==='secondary'?'Pied-à-terre':use==='available'?'Autre résidence':'Vendu'}
 function visualsForTitle(title:string){return PROPERTY_VISUALS[title]||[]}
 function visualsFor(o:PropertyOffer){const found=visualsForTitle(o.title);return found.length?found:[{key:'property-generic',alt:o.title}]}
-function visualSrc(v:PropertyVisual){return `./resources/properties/${v.key}.webp`}
+function visualSrc(v:PropertyVisual){return PROPERTY_VISUAL_ASSETS[v.key]||`./resources/properties/${v.key}.webp`}
 function propertyImage(v:PropertyVisual,className='propertyPhotoImage'){return `<img class="${className}" src="${esc(visualSrc(v))}" alt="${esc(v.alt)}" loading="lazy" decoding="async">`}
 
 function ensureEntry(){
@@ -89,7 +90,7 @@ function ensureEntry(){
 function propertyCard(p:PropertyRecord){
   const visuals=visualsForTitle(p.name),hero=visuals[0];
   return `<article class="ownedProperty ${p.use==='primary'?'isPrimary':''}">
-    ${hero?`<div class="ownedPropertyPhoto">${propertyImage(hero)}</div>`:''}
+    ${hero?`<div class="propertyPhoto ownedPropertyPhoto">${propertyImage(hero)}</div>`:''}
     <div><small>${esc(kindLabel(p.kind))}</small><h3>${esc(p.name)}</h3><p>${esc(p.city)} · ${esc(p.region)}</p></div>
     <strong>${esc(useLabel(p.use))}</strong>
     <div class="propertyActions">
