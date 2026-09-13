@@ -14,7 +14,9 @@ export async function getFamilyVisioAvailability(childId?:string):Promise<Family
   return{available:true,childId:child.id,media:entry.media,reason:'Un média famille explicitement approuvé est disponible.'};
 }
 export async function requestApprovedFamilyVisio(childId?:string){
-  const pending=requestFamilyVideoCall(childId);const availability=await getFamilyVisioAvailability(childId);window.dispatchEvent(new CustomEvent('monia:family-visio-request',{detail:{pending,availability}}));if(!availability.available)return false;window.dispatchEvent(new CustomEvent('monia:family-visio-ready',{detail:availability}));return true
+  const availability=await getFamilyVisioAvailability(childId);if(!availability.available){window.dispatchEvent(new CustomEvent('monia:family-visio-request',{detail:{pending:null,availability}}));return false}
+  const pending=requestFamilyVideoCall(availability.childId);if(!pending){const blocked={...availability,available:false,reason:'Aucune nounou de confiance n’est actuellement en charge de l’enfant pour préparer cet appel.'};window.dispatchEvent(new CustomEvent('monia:family-visio-request',{detail:{pending:null,availability:blocked}}));return false}
+  window.dispatchEvent(new CustomEvent('monia:family-visio-request',{detail:{pending,availability}}));window.dispatchEvent(new CustomEvent('monia:family-visio-ready',{detail:availability}));return true
 }
 declare global{interface Window{__moniaFamilyVisioAvailability?:(childId?:string)=>Promise<FamilyVisioAvailability>;__moniaRequestApprovedFamilyVisio?:(childId?:string)=>Promise<boolean>}}
 window.__moniaFamilyVisioAvailability=getFamilyVisioAvailability;window.__moniaRequestApprovedFamilyVisio=requestApprovedFamilyVisio;
