@@ -1,0 +1,38 @@
+name: Materialize Nimes city assets
+
+on:
+  push:
+    paths:
+      - '.github/workflows/materialize-nimes-city-assets.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Decode Nimes city visuals
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public/resources/nimes
+          base64 -d tools/nimes-assets-staging/street-tiny.b64 > public/resources/nimes/nimes-street.webp
+          base64 -d tools/nimes-assets-staging/cafe-tiny.b64 > public/resources/nimes/nimes-cafe.webp
+          base64 -d tools/nimes-assets-staging/arenes-tiny.b64 > public/resources/nimes/nimes-arenes.webp
+          base64 -d tools/nimes-assets-staging/station-tiny.b64 > public/resources/nimes/nimes-station.webp
+          for f in public/resources/nimes/nimes-street.webp public/resources/nimes/nimes-cafe.webp public/resources/nimes/nimes-arenes.webp public/resources/nimes/nimes-station.webp; do
+            test "$(head -c 4 "$f")" = "RIFF"
+          done
+      - name: Commit visual pack
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf tools/nimes-assets-staging
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/resources/nimes tools/nimes-assets-staging
+          git commit -m "Add Nimes city visual pack"
+          git push
