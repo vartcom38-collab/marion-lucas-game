@@ -1,5 +1,6 @@
 import './finca-home-life.css';
 import {getPropertyLifeSnapshot} from './property-life';
+import {PROPERTY_VISUAL_ASSETS} from './property-visual-assets';
 
 const SAVE_KEY='marion-lucas-save-v4';
 const FINCA_KEY='marion-lucas-finca-home-v1';
@@ -9,6 +10,12 @@ type FincaState={version:1;propertyId?:string;settledDay?:number;care:number;com
 type Save={day?:number;time?:string;place?:string;screen?:string;energy?:number;stress?:number;relationship?:number;flags?:Record<string,unknown>};
 
 const DEFAULT: FincaState={version:1,care:15,comfort:20,identity:10,visits:0,upgrades:[],spaceUses:{courtyard:0,living:0,kitchen:0,grounds:0,annex:0}};
+const FINCA_HERO:Record<string,string>={
+  'Finca de chênes et pâtures':'salamanca-finca-exterior',
+  'Finca blanche près de Tolède':'toledo-finca-exterior',
+  'Domaine en Estrémadure':'extremadura-estate-exterior',
+  'Maison andalouse avec terres':'jerez-finca-exterior',
+};
 function readSave():Save|null{try{const raw=localStorage.getItem(SAVE_KEY);return raw?JSON.parse(raw) as Save:null}catch{return null}}
 function writeSave(s:Save){try{localStorage.setItem(SAVE_KEY,JSON.stringify(s));window.dispatchEvent(new Event('storage'));window.dispatchEvent(new CustomEvent('monia:finca-home-changed'));return true}catch{return false}}
 function readState():FincaState{try{const raw=localStorage.getItem(FINCA_KEY);if(!raw)return structuredClone(DEFAULT);const p=JSON.parse(raw) as Partial<FincaState>;return{...structuredClone(DEFAULT),...p,version:1,upgrades:Array.isArray(p.upgrades)?p.upgrades:[],spaceUses:{...DEFAULT.spaceUses,...(p.spaceUses||{})}}}catch{return structuredClone(DEFAULT)}}
@@ -50,6 +57,14 @@ function contextualSpaces(save:Save,state:FincaState):FincaSpace[]{
 function shouldShowSceneActions(){const save=readSave();return Boolean(currentFinca()&&save&&save.place==='estate'&&(save.screen===undefined||save.screen==='game'));}
 function sceneHost(){return document.querySelector<HTMLElement>('.worldScene,.worldStage,.worldFrame,.gameWorld,.gameScene')||document.querySelector<HTMLElement>('#app')||document.body}
 function removeSceneActions(){document.getElementById('moniaFincaSceneActions')?.remove()}
+function syncEstateVisual(){
+  const save=readSave(),finca=currentFinca();if(!save||save.place!=='estate'||!finca)return;
+  const key=FINCA_HERO[finca.name];if(!key)return;const src=PROPERTY_VISUAL_ASSETS[key]||`./resources/properties/${key}.webp`;
+  const photo=document.querySelector<HTMLImageElement>('img.worldPhoto,.worldPhoto img,img[data-world-photo]');
+  if(photo&&photo.dataset.fincaBound!=='1'){photo.dataset.fincaBound='1';photo.src=src;photo.alt=finca.name;}
+  const background=document.querySelector<HTMLElement>('.worldPhoto:not(img),.worldBackdrop,.worldSceneBackground');
+  if(background&&background.dataset.fincaBound!=='1'){background.dataset.fincaBound='1';background.style.backgroundImage=`url("${src}")`;}
+}
 function renderSceneActions(){
   if(!shouldShowSceneActions()){removeSceneActions();return}
   const save=readSave();if(!save)return;const state=readState();syncProperty(state);let root=document.getElementById('moniaFincaSceneActions');
@@ -62,7 +77,7 @@ function renderSceneActions(){
 }
 
 function ensureEntry(){const active=Boolean(currentFinca());document.querySelectorAll<HTMLElement>('[data-finca-home-entry]').forEach(el=>{if(!active)el.remove()});if(!active||document.querySelector('[data-finca-home-entry]'))return;const nav=document.querySelector<HTMLElement>('.premiumNav');if(!nav)return;const b=document.createElement('button');b.type='button';b.dataset.fincaHomeEntry='1';b.title='La finca';b.setAttribute('aria-label','La finca');b.className='fincaHomeNavEntry';b.innerHTML='<b aria-hidden="true">⌂</b><span>La finca</span>';b.onclick=()=>openFincaHome();nav.appendChild(b)}
-let raf=0;function schedule(){cancelAnimationFrame(raf);raf=requestAnimationFrame(()=>{ensureEntry();renderSceneActions()})}window.addEventListener('monia:property-changed',schedule as EventListener);window.addEventListener('monia:finca-home-changed',schedule as EventListener);window.addEventListener('storage',schedule);new MutationObserver(schedule).observe(document.body,{childList:true,subtree:true});schedule();
+let raf=0;function schedule(){cancelAnimationFrame(raf);raf=requestAnimationFrame(()=>{ensureEntry();syncEstateVisual();renderSceneActions()})}window.addEventListener('monia:property-changed',schedule as EventListener);window.addEventListener('monia:finca-home-changed',schedule as EventListener);window.addEventListener('storage',schedule);new MutationObserver(schedule).observe(document.body,{childList:true,subtree:true});schedule();
 
 declare global{interface Window{__moniaFincaHome?:()=>ReturnType<typeof getFincaHomeSnapshot>;__moniaOpenFincaHome?:()=>boolean;__moniaDoFincaHomeAction?:(space:FincaSpace)=>boolean}}
 window.__moniaFincaHome=getFincaHomeSnapshot;window.__moniaOpenFincaHome=openFincaHome;window.__moniaDoFincaHomeAction=doFincaHomeAction;
