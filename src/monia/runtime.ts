@@ -12,6 +12,7 @@ import './media-life-layer';
 import './family-life-layer';
 import './property-agency-ui';
 import './finca-home-life';
+import './finca-scene-ambient';
 import './life-timeline-engine';
 import './rare-life-events';
 import { MARION_LUCAS_PROFILE, narrationPrompt, type MonIACompactContext } from './profile';
