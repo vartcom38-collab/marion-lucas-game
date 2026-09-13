@@ -3,9 +3,10 @@ const MARION_START_AGE=20;
 const LUCAS_START_AGE=22;
 const DAYS_PER_LIFE_YEAR=365;
 
-type Save={day?:number;marionAge?:number;lucasAge?:number;flags?:Record<string,unknown>};
+type Save={day?:number;marionAge?:number;lucasAge?:number;flags?:Record<string,unknown>;updatedAt?:number};
 export type LifeAgeSnapshot={day:number;lifeYear:number;elapsedYears:number;marionAge:number;lucasAge:number;canonical:true;};
 export type LifeAgeInvariant={years:number;day:number;marionAge:number;lucasAge:number;ok:boolean};
+let syncing=false;
 
 function read():Save|null{try{const raw=localStorage.getItem(SAVE_KEY);return raw?JSON.parse(raw) as Save:null}catch{return null}}
 function n(v:unknown,f=0){const x=Number(v);return Number.isFinite(x)?x:f}
@@ -41,9 +42,19 @@ export function legacyAgeFieldsMatchCanonical(save?:Save|null){
   return marionLegacy===ages.marionAge&&lucasLegacy===ages.lucasAge;
 }
 
-declare global{interface Window{__moniaLifeAges?:()=>LifeAgeSnapshot;__moniaMarionAge?:()=>number;__moniaLucasAge?:()=>number;__moniaLifeAgeHorizons?:()=>LifeAgeInvariant[];__moniaLegacyAgesMatch?:()=>boolean}}
+export function syncCanonicalAgeFields(){
+  if(syncing)return false;const s=read();if(!s)return false;const ages=getLifeAgeSnapshot(s);
+  if(s.marionAge===ages.marionAge&&s.lucasAge===ages.lucasAge)return false;
+  syncing=true;try{s.marionAge=ages.marionAge;s.lucasAge=ages.lucasAge;s.updatedAt=Date.now();localStorage.setItem(SAVE_KEY,JSON.stringify(s));window.dispatchEvent(new CustomEvent('marion:age-sync',{detail:ages}));return true}finally{syncing=false}
+}
+
+function scheduleSync(){window.setTimeout(syncCanonicalAgeFields,0)}
+window.addEventListener('marion:statechange',scheduleSync);window.addEventListener('monia:save-changed',scheduleSync as EventListener);window.addEventListener('storage',scheduleSync);document.addEventListener('visibilitychange',()=>{if(!document.hidden)syncCanonicalAgeFields()});syncCanonicalAgeFields();
+
+declare global{interface Window{__moniaLifeAges?:()=>LifeAgeSnapshot;__moniaMarionAge?:()=>number;__moniaLucasAge?:()=>number;__moniaLifeAgeHorizons?:()=>LifeAgeInvariant[];__moniaLegacyAgesMatch?:()=>boolean;__moniaSyncCanonicalAges?:()=>boolean}}
 window.__moniaLifeAges=getLifeAgeSnapshot;
 window.__moniaMarionAge=getMarionAge;
 window.__moniaLucasAge=getLucasAge;
 window.__moniaLifeAgeHorizons=verifyLifeAgeHorizons;
 window.__moniaLegacyAgesMatch=legacyAgeFieldsMatchCanonical;
+window.__moniaSyncCanonicalAges=syncCanonicalAgeFields;
