@@ -1,5 +1,6 @@
 import './coupleDistanceContactDirector.css';
 import { getChildrenLife } from './monia/children-life';
+import { attachMediaToLatestMessage } from './monia/phone-media-messages';
 
 type Msg={from:string;text:string,day:number,read:boolean};
 type SaveLike={day:number;time:string;place:string;screen:string;metLucas:boolean;official:boolean;relationship:number;trust:number;chemistry:number;stress:number;phoneUnread:number;messages:Msg[];memories:string[];flags:Record<string,boolean|number|string>;updatedAt:number};
@@ -56,6 +57,10 @@ function show(s:SaveLike){
   if(e.tone==='quiet'||e.tone==='warm')s.trust=Number(s.trust||0)+1;
   if(e.tone==='charged')s.chemistry=Number(s.chemistry||0)+1;
   addMemory(s,getChildrenLife().length?'Même loin, Lucas continue de prendre des nouvelles de la maison et des enfants sans interrompre la vie de Marion.':'Même loin, Lucas a trouvé une petite façon d’entrer dans ta journée sans interrompre la tienne.');write(s);
+  if(e.tone==='photo'){
+    const lucasPlace=String(s.flags.lucasCurrentPlace||s.flags.lucasTravelDestination||'');
+    if(lucasPlace)void attachMediaToLatestMessage({author:'Lucas',thread:'Lucas',kind:'place',place:lucasPlace});
+  }
   const card=document.createElement('aside');card.id='coupleDistanceContact';card.className=`coupleDistanceContact ${e.tone}`;
   card.innerHTML=`<span>${e.k}</span><strong>${e.t}</strong><small>${e.b}</small><em>${e.text}</em>`;game.appendChild(card);
   setTimeout(()=>card.classList.add('is-leaving'),6200);setTimeout(()=>{card.remove();active=false},7900);
@@ -63,4 +68,4 @@ function show(s:SaveLike){
 
 function arm(){const s=read();if(!s||!eligible(s)){if(timer)clearTimeout(timer);timer=0;return}if(active||timer)return;timer=window.setTimeout(()=>{timer=0;const f=read();if(f)show(f)},21000+((s.day*61+mins(s.time))%11000))}
 window.addEventListener('storage',arm);document.addEventListener('visibilitychange',()=>{if(!document.hidden)arm()});window.setInterval(arm,18000);arm();
-console.info('[Romance] distance contact active: Lucas can stay present without interrupting Marion’s life');
+console.info('[Romance] distance contact active: Lucas can stay present and occasionally share a real place photo');
