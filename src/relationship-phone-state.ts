@@ -3,12 +3,19 @@ const SAVE_KEY='marion-lucas-save-v4';
 export type RelationshipPhoneContact='Marine'|'Lucas'|string;
 export type RelationshipPhoneMessage={from:string;text:string;day:number;read:boolean;thread?:string};
 type SaveLike={day?:number;time?:string;place?:string;metLucas?:boolean;phoneUnread?:number;messages?:RelationshipPhoneMessage[];flags?:Record<string,boolean|number|string>;updatedAt?:number};
+type LucasCommunication={mode?:'local'|'connect'|'missed'|'unreachable';canCall?:boolean;canMessage?:boolean;responseDelayMinutes?:number;label?:string;reason?:string};
 
 let syncing=false;
 
 function read():SaveLike|null{try{return JSON.parse(localStorage.getItem(SAVE_KEY)||'null') as SaveLike|null}catch{return null}}
 function write(save:SaveLike){save.updatedAt=Date.now();localStorage.setItem(SAVE_KEY,JSON.stringify(save));window.dispatchEvent(new CustomEvent('marion:statechange'))}
 function isContactName(value:string){return Boolean(value&&value!=='Toi')}
+function officialLucasCommunication():LucasCommunication|null{
+  try{
+    const runtime=window as Window&{__moniaLucasCommunication?:()=>LucasCommunication};
+    return runtime.__moniaLucasCommunication?.()||null;
+  }catch{return null}
+}
 
 function nearestContact(messages:RelationshipPhoneMessage[],index:number){
   for(let distance=1;distance<messages.length;distance++){
@@ -61,12 +68,19 @@ export function markRelationshipThreadRead(save:SaveLike,contact:string){
 }
 
 export function lucasPhoneAvailability(save:SaveLike){
+  const official=officialLucasCommunication();
+  if(official){
+    if(official.mode==='local')return{canMessage:false,canCall:false,replyDelay:'none' as const,reason:'with-marion'};
+    if(official.mode==='missed')return{canMessage:official.canMessage!==false,canCall:official.canCall!==false,replyDelay:'delayed' as const,reason:'working'};
+    if(official.mode==='unreachable')return{canMessage:official.canMessage!==false,canCall:false,replyDelay:'delayed' as const,reason:'unreachable'};
+    return{canMessage:official.canMessage!==false,canCall:official.canCall!==false,replyDelay:'normal' as const,reason:'available'};
+  }
   const flags=save.flags||{};
   const physicallyTogether=flags.lucasWithMarion===true||flags.lucasPresence==='with-marion'||flags.lucasPresenceState==='with-marion';
   const working=flags.lucasBusy===true||flags.lucasPresence==='working'||flags.lucasPresenceState==='working';
   const away=flags.lucasAway===true||flags.lucasTravelingWithoutMarion===true||flags.lucasPresence==='away'||flags.lucasPresenceState==='away'||flags.lucasPresence==='traveling'||flags.lucasPresenceState==='traveling';
   if(physicallyTogether)return{canMessage:false,canCall:false,replyDelay:'none' as const,reason:'with-marion'};
-  if(working)return{canMessage:true,canCall:false,replyDelay:'delayed' as const,reason:'working'};
+  if(working)return{canMessage:true,canCall:true,replyDelay:'delayed' as const,reason:'working'};
   if(away)return{canMessage:true,canCall:true,replyDelay:'normal' as const,reason:'away'};
   return{canMessage:true,canCall:true,replyDelay:'normal' as const,reason:'available'};
 }
