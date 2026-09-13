@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "status": "locked",
+  "policy": {
+    "approval_required_for_character_photos": true,
+    "fresh_generation_is_candidate_only": true,
+    "auto_publish_live": false,
+    "generic_character_fallback_forbidden": true,
+    "place_photos_may_use_canonical_world_assets": true
+  },
+  "entries": []
+}
