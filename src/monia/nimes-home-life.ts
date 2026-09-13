@@ -1,4 +1,5 @@
 import './nimes-home-life.css';
+import './nimes-city-life';
 
 const SAVE_KEY='marion-lucas-save-v4';
 type Space='living'|'kitchen'|'bedroom'|'study';
