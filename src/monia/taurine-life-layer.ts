@@ -1,4 +1,5 @@
 import './taurine-life-layer.css';
+import './phone-consistency-runtime';
 import {getLucasCareerEvolution} from './lucas-career-evolution';
 import {getLucasPresence} from './lucas-presence-engine';
 import {getLucasProfessionalContext} from './lucas-professional-context';
