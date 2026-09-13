@@ -32,7 +32,7 @@ export function getResidenceSnapshot(place?:string):ResidenceSnapshot{
 
 export function getFamilyBaseStay(place?:string):FamilyBaseStay{
   const s=read();const raw=String(place||s?.place||'');const residence=getResidenceSnapshot(raw);if(!s||residence.kind!=='family-base')return{place:raw,active:false,visits:0,familiarity:0,stage:'new',reason:'Marion ne séjourne pas actuellement dans une maison familiale.'};
-  const key=familyKey(raw),f=s.flags||{},visits=n(f[`familyBase:${key}:visits`]),familiarity=Math.max(0,Math.min(100,n(f[`familyBase:${key}:familiarity`]))),stage:FamilyBaseStay['stage']=familiarity>=65?'very-familiar':familiarity>=25?'familiar':'new';
+  const key=familyKey(raw),f=s.flags||{},visits=n(f[`familyBase:${key}:visits`]),familiarity=Math.max(0,Math.min(100,n(f[`familyBase:${key}:familiarity`])),stage:FamilyBaseStay['stage']=familiarity>=65?'very-familiar':familiarity>=25?'familiar':'new';
   const reason=stage==='very-familiar'?'Marion connaît très bien la maison et ses habitudes, mais ce lieu reste une base familiale et non leur domicile.':stage==='familiar'?'Les repères deviennent naturels au fil des séjours, sans transformer cette maison en chez-eux.':'La maison est encore un lieu de séjour à découvrir, même si elle peut déjà sembler accueillante.';
   return{place:raw,active:true,visits,familiarity,stage,reason};
 }
@@ -54,6 +54,12 @@ export function getResidenceReadiness(place?:string):ResidenceReadiness{
 }
 
 export function setResidenceBase(kind:'marion-home'|'shared-home'|'private-base',place:string){const s=read();if(!s||!place.trim())return false;if(getResidenceSnapshot(place).kind==='family-base'&&kind==='shared-home')return false;const f=s.flags||(s.flags={});if(kind==='marion-home')f.marionHomePlace=place;else if(kind==='shared-home')f.sharedHomePlace=place;else f.lucasHomePlace=place;s.eventHistory=[...(s.eventHistory||[]),`residence-base:${kind}:${place}:${Number(s.day||1)}`].slice(-420);try{localStorage.setItem(SAVE_KEY,JSON.stringify(s));window.dispatchEvent(new CustomEvent('monia:save-changed',{detail:{key:SAVE_KEY}}));return true}catch{return false}}
+
+function syncFamilyBaseArrival(){
+  const s=read();if(!s||getResidenceSnapshot(s.place).kind!=='family-base')return;const events=s.eventHistory||[];const last=[...events].reverse().find(e=>String(e).startsWith('travel-arrival-moment:family-base:'));if(!last)return;const key=familyKey(String(s.place||'')),f=s.flags||(s.flags={}),token=`${n(s.day,1)}:${key}:${last}`;if(String(f.lastFamilyBaseArrivalToken||'')===token)return;f.lastFamilyBaseArrivalToken=token;try{localStorage.setItem(SAVE_KEY,JSON.stringify(s));recordFamilyBaseStay(String(s.place||''),true)}catch{/* optional continuity layer */}
+}
+let familySyncQueued=false;function scheduleFamilySync(){if(familySyncQueued)return;familySyncQueued=true;queueMicrotask(()=>{familySyncQueued=false;syncFamilyBaseArrival()})}
+window.addEventListener('monia:save-changed',scheduleFamilySync as EventListener);window.addEventListener('storage',scheduleFamilySync);setTimeout(scheduleFamilySync,350);
 
 declare global{interface Window{__moniaResidence?:(place?:string)=>ResidenceSnapshot;__moniaResidenceReadiness?:(place?:string)=>ResidenceReadiness;__moniaSetResidenceBase?:(kind:'marion-home'|'shared-home'|'private-base',place:string)=>boolean;__moniaFamilyBaseStay?:(place?:string)=>FamilyBaseStay;__moniaRecordFamilyBaseStay?:(place?:string,meaningful?:boolean)=>boolean}}
 window.__moniaResidence=getResidenceSnapshot;window.__moniaResidenceReadiness=getResidenceReadiness;window.__moniaSetResidenceBase=setResidenceBase;window.__moniaFamilyBaseStay=getFamilyBaseStay;window.__moniaRecordFamilyBaseStay=recordFamilyBaseStay;
