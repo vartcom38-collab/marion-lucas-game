@@ -1,3 +1,5 @@
+import {ensureLifeMilestoneChronology} from './life-milestone-chronology';
+
 const SAVE_KEY='marion-lucas-save-v4';
 
 type Readiness='not-yet'|'open'|'ready';
@@ -16,18 +18,18 @@ function write(s:Save){localStorage.setItem(SAVE_KEY,JSON.stringify(s));window.d
 function n(v:unknown,d=0){const x=Number(v);return Number.isFinite(x)?x:d}
 
 export function getCommitmentReadiness():CommitmentReadiness|null{
-  const s=read();if(!s)return null;const f=s.flags||(s.flags={});const day=Math.max(1,n(s.day,1));
+  const s=read();if(!s)return null;const f=s.flags||(s.flags={});const day=Math.max(1,n(s.day,1));const chronology=ensureLifeMilestoneChronology(s);
   const readiness=(String(f.marriageReadiness||'open') as Readiness);
-  const officialDay=n(f.officialDay,day);const cooldown=n(f.proposalCooldownUntilDay,0);
+  const officialDay=chronology?.officialDay||day;const cooldown=n(f.proposalCooldownUntilDay,0);
   const base=!!s.official&&!s.engaged&&!s.married&&n(s.relationship)>=68&&n(s.trust)>=58&&day>=officialDay+90;
   const proposalAllowed=base&&readiness!=='not-yet'&&day>=cooldown;
   return{readiness,proposalAllowed,canSignalReady:!!s.official&&!s.engaged&&!s.married,cooldownUntilDay:cooldown,reason:proposalAllowed?'La relation et le temps rendent une demande crédible, sans imposer sa date.':readiness==='not-yet'?'Marion a indiqué que ce serait trop tôt pour l’instant.':'La fenêtre n’est pas encore mûre.'};
 }
 
-export function setMarriageReadiness(value:Readiness){const s=read();if(!s)return false;const f=s.flags||(s.flags={});f.marriageReadiness=value;f.marriageReadinessDay=Math.max(1,n(s.day,1));if(value==='ready')f.proposalCooldownUntilDay=0;write(s);window.dispatchEvent(new CustomEvent('monia:marriage-readiness',{detail:{value}}));return true}
+export function setMarriageReadiness(value:Readiness){const s=read();if(!s)return false;ensureLifeMilestoneChronology(s);const f=s.flags||(s.flags={});f.marriageReadiness=value;f.marriageReadinessDay=Math.max(1,n(s.day,1));if(value==='ready')f.proposalCooldownUntilDay=0;write(s);window.dispatchEvent(new CustomEvent('monia:marriage-readiness',{detail:{value}}));return true}
 
 export function recordProposalResponse(response:'yes'|'too-early'|'no-marriage'){
-  const s=read();if(!s)return false;const f=s.flags||(s.flags={});const day=Math.max(1,n(s.day,1));
+  const s=read();if(!s)return false;ensureLifeMilestoneChronology(s);const f=s.flags||(s.flags={});const day=Math.max(1,n(s.day,1));
   f.lastProposalResponse=response;f.lastProposalResponseDay=day;
   if(response==='yes'){s.engaged=true;f.engagedDay=day;f.marriageReadiness='ready'}
   if(response==='too-early'){f.marriageReadiness='not-yet';f.proposalCooldownUntilDay=day+Math.max(60,Math.floor(90+n(s.trust)/2));f.proposalRejectedWithoutRelationshipPenalty=true}
