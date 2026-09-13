@@ -1,4 +1,5 @@
 import './coupleDistanceContactDirector.css';
+import { getChildrenLife } from './monia/children-life';
 
 type Msg={from:string;text:string,day:number,read:boolean};
 type SaveLike={day:number;time:string;place:string;screen:string;metLucas:boolean;official:boolean;relationship:number;trust:number;chemistry:number;stress:number;phoneUnread:number;messages:Msg[];memories:string[];flags:Record<string,boolean|number|string>;updatedAt:number};
@@ -23,12 +24,21 @@ function eligible(s:SaveLike){
   const t=mins(s.time);return t>=690&&t<=1320;
 }
 
+function childScene(s:SaveLike,k:number){
+  const kids=getChildrenLife();if(!kids.length)return null;const youngest=kids.slice().sort((a,b)=>a.ageDays-b.ageDays)[0];const label=youngest.name?.trim()||'le petit';
+  if(k===0)return{tone:'quiet',text:'Et les enfants, tout va bien ?',k:'LUCAS',t:'Même loin, il garde un œil sur la maison.',b:'Il demande des nouvelles simplement, comme quelque chose d’évident dans votre quotidien.'};
+  if(k===3&&youngest.ageYears>=2)return{tone:'warm',text:`${label} a refait un dessin aujourd’hui ? 😭`,k:'LUCAS',t:'Il pense aussi aux petits détails.',b:'La distance ne l’empêche pas de suivre leurs habitudes, leurs dessins et leurs petites histoires.'};
+  if(k===4)return{tone:'photo',text:'La nounou a envoyé une photo ? Montre-moi quand tu peux.',k:'LUCAS',t:'Il veut voir comment se passe leur journée.',b:'Pas de grand moment dramatique : juste un père qui veut garder le fil même quand il travaille loin.'};
+  return null
+}
+
 function sceneFor(s:SaveLike){
   const longingToday=Number(s.flags.coupleDistanceLongingDay||0)===s.day;
   const recentIntimacy=Number(s.flags.coupleMadeLoveDay||0)>=s.day-2;
   const close=Number(s.relationship||0)>=68;
   const trust=Number(s.trust||0)>=56;
   const k=(s.day*47+Math.round(s.relationship||0)+Math.round(s.trust||0))%5;
+  const family=childScene(s,k);if(family&&((s.day+k)%3!==1))return family;
   if(recentIntimacy&&k%2===0)return{tone:'charged',text:'Tu me manques un peu trop aujourd’hui.',k:'LUCAS',t:'Un message arrive au mauvais moment.',b:'Tu lis la phrase une fois. Puis une deuxième. Ce n’est pas très long, mais ça suffit largement.'};
   if(longingToday&&close)return{tone:'warm',text:'J’ai pensé à toi entre deux trucs. Ça m’a saoulé de pas pouvoir te voir 😭',k:'LUCAS',t:'Il apparaît dans ta journée sans prévenir.',b:'Pas un grand discours. Juste assez pour que l’absence paraisse tout de suite moins vide.'};
   if(trust&&k===1)return{tone:'quiet',text:'Tout va bien ici. Je te raconte après. Toi ça va ?',k:'LUCAS',t:'Il ne disparaît pas dans son rythme.',b:'Le message est banal, presque domestique. C’est précisément pour ça qu’il te fait sourire.'};
@@ -45,7 +55,7 @@ function show(s:SaveLike){
   s.flags.coupleDistanceContactDay=s.day;s.flags.coupleDistanceContactLastDay=s.day;s.flags.coupleDistanceContactTone=e.tone;
   if(e.tone==='quiet'||e.tone==='warm')s.trust=Number(s.trust||0)+1;
   if(e.tone==='charged')s.chemistry=Number(s.chemistry||0)+1;
-  addMemory(s,'Même loin, Lucas a trouvé une petite façon d’entrer dans ta journée sans interrompre la tienne.');write(s);
+  addMemory(s,getChildrenLife().length?'Même loin, Lucas continue de prendre des nouvelles de la maison et des enfants sans interrompre la vie de Marion.':'Même loin, Lucas a trouvé une petite façon d’entrer dans ta journée sans interrompre la tienne.');write(s);
   const card=document.createElement('aside');card.id='coupleDistanceContact';card.className=`coupleDistanceContact ${e.tone}`;
   card.innerHTML=`<span>${e.k}</span><strong>${e.t}</strong><small>${e.b}</small><em>${e.text}</em>`;game.appendChild(card);
   setTimeout(()=>card.classList.add('is-leaving'),6200);setTimeout(()=>{card.remove();active=false},7900);
