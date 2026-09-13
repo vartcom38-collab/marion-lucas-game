@@ -1,3 +1,5 @@
+import './visio-launch-guard';
+
 const LAST_VISIO_KEY = 'monia-last-visio-v1';
 const ITEM_PREFIX = 'monia-presentation-item-v1:';
 const SCENE_SNAPSHOT_KEY = 'monia-scene-snapshot-v1';
