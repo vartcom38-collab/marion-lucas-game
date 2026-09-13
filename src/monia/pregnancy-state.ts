@@ -2,13 +2,14 @@ const SAVE_KEY='marion-lucas-save-v4';
 
 type Save={day?:number;flags?:Record<string,unknown>;eventHistory?:string[]};
 export type CanonicalPregnancyState='none'|'trying'|'possible'|'confirmed'|'postpartum'|'loss';
-export type PregnancyStateSnapshot={state:CanonicalPregnancyState;possibleDay:number|null;confirmedDay:number|null;birthDay:number|null;canonical:true;reason:string};
+export type PregnancyStateSnapshot={state:CanonicalPregnancyState;cycle:number;possibleDay:number|null;confirmedDay:number|null;birthDay:number|null;canonical:true;reason:string};
 
 function read():Save|null{try{const raw=localStorage.getItem(SAVE_KEY);return raw?JSON.parse(raw) as Save:null}catch{return null}}
 function write(s:Save){localStorage.setItem(SAVE_KEY,JSON.stringify(s));window.dispatchEvent(new CustomEvent('monia:save-changed',{detail:{key:SAVE_KEY}}))}
 function n(v:unknown,f=0){const x=Number(v);return Number.isFinite(x)?x:f}
+function cycleOf(s:Save){return Math.max(0,Math.floor(n(s.flags?.pregnancyCycle,0)))}
 function derive(s:Save):PregnancyStateSnapshot{
-  const f=s.flags||{},day=Math.max(1,n(s.day,1));
+  const f=s.flags||{},day=Math.max(1,n(s.day,1)),cycle=cycleOf(s);
   const loss=f.pregnancyLoss===true;
   const postpartum=f.postpartum===true||String(f.familyState||'')==='postpartum';
   const confirmed=f.pregnancyConfirmed===true||String(f.familyState||'')==='pregnant';
@@ -16,13 +17,18 @@ function derive(s:Save):PregnancyStateSnapshot{
   const trying=f.tryingForBaby===true||String(f.familyState||'')==='trying'||String(f.contraceptionMode||'')==='trying';
   const possibleDay=possible?Math.max(1,n(f.pregnancyPossibleDay,day)):null;
   const confirmedDay=confirmed?Math.max(1,n(f.pregnancyConfirmedDay,n(f.pregnancyStartDay,possibleDay||day))):null;
-  const birthDay=postpartum?Math.max(1,n(f.birthDay,day)):null;
-  if(loss)return{state:'loss',possibleDay,confirmedDay,birthDay,canonical:true,reason:'Une perte de grossesse est enregistrée.'};
-  if(postpartum)return{state:'postpartum',possibleDay,confirmedDay,birthDay,canonical:true,reason:'La naissance a eu lieu et la période post-partum est active.'};
-  if(confirmed)return{state:'confirmed',possibleDay,confirmedDay,birthDay,canonical:true,reason:'La grossesse est confirmée.'};
-  if(possible)return{state:'possible',possibleDay,confirmedDay:null,birthDay:null,canonical:true,reason:'Une grossesse est biologiquement possible mais reste non confirmée.'};
-  if(trying)return{state:'trying',possibleDay:null,confirmedDay:null,birthDay:null,canonical:true,reason:'Le projet bébé est actif sans grossesse connue.'};
-  return{state:'none',possibleDay:null,confirmedDay:null,birthDay:null,canonical:true,reason:'Aucune grossesse active n’est enregistrée.'};
+  const birthDay=postpartum?Math.max(1,n(f.birthDay,n(f.lastBirthDay,day))):null;
+  if(loss)return{state:'loss',cycle,possibleDay,confirmedDay,birthDay,canonical:true,reason:'Une perte de grossesse est enregistrée pour ce cycle.'};
+  if(postpartum)return{state:'postpartum',cycle,possibleDay,confirmedDay,birthDay,canonical:true,reason:'La naissance de ce cycle a eu lieu et la période post-partum est active.'};
+  if(confirmed)return{state:'confirmed',cycle,possibleDay,confirmedDay,birthDay,canonical:true,reason:'La grossesse de ce cycle est confirmée.'};
+  if(possible)return{state:'possible',cycle,possibleDay,confirmedDay:null,birthDay:null,canonical:true,reason:'Une grossesse est biologiquement possible mais reste non confirmée.'};
+  if(trying)return{state:'trying',cycle,possibleDay:null,confirmedDay:null,birthDay:null,canonical:true,reason:'Un projet bébé est actif sans grossesse connue.'};
+  return{state:'none',cycle,possibleDay:null,confirmedDay:null,birthDay:null,canonical:true,reason:'Aucune grossesse active n’est enregistrée.'};
+}
+
+function clearActivePregnancyFlags(f:Record<string,unknown>){
+  f.pregnancyPossible=false;f.pregnancyConfirmed=false;f.postpartum=false;f.pregnancyLoss=false;f.inLabor=false;
+  delete f.pregnancyPossibleDay;delete f.pregnancyTestEarliestDay;delete f.pregnancyConfirmedDay;delete f.pregnancyStartDay;delete f.birthDay;delete f.postpartumStartDay;delete f.postpartumRecoveryUntilDay;
 }
 
 export function getPregnancyState(save?:Save|null){const s=save===undefined?read():save;return s?derive(s):null}
@@ -40,14 +46,28 @@ export function syncPregnancyState(save?:Save|null){
 }
 
 export function setPregnancyState(state:CanonicalPregnancyState,day?:number){
-  const s=read();if(!s)return false;const f=s.flags||(s.flags={}),d=Math.max(1,n(day,n(s.day,1)));
-  if(state==='trying'){f.familyState='trying';f.tryingForBaby=true;f.familyTryingDay=n(f.familyTryingDay,d)}
-  if(state==='possible'){f.pregnancyPossible=true;f.pregnancyPossibleDay=d;f.pregnancyTestEarliestDay=n(f.pregnancyTestEarliestDay,d+10)}
-  if(state==='confirmed'){f.pregnancyConfirmed=true;f.pregnancyConfirmedDay=d;f.pregnancyStartDay=d;f.familyState='pregnant';f.pregnancyPossible=false}
-  if(state==='postpartum'){f.postpartum=true;f.birthDay=d;f.familyState='postpartum';f.pregnancyConfirmed=false;f.pregnancyPossible=false}
-  if(state==='loss'){f.pregnancyLoss=true;f.familyState='thinking';f.pregnancyConfirmed=false;f.pregnancyPossible=false}
-  if(state==='none'){f.familyState='closed';f.tryingForBaby=false;f.pregnancyPossible=false;f.pregnancyConfirmed=false;f.postpartum=false;f.pregnancyLoss=false}
-  s.eventHistory=[...(s.eventHistory||[]),`pregnancy-state:${state}:${d}`].slice(-240);write(s);return true;
+  const s=read();if(!s)return false;const f=s.flags||(s.flags={}),d=Math.max(1,n(day,n(s.day,1)));const previous=derive(s);
+  if(state==='trying'){
+    const startingNewCycle=previous.state==='none'||previous.state==='postpartum'||previous.state==='loss'||String(f.familyState||'')==='parenting';
+    if(startingNewCycle){f.pregnancyCycle=Math.max(1,cycleOf(s)+1);clearActivePregnancyFlags(f);f.lastConceptionRollDay=-999;f.qualifyingConceptionEvent=false;}
+    f.familyState='trying';f.tryingForBaby=true;f.familyTryingDay=d;
+  }
+  if(state==='possible'){
+    if(cycleOf(s)<=0)f.pregnancyCycle=1;
+    f.postpartum=false;f.pregnancyLoss=false;f.pregnancyPossible=true;f.pregnancyPossibleDay=d;f.pregnancyTestEarliestDay=n(f.pregnancyTestEarliestDay,d+10);
+  }
+  if(state==='confirmed'){
+    if(cycleOf(s)<=0)f.pregnancyCycle=1;
+    f.postpartum=false;f.pregnancyLoss=false;f.pregnancyConfirmed=true;f.pregnancyConfirmedDay=d;f.pregnancyStartDay=d;f.familyState='pregnant';f.pregnancyPossible=false;
+  }
+  if(state==='postpartum'){f.postpartum=true;f.birthDay=d;f.lastBirthDay=d;f.familyState='postpartum';f.pregnancyConfirmed=false;f.pregnancyPossible=false;f.tryingForBaby=false}
+  if(state==='loss'){f.pregnancyLoss=true;f.familyState='thinking';f.pregnancyConfirmed=false;f.pregnancyPossible=false;f.tryingForBaby=false}
+  if(state==='none'){
+    const preserveParenting=String(f.familyState||'')==='parenting';
+    clearActivePregnancyFlags(f);f.tryingForBaby=false;
+    if(!preserveParenting)f.familyState='closed';
+  }
+  s.eventHistory=[...(s.eventHistory||[]),`pregnancy-state:${state}:cycle-${Math.max(1,cycleOf(s))}:${d}`].slice(-420);write(s);return true;
 }
 
 window.setTimeout(()=>syncPregnancyState(),900);
