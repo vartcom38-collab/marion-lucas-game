@@ -4,18 +4,19 @@ import './life-narrative-ui';
 
 const SAVE_KEY='marion-lucas-save-v4';
 
-type Msg={from?:string;text?:string;read?:boolean;day?:number};
-type SaveShape={messages?:Msg[];phoneUnread?:number;time?:string};
+type Msg={from?:string;text?:string;read?:boolean;day?:number;thread?:string};
+type SaveShape={messages?:Msg[];time?:string};
 
 function readSave():SaveShape{
   try{return JSON.parse(localStorage.getItem(SAVE_KEY)||'{}') as SaveShape}catch{return{}}
 }
 
-function latestUnread(){
+function unreadMessages(){
   const save=readSave();
-  const list=[...(save.messages||[])];
-  return list.find(m=>m&&m.read===false&&m.text)||null;
+  return [...(save.messages||[])].filter(m=>m&&m.from!=='Toi'&&m.read===false&&Boolean(m.text));
 }
+
+function latestUnread(){return unreadMessages()[0]||null}
 
 function findMessagesButton(phone:HTMLElement){
   return phone.querySelector<HTMLButtonElement>('.iphoneAppMessages')||
@@ -27,17 +28,17 @@ function ensureBanner(phone:HTMLElement){
     phone.querySelector('.iphoneNotificationBanner')?.remove();
     return;
   }
-  const msg=latestUnread();
-  const count=Math.max(0,Number(readSave().phoneUnread||0));
+  const unread=unreadMessages();
+  const msg=unread[0]||null;
   const existing=phone.querySelector<HTMLElement>('.iphoneNotificationBanner');
-  if(!msg||count<=0){existing?.remove();return}
-  const sender=(msg.from||'Messages').trim()||'Messages';
+  if(!msg||unread.length<=0){existing?.remove();return}
+  const sender=(msg.thread||msg.from||'Messages').trim()||'Messages';
   const text=(msg.text||'').trim();
   const banner=existing||document.createElement('button');
   banner.className='iphoneNotificationBanner';
   banner.setAttribute('type','button');
   banner.setAttribute('aria-label',`Ouvrir le message de ${sender}`);
-  banner.innerHTML=`<span class="iphoneNotifIcon">💬</span><span class="iphoneNotifText"><strong>${sender}</strong><small>maintenant</small><em>${text}</em></span>`;
+  banner.innerHTML=`<span class="iphoneNotifIcon">💬</span><span class="iphoneNotifText"><strong>${sender}</strong><small>${unread.length>1?`${unread.length} non lus`:'maintenant'}</small><em>${text}</em></span>`;
   if(!existing)phone.prepend(banner);
 }
 
