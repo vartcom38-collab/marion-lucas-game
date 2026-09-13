@@ -19,6 +19,10 @@ export type SceneRouteInput = {
   recentMessages?: string[];
   recentEvents?: string[];
   memories?: string[];
+  /** Canonical physical-presence decision from lucas-presence-engine. */
+  lucasTogether?: boolean;
+  /** When true, text is never allowed to override the canonical presence state. */
+  lucasPresenceKnown?: boolean;
 };
 
 export type SceneRouteDecision = {
@@ -36,7 +40,7 @@ function text(input: SceneRouteInput) {
     .toLowerCase();
 }
 
-function explicitCoPresence(input: SceneRouteInput, haystack: string) {
+function textualCoPresence(input: SceneRouteInput, haystack: string) {
   const place = (input.place || '').toLowerCase();
   if (/estate|finca|family/.test(place) && /ensemble|avec lucas|lucas est là|lucas arrive|lucas rentre|retrouv/.test(haystack)) return true;
   return /ensemble au même endroit|dans la même pièce|à côté de lucas|avec lucas|lucas est là|lucas arrive|lucas rentre|ils se retrouvent|retrouvent lucas/.test(haystack);
@@ -44,7 +48,11 @@ function explicitCoPresence(input: SceneRouteInput, haystack: string) {
 
 export function routeSceneFromGameState(input: SceneRouteInput): SceneRouteDecision {
   const haystack = text(input);
-  const coPresence = explicitCoPresence(input, haystack);
+  // Physical presence is a state fact, not a narrative guess. Once the presence
+  // engine has answered, old messages/memories cannot make Lucas appear visually.
+  const coPresence = input.lucasPresenceKnown
+    ? input.lucasTogether === true
+    : textualCoPresence(input, haystack);
   const familyContext = Number(input.children || 0) > 0 && /enfant|bébé|fille|fils|famille|parent/.test(haystack);
   const relation = Number(input.relationship || 0);
   const chemistry = Number(input.chemistry || 0);
@@ -60,7 +68,7 @@ export function routeSceneFromGameState(input: SceneRouteInput): SceneRouteDecis
   if (familyContext && coPresence) {
     return {
       route: 'family-drama',
-      reason: 'Contexte familial explicite avec co-présence confirmée.',
+      reason: 'Contexte familial avec co-présence physique de Lucas confirmée par le moteur de présence.',
       physicalCoPresence: true,
       familyContext: true,
       intimacyLevel,
@@ -71,7 +79,7 @@ export function routeSceneFromGameState(input: SceneRouteInput): SceneRouteDecis
   if (coPresence) {
     return {
       route: 'couple-drama',
-      reason: 'Marion et Lucas sont explicitement présents ensemble dans le contexte.',
+      reason: 'La présence physique de Lucas avec Marion est confirmée par l’état de jeu.',
       physicalCoPresence: true,
       familyContext: false,
       intimacyLevel,
@@ -90,10 +98,10 @@ export function routeSceneFromGameState(input: SceneRouteInput): SceneRouteDecis
     };
   }
 
-  if (soloSignal) {
+  if (soloSignal && !input.lucasPresenceKnown) {
     return {
       route: 'lucas-solo-drama',
-      reason: 'Moment de vie de Lucas explicite sans co-présence de Marion.',
+      reason: 'Moment de vie de Lucas explicite sans état de présence canonique disponible.',
       physicalCoPresence: false,
       familyContext: false,
       intimacyLevel: 'none',
@@ -101,10 +109,12 @@ export function routeSceneFromGameState(input: SceneRouteInput): SceneRouteDecis
     };
   }
 
-  if (/lieu|appartement|fenêtre|ville|nuit|matin|pluie|soleil|ambiance/.test(haystack)) {
+  if (/lieu|appartement|fenêtre|ville|nuit|matin|pluie|soleil|ambiance/.test(haystack) || input.lucasPresenceKnown) {
     return {
       route: 'environment-beat',
-      reason: 'Le contexte soutient une respiration visuelle du monde plutôt qu’une scène personnage.',
+      reason: input.lucasPresenceKnown
+        ? 'Lucas n’est pas physiquement avec Marion : le visuel reste centré sur le lieu de Marion et exclut Lucas.'
+        : 'Le contexte soutient une respiration visuelle du monde plutôt qu’une scène personnage.',
       physicalCoPresence: false,
       familyContext: false,
       intimacyLevel: 'none',
