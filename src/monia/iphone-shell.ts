@@ -52,11 +52,16 @@ function classifyApps(phone:HTMLElement){
 
 function enhanceConversation(phone:HTMLElement){
   const thread=phone.querySelector<HTMLElement>('.smsThread');
-  if(!thread)return;
+  if(!thread){
+    phone.classList.remove('iphoneConversation');
+    phone.querySelector('.iphoneConversationHeader')?.remove();
+    return;
+  }
   phone.classList.add('iphoneConversation');
   const parent=thread.parentElement;
   if(parent&&!parent.querySelector(':scope > .iphoneConversationHeader')){
-    const name=phone.textContent?.match(/Marine|Lucas/)?.[0]||'Messages';
+    const legacyName=parent.querySelector<HTMLElement>('.nativeThreadHead strong')?.textContent?.trim()||'';
+    const name=legacyName||phone.textContent?.match(/Marine|Lucas/)?.[0]||'Messages';
     const header=document.createElement('div');
     header.className='iphoneConversationHeader';
     header.innerHTML=`<button type="button" class="iphoneBack" aria-label="Retour">‹</button><div class="iphoneContactAvatar">${name.charAt(0)}</div><div class="iphoneContactMeta"><strong>${name}</strong><span>iMessage</span></div><button type="button" class="iphoneCall" aria-label="Appeler">⌕</button><button type="button" class="iphoneVideo" aria-label="Visio">▭</button>`;
