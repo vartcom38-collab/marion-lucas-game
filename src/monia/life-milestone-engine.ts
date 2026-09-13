@@ -1,3 +1,4 @@
+import './birthday-life';
 import { getLifeAgeSnapshot } from './life-age-engine';
 import { getChildrenLife, type ChildLifeSnapshot } from './children-life';
 
