@@ -1,5 +1,9 @@
 import type { DramaStudioComposition, DramaStudioClip } from './drama-studio';
 
+const APPROVED_URL='./config/drama-approved.json';
+type ApprovedEntry={id?:string;title?:string;media?:string[];clips?:string[]};
+type ApprovedManifest={status?:string;policy?:{auto_publish_live?:boolean;gameplay_authority_required?:boolean;approval_required?:boolean};entries?:ApprovedEntry[]};
+
 function sleep(ms: number) {
   return new Promise(resolve => window.setTimeout(resolve, ms));
 }
@@ -73,6 +77,20 @@ function createVisual(clip: DramaStudioClip) {
   return { wrapper, video: media instanceof HTMLVideoElement ? media : null };
 }
 
+async function approvedEntryFor(composition:DramaStudioComposition){
+  try{
+    const r=await fetch(`${APPROVED_URL}?v=2`,{cache:'no-cache',credentials:'same-origin'});
+    if(!r.ok)return null;
+    const manifest=await r.json() as ApprovedManifest;
+    if(manifest.status!=='locked'||manifest.policy?.approval_required!==true||manifest.policy?.gameplay_authority_required!==true)return null;
+    const entry=(manifest.entries||[]).find(e=>e.title===composition.title||e.id===composition.title);
+    if(!entry)return null;
+    const allowed=new Set([...(entry.media||[]),...(entry.clips||[])]);
+    if(allowed.size&&composition.clips.some(c=>!c.media||!allowed.has(c.media.src)))return null;
+    return entry;
+  }catch{return null}
+}
+
 export class MonIADramaPlayer {
   private cancelled = false;
   private raf = 0;
@@ -88,6 +106,15 @@ export class MonIADramaPlayer {
     this.cancelled = false;
     mount.innerHTML = '';
 
+    if(!composition.playable||composition.clips.length===0||composition.clips.some(clip=>!clip.media)){
+      console.warn('[Drama Player] blocked incomplete live composition',composition.title);
+      return false;
+    }
+    if(!await approvedEntryFor(composition)){
+      console.warn('[Drama Player] blocked unapproved live composition',composition.title);
+      return false;
+    }
+
     const stage = document.createElement('div');
     stage.className = 'moniaDramaStage';
     Object.assign(stage.style, {
@@ -100,17 +127,8 @@ export class MonIADramaPlayer {
     for (const clip of composition.clips) {
       if (this.cancelled) break;
       stage.innerHTML = '';
-      if (!clip.media) {
-        const missing = document.createElement('div');
-        missing.textContent = 'Plan visuel à enrichir';
-        Object.assign(missing.style, {display:'grid',placeItems:'center',height:'100%',opacity:'.55'});
-        stage.appendChild(missing);
-        await sleep(clip.duration * 1000);
-        continue;
-      }
-
       const visual = createVisual(clip);
-      if (!visual) continue;
+      if (!visual) { this.stop(); mount.innerHTML=''; return false; }
       stage.appendChild(visual.wrapper);
 
       const start = performance.now();
@@ -124,12 +142,13 @@ export class MonIADramaPlayer {
       this.raf = requestAnimationFrame(animate);
 
       if (visual.video) {
-        try { await visual.video.play(); } catch { /* image/first frame remains usable */ }
+        try { await visual.video.play(); } catch { /* approved first frame remains usable */ }
       }
       if (clip.dialogue) speak(clip.dialogue);
       await sleep(durationMs);
       visual.video?.pause();
     }
+    return !this.cancelled;
   }
 }
 
