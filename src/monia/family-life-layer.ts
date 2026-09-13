@@ -1,5 +1,6 @@
 import './property-life';
 import { getLifeAgeSnapshot } from './life-age-engine';
+import { getPregnancyState, setPregnancyState } from './pregnancy-state';
 
 const SAVE_KEY='marion-lucas-save-v4';
 
@@ -21,16 +22,21 @@ function n(v:unknown,fallback=0){const x=Number(v);return Number.isFinite(x)?x:f
 export function getFamilyLifeOpportunity():FamilyOpportunity|null{
   const s=readSave();if(!s)return null;
   const f=s.flags||(s.flags={});const day=Math.max(1,n(s.day,1));
-  const state=String(f.familyState||'closed') as FamilyState;
+  const pregnancy=getPregnancyState(s);
+  let state=String(f.familyState||'closed') as FamilyState;
+  if(pregnancy?.state==='confirmed')state='pregnant';
+  else if(pregnancy?.state==='postpartum')state='postpartum';
+  else if(pregnancy?.state==='trying'||pregnancy?.state==='possible')state='trying';
   const relationship=n(s.relationship),trust=n(s.trust),marionAge=getLifeAgeSnapshot(s).marionAge;
   if(!s.married&&state==='closed')return{state:'closed',eligible:false,surpriseEligible:false,reason:'Le projet familial reste fermé tant que le couple ne l’a pas réellement ouvert.'};
   if(state==='closed')return{state:'thinking',eligible:true,surpriseEligible:false,reason:'Le sujet peut être évoqué sans imposer de décision.'};
   if(state==='thinking')return{state:'thinking',eligible:relationship>=58&&trust>=52,surpriseEligible:false,reason:'Le couple peut choisir d’essayer, de patienter ou de ne pas vouloir d’enfant.'};
   if(state==='trying'){
     const since=n(f.familyTryingDay,day),wait=Math.max(0,day-since),cooldown=n(f.familyNextCheckDay,since+28);
-    return{state:'trying',eligible:day>=cooldown,surpriseEligible:day>=cooldown,reason:wait<30?'Le projet est récent; rien ne doit être instantané.':'Une nouvelle fenêtre naturelle peut être évaluée.',nextCheckDay:cooldown,possibleOutcomes:['not-yet','pregnancy','pause-project']};
+    const hiddenPossible=pregnancy?.state==='possible';
+    return{state:'trying',eligible:!hiddenPossible&&day>=cooldown,surpriseEligible:!hiddenPossible&&day>=cooldown,reason:hiddenPossible?'Une grossesse possible existe mais reste inconnue : le projet familial ne doit pas révéler ce secret.':wait<30?'Le projet est récent; rien ne doit être instantané.':'Une nouvelle fenêtre naturelle peut être évaluée.',nextCheckDay:hiddenPossible?undefined:cooldown,possibleOutcomes:['not-yet','pregnancy','pause-project']};
   }
-  if(state==='pregnant')return{state:'pregnant',eligible:true,surpriseEligible:true,reason:'La grossesse évolue par étapes; les informations importantes peuvent rester des surprises.',possibleOutcomes:['single-pregnancy','twins','girl','boy','keep-sex-secret','complication','loss']};
+  if(state==='pregnant')return{state:'pregnant',eligible:true,surpriseEligible:true,reason:'La grossesse confirmée évolue par étapes; les informations importantes peuvent rester des surprises.',possibleOutcomes:['single-pregnancy','twins','girl','boy','keep-sex-secret','complication','loss']};
   if(state==='postpartum')return{state:'postpartum',eligible:true,surpriseEligible:false,reason:'La priorité est l’adaptation au nouveau rythme, au repos et au couple.'};
   if(state==='parenting')return{state:'parenting',eligible:true,surpriseEligible:true,reason:`La famille évolue avec l’âge des enfants et les étapes de vie de Marion (${marionAge} ans).`};
   return{state:'closed',eligible:false,surpriseEligible:false,reason:'Aucune fenêtre familiale active.'};
@@ -42,10 +48,14 @@ export function markFamilyDecision(decision:'open'|'try'|'wait'|'stop'|'pregnant
   if(decision==='try'){f.familyState='trying';f.familyTryingDay=day;f.familyNextCheckDay=day+28;}
   if(decision==='wait'){f.familyState='thinking';f.familyNextConversationDay=day+60;}
   if(decision==='stop'){f.familyState='closed';f.familyChoiceStoppedDay=day;}
-  if(decision==='pregnant'){f.familyState='pregnant';f.pregnancyStartDay=day;}
-  if(decision==='postpartum'){f.familyState='postpartum';f.birthDay=day;}
   if(decision==='parenting'){f.familyState='parenting';}
-  try{localStorage.setItem(SAVE_KEY,JSON.stringify(s));window.dispatchEvent(new Event('storage'));return true}catch{return false}
+  try{
+    localStorage.setItem(SAVE_KEY,JSON.stringify(s));
+    if(decision==='try')setPregnancyState('trying',day);
+    if(decision==='pregnant')setPregnancyState('confirmed',day);
+    if(decision==='postpartum')setPregnancyState('postpartum',day);
+    window.dispatchEvent(new Event('storage'));return true
+  }catch{return false}
 }
 
 declare global{interface Window{__moniaFamilyLife?:()=>FamilyOpportunity|null;__moniaFamilyDecision?:(decision:'open'|'try'|'wait'|'stop'|'pregnant'|'postpartum'|'parenting')=>boolean}}
