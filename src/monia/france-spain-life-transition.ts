@@ -1,3 +1,5 @@
+import { isNimesPlace, isSpainPlace } from './spain-geography';
+
 const SAVE_KEY='marion-lucas-save-v4';
 
 type Save={day?:number;time?:string;place?:string;metLucas?:boolean;official?:boolean;relationship?:number;trust?:number;calendar?:Array<{day?:number;time?:string;owner?:string;title?:string;place?:string}>;flags?:Record<string,unknown>;eventHistory?:string[]};
@@ -6,14 +8,12 @@ export type FranceSpainState={phase:FranceSpainPhase;nimesIsHome:boolean;spainIs
 
 function read():Save|null{try{const raw=localStorage.getItem(SAVE_KEY);return raw?JSON.parse(raw) as Save:null}catch{return null}}
 function n(v:unknown,f=0){const x=Number(v);return Number.isFinite(x)?x:f}
-function inNimes(place:string){return /home|nimes|cafe|arenes|station/i.test(place)}
-function inSpain(place:string){return /madrid|spain|finca|estate|family|sevill|andal|salam|hotel/i.test(place)}
 function recent(s:Save,rx:RegExp){return (s.eventHistory||[]).slice(-30).some(e=>rx.test(String(e)))}
 
 export function getFranceSpainState():FranceSpainState|null{
   const s=read();if(!s)return null;const place=String(s.place||'home');const f=s.flags||{};const day=n(s.day,1);
-  const nimes=inNimes(place),spain=inSpain(place);const relationship=n(s.relationship),trust=n(s.trust);
-  const hasSpainOpened=!!f.spainLifeOpened||spain||recent(s,/spain|madrid|espagne|move-spain|travel-spain/i);
+  const nimes=isNimesPlace(place)||place==='home',spain=isSpainPlace(place);const relationship=n(s.relationship),trust=n(s.trust);
+  const hasSpainOpened=!!f.spainLifeOpened||spain||recent(s,/spain|madrid|espagne|sevill|andal|salamanca|move-spain|travel-spain/i);
   const hasSpainRoot=!!f.spainHomeEstablished||recent(s,/spain-home-established|moved-to-spain/i);
   let phase:FranceSpainPhase='nimes-rooted';
   if(hasSpainRoot&&nimes)phase='between-bases';else if(hasSpainRoot)phase='spain-rooted';else if(spain)phase='transitioning';else if(hasSpainOpened)phase='spain-opening';
@@ -29,8 +29,8 @@ export function getFranceSpainState():FranceSpainState|null{
   return{phase,nimesIsHome:!hasSpainRoot||nimes,spainIsHome:hasSpainRoot,marineDistance:nimes?'same-city':'distance',canPrepareSpain,canReturnNimes,travelFriction:friction,suggestions,reason};
 }
 
-export function markSpainLifeOpened(){const s=read();if(!s)return false;const f=s.flags||(s.flags={});f.spainLifeOpened=true;f.spainLifeOpenedDay=n(s.day,1);try{localStorage.setItem(SAVE_KEY,JSON.stringify(s));window.dispatchEvent(new Event('storage'));return true}catch{return false}}
-export function markSpainHomeEstablished(){const s=read();if(!s)return false;const f=s.flags||(s.flags={});f.spainLifeOpened=true;f.spainHomeEstablished=true;f.spainHomeEstablishedDay=n(s.day,1);s.eventHistory=[...(s.eventHistory||[]),'spain-home-established'].slice(-200);try{localStorage.setItem(SAVE_KEY,JSON.stringify(s));window.dispatchEvent(new Event('storage'));return true}catch{return false}}
+export function markSpainLifeOpened(){const s=read();if(!s)return false;const f=s.flags||(s.flags={});f.spainLifeOpened=true;if(!n(f.spainLifeOpenedDay))f.spainLifeOpenedDay=n(s.day,1);try{localStorage.setItem(SAVE_KEY,JSON.stringify(s));window.dispatchEvent(new CustomEvent('monia:save-changed',{detail:{key:SAVE_KEY}}));return true}catch{return false}}
+export function markSpainHomeEstablished(){const s=read();if(!s)return false;const f=s.flags||(s.flags={});f.spainLifeOpened=true;if(!n(f.spainLifeOpenedDay))f.spainLifeOpenedDay=n(s.day,1);f.spainHomeEstablished=true;f.spainHomeEstablishedDay=n(s.day,1);s.eventHistory=[...(s.eventHistory||[]),'spain-home-established'].slice(-200);try{localStorage.setItem(SAVE_KEY,JSON.stringify(s));window.dispatchEvent(new CustomEvent('monia:save-changed',{detail:{key:SAVE_KEY}}));return true}catch{return false}}
 
 declare global{interface Window{__moniaFranceSpainState?:()=>FranceSpainState|null;__moniaOpenSpainLife?:()=>boolean;__moniaEstablishSpainHome?:()=>boolean}}
 window.__moniaFranceSpainState=getFranceSpainState;window.__moniaOpenSpainLife=markSpainLifeOpened;window.__moniaEstablishSpainHome=markSpainHomeEstablished;
