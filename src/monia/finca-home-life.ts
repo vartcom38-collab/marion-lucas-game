@@ -10,11 +10,11 @@ type FincaState={version:1;propertyId?:string;settledDay?:number;care:number;com
 type Save={day?:number;time?:string;place?:string;screen?:string;energy?:number;stress?:number;relationship?:number;flags?:Record<string,unknown>};
 
 const DEFAULT: FincaState={version:1,care:15,comfort:20,identity:10,visits:0,upgrades:[],spaceUses:{courtyard:0,living:0,kitchen:0,grounds:0,annex:0}};
-const FINCA_HERO:Record<string,string>={
-  'Finca de chênes et pâtures':'salamanca-finca-exterior',
-  'Finca blanche près de Tolède':'toledo-finca-exterior',
-  'Domaine en Estrémadure':'extremadura-estate-exterior',
-  'Maison andalouse avec terres':'jerez-finca-exterior',
+const FINCA_VIEWS:Record<string,Record<'hero'|FincaSpace,string>>={
+  'Finca de chênes et pâtures':{hero:'salamanca-finca-exterior',courtyard:'salamanca-finca-patio',living:'salamanca-finca-patio',kitchen:'salamanca-finca-patio',grounds:'salamanca-finca-land',annex:'salamanca-finca-land'},
+  'Finca blanche près de Tolède':{hero:'toledo-finca-exterior',courtyard:'toledo-finca-patio',living:'toledo-finca-patio',kitchen:'toledo-finca-patio',grounds:'toledo-finca-olive',annex:'toledo-finca-olive'},
+  'Domaine en Estrémadure':{hero:'extremadura-estate-exterior',courtyard:'extremadura-estate-courtyard',living:'extremadura-estate-courtyard',kitchen:'extremadura-estate-courtyard',grounds:'extremadura-estate-land',annex:'extremadura-estate-land'},
+  'Maison andalouse avec terres':{hero:'jerez-finca-exterior',courtyard:'jerez-finca-courtyard',living:'jerez-finca-courtyard',kitchen:'jerez-finca-courtyard',grounds:'jerez-finca-land',annex:'jerez-finca-land'},
 };
 function readSave():Save|null{try{const raw=localStorage.getItem(SAVE_KEY);return raw?JSON.parse(raw) as Save:null}catch{return null}}
 function writeSave(s:Save){try{localStorage.setItem(SAVE_KEY,JSON.stringify(s));window.dispatchEvent(new Event('storage'));window.dispatchEvent(new CustomEvent('monia:finca-home-changed'));return true}catch{return false}}
@@ -57,13 +57,19 @@ function contextualSpaces(save:Save,state:FincaState):FincaSpace[]{
 function shouldShowSceneActions(){const save=readSave();return Boolean(currentFinca()&&save&&save.place==='estate'&&(save.screen===undefined||save.screen==='game'));}
 function sceneHost(){return document.querySelector<HTMLElement>('.worldScene,.worldStage,.worldFrame,.gameWorld,.gameScene')||document.querySelector<HTMLElement>('#app')||document.body}
 function removeSceneActions(){document.getElementById('moniaFincaSceneActions')?.remove()}
+function currentViewKey(save:Save,fincaName:string){
+  const views=FINCA_VIEWS[fincaName];if(!views)return null;
+  const last=save.flags?.lastFincaHomeAction;
+  if(last==='courtyard'||last==='living'||last==='kitchen'||last==='grounds'||last==='annex')return views[last];
+  return views.hero;
+}
 function syncEstateVisual(){
   const save=readSave(),finca=currentFinca();if(!save||save.place!=='estate'||!finca)return;
-  const key=FINCA_HERO[finca.name];if(!key)return;const src=PROPERTY_VISUAL_ASSETS[key]||`./resources/properties/${key}.webp`;
+  const key=currentViewKey(save,finca.name);if(!key)return;const src=PROPERTY_VISUAL_ASSETS[key]||`./resources/properties/${key}.webp`;
   const photo=document.querySelector<HTMLImageElement>('img.worldPhoto,.worldPhoto img,img[data-world-photo]');
-  if(photo&&photo.dataset.fincaBound!=='1'){photo.dataset.fincaBound='1';photo.src=src;photo.alt=finca.name;}
+  if(photo&&photo.dataset.fincaViewKey!==key){photo.dataset.fincaViewKey=key;photo.src=src;photo.alt=finca.name;}
   const background=document.querySelector<HTMLElement>('.worldPhoto:not(img),.worldBackdrop,.worldSceneBackground');
-  if(background&&background.dataset.fincaBound!=='1'){background.dataset.fincaBound='1';background.style.backgroundImage=`url("${src}")`;}
+  if(background&&background.dataset.fincaViewKey!==key){background.dataset.fincaViewKey=key;background.style.backgroundImage=`url("${src}")`;}
 }
 function renderSceneActions(){
   if(!shouldShowSceneActions()){removeSceneActions();return}
@@ -72,7 +78,7 @@ function renderSceneActions(){
   const spaces=contextualSpaces(save,state);
   const mood=state.identity>=45?'Chez eux':state.comfort>=40?'Ils prennent leurs habitudes':'Encore nouveau';
   root.innerHTML=`<div class="fincaSceneStatus"><span>${esc(mood)}</span><small>${esc(String(save.time||''))}</small></div><div class="fincaSceneButtons">${spaces.map(space=>`<button data-finca-scene-space="${space}" title="${esc(ACTIONS[space].label)}"><b>${esc(ACTIONS[space].short)}</b><small>${ACTIONS[space].minutes} min</small></button>`).join('')}<button class="fincaSceneMore" data-finca-scene-more title="Voir toute la finca"><b>•••</b><small>Maison</small></button></div>`;
-  root.querySelectorAll<HTMLButtonElement>('[data-finca-scene-space]').forEach(btn=>btn.onclick=e=>{e.stopPropagation();const space=btn.dataset.fincaSceneSpace as FincaSpace;if(doFincaHomeAction(space)){renderSceneActions()}});
+  root.querySelectorAll<HTMLButtonElement>('[data-finca-scene-space]').forEach(btn=>btn.onclick=e=>{e.stopPropagation();const space=btn.dataset.fincaSceneSpace as FincaSpace;if(doFincaHomeAction(space)){syncEstateVisual();renderSceneActions()}});
   root.querySelector<HTMLButtonElement>('[data-finca-scene-more]')?.addEventListener('click',e=>{e.stopPropagation();openFincaHome()});
 }
 
