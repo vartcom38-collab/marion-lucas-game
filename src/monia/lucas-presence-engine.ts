@@ -1,4 +1,5 @@
 import { resolveLucasHomeRhythm } from './lucas-home-rhythm';
+import '../social-presence-state';
 
 const SAVE_KEY='marion-lucas-save-v4';
 
