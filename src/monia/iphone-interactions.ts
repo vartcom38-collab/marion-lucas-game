@@ -14,8 +14,18 @@ function readMessageUnread(){
   }catch{return 0}
 }
 
+function readSave(){try{return JSON.parse(localStorage.getItem(SAVE_KEY)||'{}') as Record<string,unknown>}catch{return{}}}
 function labelOf(button:HTMLButtonElement){
   return `${button.getAttribute('aria-label')||''} ${button.title||''} ${button.textContent||''}`.toLowerCase().replace(/\s+/g,' ').trim();
+}
+function conversationContact(phone:HTMLElement){
+  return (phone.querySelector<HTMLElement>('.iphoneContactMeta strong')?.textContent||phone.querySelector<HTMLElement>('.nativeThreadHead strong')?.textContent||'').trim();
+}
+function relationshipAllows(phone:HTMLElement,kind:'call'|'video'){
+  if(kind==='video')return true;
+  const contact=conversationContact(phone);if(!contact)return true;
+  const runtime=window.__marionRelationshipPhone;
+  return runtime?.contactAllowed?runtime.contactAllowed(readSave() as never,contact,'call'):true;
 }
 
 function realButtons(phone:HTMLElement){
@@ -35,9 +45,11 @@ function findRealAction(phone:HTMLElement,kind:'back'|'call'|'video'){
 function wireProxy(phone:HTMLElement,selector:string,kind:'back'|'call'|'video'){
   const proxy=phone.querySelector<HTMLButtonElement>(selector);
   if(!proxy)return;
-  const target=findRealAction(phone,kind);
+  const relationshipBlocked=(kind==='call'||kind==='video')&&!relationshipAllows(phone,kind);
+  const target=relationshipBlocked?null:findRealAction(phone,kind);
   proxy.classList.toggle('iphoneProxyUnavailable',!target);
   proxy.dataset.iphoneProxyReady=target?'1':'0';
+  if(relationshipBlocked)proxy.setAttribute('aria-label','Indisponible pour le moment');
 }
 
 function unreadBadge(phone:HTMLElement){
@@ -49,7 +61,6 @@ function unreadBadge(phone:HTMLElement){
   if(!badge){
     badge=document.createElement('span');
     badge.className='iphoneUnreadBadge';
-    badge.setAttribute('aria-label',`${count} message${count>1?'s':''} non lu${count>1?'s':''}`);
     app.append(badge);
   }
   badge.setAttribute('aria-label',`${count} message${count>1?'s':''} non lu${count>1?'s':''}`);
@@ -79,6 +90,7 @@ function enhance(phone:HTMLElement){
 function activateProxy(button:HTMLButtonElement,phone:HTMLElement){
   const kind=button.classList.contains('iphoneBack')?'back':button.classList.contains('iphoneCall')?'call':button.classList.contains('iphoneVideo')?'video':null;
   if(!kind)return false;
+  if((kind==='call'||kind==='video')&&!relationshipAllows(phone,kind))return true;
   const target=findRealAction(phone,kind);
   if(!target)return true;
   target.click();
