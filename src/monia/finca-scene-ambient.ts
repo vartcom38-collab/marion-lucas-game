@@ -1,4 +1,5 @@
 import './finca-scene-ambient.css';
+import './nimes-home-life';
 
 const SAVE_KEY='marion-lucas-save-v4';
 type FincaSpace='courtyard'|'living'|'kitchen'|'grounds'|'annex';
