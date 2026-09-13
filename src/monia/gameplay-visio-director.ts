@@ -8,6 +8,7 @@ const VISIO_KEY='monia-last-visio-v1';
 const VISIO_MEDIA_KEY='monia-last-visio-media-v1';
 const REQUEST_EVENT='marion-lucas:gameplay-visio';
 const READY_EVENT='marion-lucas:gameplay-visio-ready';
+const APPROVAL_MANIFEST_NAME='monia-visio-approved.json';
 
 type LooseSave={day?:number;time?:string;place?:string;relationship?:number;trust?:number;chemistry?:number;memories?:string[];eventHistory?:string[];outfit?:string;flags?:Record<string,string|number|boolean>};
 export type GameplayVisioRequest={source:'gameplay';id:string;reason:string;priority?:'normal'|'important';validForMinutes?:number;requiredPlace?:string;relationshipMin?:number;contextHint?:string};
@@ -60,10 +61,7 @@ async function prepare(request:GameplayVisioRequest){
     const authorizedAt=Date.now();
     const validForMinutes=Math.max(1,Math.min(30,Number(request.validForMinutes||8)));
     const ticket:GameplayVisioMediaTicket={state:'ready',videoUrl:freshClip.src,source:'approved-manifest',requestId:request.id,signature:sig,authorizedAt,expiresAt:authorizedAt+validForMinutes*60_000};
-    try{
-      sessionStorage.setItem(VISIO_KEY,JSON.stringify(result.response));
-      sessionStorage.setItem(VISIO_MEDIA_KEY,JSON.stringify(ticket));
-    }catch{}
+    try{sessionStorage.setItem(VISIO_KEY,JSON.stringify(result.response));sessionStorage.setItem(VISIO_MEDIA_KEY,JSON.stringify(ticket))}catch{}
     window.dispatchEvent(new CustomEvent<GameplayVisioReady>(READY_EVENT,{detail:{request,result:result.response,signature:sig}}));
   }catch(error){console.warn('[Visio Director] gameplay visio preparation failed',error);clearTicket()}finally{running=false}
 }
@@ -71,16 +69,9 @@ async function prepare(request:GameplayVisioRequest){
 window.addEventListener(REQUEST_EVENT,((event:Event)=>{const request=(event as CustomEvent<GameplayVisioRequest>).detail;if(request?.source==='gameplay')void prepare(request)}) as EventListener);
 
 export function requestGameplayVisio(request:Omit<GameplayVisioRequest,'source'>){window.dispatchEvent(new CustomEvent<GameplayVisioRequest>(REQUEST_EVENT,{detail:{...request,source:'gameplay'}}))}
-export function readGameplayVisioTicket():GameplayVisioMediaTicket|null{
-  try{
-    const raw=sessionStorage.getItem(VISIO_MEDIA_KEY);if(!raw)return null;
-    const ticket=JSON.parse(raw) as GameplayVisioMediaTicket;
-    if(ticket.state!=='ready'||ticket.source!=='approved-manifest'||!ticket.requestId||!ticket.signature||!isApprovedLucasVisioSource(ticket.videoUrl)||Date.now()>=Number(ticket.expiresAt||0)){clearTicket();return null}
-    return ticket;
-  }catch{clearTicket();return null}
-}
+export function readGameplayVisioTicket():GameplayVisioMediaTicket|null{try{const raw=sessionStorage.getItem(VISIO_MEDIA_KEY);if(!raw)return null;const ticket=JSON.parse(raw) as GameplayVisioMediaTicket;if(ticket.state!=='ready'||ticket.source!=='approved-manifest'||!ticket.requestId||!ticket.signature||!isApprovedLucasVisioSource(ticket.videoUrl)||Date.now()>=Number(ticket.expiresAt||0)){clearTicket();return null}return ticket}catch{clearTicket();return null}}
 export function consumeGameplayVisioTicket(){const ticket=readGameplayVisioTicket();clearTicket();return ticket}
 export const GAMEPLAY_VISIO_REQUEST_EVENT=REQUEST_EVENT;
 export const GAMEPLAY_VISIO_READY_EVENT=READY_EVENT;
 
-console.info('[Visio Director] approved media handoff + gameplay gating active');
+console.info(`[Visio Director] approved media handoff + gameplay gating active · ${APPROVAL_MANIFEST_NAME}`);
