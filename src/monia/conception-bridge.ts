@@ -1,4 +1,5 @@
 import { conceptionMayRoll } from './intimacy-life-layer';
+import { setPregnancyState } from './pregnancy-state';
 
 const SAVE_KEY='marion-lucas-save-v4';
 
@@ -25,11 +26,10 @@ export function resolveConceptionWindow():ConceptionResult{
   f.qualifyingConceptionEvent=false;
   f.qualifyingConceptionEventConsumedDay=day;
   if(roll<chance){
-    f.pregnancyPossible=true;
-    f.pregnancyPossibleDay=day;
     f.pregnancyTestEarliestDay=day+10;
     s.eventHistory=[...(s.eventHistory||[]),'pregnancy-possible-hidden'].slice(-160);
     write(s);
+    setPregnancyState('possible',day);
     window.dispatchEvent(new CustomEvent('monia:pregnancy-possibility-hidden',{detail:{day,testEarliestDay:day+10}}));
     return{checked:true,possible:true,conceived:true,reason:'Une grossesse devient possible mais reste inconnue du joueur.',nextCheckDay:day+10};
   }
