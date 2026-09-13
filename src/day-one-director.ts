@@ -30,7 +30,7 @@ function seedDayOne(s:SaveLike){
   let changed=false;
   if(!s.flags.dayOneSocialSeeded){s.flags.dayOneSocialSeeded=true;changed=true}
   if(!s.flags.dayOneThread){s.flags.dayOneThread='marine_invite';changed=true}
-  if(!existing){s.messages.unshift({from:'Marine',text:invite,day:1,read:false});s.phoneUnread=Math.max(0,Number(s.phoneUnread||0))+1;changed=true}
+  if(!existing){s.messages.unshift({from:'Marine',text:invite,day:1,read:false});changed=true}
   if(!s.calendar.some(i=>i.day===1&&i.title==='Retrouver Marine près des arènes')){
     s.calendar.push({owner:'Marion',title:'Retrouver Marine près des arènes',day:1,note:'Elle t’a écrit ce matin. Tu peux la rejoindre quand tu veux.'});changed=true
   }
@@ -106,7 +106,7 @@ function showEscalation(s:SaveLike){
   const game=document.querySelector<HTMLElement>('main.game.immersivePlayable');if(!game)return;
   escalationOpen=true;s.flags.dayOneMarineCallSeen=true;
   s.messages.unshift({from:'Marine',text:'Bon 😭 je suis pas loin. Descends quand tu veux, je t’embarque.',day:1,read:false});
-  s.phoneUnread=Math.max(0,Number(s.phoneUnread||0))+1;write(s);
+  write(s);
   const veil=document.createElement('div');veil.className='dayOneCallVeil';
   veil.innerHTML=`<section class="dayOneCallCard"><span>APPEL · MARINE</span><h2>« Alors, tu viens ? »</h2><p>Elle est dehors, de bonne humeur, sans te mettre la pression. La ville bouge déjà et tu sens que rester enfermée toute la matinée serait dommage.</p><div><button id="dayOneGo" class="primary">Oui, j’arrive</button><button id="dayOneLater">Je finis un truc</button></div></section>`;
   game.appendChild(veil);
