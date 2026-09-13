@@ -22,6 +22,7 @@ import './place-ambient-signature';
 import { getContextualMemoryResonance } from './contextual-memory-resonance';
 import { getLifeDirectorSnapshot } from './life-director';
 import { getLucasDailyAvailability } from './lucas-daily-availability';
+import { getLucasPresence } from './lucas-presence-engine';
 import { routeSceneFromGameState, type MonIASceneRoute } from './scene-context-router';
 import { buildAdaptiveLucasVisioPrompt, type LucasVisioMood } from './adaptive-visio';
 
@@ -81,17 +82,18 @@ function hiddenReadiness(s:Save):HiddenLifeReadiness{
 
 export function planLifeMedia():LifeMediaOpportunity[]{
   const s=readSave();const snapshot=getLifeDirectorSnapshot();if(!s||!snapshot)return[];
-  const haystack=recentText(s);const lucasAvailability=getLucasDailyAvailability();
+  const haystack=recentText(s);const lucasAvailability=getLucasDailyAvailability();const lucasPresence=getLucasPresence();
   const routeDecision=routeSceneFromGameState({
     place:s.place,time:s.time,relationship:n(s.relationship),trust:n(s.trust),chemistry:n(s.chemistry),official:!!s.official,engaged:!!s.engaged,married:!!s.married,children:n(s.children),
-    recentMessages:(s.messages||[]).slice(0,6).map(m=>m.text||''),recentEvents:(s.eventHistory||[]).slice(-6),memories:(s.memories||[]).slice(0,6)
+    recentMessages:(s.messages||[]).slice(0,6).map(m=>m.text||''),recentEvents:(s.eventHistory||[]).slice(-6),memories:(s.memories||[]).slice(0,6),
+    lucasTogether:lucasPresence?.together===true,lucasPresenceKnown:!!lucasPresence
   });
   const out:LifeMediaOpportunity[]=[];
   const unread=(s.messages||[]).find(m=>m.read===false&&m.text);
   if(unread)out.push({id:'unread-message',channel:'message',route:'message-only',priority:100,eligible:true,approvalRequired:false,surpriseSafe:true,reason:'Un message réel existe déjà dans la sauvegarde.'});
   const resonance=getContextualMemoryResonance();
   if(resonance)out.push({id:resonance.id,channel:'ambient',route:'environment-beat',priority:34,eligible:true,approvalRequired:false,surpriseSafe:true,reason:`${resonance.narrative} Le souvenir reste une résonance du présent : aucun flashback automatique et aucune ancienne scène n’est rejouée.`});
-  if(s.metLucas&&snapshot.surpriseBudget.call){const canCall=lucasAvailability?.canCallNow!==false;out.push({id:'lucas-call-window',channel:'call',route:'visio',priority:lucasAvailability?.contactWeight||58,eligible:canCall,approvalRequired:false,surpriseSafe:true,reason:lucasAvailability?.reason||'Lucas est connu et un appel spontané peut être proposé ou initié librement.'});}
+  if(s.metLucas&&snapshot.surpriseBudget.call){const canCall=lucasAvailability?.canCallNow!==false&&!lucasPresence?.together;out.push({id:'lucas-call-window',channel:'call',route:'visio',priority:lucasAvailability?.contactWeight||58,eligible:canCall,approvalRequired:false,surpriseSafe:true,reason:lucasPresence?.together?'Lucas est physiquement avec Marion : aucun appel distant n’est proposé.':lucasAvailability?.reason||'Lucas est connu et un appel spontané peut être proposé ou initié librement.'});}
   if(s.metLucas&&snapshot.surpriseBudget.cinematic){
     const route=routeDecision.route;
     if(route!=='message-only'&&route!=='visio')out.push({id:'contextual-cinematic',channel:'cinematic',route,priority:72,eligible:true,approvalRequired:true,surpriseSafe:true,reason:routeDecision.reason});
@@ -99,7 +101,7 @@ export function planLifeMedia():LifeMediaOpportunity[]{
   if(s.metLucas&&snapshot.surpriseBudget.voice)out.push({id:'voice-candidate',channel:'voice',route:'message-only',priority:45,eligible:false,approvalRequired:true,surpriseSafe:false,reason:'Canal réservé jusqu’à validation d’une voix Lucas naturelle et stable.'});
   if(s.metLucas){
     const visioPrompt=buildAdaptiveLucasVisioPrompt({state:'speaking',mood:moodFor(s),place:String(s.place||''),timeOfDay:String(s.time||''),relationship:relationLabel(s),recentBeat:`${haystack.slice(-320)} · ${lucasAvailability?.reason||''}`.slice(-420)});
-    out.push({id:'adaptive-visio',channel:'visio',route:'visio',priority:lucasAvailability?.contactWeight||66,eligible:lucasAvailability?.canCallNow!==false,approvalRequired:true,surpriseSafe:true,reason:lucasAvailability?.reason||'La visio est adaptée au lieu, à l’heure, à la relation et au contexte récent.',prompt:visioPrompt});
+    out.push({id:'adaptive-visio',channel:'visio',route:'visio',priority:lucasAvailability?.contactWeight||66,eligible:lucasPresence?.together!==true&&lucasAvailability?.canCallNow!==false,approvalRequired:true,surpriseSafe:true,reason:lucasPresence?.together?'Lucas est physiquement présent : la visio distante est désactivée.':lucasAvailability?.reason||'La visio est adaptée au lieu, à l’heure, à la relation et au contexte récent.',prompt:visioPrompt});
   }
   return out.sort((a,b)=>b.priority-a.priority);
 }
