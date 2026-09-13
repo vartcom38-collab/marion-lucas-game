@@ -1,4 +1,5 @@
 import './madrid-home-life.css';
+import './madrid-life-moments';
 import {getPropertyLifeSnapshot} from './property-life';
 
 const SAVE_KEY='marion-lucas-save-v4';
