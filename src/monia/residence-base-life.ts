@@ -32,7 +32,7 @@ export function getResidenceSnapshot(place?:string):ResidenceSnapshot{
 
 export function getFamilyBaseStay(place?:string):FamilyBaseStay{
   const s=read();const raw=String(place||s?.place||'');const residence=getResidenceSnapshot(raw);if(!s||residence.kind!=='family-base')return{place:raw,active:false,visits:0,familiarity:0,stage:'new',reason:'Marion ne séjourne pas actuellement dans une maison familiale.'};
-  const key=familyKey(raw),f=s.flags||{},visits=n(f[`familyBase:${key}:visits`]),familiarity=Math.max(0,Math.min(100,n(f[`familyBase:${key}:familiarity`])),stage:FamilyBaseStay['stage']=familiarity>=65?'very-familiar':familiarity>=25?'familiar':'new';
+  const key=familyKey(raw),f=s.flags||{},visits=n(f[`familyBase:${key}:visits`]),familiarity=Math.max(0,Math.min(100,n(f[`familyBase:${key}:familiarity`]))),stage:FamilyBaseStay['stage']=familiarity>=65?'very-familiar':familiarity>=25?'familiar':'new';
   const reason=stage==='very-familiar'?'Marion connaît très bien la maison et ses habitudes, mais ce lieu reste une base familiale et non leur domicile.':stage==='familiar'?'Les repères deviennent naturels au fil des séjours, sans transformer cette maison en chez-eux.':'La maison est encore un lieu de séjour à découvrir, même si elle peut déjà sembler accueillante.';
   return{place:raw,active:true,visits,familiarity,stage,reason};
 }
