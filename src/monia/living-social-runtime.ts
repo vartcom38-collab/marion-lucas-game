@@ -1,5 +1,6 @@
 import './living-social-runtime.css';
 import './taurine-life-layer';
+import './visio-phone-bridge';
 import {getSocialPresence,setSocialPresence} from '../social-presence-state';
 import {getLucasPresence} from './lucas-presence-engine';
 
