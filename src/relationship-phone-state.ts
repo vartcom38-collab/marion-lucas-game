@@ -1,0 +1,95 @@
+const SAVE_KEY='marion-lucas-save-v4';
+
+export type RelationshipPhoneContact='Marine'|'Lucas'|string;
+export type RelationshipPhoneMessage={from:string;text:string;day:number;read:boolean;thread?:string};
+type SaveLike={day?:number;time?:string;place?:string;metLucas?:boolean;phoneUnread?:number;messages?:RelationshipPhoneMessage[];flags?:Record<string,boolean|number|string>;updatedAt?:number};
+
+let syncing=false;
+
+function read():SaveLike|null{try{return JSON.parse(localStorage.getItem(SAVE_KEY)||'null') as SaveLike|null}catch{return null}}
+function write(save:SaveLike){save.updatedAt=Date.now();localStorage.setItem(SAVE_KEY,JSON.stringify(save));window.dispatchEvent(new CustomEvent('marion:statechange'))}
+function isContactName(value:string){return Boolean(value&&value!=='Toi')}
+
+function nearestContact(messages:RelationshipPhoneMessage[],index:number){
+  for(let distance=1;distance<messages.length;distance++){
+    const older=index+distance<messages.length?messages[index+distance]:null;
+    if(older&&isContactName(older.from))return older.thread||older.from;
+    const newer=index-distance>=0?messages[index-distance]:null;
+    if(newer&&isContactName(newer.from))return newer.thread||newer.from;
+  }
+  return'';
+}
+
+function fallbackThread(save:SaveLike){
+  const messages=save.messages||[];
+  const hasMarine=messages.some(message=>message.from==='Marine'||message.thread==='Marine');
+  const hasLucas=messages.some(message=>message.from==='Lucas'||message.thread==='Lucas');
+  if(!save.metLucas&&hasMarine)return'Marine';
+  if(save.metLucas&&hasLucas&&!hasMarine)return'Lucas';
+  if(hasMarine&&!hasLucas)return'Marine';
+  if(hasLucas&&!hasMarine)return'Lucas';
+  return save.metLucas?'Lucas':'Marine';
+}
+
+export function normalizeRelationshipPhoneThreads(save:SaveLike){
+  const messages=Array.isArray(save.messages)?save.messages:[];
+  let changed=false;
+  messages.forEach((message,index)=>{
+    if(message.thread)return;
+    if(isContactName(message.from)){
+      message.thread=message.from;
+      changed=true;
+      return;
+    }
+    const inferred=nearestContact(messages,index)||fallbackThread(save);
+    if(inferred){message.thread=inferred;changed=true}
+  });
+  return changed;
+}
+
+export function relationshipThreadUnread(save:SaveLike,contact:string){
+  return(save.messages||[]).filter(message=>message.from!=='Toi'&&!message.read&&(message.thread||message.from)===contact).length;
+}
+
+export function markRelationshipThreadRead(save:SaveLike,contact:string){
+  normalizeRelationshipPhoneThreads(save);
+  let changed=false;
+  for(const message of save.messages||[]){
+    if(message.from!=='Toi'&&!message.read&&(message.thread||message.from)===contact){message.read=true;changed=true}
+  }
+  return changed;
+}
+
+export function lucasPhoneAvailability(save:SaveLike){
+  const flags=save.flags||{};
+  const physicallyTogether=flags.lucasWithMarion===true||flags.lucasPresence==='with-marion'||flags.lucasPresenceState==='with-marion';
+  const working=flags.lucasBusy===true||flags.lucasPresence==='working'||flags.lucasPresenceState==='working';
+  const away=flags.lucasAway===true||flags.lucasTravelingWithoutMarion===true||flags.lucasPresence==='away'||flags.lucasPresenceState==='away'||flags.lucasPresence==='traveling'||flags.lucasPresenceState==='traveling';
+  if(physicallyTogether)return{canMessage:false,canCall:false,replyDelay:'none' as const,reason:'with-marion'};
+  if(working)return{canMessage:true,canCall:false,replyDelay:'delayed' as const,reason:'working'};
+  if(away)return{canMessage:true,canCall:true,replyDelay:'normal' as const,reason:'away'};
+  return{canMessage:true,canCall:true,replyDelay:'normal' as const,reason:'available'};
+}
+
+export function relationshipPhoneContactAllowed(save:SaveLike,contact:string,channel:'message'|'call'='message'){
+  if(contact!=='Lucas')return true;
+  const availability=lucasPhoneAvailability(save);
+  return channel==='call'?availability.canCall:availability.canMessage;
+}
+
+function sync(){
+  if(syncing)return;
+  const save=read();if(!save)return;
+  if(!normalizeRelationshipPhoneThreads(save))return;
+  syncing=true;write(save);syncing=false;
+}
+
+window.addEventListener('storage',sync);
+window.addEventListener('marion:statechange',sync as EventListener);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)sync()});
+window.setTimeout(sync,0);
+
+declare global{interface Window{__marionRelationshipPhone?:{normalize:(save:SaveLike)=>boolean;availability:(save:SaveLike)=>ReturnType<typeof lucasPhoneAvailability>;contactAllowed:(save:SaveLike,contact:string,channel?:'message'|'call')=>boolean}}}
+window.__marionRelationshipPhone={normalize:normalizeRelationshipPhoneThreads,availability:lucasPhoneAvailability,contactAllowed:relationshipPhoneContactAllowed};
+
+console.info('[Phone] relationship thread continuity active');
