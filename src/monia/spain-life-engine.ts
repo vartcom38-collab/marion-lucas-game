@@ -13,10 +13,17 @@ function read():Save|null{try{const raw=localStorage.getItem(SAVE_KEY);return ra
 function n(v:unknown,f=0){const x=Number(v);return Number.isFinite(x)?x:f}
 function mins(t?:string){const [h,m]=String(t||'09:00').split(':').map(Number);return (h||0)*60+(m||0)}
 function daysSince(s:Save,key:string){const d=n(s.flags?.[key],0);return d?Math.max(0,n(s.day,1)-d):0}
+function ensureSpainOpeningForExistingSave(s:Save,physicallyInSpain:boolean){
+  if(!physicallyInSpain)return;
+  const f=s.flags||(s.flags={});
+  if(f.spainLifeOpened===true&&n(f.spainLifeOpenedDay)>0)return;
+  f.spainLifeOpened=true;f.spainLifeOpenedDay=n(s.day,1);f.spainFirstStayPlace=String(s.place||'Espagne');f.spainOpeningMigrated=true;
+  s.eventHistory=[...(s.eventHistory||[]),`spain-life-opened:migrated:${String(s.place||'Espagne')}:${n(s.day,1)}`].slice(-220);
+  try{localStorage.setItem(SAVE_KEY,JSON.stringify(s));window.dispatchEvent(new CustomEvent('monia:save-changed',{detail:{key:SAVE_KEY,migration:'spain-first-stay'}}));}catch{/* read-only fallback keeps snapshot usable */}
+}
 
 export function getSpainLifeSnapshot():SpainLifeSnapshot|null{
-  const s=read();if(!s)return null;const transition=getFranceSpainState();const place=String(s.place||'home');
-  const physicallyInSpain=isSpainPlace(place);
+  const s=read();if(!s)return null;const place=String(s.place||'home');const physicallyInSpain=isSpainPlace(place);ensureSpainOpeningForExistingSave(s,physicallyInSpain);const transition=getFranceSpainState();
   if(!physicallyInSpain&&transition?.phase!=='spain-rooted'&&transition?.phase!=='between-bases')return{active:false,stage:'not-yet',place,directions:[],socialOpen:false,homeRoutineOpen:false,independentLifeOpen:false,reason:'La vie espagnole n’est pas encore le quotidien de Marion.'};
   const sinceArrival=daysSince(s,'spainLifeOpenedDay');const rooted=transition?.phase==='spain-rooted'||transition?.phase==='between-bases'||!!s.flags?.spainHomeEstablished;
   const stage:SpainLifeSnapshot['stage']=rooted?'rooted':sinceArrival<=3?'arriving':'settling';
