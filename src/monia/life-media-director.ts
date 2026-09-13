@@ -61,6 +61,7 @@ function n(v:unknown,fallback=0){const x=Number(v);return Number.isFinite(x)?x:f
 function recentText(s:Save){return [...(s.messages||[]).slice(0,8).map(m=>m.text||''),...(s.eventHistory||[]).slice(-8),...(s.memories||[]).slice(0,8)].join(' · ')}
 function relationLabel(s:Save){const r=n(s.relationship);return r>=70?'très proche':r>=45?'proche':r>=20?'en rapprochement':'encore réservé'}
 function moodFor(s:Save):LucasVisioMood{const availability=getLucasDailyAvailability();if(availability?.tone==='tender')return'tender';if(availability?.tone==='drained')return'worried';if(availability?.tone==='quiet')return'neutral';const stress=n(s.stress),r=n(s.relationship),t=n(s.trust);if(stress>70)return'worried';if(r>=60&&t>=45)return'tender';if(n(s.chemistry)>=60&&availability?.tone!=='focused')return'playful';return'neutral'}
+function gameplayCinematicRequest(s:Save){const f=s.flags||{};const id=String(f.gameplayCinematicRequestId||'').trim();if(!id)return null;const day=n(f.gameplayCinematicRequestDay,n(s.day,1));if(day!==n(s.day,1))return null;const route=String(f.gameplayCinematicRoute||'').trim() as MonIASceneRoute;return{id,route:route||null,reason:String(f.gameplayCinematicReason||'Grand moment explicitement autorisé par le gameplay.')};}
 
 function hiddenReadiness(s:Save):HiddenLifeReadiness{
   const day=Math.max(1,n(s.day,1));
@@ -94,10 +95,8 @@ export function planLifeMedia():LifeMediaOpportunity[]{
   const resonance=getContextualMemoryResonance();
   if(resonance)out.push({id:resonance.id,channel:'ambient',route:'environment-beat',priority:34,eligible:true,approvalRequired:false,surpriseSafe:true,reason:`${resonance.narrative} Le souvenir reste une résonance du présent : aucun flashback automatique et aucune ancienne scène n’est rejouée.`});
   if(s.metLucas&&snapshot.surpriseBudget.call){const canCall=lucasAvailability?.canCallNow!==false&&!lucasPresence?.together;out.push({id:'lucas-call-window',channel:'call',route:'visio',priority:lucasAvailability?.contactWeight||58,eligible:canCall,approvalRequired:false,surpriseSafe:true,reason:lucasPresence?.together?'Lucas est physiquement avec Marion : aucun appel distant n’est proposé.':lucasAvailability?.reason||'Lucas est connu et un appel spontané peut être proposé ou initié librement.'});}
-  if(s.metLucas&&snapshot.surpriseBudget.cinematic){
-    const route=routeDecision.route;
-    if(route!=='message-only'&&route!=='visio')out.push({id:'contextual-cinematic',channel:'cinematic',route,priority:72,eligible:true,approvalRequired:true,surpriseSafe:true,reason:routeDecision.reason});
-  }
+  const cinematicRequest=gameplayCinematicRequest(s);
+  if(s.metLucas&&snapshot.surpriseBudget.cinematic&&cinematicRequest){const route=cinematicRequest.route||routeDecision.route;if(route!=='message-only'&&route!=='visio')out.push({id:cinematicRequest.id,channel:'cinematic',route,priority:88,eligible:true,approvalRequired:true,surpriseSafe:true,reason:cinematicRequest.reason});}
   if(s.metLucas&&snapshot.surpriseBudget.voice)out.push({id:'voice-candidate',channel:'voice',route:'message-only',priority:45,eligible:false,approvalRequired:true,surpriseSafe:false,reason:'Canal réservé jusqu’à validation d’une voix Lucas naturelle et stable.'});
   if(s.metLucas){
     const visioPrompt=buildAdaptiveLucasVisioPrompt({state:'speaking',mood:moodFor(s),place:String(s.place||''),timeOfDay:String(s.time||''),relationship:relationLabel(s),recentBeat:`${haystack.slice(-320)} · ${lucasAvailability?.reason||''}`.slice(-420)});
