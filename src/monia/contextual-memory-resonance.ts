@@ -1,5 +1,6 @@
 import { getSharedMemories, markMemoryResurfaced, type SharedMemory } from './shared-memory-life';
 import { getSeasonalLifeSnapshot } from './seasonal-life-engine';
+import { getCurrentPlaceHistory } from './place-history-life';
 
 const SAVE_KEY='marion-lucas-save-v4';
 type Save={day?:number;time?:string;place?:string;flags?:Record<string,unknown>;eventHistory?:string[]};
@@ -30,11 +31,12 @@ function copy(kind:SharedMemory['kind'],trigger:MemoryResonanceTrigger){
 }
 
 export function getContextualMemoryResonance():MemoryResonanceCue|null{
-  const s=read();if(!s)return null;const day=n(s.day,1),place=String(s.place||''),season=getSeasonalLifeSnapshot();
+  const s=read();if(!s)return null;const day=n(s.day,1),place=String(s.place||''),season=getSeasonalLifeSnapshot(),placeHistory=getCurrentPlaceHistory();
   const memories=getSharedMemories().filter(m=>m.canResurface&&m.ageDays>=90&&day-n(s.flags?.[`memory:${m.id}:lastResurfaceDay`],0)>=150);
   if(!memories.length)return null;
-  const ranked=memories.map(m=>{const trigger=triggerFor(m,place,season?.season);let bonus=0;if(trigger==='place'||trigger==='taurine-rhythm'||trigger==='home-rhythm'||trigger==='family-rhythm')bonus+=18;if(m.ageDays>=365)bonus+=8;return{m,trigger,score:m.importance+bonus};}).sort((a,b)=>b.score-a.score);
-  const gate=hash(`memory-resonance:${Math.floor(day/10)}:${place}:${season?.season||'none'}`)%100;if(gate>=22)return null;
+  const placeDepth=placeHistory?.tier==='deeply-lived'?18:placeHistory?.tier==='important'?13:placeHistory?.tier==='anchored'?8:placeHistory?.tier==='familiar'?4:0;
+  const ranked=memories.map(m=>{const trigger=triggerFor(m,place,season?.season);let bonus=0;if(trigger==='place'||trigger==='taurine-rhythm'||trigger==='home-rhythm'||trigger==='family-rhythm')bonus+=18+placeDepth;if(m.ageDays>=365)bonus+=8;if(placeHistory?.meaningfulMoments)bonus+=Math.min(10,placeHistory.meaningfulMoments*2);return{m,trigger,score:m.importance+bonus};}).sort((a,b)=>b.score-a.score);
+  const gateBase=placeDepth>=13?30:placeDepth>=8?26:22;const gate=hash(`memory-resonance:${Math.floor(day/10)}:${place}:${season?.season||'none'}`)%100;if(gate>=gateBase)return null;
   const pick=ranked[hash(`memory-resonance-pick:${Math.floor(day/10)}:${place}`)%Math.min(4,ranked.length)];if(!pick)return null;
   return{id:`resonance-${pick.m.id}`,memoryId:pick.m.id,kind:pick.m.kind,trigger:pick.trigger,strength:Math.min(100,pick.score),subtle:true,replayScene:false,label:'Un souvenir revient brièvement',narrative:copy(pick.m.kind,pick.trigger),intent:`memory-resonance:${pick.m.id}`};
 }
