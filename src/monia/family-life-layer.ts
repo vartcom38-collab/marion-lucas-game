@@ -40,7 +40,7 @@ export function getFamilyLifeOpportunity():FamilyOpportunity|null{
   }
   if(state==='pregnant')return{state:'pregnant',eligible:true,surpriseEligible:true,reason:'La grossesse confirmée évolue par étapes; les informations importantes peuvent rester des surprises.',possibleOutcomes:['single-pregnancy','twins','girl','boy','keep-sex-secret','complication','loss']};
   if(state==='postpartum')return{state:'postpartum',eligible:true,surpriseEligible:false,reason:'La priorité est l’adaptation au nouveau rythme, au repos et au couple.'};
-  if(state==='parenting')return{state:'parenting',eligible:true,surpriseEligible:true,reason:`La famille évolue avec l’âge des enfants et les étapes de vie de Marion (${marionAge} ans).`};
+  if(state==='parenting')return{state:'parenting',eligible:true,surpriseEligible:true,reason:`La famille évolue avec l’âge des enfants et les étapes de vie de Marion (${marionAge} ans). Un nouveau projet d’enfant peut être rouvert plus tard sans effacer les précédents.`};
   return{state:'closed',eligible:false,surpriseEligible:false,reason:'Aucune fenêtre familiale active.'};
 }
 
@@ -49,10 +49,12 @@ export function markFamilyDecision(decision:'open'|'try'|'wait'|'stop'|'pregnant
   if(decision==='open')f.familyState='thinking';
   if(decision==='try'){f.familyState='trying';f.familyTryingDay=day;f.familyNextCheckDay=day+28;}
   if(decision==='wait'){f.familyState='thinking';f.familyNextConversationDay=day+60;}
-  if(decision==='stop'){f.familyState='closed';f.familyChoiceStoppedDay=day;}
+  if(decision==='stop'){f.familyState=n(s.children,0)>0?'parenting':'closed';f.familyChoiceStoppedDay=day;}
   if(decision==='parenting'){f.familyState='parenting';}
   try{
     localStorage.setItem(SAVE_KEY,JSON.stringify(s));
+    if(decision==='parenting')setPregnancyState('none',day);
+    if(decision==='open')setPregnancyState('none',day);
     if(decision==='try')setPregnancyState('trying',day);
     if(decision==='pregnant')setPregnancyState('confirmed',day);
     if(decision==='postpartum')return !!finalizeBirth({birthDay:day});
