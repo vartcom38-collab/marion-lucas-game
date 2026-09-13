@@ -33,32 +33,32 @@ const PROPERTY_VISUALS:Record<string,PropertyVisual[]>={
   'Maison andalouse avec terres':[
     {key:'jerez-finca-exterior',alt:'Maison andalouse avec terres près de Jerez'},
     {key:'jerez-finca-courtyard',alt:'Cour intérieure de la maison andalouse'},
-    {key:'jerez-finca-land',alt:'Terres sèches et dépendances près de Jerez'},
+    {key:'jerez-finca-land',alt:'Terres et vignobles autour de la maison andalouse'},
   ],
   'Appartement ancien à Séville':[
-    {key:'sevilla-flat-living',alt:'Appartement ancien lumineux à Séville'},
-    {key:'sevilla-flat-balcony',alt:'Balcon de l’appartement à Séville'},
-    {key:'sevilla-flat-street',alt:'Rue du centre historique près de l’appartement à Séville'},
+    {key:'sevilla-flat-courtyard',alt:'Patio andalou de la résidence à Séville'},
+    {key:'sevilla-flat-street',alt:'Façade ancienne de la résidence à Séville'},
+    {key:'sevilla-flat-living',alt:'Salon élégant ouvert sur le patio à Séville'},
   ],
   'Appartement lumineux à Valence':[
-    {key:'valencia-flat-living',alt:'Appartement lumineux à Valence'},
+    {key:'valencia-flat-living',alt:'Appartement lumineux ouvert sur la mer à Valence'},
     {key:'valencia-flat-terrace',alt:'Terrasse de l’appartement à Valence'},
-    {key:'valencia-flat-view',alt:'Vue urbaine depuis l’appartement à Valence'},
+    {key:'valencia-flat-view',alt:'Vue mer au coucher du soleil depuis l’appartement à Valence'},
   ],
-  'Maison sur la côte basque':[
-    {key:'basque-coast-house-exterior',alt:'Maison élégante sur la côte basque'},
-    {key:'basque-coast-house-garden',alt:'Jardin de la maison sur la côte basque'},
-    {key:'basque-coast-house-view',alt:'Vue vers la côte depuis la maison basque'},
+  'Appartement Belle Époque à Saint-Sébastien':[
+    {key:'basque-coast-exterior',alt:'Résidence Belle Époque face à la baie de Saint-Sébastien'},
+    {key:'basque-coast-living',alt:'Salon lumineux avec vue sur la baie de Saint-Sébastien'},
+    {key:'basque-coast-terrace',alt:'Terrasse au coucher du soleil sur la baie de Saint-Sébastien'},
   ],
   'Maison méditerranéenne':[
     {key:'soller-house-exterior',alt:'Maison méditerranéenne en pierre à Sóller'},
-    {key:'soller-house-terrace',alt:'Terrasse et agrumes de la maison à Sóller'},
-    {key:'soller-house-view',alt:'Reliefs autour de la maison à Sóller'},
+    {key:'soller-house-terrace',alt:'Cour aux agrumes de la maison à Sóller'},
+    {key:'soller-house-interior',alt:'Salon méditerranéen de la maison à Sóller'},
   ],
-  'Maison de campagne catalane':[
-    {key:'girona-country-house-exterior',alt:'Maison de campagne restaurée près de Gérone'},
-    {key:'girona-country-house-garden',alt:'Jardin de la maison de campagne près de Gérone'},
-    {key:'girona-country-house-interior',alt:'Intérieur de la maison de campagne près de Gérone'},
+  'Maison ancienne à Gérone':[
+    {key:'girona-townhouse-exterior',alt:'Maison ancienne dans la vieille ville de Gérone'},
+    {key:'girona-townhouse-interior',alt:'Salon rénové de la maison à Gérone'},
+    {key:'girona-townhouse-terrace',alt:'Terrasse dominant la vieille ville de Gérone'},
   ],
 };
 
