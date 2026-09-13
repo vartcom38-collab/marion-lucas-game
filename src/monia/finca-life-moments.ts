@@ -1,3 +1,4 @@
+import './finca-life-moments.css';
 const SAVE_KEY='marion-lucas-save-v4';
 const MOMENT_KEY='marion-lucas-finca-moments-v1';
 
