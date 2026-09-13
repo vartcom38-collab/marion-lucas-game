@@ -12,6 +12,7 @@ function read():Save|null{try{const raw=localStorage.getItem(SAVE_KEY);return ra
 function n(v:unknown,f=0){const x=Number(v);return Number.isFinite(x)?x:f}
 function recent(s:Save,rx:RegExp){return (s.eventHistory||[]).slice(-30).some(e=>rx.test(String(e)))}
 function installationBase(s:Save){const f=s.flags||{};const candidates=[f.sharedHomePlace,f.coupleHomePlace,f.lucasHomePlace].map(v=>String(v||'').trim()).filter(Boolean);return candidates.find(isSpainPlace)||null}
+function looksLikeFamilyBase(place:string){const p=place.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');return/finca|family estate|maison familiale|family home/.test(p)}
 
 export function getSpainInstallationReadiness():SpainInstallationReadiness{
   const s=read();if(!s)return{eligible:false,daysSinceOpening:0,livedMoments:0,basePlace:null,baseKind:null,reason:'Aucune partie active.'};
@@ -24,7 +25,7 @@ export function getSpainInstallationReadiness():SpainInstallationReadiness{
   if(daysSinceOpening<4||livedMoments<3)return{eligible:false,daysSinceOpening,livedMoments,basePlace,baseKind:base?.kind||null,reason:'Il faut d’abord plusieurs jours et plusieurs moments ordinaires vécus sur place : l’installation ne doit pas être instantanée.'};
   if(n(s.relationship)<40||n(s.trust)<30)return{eligible:false,daysSinceOpening,livedMoments,basePlace,baseKind:base?.kind||null,reason:'Le quotidien commun n’est pas encore assez stable pour transformer un séjour en installation.'};
   if(!basePlace||!base)return{eligible:false,daysSinceOpening,livedMoments,basePlace:null,baseKind:null,reason:'Il faut qu’une vraie base résidentielle espagnole ait été choisie avant de parler d’installation.'};
-  if(base.kind==='family-base')return{eligible:false,daysSinceOpening,livedMoments,basePlace,baseKind:base.kind,reason:'La maison familiale reste une base familiale : elle ne devient jamais automatiquement le domicile du couple.'};
+  if(looksLikeFamilyBase(basePlace)||base.kind==='family-base')return{eligible:false,daysSinceOpening,livedMoments,basePlace,baseKind:'family-base',reason:'La maison familiale reste une base familiale : elle ne devient jamais automatiquement le domicile du couple.'};
   if(!base.isHome||base.isTemporary)return{eligible:false,daysSinceOpening,livedMoments,basePlace,baseKind:base.kind,reason:'Un hôtel, une ville ou un lieu de passage ne peut pas devenir un domicile par simple répétition.'};
   return{eligible:true,daysSinceOpening,livedMoments,basePlace,baseKind:base.kind,reason:'La vie sur place a eu le temps de devenir un quotidien et une vraie base résidentielle existe. Le gameplay peut maintenant confirmer l’installation.'};
 }
