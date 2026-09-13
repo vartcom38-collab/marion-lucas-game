@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "policy": "photorealistic-local-assets-only",
+  "style": "Photographie immobilière haut de gamme mais naturelle, photoréaliste, Espagne contemporaine crédible, lumière réelle, aucun personnage, aucun texte, aucun watermark, aucun rendu 3D ou illustration.",
+  "shots": [
+    {"file":"salamanca-finca-exterior.webp","place":"Salamanque, Castille-et-León","view":"extérieur principal","brief":"Finca espagnole en pierre claire et ancienne, élégante mais pas ostentatoire, grands chênes, pâtures ouvertes, allée de terre, lumière douce de fin de matinée."},
+    {"file":"salamanca-finca-patio.webp","place":"Salamanque, Castille-et-León","view":"patio","brief":"Patio rural espagnol authentique, pierre, bois, pots en terre cuite, ombre légère, continuité architecturale avec la finca de Salamanque."},
+    {"file":"salamanca-finca-land.webp","place":"Salamanque, Castille-et-León","view":"terres","brief":"Grandes pâtures sèches et vertes par endroits, chênes espacés, dépendances discrètes au loin, paysage ample de Castille-et-León."},
+
+    {"file":"toledo-finca-exterior.webp","place":"Tolède, Castille-La Manche","view":"extérieur principal","brief":"Finca blanche près de Tolède, volumes méditerranéens sobres, toiture terre cuite, oliviers adultes, terrain lumineux, élégance simple."},
+    {"file":"toledo-finca-patio.webp","place":"Tolède, Castille-La Manche","view":"patio","brief":"Patio blanc et minéral de la même finca, pierre claire, bassin discret ou fontaine sobre, quelques agrumes et oliviers, soleil espagnol."},
+    {"file":"toledo-finca-olive.webp","place":"Tolède, Castille-La Manche","view":"oliveraie","brief":"Oliviers autour de la finca blanche, terrain sec et entretenu, vue douce sur la campagne de Castille-La Manche."},
+
+    {"file":"extremadura-estate-exterior.webp","place":"Trujillo, Estrémadure","view":"extérieur principal","brief":"Ancien domaine rural d'Estrémadure, corps de ferme historique en pierre, grand portail simple, paysage brut, propriété vaste à potentiel."},
+    {"file":"extremadura-estate-courtyard.webp","place":"Trujillo, Estrémadure","view":"cour","brief":"Grande cour ancienne du même domaine, murs en pierre patinée, dépendances agricoles, lumière chaude, rénovations possibles mais lieu sain."},
+    {"file":"extremadura-estate-land.webp","place":"Trujillo, Estrémadure","view":"terres","brief":"Vastes terres d'Estrémadure vues depuis le domaine, relief doux, végétation sèche, quelques arbres et clôtures rurales."},
+
+    {"file":"jerez-finca-exterior.webp","place":"Jerez de la Frontera, Andalousie","view":"extérieur principal","brief":"Maison andalouse blanche avec terres, architecture traditionnelle raffinée sans luxe excessif, cour et grands arbres, lumière chaude du sud."},
+    {"file":"jerez-finca-courtyard.webp","place":"Jerez de la Frontera, Andalousie","view":"cour intérieure","brief":"Cour intérieure andalouse de la même maison, murs blancs, carreaux de terre cuite, orangers, ombres nettes, atmosphère calme."},
+    {"file":"jerez-finca-land.webp","place":"Jerez de la Frontera, Andalousie","view":"terres","brief":"Terres sèches autour de Jerez, clôtures élégantes, dépendances et allées, lumière dorée, végétation méditerranéenne."},
+
+    {"file":"sevilla-flat-living.webp","place":"Séville, Andalousie","view":"salon","brief":"Appartement ancien rénové à Séville, hauts plafonds, moulures sobres, grandes fenêtres, parquet ou carreaux traditionnels, lumière naturelle."},
+    {"file":"sevilla-flat-balcony.webp","place":"Séville, Andalousie","view":"balcon","brief":"Petit balcon élégant du même appartement, ferronnerie, façade sévillane crédible, rue du centre historique en contrebas."},
+    {"file":"sevilla-flat-street.webp","place":"Séville, Andalousie","view":"quartier","brief":"Rue résidentielle du centre de Séville près de l'appartement, façades anciennes entretenues, lumière chaude, vie urbaine discrète sans personne au premier plan."},
+
+    {"file":"valencia-flat-living.webp","place":"Valence, Communauté valencienne","view":"salon","brief":"Appartement lumineux contemporain à Valence, grandes baies, terrasse visible, design chaleureux et réaliste, pas ultra-luxueux."},
+    {"file":"valencia-flat-terrace.webp","place":"Valence, Communauté valencienne","view":"terrasse","brief":"Terrasse urbaine du même appartement, plantes méditerranéennes, mobilier discret, lumière claire de Valence."},
+    {"file":"valencia-flat-view.webp","place":"Valence, Communauté valencienne","view":"vue","brief":"Vue depuis l'appartement sur Valence, tissu urbain méditerranéen, ciel lumineux, suggestion de proximité avec la côte sans carte postale touristique."},
+
+    {"file":"basque-coast-house-exterior.webp","place":"Saint-Sébastien, Pays basque","view":"extérieur principal","brief":"Maison élégante du Pays basque espagnol, architecture régionale contemporaine, jardin vert, humidité légère et ciel océanique crédible."},
+    {"file":"basque-coast-house-garden.webp","place":"Saint-Sébastien, Pays basque","view":"jardin","brief":"Jardin intime et très vert de la même maison, haies, pelouse naturelle, terrasse sobre, influence océanique."},
+    {"file":"basque-coast-house-view.webp","place":"Saint-Sébastien, Pays basque","view":"vue mer","brief":"Vue partielle vers la côte basque depuis la propriété, relief vert et Atlantique au loin, atmosphère calme plutôt que spectaculaire."},
+
+    {"file":"soller-house-exterior.webp","place":"Sóller, Majorque","view":"extérieur principal","brief":"Maison méditerranéenne en pierre claire à Sóller, architecture majorquine crédible, agrumes, terrasses et relief montagneux."},
+    {"file":"soller-house-terrace.webp","place":"Sóller, Majorque","view":"terrasse","brief":"Terrasse de la même maison en pierre, citronniers et orangers, mobilier simple haut de gamme, lumière des Baléares."},
+    {"file":"soller-house-view.webp","place":"Sóller, Majorque","view":"paysage","brief":"Vue depuis la propriété sur la vallée de Sóller et les reliefs, végétation méditerranéenne, aucune esthétique de resort."},
+
+    {"file":"girona-country-house-exterior.webp","place":"Gérone, Catalogne","view":"extérieur principal","brief":"Ancienne maison catalane restaurée, pierre naturelle, jardin mature, campagne verdoyante près de Gérone, charme sobre."},
+    {"file":"girona-country-house-garden.webp","place":"Gérone, Catalogne","view":"jardin","brief":"Jardin naturel de la même maison, arbres matures, herbes hautes contrôlées, terrasse en pierre et atmosphère paisible."},
+    {"file":"girona-country-house-interior.webp","place":"Gérone, Catalogne","view":"intérieur","brief":"Intérieur rénové d'une maison catalane, murs en pierre partiellement apparents, bois ancien, mobilier contemporain chaleureux, lumière naturelle."}
+  ]
+}
