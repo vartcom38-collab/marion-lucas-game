@@ -24,18 +24,18 @@ export function establishTrustedNanny(){
 export function dismissTrustedNanny(){const s=read();if(!s)return false;const f=s.flags||(s.flags={});if(f.childcareNannyEstablished!==true)return false;f.childcareNannyDismissed=true;f.childcareNannyEstablished=false;s.eventHistory=[...(s.eventHistory||[]),`trusted-nanny-dismissed:${Math.max(1,n(s.day,1))}`].slice(-520);write(s);return true}
 
 export function getTrustedNannySnapshot():TrustedNannySnapshot|null{
-  const s=read();if(!s)return null;const kids=getChildrenLife();const established=isEstablished(s);
-  return{established,available:established,childrenCount:kids.length,canTravel:established,canStayOvernight:established,canSendPhotos:established,canSendDrawings:established&&kids.some(k=>k.ageYears>=2),canHostFamilyVisio:established,updates:established?updatesOf(s).slice(-80):[]}
+  const s=read();if(!s)return null;const kids=getChildrenLife();const established=isEstablished(s);const f=s.flags||{};const photoReady=established&&typeof f.trustedNannyPhotoMediaKey==='string'&&String(f.trustedNannyPhotoMediaKey).trim().length>0;const drawingReady=established&&kids.some(k=>k.ageYears>=2)&&typeof f.trustedNannyDrawingMediaKey==='string'&&String(f.trustedNannyDrawingMediaKey).trim().length>0;
+  return{established,available:established,childrenCount:kids.length,canTravel:established,canStayOvernight:established,canSendPhotos:photoReady,canSendDrawings:drawingReady,canHostFamilyVisio:established,updates:established?updatesOf(s).slice(-80):[]}
 }
 
 export function queueTrustedNannyUpdate(kind:NannyUpdateKind,input:{childId?:string;text?:string;mediaKey?:string}={}){
   const s=read();if(!s||!isEstablished(s))return null;const kids=getChildrenLife();if(!kids.length)return null;const child=input.childId?kids.find(k=>k.id===input.childId):kids[0];
-  if(kind==='drawing'&&child&&child.ageYears<2)return null;
-  const day=Math.max(1,n(s.day,1)),time=String(s.time||'12:00');const id=`nanny-${kind}-${day}-${Date.now()}`;
+  if(kind==='drawing'&&child&&child.ageYears<2)return null;const mediaKind=kind==='photo'||kind==='drawing';const effectiveKind:NannyUpdateKind=mediaKind&&!input.mediaKey?'message':kind;
+  const day=Math.max(1,n(s.day,1)),time=String(s.time||'12:00');const id=`nanny-${effectiveKind}-${day}-${Date.now()}`;
   const childLabel=child?.name?.trim()||'le petit';
-  const defaultText=kind==='photo'?`Petite photo de ${childLabel} pour vous rassurer. Tout va bien ici.`:kind==='drawing'?`${childLabel} a fait un dessin pour vous. Je vous le garde et je vous envoie une photo.`:kind==='video-call-request'?`${childLabel} est disponible si vous voulez faire un petit appel vidéo.`:`Tout va bien avec ${childLabel}. Je vous tiens au courant.`;
-  const u:NannyUpdate={id,day,time,kind,childId:child?.id,text:input.text?.trim()||defaultText,mediaKey:input.mediaKey,read:false};const f=s.flags||(s.flags={});f.trustedNannyUpdates=[...updatesOf(s),u].slice(-120);f.trustedNannyLastUpdateDay=day;
-  pushToPhone(s,u);s.eventHistory=[...(s.eventHistory||[]),`trusted-nanny-update:${kind}:${child?.id||'family'}:${day}`].slice(-520);write(s);window.dispatchEvent(new CustomEvent('monia:nanny-update',{detail:u}));return u
+  const defaultText=effectiveKind==='photo'?`Petite photo de ${childLabel} pour vous rassurer. Tout va bien ici.`:effectiveKind==='drawing'?`${childLabel} a fait un dessin pour vous. Je vous le garde et je vous envoie une photo.`:effectiveKind==='video-call-request'?`${childLabel} est disponible si vous voulez faire un petit appel vidéo.`:`Tout va bien avec ${childLabel}. Je vous tiens au courant.`;
+  const u:NannyUpdate={id,day,time,kind:effectiveKind,childId:child?.id,text:input.text?.trim()||defaultText,mediaKey:effectiveKind===kind?input.mediaKey:undefined,read:false};const f=s.flags||(s.flags={});f.trustedNannyUpdates=[...updatesOf(s),u].slice(-120);f.trustedNannyLastUpdateDay=day;
+  pushToPhone(s,u);s.eventHistory=[...(s.eventHistory||[]),`trusted-nanny-update:${effectiveKind}:${child?.id||'family'}:${day}`].slice(-520);write(s);window.dispatchEvent(new CustomEvent('monia:nanny-update',{detail:u}));return u
 }
 
 export function markTrustedNannyUpdateRead(id:string){const s=read();if(!s||!isEstablished(s))return false;const f=s.flags||(s.flags={});const list=updatesOf(s);const i=list.findIndex(x=>x.id===id);if(i<0)return false;list[i]={...list[i],read:true};f.trustedNannyUpdates=list;write(s);return true}
