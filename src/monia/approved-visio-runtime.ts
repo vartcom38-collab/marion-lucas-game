@@ -21,14 +21,15 @@ function stateValue(raw:RawClip):LucasVisioState{
   const rawState=stringValue(raw.state,raw.mode,raw.kind,raw.phase).toLowerCase();
   return VALID_STATES.has(rawState as LucasVisioState)?rawState as LucasVisioState:'listen';
 }
+function candidatePath(src:string){return/(^|\/)candidates?(\/|$)/i.test(src)||/candidate-only/i.test(src)}
 function approvedValue(raw:RawClip){
-  if(raw.approved===false||raw.validated===false||raw.status==='rejected'||raw.status==='candidate')return false;
+  if(raw.approved===false||raw.validated===false||raw.status==='rejected'||raw.status==='candidate'||raw.candidateOnly===true)return false;
   return true;
 }
 function normalize(raw:RawClip,index:number):ApprovedVisioClip|null{
   if(!approvedValue(raw))return null;
   const src=stringValue(raw.src,raw.path,raw.url,raw.file,raw.asset);
-  if(!src)return null;
+  if(!src||candidatePath(src))return null;
   return{
     id:stringValue(raw.id,raw.slug)||`approved-visio-${index+1}`,
     src,
