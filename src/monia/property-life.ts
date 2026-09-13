@@ -1,5 +1,6 @@
 const SAVE_KEY='marion-lucas-save-v4';
 const PROPERTY_KEY='marion-lucas-properties-v1';
+const VISIT_KEY='marion-lucas-property-visits-v1';
 
 type Owner='marion'|'lucas'|'joint';
 export type PropertyKind='apartment'|'house'|'finca'|'city-flat'|'coastal-home'|'country-home';
@@ -58,14 +59,15 @@ const CATALOG:Omit<PropertyOffer,'id'>[]=[
   {title:'Maison andalouse avec terres',kind:'finca',city:'Jerez de la Frontera',region:'Andalousie',country:'Espagne',price:1690000,hectares:19,bedrooms:6,character:'Cour intérieure, terres sèches, lumière du sud et bâtiments annexes.',distanceNote:'Sud de l’Espagne, climat et rythme très différents de Madrid.',firstHomeEligible:true},
   {title:'Appartement ancien à Séville',kind:'city-flat',city:'Séville',region:'Andalousie',country:'Espagne',price:640000,bedrooms:3,character:'Beaux volumes, patio andalou, façade ancienne et emplacement central pour de courts séjours.',distanceNote:'Pied-à-terre urbain, pratique pour quelques jours.',firstHomeEligible:false},
   {title:'Appartement lumineux à Valence',kind:'city-flat',city:'Valence',region:'Communauté valencienne',country:'Espagne',price:590000,bedrooms:3,character:'Terrasse, grandes fenêtres et accès rapide au centre comme à la mer.',distanceNote:'Pied-à-terre polyvalent entre ville et côte.',firstHomeEligible:false},
-  {title:'Appartement Belle Époque à Saint-Sébastien',kind:'coastal-home',city:'Saint-Sébastien',region:'Pays basque',country:'Espagne',price:1320000,bedrooms:4,character:'Belle façade ancienne, balcon sur la baie et intérieur lumineux aux accents marins.',distanceNote:'Résidence secondaire au nord, adaptée aux séjours plus calmes.',firstHomeEligible:false},
+  {title:'Appartement Belle Époque à Saint-Sébastien',kind:'city-flat',city:'Saint-Sébastien',region:'Pays basque',country:'Espagne',price:1320000,bedrooms:4,character:'Belle façade ancienne, balcon sur la baie et intérieur lumineux aux accents marins.',distanceNote:'Pied-à-terre élégant au nord, adapté aux séjours plus calmes.',firstHomeEligible:false},
   {title:'Maison méditerranéenne',kind:'coastal-home',city:'Sóller',region:'Îles Baléares',country:'Espagne',price:1850000,bedrooms:5,character:'Pierre claire, terrasses, agrumes et vue sur les reliefs.',distanceNote:'Pied-à-terre insulaire, plus exceptionnel et moins spontané.',firstHomeEligible:false},
-  {title:'Maison ancienne à Gérone',kind:'country-home',city:'Gérone',region:'Catalogne',country:'Espagne',price:890000,bedrooms:4,character:'Bâtisse en pierre rénovée, grands volumes et terrasse dominant la vieille ville.',distanceNote:'Résidence secondaire catalane avec accès facile à la côte comme à la campagne.',firstHomeEligible:false},
+  {title:'Maison ancienne à Gérone',kind:'house',city:'Gérone',region:'Catalogne',country:'Espagne',price:890000,bedrooms:4,character:'Bâtisse en pierre rénovée, grands volumes et terrasse dominant la vieille ville.',distanceNote:'Résidence secondaire catalane avec accès facile à la côte comme à la campagne.',firstHomeEligible:false},
 ];
 
 function readSave():Save|null{try{const raw=localStorage.getItem(SAVE_KEY);return raw?JSON.parse(raw) as Save:null}catch{return null}}
 function writeSave(s:Save){try{localStorage.setItem(SAVE_KEY,JSON.stringify(s));window.dispatchEvent(new Event('storage'));window.dispatchEvent(new CustomEvent('monia:property-changed'));return true}catch{return false}}
 function dayOf(s:Save|null){return Math.max(1,Number(s?.day||1)||1)}
+function hasVisitedOffer(offerIdValue:string){try{const raw=localStorage.getItem(VISIT_KEY);if(!raw)return false;const parsed=JSON.parse(raw) as {visited?:Record<string,number>};return Boolean(parsed.visited?.[offerIdValue])}catch{return false}}
 function initialState():PropertyState{
   const s=readSave(),day=dayOf(s);
   return{version:1,searchOpen:false,shortlisted:[],lastOfferRefreshDay:0,offerSeed:day,owned:[
@@ -127,7 +129,7 @@ export function closePropertySearch(){const state=readState();state.searchOpen=f
 export function refreshPropertyOffers(){const s=readSave();if(!s)return false;const state=readState();const day=dayOf(s);if(day-state.lastOfferRefreshDay<7)return false;state.offerSeed=(state.offerSeed+137+day)%10007;state.lastOfferRefreshDay=day;return writeState(state)}
 export function shortlistProperty(offerIdValue:string){const s=readSave();const state=readState();const offer=availableOffers(state,s).find(o=>o.id===offerIdValue);if(!offer)return false;state.shortlisted=[offerIdValue,...state.shortlisted.filter(x=>x!==offerIdValue)].slice(0,5);return writeState(state)}
 export function purchaseProperty(offerIdValue:string,makePrimary=false){
-  const s=readSave();if(!s)return false;const state=normalizePrimaryForCohabitation(readState(),s);const offer=availableOffers(state,s).find(o=>o.id===offerIdValue);if(!offer)return false;
+  const s=readSave();if(!s)return false;const state=normalizePrimaryForCohabitation(readState(),s);const offer=availableOffers(state,s).find(o=>o.id===offerIdValue);if(!offer||!hasVisitedOffer(offerIdValue))return false;
   const firstJoint=!hasJointFinca(state);if(firstJoint&&!offer.firstHomeEligible)return false;
   if(makePrimary)for(const p of state.owned)if(p.use==='primary')p.use='available';
   const id=`owned-${offer.id}-${dayOf(s)}`;
