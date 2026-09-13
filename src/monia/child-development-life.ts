@@ -1,4 +1,6 @@
 import './child-bond-life';
+import './trusted-nanny-life';
+import './family-visio-director';
 import { getChildrenLife, type ChildLifeSnapshot } from './children-life';
 
 export type ChildDevelopmentPhase='early-care'|'preschool-rhythm'|'school-rhythm'|'preteen-autonomy'|'teen-autonomy'|'adult-independent';
