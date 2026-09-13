@@ -23,6 +23,7 @@ import { getContextualMemoryResonance } from './contextual-memory-resonance';
 import { getLifeDirectorSnapshot } from './life-director';
 import { getLucasDailyAvailability } from './lucas-daily-availability';
 import { getLucasPresence } from './lucas-presence-engine';
+import { ensureLifeMilestoneChronology } from './life-milestone-chronology';
 import { routeSceneFromGameState, type MonIASceneRoute } from './scene-context-router';
 import { buildAdaptiveLucasVisioPrompt, type LucasVisioMood } from './adaptive-visio';
 
@@ -64,12 +65,12 @@ function moodFor(s:Save):LucasVisioMood{const availability=getLucasDailyAvailabi
 function gameplayCinematicRequest(s:Save){const f=s.flags||{};const id=String(f.gameplayCinematicRequestId||'').trim();if(!id)return null;const day=n(f.gameplayCinematicRequestDay,n(s.day,1));if(day!==n(s.day,1))return null;const route=String(f.gameplayCinematicRoute||'').trim() as MonIASceneRoute;return{id,route:route||null,reason:String(f.gameplayCinematicReason||'Grand moment explicitement autorisé par le gameplay.')};}
 
 function hiddenReadiness(s:Save):HiddenLifeReadiness{
-  const day=Math.max(1,n(s.day,1));
-  const officialDay=n(s.flags?.officialDay,day);
-  const engagedDay=n(s.flags?.engagedDay,day);
-  const marriedDay=n(s.flags?.marriedDay,day);
+  const day=Math.max(1,n(s.day,1));const chronology=ensureLifeMilestoneChronology(s);
+  const officialDay=chronology?.officialDay||day;
+  const engagedDay=chronology?.engagedDay||day;
+  const marriedDay=chronology?.marriedDay||day;
   const relation=n(s.relationship),trust=n(s.trust);
-  const proposalEarliest=Math.max(officialDay+90,day);
+  const proposalEarliest=officialDay+90;
   const proposalLatestSoft=Math.max(proposalEarliest+240,officialDay+540);
   const proposalEligible=!!s.official&&!s.engaged&&relation>=68&&trust>=58&&day>=proposalEarliest;
   const weddingEligible=!!s.engaged&&!s.married&&day>=engagedDay+14;
