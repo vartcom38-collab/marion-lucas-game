@@ -1,4 +1,5 @@
 import './socialFreedom.css';
+import './monia/living-social-runtime';
 
 const SAVE_KEY='marion-lucas-save-v4';
 type SaveLike={day?:number;time?:string;metLucas?:boolean;messages?:Array<{from:string;text:string;day:number;read:boolean}>;memories?:string[];flags?:Record<string,boolean|number|string>;updatedAt?:number};
