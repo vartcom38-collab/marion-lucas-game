@@ -3,6 +3,7 @@ import type { MonIADirectorRequest, MonIADirectorResult } from './director';
 import { planDrama } from './drama-planner';
 import { composeDramaStudio } from './drama-studio';
 import { moniaDramaPlayer } from './drama-player';
+import { getLucasPresence } from './lucas-presence-engine';
 
 const SAVE_KEY = 'marion-lucas-save-v4';
 const SEEN_KEY = 'monia-scene-seen-v1';
@@ -70,26 +71,39 @@ function closeScene() {
   document.getElementById(ACTIVE_ID)?.remove();
 }
 
-function mediaForScene(scene: MonIADirectorResult['scene']) {
-  const location = (scene?.location || '').toLowerCase();
-  if (/nîmes|appartement|marion/.test(location)) {
-    return { kind: 'image' as const, src: './resources/appartement-nimes.png' };
-  }
-  return { kind: 'video' as const, src: './resources/lucas-intro.mp4' };
+function environmentMedia(place = '', location = '') {
+  const p = `${place} ${location}`.toLowerCase();
+  if (/cafe|café/.test(p)) return { kind: 'image' as const, src: './resources/nimes/nimes-cafe.webp' };
+  if (/ar[eè]nes|arena/.test(p)) return { kind: 'image' as const, src: './resources/nimes/nimes-arenes.webp' };
+  if (/station|gare/.test(p)) return { kind: 'image' as const, src: './resources/nimes/nimes-station.webp' };
+  if (/madrid/.test(p)) return { kind: 'image' as const, src: './resources/madrid/lucas-country-home-exterior.webp' };
+  if (/family|famille/.test(p)) return { kind: 'image' as const, src: './resources/family/family-exterior.webp' };
+  if (/n[iî]mes/.test(p)) return { kind: 'image' as const, src: './resources/nimes/nimes-street.webp' };
+  return { kind: 'image' as const, src: './resources/nimes/marion-apartment-living.webp' };
 }
 
-function openFallbackScene(snapshot: DirectorSnapshot, dialogue: string) {
+/**
+ * Fail-closed visual policy:
+ * - Lucas physically present => a composed character scene is required; never fake it with a solo/environment fallback.
+ * - Lucas physically absent => fallback media is environment-only and contains no Lucas media source.
+ */
+function openFallbackScene(snapshot: DirectorSnapshot, dialogue: string, save: LooseSave) {
+  const presence = getLucasPresence();
+  if (presence?.together) {
+    console.warn('[MonIA Scene] Lucas is physically present; environment-only fallback suppressed until an approved integrated composition is playable.');
+    closeScene();
+    return;
+  }
+
   closeScene();
   const scene = snapshot.scene;
   const duration = Math.max(8, Math.min(30, Number(scene?.duration || 18)));
-  const media = mediaForScene(scene);
+  const media = environmentMedia(String(save.place || ''), scene?.location || '');
   const overlay = document.createElement('div');
   overlay.id = ACTIVE_ID;
   overlay.style.cssText = 'position:fixed;inset:0;z-index:100000;background:#080706;color:white;overflow:hidden;font-family:inherit';
 
-  const visual = media.kind === 'video'
-    ? `<video id="moniaDramaMedia" src="${media.src}" autoplay muted loop playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;animation:moniaDramaCamera 9s ease-in-out infinite alternate"></video>`
-    : `<img id="moniaDramaMedia" src="${media.src}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;animation:moniaDramaCamera 9s ease-in-out infinite alternate">`;
+  const visual = `<img id="moniaDramaMedia" src="${media.src}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;animation:moniaDramaCamera 9s ease-in-out infinite alternate">`;
 
   overlay.innerHTML = `${visual}<style>@keyframes moniaDramaCamera{0%{transform:scale(1.03) translate3d(-.8%,.2%,0)}45%{transform:scale(1.08) translate3d(.5%,-.4%,0)}100%{transform:scale(1.12) translate3d(-.2%,-.7%,0)}}@keyframes moniaDramaFade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}</style><div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.5),rgba(0,0,0,.06) 42%,rgba(0,0,0,.78))"></div><div style="position:absolute;inset:0;pointer-events:none;border-top:5vh solid #070605;border-bottom:5vh solid #070605"></div><div style="position:absolute;top:7vh;left:5vw;right:5vw;display:flex;justify-content:space-between;align-items:flex-start;text-shadow:0 2px 14px #000"><div><small style="letter-spacing:.23em;opacity:.8">MONIA · SCÈNE DYNAMIQUE</small><h2 style="font-size:clamp(1.25rem,3vw,2.1rem);margin:.5rem 0 .2rem">${safe(scene?.location || 'Moment')}</h2><span style="opacity:.72">${safe(snapshot.emotion || 'intense')} · ${duration}s</span></div><button id="closeMoniaDrama" style="width:44px;height:44px;border:0;border-radius:50%;background:rgba(0,0,0,.48);color:white;font-size:24px;cursor:pointer">×</button></div><div style="position:absolute;left:7vw;right:7vw;bottom:9vh;max-width:840px;margin:auto;padding:18px 22px;background:rgba(10,8,7,.56);border:1px solid rgba(255,255,255,.14);border-radius:18px;backdrop-filter:blur(12px);animation:moniaDramaFade .65s ease both"><small style="opacity:.7">${safe(scene?.framing || 'plan cinématographique')} · ${safe(scene?.lighting || 'lumière naturelle')}</small><p style="font-size:clamp(1.05rem,2.4vw,1.45rem);line-height:1.5;margin:.6rem 0">${safe(dialogue)}</p><span style="font-size:.85rem;opacity:.66">${safe(scene?.action || 'Le moment se joue naturellement.')}</span><div style="display:flex;gap:10px;margin-top:14px"><button id="replayMoniaDrama" style="border:0;border-radius:999px;padding:10px 16px;cursor:pointer">▶ Réécouter</button><button id="endMoniaDrama" style="border:0;border-radius:999px;padding:10px 16px;background:#8f2929;color:white;cursor:pointer">Terminer la scène</button></div></div>`;
 
@@ -113,11 +127,17 @@ function relationLabel(value = 0) {
 async function openStudioScene(snapshot: DirectorSnapshot, dialogue: string, save: LooseSave) {
   const scene = snapshot.scene;
   const place = scene?.location || save.place || 'Nîmes';
+  const presence = getLucasPresence();
+  const lucasTogether = presence?.together === true;
+  const actors = lucasTogether ? ['Marion', 'Lucas'] : ['Marion'];
+  const availableMedia = lucasTogether
+    ? ['atlas-lucas.webp', 'atlas-marion.webp', 'appartement-nimes.png']
+    : ['atlas-marion.webp', 'marion-nimes.mp4', 'appartement-nimes.png'];
   try {
     const plan = await planDrama({
       title: 'Scène MonIA',
       premise: `${scene?.action || 'Moment partagé.'} ${dialogue}`.trim(),
-      actors: ['Marion', 'Lucas'],
+      actors,
       targetDuration: Math.max(15, Math.min(36, Number(scene?.duration || 24))),
       format: '9:16',
       context: {
@@ -126,7 +146,9 @@ async function openStudioScene(snapshot: DirectorSnapshot, dialogue: string, sav
         time: save.time || '20:30',
         day: Number(save.day || 1),
         recentAction: scene?.action || 'Une scène immédiate se joue.',
-        activeObjective: 'Jouer uniquement la conséquence immédiate déjà autorisée, sans créer de nouveau tournant narratif.',
+        activeObjective: lucasTogether
+          ? 'Jouer uniquement la conséquence immédiate déjà autorisée. Lucas est physiquement avec Marion et doit être intégré naturellement dans les plans de la scène.'
+          : 'Jouer uniquement la conséquence immédiate déjà autorisée. Lucas n’est pas physiquement avec Marion et ne doit apparaître dans aucun plan de cette scène.',
         relationship: relationLabel(Number(save.relationship || 0)),
         memories: (save.memories || []).slice(0, 5),
         recentEvents: (save.eventHistory || []).slice(-5),
@@ -136,14 +158,17 @@ async function openStudioScene(snapshot: DirectorSnapshot, dialogue: string, sav
           'Lucas reste absolument fidèle.',
           'Ne pas inventer de rendez-vous, voyage, rupture, dispute majeure ou déclaration canonique.',
           'Utiliser uniquement une proximité compatible avec le contexte déjà autorisé.',
+          lucasTogether
+            ? 'PRÉSENCE VISUELLE OBLIGATOIRE : Lucas est physiquement dans la scène avec Marion. Il doit être intégré photoréalistement au même décor, avec une échelle, une lumière et une perspective cohérentes.'
+            : 'ABSENCE VISUELLE OBLIGATOIRE : Lucas n’est pas physiquement avec Marion. Ne jamais afficher Lucas, son portrait, son corps, son reflet ou un média Lucas dans le décor actuel.',
         ],
       },
-      availableMedia: ['atlas-lucas.webp', 'atlas-marion.webp', 'lucas-intro.mp4', 'marion-nimes.mp4', 'appartement-nimes.png'],
+      availableMedia,
     }, true);
 
     const composition = composeDramaStudio(plan);
     if (!composition.playable) {
-      openFallbackScene(snapshot, dialogue);
+      openFallbackScene(snapshot, dialogue, save);
       return;
     }
 
@@ -158,7 +183,7 @@ async function openStudioScene(snapshot: DirectorSnapshot, dialogue: string, sav
     if (!mount) return;
     await moniaDramaPlayer.play(composition, mount);
   } catch {
-    openFallbackScene(snapshot, dialogue);
+    openFallbackScene(snapshot, dialogue, save);
   }
 }
 
@@ -208,4 +233,4 @@ window.setInterval(scanForScene, 650);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) scanForScene(); });
 scanForScene();
 
-console.info('[MonIA] Canonical Drama Studio runtime active');
+console.info('[MonIA] Canonical Drama Studio runtime active with physical-presence visual gating');
