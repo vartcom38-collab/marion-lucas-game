@@ -1,4 +1,5 @@
 import './iphone-shell.css';
+import '../relationship-phone-state';
 
 const SAVE_KEY='marion-lucas-save-v4';
 
@@ -31,7 +32,7 @@ function ensureChrome(phone:HTMLElement){
   if(!phone.querySelector(':scope > .iphoneHomeIndicator')){
     const home=document.createElement('div');
     home.className='iphoneHomeIndicator';
-    phone.append(home);
+    phone.appendChild(home);
   }
 }
 
