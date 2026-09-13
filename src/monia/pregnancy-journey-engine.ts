@@ -14,8 +14,8 @@ function yes(s:Save,key:string){return !!flag(s,key)}
 
 export function getPregnancyJourney():PregnancyJourney|null{
   const s=readSave();if(!s)return null;
-  const canonical=getPregnancyState(s);const confirmedDay=canonical?.confirmedDay||null;
-  const g=confirmedDay?Math.max(0,n(s.day,1)-confirmedDay):null;let stage:PregnancyStage='none';
+  const canonical=getPregnancyState(s);const timelineStart=canonical?.startDay||canonical?.confirmedDay||null;
+  const g=timelineStart?Math.max(0,n(s.day,1)-timelineStart):null;let stage:PregnancyStage='none';
   if(canonical?.state==='loss')stage='loss';
   else if(canonical?.state==='postpartum')stage='postpartum';
   else if(yes(s,'inLabor')&&canonical?.state==='confirmed')stage='labor';
