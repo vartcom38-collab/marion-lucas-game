@@ -63,9 +63,9 @@ export function setPregnancyState(state:CanonicalPregnancyState,day?:number){
   if(state==='postpartum'){f.postpartum=true;f.birthDay=d;f.lastBirthDay=d;f.familyState='postpartum';f.pregnancyConfirmed=false;f.pregnancyPossible=false;f.tryingForBaby=false}
   if(state==='loss'){f.pregnancyLoss=true;f.familyState='thinking';f.pregnancyConfirmed=false;f.pregnancyPossible=false;f.tryingForBaby=false}
   if(state==='none'){
-    const preserveParenting=String(f.familyState||'')==='parenting';
+    const keep=String(f.familyState||'');
     clearActivePregnancyFlags(f);f.tryingForBaby=false;
-    if(!preserveParenting)f.familyState='closed';
+    if(!['parenting','thinking'].includes(keep))f.familyState='closed';
   }
   s.eventHistory=[...(s.eventHistory||[]),`pregnancy-state:${state}:cycle-${Math.max(1,cycleOf(s))}:${d}`].slice(-420);write(s);return true;
 }
