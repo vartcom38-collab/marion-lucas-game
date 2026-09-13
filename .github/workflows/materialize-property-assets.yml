@@ -1,0 +1,72 @@
+name: Materialize property visuals
+
+on:
+  push:
+    paths:
+      - '.github/workflows/materialize-property-assets.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install WebP tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y webp
+      - name: Download and convert property visuals
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public/resources/properties .tmp-property-assets
+          fetch() {
+            key="$1"
+            url="$2"
+            src=".tmp-property-assets/${key}.png"
+            curl -L --fail --retry 3 --retry-delay 2 "$url" -o "$src"
+            cwebp -quiet -q 68 -resize 720 540 "$src" -o "public/resources/properties/${key}.webp"
+          }
+          fetch 'salamanca-finca-exterior' 'https://pikaso.cdnpk.net/private/production/5434282301/render.png?token=exp=1789516800~hmac=b31a775f9341e4ad2230df0cba231e090ec44c38c9a915356efebb8ec8b0ce23'
+          fetch 'salamanca-finca-patio' 'https://pikaso.cdnpk.net/private/production/5434282459/render.png?token=exp=1789516800~hmac=80efbd640f783118328cfd1b30402934b6a2756f09f2a340ae95828bc1864ae1'
+          fetch 'salamanca-finca-land' 'https://pikaso.cdnpk.net/private/production/5434281920/render.png?token=exp=1789516800~hmac=0d225b385f9bfef368d637bb8948314ca483564eb50d95490453f24cb3f9c0fd'
+          fetch 'toledo-finca-exterior' 'https://pikaso.cdnpk.net/private/production/5434282910/render.png?token=exp=1789516800~hmac=f784a1f644943568b2804ec2cc23441da34148f2cdef05b6bb9d15c4d01e75b4'
+          fetch 'toledo-finca-patio' 'https://pikaso.cdnpk.net/private/production/5434283146/render.png?token=exp=1789516800~hmac=fe4f9b8f6a2e57ffeaed184c53a1d40ba7fbb533546f7ed88085d8e5a2ba227a'
+          fetch 'toledo-finca-olive' 'https://pikaso.cdnpk.net/private/production/5434282687/render.png?token=exp=1789516800~hmac=ee0d3f6c30e8c663f47d6a484aa8a4f63befd80204b1cfc243de592809a74e7e'
+          fetch 'extremadura-estate-exterior' 'https://pikaso.cdnpk.net/private/production/5434283180/render.png?token=exp=1789516800~hmac=24b52e8f11195553bc570812063d7b655d5e22666c0b235e08186af35feed45a'
+          fetch 'extremadura-estate-courtyard' 'https://pikaso.cdnpk.net/private/production/5434283791/render.png?token=exp=1789516800~hmac=cba36d1f73e0584a264e02296af42aa0df8a1022a56097f562416c919bba8cc0'
+          fetch 'extremadura-estate-land' 'https://pikaso.cdnpk.net/private/production/5434283951/render.png?token=exp=1789516800~hmac=c5e479cfe897322e88340bf9db51392e558bc937257b13a12da05a168bdb788c'
+          fetch 'jerez-finca-exterior' 'https://pikaso.cdnpk.net/private/production/5434275641/3583735375.png?token=exp=1789516800~hmac=a19a0102389c4e8e4d903d525ad0baf2037e5c474df55ac509111585a1256f9e'
+          fetch 'jerez-finca-courtyard' 'https://pikaso.cdnpk.net/private/production/5434276142/3583735586.png?token=exp=1789516800~hmac=aa9c76917860861b7a9af6af5ed6a675f8a836a6a366e96d9c9a3a8718885aad'
+          fetch 'jerez-finca-land' 'https://pikaso.cdnpk.net/private/production/5434276524/3583735769.png?token=exp=1789516800~hmac=80c3ffbd6b763158d6af01fb8d70e294065597ff1787ebd7ad8785deaba54205'
+          fetch 'sevilla-flat-courtyard' 'https://pikaso.cdnpk.net/private/production/5434277018/3583736019.png?token=exp=1789516800~hmac=25da65eaa8d51fbaefb024d9b37844d6b38e76e6363f472964fa674fe7ba8e01'
+          fetch 'sevilla-flat-street' 'https://pikaso.cdnpk.net/private/production/5434277465/3583736267.png?token=exp=1789516800~hmac=e153135c0b0c69b4215f2d1feb9b7ebb8295fb9867e2e72c8bd0d0c568e5e74c'
+          fetch 'sevilla-flat-living' 'https://pikaso.cdnpk.net/private/production/5434277868/3583736510.png?token=exp=1789516800~hmac=70059a4d76f71479e2266aef8afed25d2444d2e3da35e6f9ada3636f3d6e4606'
+          fetch 'valencia-flat-living' 'https://pikaso.cdnpk.net/private/production/5434278324/3583736740.png?token=exp=1789516800~hmac=629b813303e18711a262a53f5ee18a6bd68b3768bc46b805c4bf2585b7bd14fe'
+          fetch 'valencia-flat-terrace' 'https://pikaso.cdnpk.net/private/production/5434278637/3583736917.png?token=exp=1789516800~hmac=3019c61c1db2a920c363b8c1c554089c8152529170d6d5570c920937ba5646cf'
+          fetch 'valencia-flat-view' 'https://pikaso.cdnpk.net/private/production/5434279048/3583737125.png?token=exp=1789516800~hmac=fdcfaf170b33e2d74cd5ccd9c797f20851833428d44d6f62326a9f5e4b0586b1'
+          fetch 'basque-coast-exterior' 'https://pikaso.cdnpk.net/private/production/5434266645/3583730802.png?token=exp=1789516800~hmac=6b014ab92c053fe335ab56d93ed59990a68dda76c8275bbb52de307da6829d92'
+          fetch 'basque-coast-living' 'https://pikaso.cdnpk.net/private/production/5434267991/3583731514.png?token=exp=1789516800~hmac=5e25ca710e0a9d3a516ddbffd7c4b8dd740a3bd57920cb7a338fba0c7207751e'
+          fetch 'basque-coast-terrace' 'https://pikaso.cdnpk.net/private/production/5434268459/3583731750.png?token=exp=1789516800~hmac=7ed5d647dff679a737f1578ce5c9eaef9ebb49bdd9d8d4cdac386047fd12dc80'
+          fetch 'soller-house-exterior' 'https://pikaso.cdnpk.net/private/production/5434268973/3583732034.png?token=exp=1789516800~hmac=c233dca780977d8deb7acd822c9507cf840b04b147af2306f6f859e085041272'
+          fetch 'soller-house-terrace' 'https://pikaso.cdnpk.net/private/production/5434269750/3583732497.png?token=exp=1789516800~hmac=9f70a25430c5f763b7105d820cc72df4b5135ea61333ff0e72be72302b0f24ce'
+          fetch 'soller-house-interior' 'https://pikaso.cdnpk.net/private/production/5434270072/3583732707.png?token=exp=1789516800~hmac=0efa6b45987b93a7bf2381f8a4d6b2200a42cf91f86fe3ff09ef7e1d1c1761cb'
+          fetch 'girona-townhouse-exterior' 'https://pikaso.cdnpk.net/private/production/5434293663/render.png?token=exp=1789516800~hmac=606dedb0b9c206865877f779647659167f5238177eb0cdcab1fab2c43ad9080f'
+          fetch 'girona-townhouse-interior' 'https://pikaso.cdnpk.net/private/production/5434274689/3583734862.png?token=exp=1789516800~hmac=5484d1f1b8b005d98013b24f3e3e2388d62e48f37b99904a46e7843febae65e6'
+          fetch 'girona-townhouse-terrace' 'https://pikaso.cdnpk.net/private/production/5434275236/3583735169.png?token=exp=1789516800~hmac=ca59210ff8d0460270ce64bcb72aa857cbeb1e163144996a80f819c1cc3b49cc'
+          rm -rf .tmp-property-assets
+      - name: Commit property assets
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add public/resources/properties/*.webp
+          if git diff --cached --quiet; then
+            echo 'No asset changes to commit.'
+            exit 0
+          fi
+          git commit -m 'Add validated photorealistic property galleries'
+          git push
