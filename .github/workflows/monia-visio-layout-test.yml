@@ -60,12 +60,12 @@ jobs:
         run: |
           python - <<'PY'
           import os, requests
-          url=f'https://marion-lucas.marionbolomey.fr/resources/monia/generated/visio-lucas-speaking-fr-layout-v5-candidate.mp4?run={os.environ["GITHUB_RUN_ID"]}'
+          url=f'https://marion-lucas.marionbolomey.fr/resources/monia/generated/visio-lucas-speaking-fr-layout-v6-candidate.mp4?run={os.environ["GITHUB_RUN_ID"]}'
           r=requests.get(url,timeout=30,headers={'Range':'bytes=0-63','Cache-Control':'no-cache','Accept':'video/*,*/*'})
           ok=r.status_code in (200,206) and len(r.content)>=16 and (b'ftyp' in r.content[:32] or r.content.startswith(b'RIFF') or r.content.startswith(b'\x1aE\xdf\xa3'))
           print(f'candidate={url} verified={ok} status={r.status_code} bytes={len(r.content)}')
           if not ok:
-              raise SystemExit('MonIA V5 layout candidate public verification failed')
+              raise SystemExit('MonIA V6 layout candidate public verification failed')
           PY
 
       - name: Candidate-only policy
@@ -73,4 +73,4 @@ jobs:
           echo "Candidate only: true"
           echo "Narrative authority: false"
           echo "Live manifest mutation: forbidden"
-          echo "Purpose: visual validation of exact visio composition, warm gaze and natural everyday French delivery"
+          echo "Purpose: validate V5 composition with more casual spontaneous French rhythm"
