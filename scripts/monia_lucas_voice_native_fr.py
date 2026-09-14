@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import argparse
+import asyncio
 import os
 import shutil
 import subprocess
 from pathlib import Path
 
+import edge_tts
 import requests
 from gradio_client import Client, handle_file
 
@@ -50,7 +52,6 @@ def ffmpeg_wav(source: Path, target: Path, sample_rate: int = 24000, normalize: 
 
 
 def extract_reference_audio(video_path: Path, wav_path: Path) -> None:
-    # Keep Lucas V3 timbre as intact as possible; no aggressive dynamics processing.
     ffmpeg_wav(video_path, wav_path, sample_rate=24000, normalize=False)
 
 
@@ -74,25 +75,44 @@ def result_path(result) -> Path:
     raise RuntimeError(f"No usable audio file returned: {type(result).__name__}")
 
 
-def generate_conversational_french_source(target: Path) -> str:
+async def make_french_reference(mp3_path: Path) -> str:
+    voices = await edge_tts.list_voices()
+    preferred = ["fr-FR-HenriNeural", "fr-FR-AlainNeural"]
+    names = {v.get("ShortName") for v in voices}
+    voice = next((name for name in preferred if name in names), None)
+    if not voice:
+        voice = next(
+            (str(v["ShortName"]) for v in voices if v.get("Locale") == "fr-FR" and v.get("Gender") == "Male"),
+            None,
+        )
+    if not voice:
+        raise RuntimeError("No fr-FR male voice available for donor reference")
+    # This is only a pronunciation/style scaffold for Chatterbox, never the final Lucas voice.
+    communicate = edge_tts.Communicate(TEXT, voice, rate="-2%", pitch="-2Hz", volume="+0%")
+    await communicate.save(str(mp3_path))
+    if not mp3_path.exists() or mp3_path.stat().st_size < 2048:
+        raise RuntimeError("Could not create French donor reference")
+    return voice
+
+
+def generate_conversational_french_source(reference_wav: Path, target: Path) -> str:
     token = os.environ.get("HF_TOKEN", "").strip() or None
-    client = Client(CHATTERBOX_SPACE, token=token, verbose=False)
-    # No reference audio here on purpose: we want clean native French phrasing first.
+    client = Client(CHATTERBOX_SPACE, token=token, verbose=False, download_files=True)
     result = client.predict(
         TEXT,
         "fr",
-        None,
-        0.42,
-        0.72,
+        handle_file(reference_wav),
+        0.55,
+        0.74,
         2719,
-        0.35,
+        0.28,
         api_name=CHATTERBOX_API,
     )
     source = result_path(result)
     shutil.copyfile(source, target)
     if target.stat().st_size < 4096:
         raise RuntimeError("Conversational French donor is too small")
-    return "Chatterbox native French conversational donor"
+    return "Chatterbox French conversational donor guided by fr-FR reference"
 
 
 def resolve_seed_vc_audio(result) -> Path:
@@ -121,12 +141,12 @@ def convert_timbre(native_source: Path, lucas_reference: Path, target: Path) -> 
     result = client.predict(
         source_audio_path=handle_file(native_source),
         target_audio_path=handle_file(lucas_reference),
-        diffusion_steps=28,
+        diffusion_steps=30,
         length_adjust=1.0,
         intelligebility_cfg_rate=0.0,
-        similarity_cfg_rate=0.66,
+        similarity_cfg_rate=0.64,
         top_p=0.92,
-        temperature=0.8,
+        temperature=0.78,
         repetition_penalty=1.0,
         convert_style=False,
         anonymization_only=False,
@@ -136,7 +156,7 @@ def convert_timbre(native_source: Path, lucas_reference: Path, target: Path) -> 
     shutil.copyfile(source, target)
     if not target.exists() or target.stat().st_size < 4096:
         raise RuntimeError("Seed-VC Lucas fluid French candidate is too small")
-    return "conversational native French donor + Seed-VC timbre-only conversion to Lucas V3"
+    return "fluid French donor + Seed-VC timbre-only conversion to Lucas V3"
 
 
 def main() -> None:
@@ -149,19 +169,23 @@ def main() -> None:
     work = engine.WORK_DIR
     reference_video = work / "lucas-v3-fluid-fr-reference.mp4"
     reference_wav = work / "lucas-v3-fluid-fr-reference.wav"
+    scaffold_mp3 = work / "lucas-fluid-fr-scaffold.mp3"
+    scaffold_wav = work / "lucas-fluid-fr-scaffold.wav"
     donor_raw = work / "lucas-fluid-fr-donor-raw.wav"
     donor_wav = work / "lucas-fluid-fr-donor.wav"
     target = work / OUTPUT_NAME
 
     download_reference(reference_video)
     extract_reference_audio(reference_video, reference_wav)
-    donor_provider = generate_conversational_french_source(donor_raw)
+    scaffold_voice = asyncio.run(make_french_reference(scaffold_mp3))
+    ffmpeg_wav(scaffold_mp3, scaffold_wav, sample_rate=24000, normalize=False)
+    donor_provider = generate_conversational_french_source(scaffold_wav, donor_raw)
     ffmpeg_wav(donor_raw, donor_wav, sample_rate=24000, normalize=False)
     target.unlink(missing_ok=True)
     provider = convert_timbre(donor_wav, reference_wav, target)
 
     print(
-        f"MONIA_LUCAS_FLUID_FR donor={donor_provider} compute={provider} "
+        f"MONIA_LUCAS_FLUID_FR scaffold={scaffold_voice} donor={donor_provider} compute={provider} "
         f"output={target} bytes={target.stat().st_size}"
     )
     if args.publish_candidate:
