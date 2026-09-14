@@ -22,32 +22,26 @@
 </div>
 <script>
 const choices=document.getElementById('choices'),ended=document.getElementById('ended'),video=document.getElementById('lucasVideo'),listening=document.getElementById('listening'),startgate=document.getElementById('startgate');
-let current='start';
+const BASE='https://marion-lucas.marionbolomey.fr/resources/monia/generated/';
+let audio=null;
 const scenes={
- start:{say:'Salut… ça va, toi ? Qu’est-ce que tu racontes ?',choices:[['Ça va, et toi ?','calm'],['Je voulais juste te voir','warm'],['Tu fais quoi là ?','busy']]},
- calm:{say:'Ça va… journée un peu longue, mais tranquille. Et toi, t’as fait quoi ?',choices:[['Pas grand-chose','calm2'],['J’ai pensé à toi','warm2'],['Je te raconterai plus tard','later']]},
- calm2:{say:'T’as l’air tranquille, toi. Ça fait du bien de te voir comme ça.',choices:[['Oui, ça va','warm2'],['Et toi, vraiment ?','busy2'],['Reste un peu avec moi','stay']]},
- warm:{say:'Ah ouais ?… Ça me fait plaisir que tu m’appelles juste pour ça.',choices:[['Tu me manquais un peu','miss'],['Fais pas le malin','tease'],['Raconte-moi ta journée','busy2']]},
- warm2:{say:'Ça me plaît de t’entendre dire ça.',choices:[['T’habitue pas trop','tease'],['Moi aussi','stay'],['On se voit bientôt ?','soon']]},
- busy:{say:'Je viens de me poser deux minutes. J’allais justement souffler un peu.',choices:[['Je te laisse respirer','later'],['Non, reste un peu','stay'],['T’as l’air crevé','busy2']]},
- busy2:{say:'Un peu, ouais. Mais ça va. Là, je suis bien.',choices:[['Alors reste','stay'],['Je te laisse quand même','later'],['Tu souris pourquoi ?','tease']]},
- tease:{say:'Je fais pas le malin. Enfin… pas tant que ça.',choices:[['Si, un peu','tease2'],['Ça te va bien','warm2'],['Bon, continue','busy2']]},
- tease2:{say:'Peut-être un peu. Mais seulement avec toi.',choices:[['Je savais','stay'],['Mmh, bien sûr','warm2'],['On se reparle après','later']]},
- miss:{say:'Toi aussi, un peu.',choices:[['Un peu seulement ?','tease2'],['Je prends','warm2'],['On se voit bientôt ?','soon']]},
- stay:{say:'Je reste. J’ai encore quelques minutes.',choices:[['Alors raconte','busy2'],['Ça me va','warm2'],['Je te laisse après','later']]},
- soon:{say:'Oui. On va trouver un moment.',choices:[['J’espère bien','warm2'],['Promis ?','stay'],['D’accord','later']]},
- later:{say:'D’accord… on se reparle après.',choices:[['Raccrocher','end']]}
+ opening:{audio:'opening',choices:[['Ça va, et toi ?','calm'],['Je voulais juste te voir','warm'],['Tu fais quoi là ?','busy']]},
+ calm:{audio:'calm',choices:[['Pas grand-chose','calm'],['J’ai pensé à toi','warm'],['Je te raconterai plus tard','end']]},
+ warm:{audio:'warm',choices:[['Tu me manquais un peu','miss'],['Fais pas le malin','tease'],['Raconte-moi ta journée','busy']]},
+ busy:{audio:'busy',choices:[['Je te laisse respirer','end'],['Non, reste un peu','warm'],['T’as l’air crevé','calm']]},
+ tease:{audio:'tease',choices:[['Si, un peu','tease'],['Ça te va bien','warm'],['Bon, continue','busy']]},
+ miss:{audio:'miss',choices:[['Un peu seulement ?','tease'],['Je prends','warm'],['On se voit bientôt ?','calm']]},
+ end:{audio:'end',choices:[['Raccrocher','finish']]}
 };
-function pickVoice(){const voices=speechSynthesis.getVoices();return voices.find(v=>/^fr(-|_)/i.test(v.lang)&&/thomas|paul|henri|male|homme/i.test(v.name))||voices.find(v=>/^fr(-|_)/i.test(v.lang))||voices[0]}
-function speak(text,onend){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang='fr-FR';u.rate=.9;u.pitch=.82;u.volume=1;const voice=pickVoice();if(voice)u.voice=voice;u.onstart=()=>{choices.classList.remove('show');listening.classList.remove('show')};u.onend=()=>{listening.classList.add('show');onend?.()};speechSynthesis.speak(u)}
 function showChoices(items){choices.innerHTML='';items.forEach(([label,next])=>{const b=document.createElement('button');b.className='choice';b.textContent=label;b.onclick=()=>select(next);choices.appendChild(b)});requestAnimationFrame(()=>choices.classList.add('show'))}
-function enter(key){current=key;if(key==='end'){finish();return}const s=scenes[key];if(!s)return;listening.classList.remove('show');speak(s.say,()=>showChoices(s.choices))}
-function select(next){choices.classList.remove('show');listening.classList.remove('show');setTimeout(()=>enter(next),300)}
-function finish(){speechSynthesis.cancel();video.pause();ended.classList.add('show')}
-function begin(){ended.classList.remove('show');startgate.style.display='none';video.muted=true;video.play().catch(()=>{});enter('start')}
-function restart(){current='start';video.currentTime=0;video.play().catch(()=>{});begin()}
+function playLucas(key,onend){if(audio){audio.pause();audio=null}choices.classList.remove('show');listening.classList.remove('show');audio=new Audio(BASE+`lucas-visio-dialogue-v1-${key}-candidate.wav?v=1`);audio.preload='auto';audio.onended=()=>{listening.classList.add('show');onend?.()};audio.onerror=()=>{listening.textContent='Audio Lucas en préparation…';listening.classList.add('show');onend?.()};audio.play().catch(()=>{listening.textContent='Touchez une fois l’écran pour autoriser le son';listening.classList.add('show')})}
+function enter(key){if(key==='finish'){finish();return}const s=scenes[key];if(!s)return;playLucas(s.audio,()=>showChoices(s.choices))}
+function select(next){choices.classList.remove('show');listening.classList.remove('show');setTimeout(()=>enter(next),250)}
+function finish(){if(audio){audio.pause();audio=null}video.pause();ended.classList.add('show')}
+function begin(){ended.classList.remove('show');startgate.style.display='none';video.muted=true;video.play().catch(()=>{});enter('opening')}
+function restart(){video.currentTime=0;video.play().catch(()=>{});begin()}
 document.getElementById('startCall').onclick=begin;document.getElementById('end').onclick=finish;document.getElementById('restart').onclick=restart;document.getElementById('camera').onclick=e=>{const self=document.getElementById('selfView');self.style.display=self.style.display==='none'?'grid':'none';e.currentTarget.classList.toggle('off')};document.getElementById('mic').onclick=e=>e.currentTarget.classList.toggle('off');
-video.muted=true;video.play().catch(()=>{});if('speechSynthesis'in window)speechSynthesis.onvoiceschanged=()=>{};
+video.muted=true;video.play().catch(()=>{});
 </script>
 </body>
 </html>
