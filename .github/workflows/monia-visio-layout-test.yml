@@ -8,7 +8,7 @@ on:
       - ".github/workflows/monia-visio-layout-test.yml"
       - "scripts/monia_visio_layout_test.py"
       - "scripts/monia_video_engine.py"
-      - "resources/monia/canon/lucas/visio-layout-reference.jpg.b64"
+      - "resources/monia/canon/lucas/visio-layout-reference.jpg"
 
 permissions:
   contents: read
@@ -37,15 +37,13 @@ jobs:
       - name: Validate layout reference
         run: |
           python - <<'PY'
-          import base64, io
           from pathlib import Path
           from PIL import Image
-          p=Path('resources/monia/canon/lucas/visio-layout-reference.jpg.b64')
-          raw=base64.b64decode(p.read_text().strip())
-          im=Image.open(io.BytesIO(raw)); im.load()
+          p=Path('resources/monia/canon/lucas/visio-layout-reference.jpg')
+          im=Image.open(p); im.load()
           if im.width < 300 or im.height < 500:
               raise SystemExit(f'layout reference too small: {im.width}x{im.height}')
-          print(f'layout reference valid: {im.width}x{im.height}, {len(raw)} bytes')
+          print(f'layout reference valid: {im.width}x{im.height}, {p.stat().st_size} bytes')
           PY
 
       - name: Generate layout candidate only
