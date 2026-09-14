@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import argparse
-import base64
 from dataclasses import replace
 from pathlib import Path
 
@@ -9,7 +8,7 @@ from PIL import Image
 
 import scripts.monia_video_engine as engine
 
-REFERENCE_B64 = Path("resources/monia/canon/lucas/visio-layout-reference.jpg.b64")
+REFERENCE_IMAGE = Path("resources/monia/canon/lucas/visio-layout-reference.jpg")
 OUTPUT_NAME = "visio-lucas-speaking-fr-layout-candidate.mp4"
 
 PROMPT = (
@@ -31,11 +30,8 @@ NEGATIVE = (
 )
 
 
-def decode_reference(target: Path, width: int, height: int) -> None:
-    raw = base64.b64decode(REFERENCE_B64.read_text(encoding="utf-8").strip())
-    original = target.with_suffix(".jpg")
-    original.write_bytes(raw)
-    image = Image.open(original).convert("RGB")
+def prepare_reference(target: Path, width: int, height: int) -> None:
+    image = Image.open(REFERENCE_IMAGE).convert("RGB")
     ratio = width / height
     source_ratio = image.width / image.height
     if source_ratio > ratio:
@@ -64,7 +60,7 @@ def generate() -> tuple[Path, str]:
     )
     source = engine.WORK_DIR / "lucas-visio-layout-reference.png"
     target = engine.WORK_DIR / OUTPUT_NAME
-    decode_reference(source, profile.width, profile.height)
+    prepare_reference(source, profile.width, profile.height)
     target.unlink(missing_ok=True)
     errors: list[str] = []
     try:
