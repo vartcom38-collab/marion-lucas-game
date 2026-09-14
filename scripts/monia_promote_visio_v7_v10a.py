@@ -29,9 +29,6 @@ def duration(path: Path) -> float:
 
 def remove_trailing_filler(source: Path, target: Path) -> None:
     dur = duration(source)
-    # The validated take contains an unwanted tiny English filler at the very end.
-    # Keep the exact V7 picture untouched; trim only the final audio tail, then pad
-    # silence so A/V duration remains identical and lip timing before the tail is unchanged.
     audio_end = max(0.5, dur - 0.55)
     subprocess.run([
         "ffmpeg","-hide_banner","-loglevel","error","-y",
@@ -54,10 +51,14 @@ def ensure_remote_dir(ftp: ftplib.FTP, path: str) -> None:
                 raise
 
 
+def secret(name: str) -> str:
+    return os.environ[name].strip().replace("\r", "").replace("\n", "")
+
+
 def upload(local: Path) -> str:
-    host = os.environ["INFOMANIAK_FTP_HOST"]
-    user = os.environ["INFOMANIAK_FTP_USER"]
-    password = os.environ["INFOMANIAK_FTP_PASSWORD"]
+    host = secret("INFOMANIAK_FTP_HOST")
+    user = secret("INFOMANIAK_FTP_USER")
+    password = secret("INFOMANIAK_FTP_PASSWORD")
     ftp = ftplib.FTP(host, timeout=60)
     ftp.login(user, password)
     ensure_remote_dir(ftp, REMOTE_DIR)
