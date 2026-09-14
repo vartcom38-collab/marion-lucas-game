@@ -1,5 +1,6 @@
 import './finca-move-persistence-guard';
 import './marriage-readiness';
+import './legacy-family-progression-guard';
 import {ensureLifeMilestoneChronology} from './life-milestone-chronology';
 
 const SAVE_KEY='marion-lucas-save-v4';
