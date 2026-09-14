@@ -7,37 +7,39 @@ from pathlib import Path
 import scripts.monia_video_engine as engine
 
 CALL_GRAMMAR = (
-    "Source grammar: REAL SMARTPHONE FRONT-CAMERA VIDEO CALL, not a cinematic portrait and not a studio shot. "
-    "Lucas is holding or propping a phone at ordinary conversational distance. Framing is slightly imperfect and human: "
-    "head and shoulders visible, Lucas a little off-center at moments, mild wide-angle front-camera perspective, believable room depth. "
-    "Add tiny natural phone micro-shake or body sway, minute framing drift, subtle autofocus/exposure breathing and light consumer-phone compression. "
-    "Lighting must feel like ordinary available light, never beauty lighting. Background is credible and quietly alive but not distracting. "
-    "Lucas sometimes looks at Marion on the screen and sometimes briefly toward the lens, as people do on a real video call. "
-    "No cinematic dolly, no fashion pose, no frozen portrait, no dramatic camera move, no baked-in call UI, no captions. "
+    "Source grammar: REAL SMARTPHONE FRONT-CAMERA VIDEO CALL, not a cinematic portrait, not a studio shot and not a webcam recording. "
+    "Match the visual language of a person holding a phone close during a private video call: Lucas fills most of the frame from upper chest to hair, "
+    "his face is close to the lens, with mild front-camera wide-angle perspective and believable arm-length distance. "
+    "The phone is roughly at eye level but never perfectly stabilized; allow tiny hand/body sway, minute framing drift, subtle autofocus/exposure breathing, "
+    "small consumer-phone compression and ordinary available room light. The crop may be slightly imperfect at the shoulders or hair for realism. "
+    "Lucas is not posing. He is actively looking at Marion on the screen and intermittently toward the tiny front-camera lens, creating the familiar screen-versus-lens eye-line mismatch of a real video call. "
+    "Background remains a real lived-in room with believable depth, softly out of focus and secondary to the face. "
+    "No cinematic dolly, no fashion pose, no symmetrical hero portrait, no shallow-depth glamour shot, no tripod-static framing, no baked-in call UI, no captions. "
 )
 
 STATE_PROMPTS = {
     "listening": (
         "State: LISTENING. Lucas is silently listening to Marion during the live call. "
-        "His mouth remains naturally closed. He breathes, blinks irregularly, makes tiny attentive eye shifts and one restrained micro nod. "
-        "He is watching a person on a screen rather than posing for a portrait. No speaking and no repeated mechanical gesture."
+        "His mouth remains naturally closed. He breathes, blinks irregularly, makes tiny attentive eye shifts, a slight head-angle change and one restrained micro nod. "
+        "His attention feels directed to a person on the phone screen, never to a photographer. No speaking and no repeated mechanical gesture."
     ),
     "speaking": (
-        "State: SPEAKING. Lucas is unmistakably TALKING in a normal conversational reply throughout most of the clip. "
-        "Show clearly visible, varied and natural lip articulation, jaw opening and closing, subtle cheek movement and changing mouth shapes, "
-        "with short conversational pauses, breaths and tiny eyebrow/head gestures. His mouth must NOT stay nearly closed or look like silent posing. "
-        "The movement should read immediately as a real person speaking even with the clip muted. Keep it natural rather than theatrical. "
-        "Do not mime one exact written sentence and do not attempt audio lip synchronization; runtime audio remains separate and playback is never warped."
+        "State: SPEAKING. Lucas is CLEARLY AND CONTINUOUSLY TALKING in a normal conversational reply for most of the clip. "
+        "The first second must already show unmistakable speech. Use repeated varied open-mouth phoneme shapes, visible lower-jaw travel, lip rounding and spreading, "
+        "brief tooth visibility where natural, subtle cheek movement, small tongue/lip transitions, breaths and tiny head/eyebrow beats that accompany normal speech. "
+        "His lips must visibly change shape many times across the clip; the jaw must open enough that muted playback immediately reads as someone speaking rather than posing. "
+        "Include only very short natural pauses, never a long closed-mouth hold. Maintain conversational eye contact with the screen/lens while talking. "
+        "Keep the performance intimate and ordinary, not theatrical. Do not mime one exact written sentence and do not attempt audio lip synchronization; runtime audio remains separate and playback is never warped."
     ),
     "reaction": (
         "State: REACTION. Lucas has just heard something from Marion on the live call and reacts privately: "
-        "a quick eye change, small eyebrow response, a restrained closed-mouth half-smile or amused breath, then a natural return to neutral. "
-        "He remains aware of the phone screen. No speaking, no theatrical expression, no looping gesture."
+        "a quick eye change, small eyebrow response, a restrained closed-mouth half-smile or amused breath, then a natural return toward neutral. "
+        "He remains close to the front camera and aware of the phone screen. No speaking, no theatrical expression, no looping gesture."
     ),
     "thinking": (
         "State: THINKING. Lucas pauses during the live call before replying. "
-        "His gaze slips briefly away from the screen, he breathes, blinks, subtly adjusts the phone or his posture, then looks back toward Marion on-screen. "
-        "Mouth stays closed. It must feel like a spontaneous pause inside an ongoing phone call, not a posed portrait."
+        "His gaze slips briefly away from the screen, he breathes, blinks, subtly shifts his grip/posture so the framing moves by a few pixels, then looks back toward Marion on-screen. "
+        "Mouth stays closed. It must feel like a spontaneous pause inside an ongoing handheld phone call, not a posed portrait."
     ),
 }
 
@@ -55,15 +57,16 @@ def profile_for(state: str) -> engine.CharacterProfile:
     negative = (
         base.negative
         + ", identity substitution, lip-sync imitation, playback warping, random seeking, frozen mouth while speaking, "
-        + "silent speaking pose, studio portrait, cinematic portrait, beauty lighting, dolly shot, perfectly centered locked framing, "
-        + "tripod-static portrait, repeated gesture, exaggerated acting, baked-in phone interface, captions, subtitles"
+        + "silent speaking pose, tiny mouth movement, almost-closed mouth during speech, studio portrait, cinematic portrait, glamour portrait, beauty lighting, "
+        + "dolly shot, perfectly centered locked framing, tripod-static portrait, webcam composition, distant medium shot, repeated gesture, exaggerated acting, "
+        + "baked-in phone interface, captions, subtitles"
     )
     return replace(
         base,
         key=f"lucas-visio-{state}",
         prompt=prompt,
         negative=negative,
-        duration=4,
+        duration=5 if state == "speaking" else 4,
         output_name=f"visio-lucas-{state}-candidate.mp4",
     )
 
