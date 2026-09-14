@@ -1,0 +1,57 @@
+name: MonIA Lucas Voice Test
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/monia-lucas-voice-test.yml"
+      - "scripts/monia_lucas_voice_test.py"
+      - "scripts/monia_video_engine.py"
+
+permissions:
+  contents: read
+
+jobs:
+  generate-lucas-voice-candidate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      INFOMANIAK_FTP_HOST: ${{ secrets.INFOMANIAK_FTP_HOST }}
+      INFOMANIAK_FTP_USER: ${{ secrets.INFOMANIAK_FTP_USER }}
+      INFOMANIAK_FTP_PASSWORD: ${{ secrets.INFOMANIAK_FTP_PASSWORD }}
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install ffmpeg
+        run: sudo apt-get update -qq && sudo apt-get install -y ffmpeg
+
+      - name: Install MonIA voice dependencies
+        run: python -m pip install --disable-pip-version-check gradio_client requests pillow
+
+      - name: Generate Lucas French voice candidate from V3 reference
+        run: python -m scripts.monia_lucas_voice_test --publish-candidate
+
+      - name: Verify voice candidate publicly
+        run: |
+          python - <<'PY'
+          import requests
+          url='https://marion-lucas.marionbolomey.fr/resources/monia/generated/lucas-voice-v1-candidate.wav'
+          r=requests.get(url,timeout=30,headers={'Range':'bytes=0-127','Cache-Control':'no-cache','Accept':'audio/*,*/*'})
+          ok=r.status_code in (200,206) and len(r.content)>=44 and (r.content.startswith(b'RIFF') or r.content.startswith(b'ID3'))
+          print(f'candidate={url} verified={ok} status={r.status_code} bytes={len(r.content)}')
+          if not ok:
+              raise SystemExit('MonIA Lucas voice candidate public verification failed')
+          PY
+
+      - name: Candidate-only policy
+        run: |
+          echo "Candidate only: true"
+          echo "Narrative authority: false"
+          echo "Live manifest mutation: forbidden"
+          echo "Reference source: Lucas V3 speaking candidate audio only"
+          echo "Purpose: validate warm, suave, natural French Lucas voice before video integration"
