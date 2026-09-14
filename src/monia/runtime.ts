@@ -11,6 +11,8 @@ import './commitment-readiness';
 import './taurine-life-layer';
 import './media-life-layer';
 import './family-life-layer';
+import './intimacy-life-layer';
+import './conception-bridge';
 import './france-spain-life-transition';
 import './spain-life-engine';
 import './madrid-home-life';
@@ -78,216 +80,139 @@ const FALLBACKS: Record<string, string[]> = {
 };
 
 function fallback(action: string): MonIAResult {
-  const pool = FALLBACKS[action] || ['Le moment passe simplement, mais il laisse une petite trace dans le rythme de la journée.'];
-  return { narration: pool[0], memory: '', objective: null, source: 'fallback' };
+  const list = FALLBACKS[action] || ['La journée continue avec son propre rythme.'];
+  const narration = list[Math.floor(Math.random() * list.length)] || list[0];
+  return { narration, memory: narration, objective: null, source: 'fallback' };
 }
 
-function parseNarrationJSON(raw: string) {
-  const start = raw.indexOf('{');
-  const end = raw.lastIndexOf('}');
-  if (start < 0 || end <= start) return null;
-  try {
-    const v = JSON.parse(raw.slice(start, end + 1));
-    if (typeof v?.narration !== 'string' || v.narration.length < 3 || v.narration.length > 500) return null;
-    return {
-      narration: v.narration.trim(),
-      memory: typeof v.memory === 'string' ? v.memory.trim().slice(0, 180) : '',
-      objective: typeof v.objective === 'string' ? v.objective.trim().slice(0, 100) : null,
-    } as const;
-  } catch {
-    return null;
-  }
+function compactContext(context: any): MonIACompactContext {
+  return {
+    action: String(context?.action || 'idle'),
+    place: String(context?.place || ''),
+    time: String(context?.time || ''),
+    day: Number(context?.day || 1),
+    relationship: Number(context?.relationship || 0),
+    trust: Number(context?.trust || 0),
+    chemistry: Number(context?.chemistry || 0),
+    stress: Number(context?.stress || 0),
+    energy: Number(context?.energy || 0),
+    official: Boolean(context?.official),
+    metLucas: Boolean(context?.metLucas),
+    memories: Array.isArray(context?.memories) ? context.memories.slice(0, 8).map(String) : [],
+  };
 }
 
 class MonIARuntime {
-  readonly profile = MARION_LUCAS_PROFILE;
+  mode: MonIAMode = 'auto';
+  status: MonIAStatus = { status: 'idle', progress: 0, label: 'MonIA prête' };
   private worker: Worker | null = null;
-  private pending = new Map<string, Pending>();
+  private pending = new Map<number, Pending>();
+  private seq = 0;
   private listeners = new Set<(s: MonIAStatus) => void>();
-  private state: MonIAStatus = { status: 'idle', progress: 0, label: 'IA serveur prioritaire · secours local prêt' };
 
-  isSupported() {
-    return typeof Worker !== 'undefined' && typeof indexedDB !== 'undefined' && typeof WebAssembly !== 'undefined';
+  constructor() {
+    const saved = moniaStorage.getSettings();
+    this.mode = (saved.mode as MonIAMode) || 'auto';
   }
 
-  observe(fn: (s: MonIAStatus) => void) {
+  subscribe(fn: (s: MonIAStatus) => void) {
     this.listeners.add(fn);
-    fn(this.state);
+    fn(this.status);
     return () => this.listeners.delete(fn);
   }
 
-  getStatus() {
-    return this.state;
+  private setStatus(status: MonIAStatus) {
+    this.status = status;
+    this.listeners.forEach((fn) => fn(status));
   }
 
-  private setState(s: MonIAStatus) {
-    this.state = s;
-    this.listeners.forEach(fn => fn(s));
+  private supportsWorker() {
+    return typeof Worker !== 'undefined';
   }
 
-  private ensureWorker() {
-    if (this.worker) return this.worker;
-    if (!this.isSupported()) {
-      this.setState({ status: 'unsupported', progress: 0, label: 'Moteur local incompatible · fallback déterministe actif' });
-      return null;
+  async init() {
+    if (this.worker || this.status.status === 'loading') return;
+    if (!this.supportsWorker()) {
+      this.setStatus({ status: 'unsupported', progress: 0, label: 'Mode léger' });
+      return;
     }
+    this.setStatus({ status: 'loading', progress: 5, label: 'MonIA se prépare…' });
+    try {
+      this.worker = new Worker(new URL('./worker.ts', import.meta.url), { type: 'module' });
+      this.worker.onmessage = (ev) => this.onMessage(ev.data);
+      this.worker.onerror = () => {
+        this.setStatus({ status: 'error', progress: 0, label: 'MonIA locale indisponible' });
+      };
+      this.worker.postMessage({ type: 'init', mode: this.mode });
+    } catch {
+      this.worker = null;
+      this.setStatus({ status: 'error', progress: 0, label: 'MonIA locale indisponible' });
+    }
+  }
 
-    const w = new Worker(new URL('./worker.ts', import.meta.url), { type: 'module' });
-    w.onmessage = e => {
-      const m = e.data || {};
-      if (m.type === 'status') {
-        this.setState({ status: m.status, progress: Number(m.progress || 0), label: String(m.label || '') });
-        return;
-      }
+  private onMessage(msg: any) {
+    if (msg?.type === 'status') {
+      this.setStatus(msg.status as MonIAStatus);
+      return;
+    }
+    if (msg?.type === 'result') {
+      const p = this.pending.get(Number(msg.id));
+      if (!p) return;
+      this.pending.delete(Number(msg.id));
+      if (p.kind === 'narration') p.resolve(msg.result as MonIAResult);
+      else p.resolve(msg.result as MonIADirectorResult);
+    }
+  }
 
-      const id = String(m.id || '');
-      const pending = this.pending.get(id);
-      if (!pending) return;
-
-      if (m.type === 'error') {
+  async narrate(action: string, context: any): Promise<MonIAResult> {
+    const compact = compactContext({ ...context, action });
+    const fb = fallback(action);
+    if (this.mode === 'light') return fb;
+    try {
+      const server = await askMonIAServerBrain({ kind: 'narration', prompt: narrationPrompt(compact), profile: MARION_LUCAS_PROFILE });
+      if (server?.narration) return { narration: server.narration, memory: server.memory || server.narration, objective: server.objective || null, source: 'local' };
+    } catch {}
+    if (!this.worker || this.status.status !== 'ready') return fb;
+    const id = ++this.seq;
+    return new Promise((resolve) => {
+      this.pending.set(id, { kind: 'narration', resolve, fallback: fb, context: compact });
+      this.worker!.postMessage({ type: 'narrate', id, prompt: narrationPrompt(compact), fallback: fb });
+      window.setTimeout(() => {
+        const p = this.pending.get(id);
+        if (!p || p.kind !== 'narration') return;
         this.pending.delete(id);
-        pending.resolve(pending.fallback as never);
-        return;
-      }
-
-      if (m.type !== 'result') return;
-      this.pending.delete(id);
-      const raw = String(m.text || '');
-
-      if (pending.kind === 'narration') {
-        const parsed = parseNarrationJSON(raw);
-        if (!parsed) {
-          pending.resolve(pending.fallback);
-          return;
-        }
-        const result: MonIAResult = { ...parsed, source: 'local' };
-        if (result.memory) {
-          void moniaStorage.put({
-            id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
-            kind: 'action',
-            text: result.memory,
-            day: pending.context.day,
-            time: pending.context.time,
-            actors: [pending.context.speaker],
-            createdAt: Date.now(),
-          });
-        }
-        pending.resolve(result);
-        return;
-      }
-
-      const parsed = parseDirectorJSON(raw, pending.fallback);
-      const result = parsed || pending.fallback;
-      if (result.memory) {
-        void moniaStorage.put({
-          id: `director-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-          kind: 'dialogue',
-          text: result.memory,
-          day: pending.request.context.day,
-          time: pending.request.context.time,
-          actors: ['Marion', pending.request.actor],
-          createdAt: Date.now(),
-        });
-      }
-      pending.resolve(result);
-    };
-
-    w.onerror = () => this.setState({ status: 'error', progress: 0, label: 'IA locale indisponible · fallback déterministe actif' });
-    this.worker = w;
-    return w;
-  }
-
-  private async serverNarration(context:MonIACompactContext):Promise<MonIAResult|null>{
-    const response=await askMonIAServerBrain('narration',narrationPrompt(context));
-    if(!response.ok||!response.text)return null;
-    const parsed=parseNarrationJSON(response.text);
-    if(!parsed)return null;
-    const result:MonIAResult={...parsed,source:'local'};
-    if(result.memory){
-      await moniaStorage.put({id:`server-${Date.now()}-${Math.random().toString(36).slice(2)}`,kind:'action',text:result.memory,day:context.day,time:context.time,actors:[context.speaker],createdAt:Date.now()}).catch(()=>undefined);
-    }
-    this.setState({status:'ready',progress:100,label:`MonIA serveur prête${response.model?` · ${response.model}`:''}`});
-    return result;
-  }
-
-  private async serverDirector(request:MonIADirectorRequest,safe:MonIADirectorResult):Promise<MonIADirectorResult|null>{
-    const response=await askMonIAServerBrain('director',directorPrompt(request));
-    if(!response.ok||!response.text)return null;
-    const parsed=parseDirectorJSON(response.text,safe);
-    if(!parsed)return null;
-    if(parsed.memory){
-      await moniaStorage.put({id:`server-director-${Date.now()}-${Math.random().toString(36).slice(2)}`,kind:'dialogue',text:parsed.memory,day:request.context.day,time:request.context.time,actors:['Marion',request.actor],createdAt:Date.now()}).catch(()=>undefined);
-    }
-    this.setState({status:'ready',progress:100,label:`MonIA serveur prête${response.model?` · ${response.model}`:''}`});
-    return parsed;
-  }
-
-  async narrate(context: MonIACompactContext, mode: MonIAMode, enabled: boolean) {
-    const safe = fallback(context.recentAction);
-    await moniaStorage.put({
-      id: `action-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-      kind: 'action',
-      text: `${context.place} · ${context.recentAction}`,
-      day: context.day,
-      time: context.time,
-      actors: [context.speaker],
-      createdAt: Date.now(),
-    }).catch(() => undefined);
-
-    if (!enabled) return safe;
-    const server=await this.serverNarration(context).catch(()=>null);
-    if(server)return server;
-    const w = this.ensureWorker();
-    if (!w) return safe;
-
-    return new Promise<MonIAResult>(resolve => {
-      const id = Math.random().toString(36).slice(2);
-      this.pending.set(id, { kind: 'narration', resolve, fallback: safe, context });
-      w.postMessage({ type: 'generate', id, mode, task: 'narration', prompt: narrationPrompt(context) });
+        resolve(fb);
+      }, 4500);
     });
   }
 
-  async direct(request: MonIADirectorRequest, mode: MonIAMode = 'auto', enabled = true) {
-    const safe = fallbackDirector(request);
-    await moniaStorage.put({
-      id: `dialogue-in-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-      kind: 'dialogue',
-      text: request.playerText ? `Marion → ${request.actor}: ${request.playerText}` : `Interaction avec ${request.actor}`,
-      day: request.context.day,
-      time: request.context.time,
-      actors: ['Marion', request.actor],
-      createdAt: Date.now(),
-    }).catch(() => undefined);
-
-    if (!enabled) return safe;
-    const server=await this.serverDirector(request,safe).catch(()=>null);
-    if(server)return server;
-    const w = this.ensureWorker();
-    if (!w) return safe;
-
-    return new Promise<MonIADirectorResult>(resolve => {
-      const id = Math.random().toString(36).slice(2);
-      this.pending.set(id, { kind: 'director', resolve, fallback: safe, request });
-      w.postMessage({ type: 'generate', id, mode, task: 'director', prompt: directorPrompt(request) });
+  async direct(request: MonIADirectorRequest): Promise<MonIADirectorResult> {
+    const fb = fallbackDirector(request);
+    try {
+      const server = await askMonIAServerBrain({ kind: 'director', prompt: directorPrompt(request), profile: MARION_LUCAS_PROFILE });
+      if (server) {
+        const parsed = parseDirectorJSON(server);
+        if (parsed) return parsed;
+      }
+    } catch {}
+    if (this.mode === 'light' || !this.worker || this.status.status !== 'ready') return fb;
+    const id = ++this.seq;
+    return new Promise((resolve) => {
+      this.pending.set(id, { kind: 'director', resolve, fallback: fb, request });
+      this.worker!.postMessage({ type: 'direct', id, prompt: directorPrompt(request), fallback: fb });
+      window.setTimeout(() => {
+        const p = this.pending.get(id);
+        if (!p || p.kind !== 'director') return;
+        this.pending.delete(id);
+        resolve(fb);
+      }, 5000);
     });
-  }
-
-  async recentMemories(limit = 16) {
-    return moniaStorage.recent(limit);
-  }
-
-  async relevantMemories(text: string, day: number, actors: string[] = ['Marion', 'Lucas'], limit = 10) {
-    return moniaStorage.relevant({ text, day, actors, limit });
-  }
-
-  release() {
-    this.worker?.postMessage({ type: 'release' });
-    this.worker?.terminate();
-    this.worker = null;
-    this.pending.clear();
-    this.setState({ status: 'idle', progress: 0, label: 'IA locale libérée · MonIA serveur reste prioritaire' });
   }
 }
 
-export const monia = new MonIARuntime();
-export type { MonIADirectorRequest, MonIADirectorResult } from './director';
+export const moniaRuntime = new MonIARuntime();
+
+if (typeof window !== 'undefined') {
+  (window as any).__moniaRuntime = moniaRuntime;
+  window.setTimeout(() => moniaRuntime.init(), 250);
+}
