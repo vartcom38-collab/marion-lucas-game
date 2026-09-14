@@ -15,7 +15,8 @@ function yes(s:Save,key:string){return !!flag(s,key)}
 export function getPregnancyJourney():PregnancyJourney|null{
   const s=readSave();if(!s)return null;
   const canonical=getPregnancyState(s);const timelineStart=canonical?.startDay||canonical?.confirmedDay||null;
-  const g=timelineStart?Math.max(0,n(s.day,1)-timelineStart):null;let stage:PregnancyStage='none';
+  const day=Math.max(1,n(s.day,1));
+  const g=timelineStart?Math.max(0,day-timelineStart):null;let stage:PregnancyStage='none';
   if(canonical?.state==='loss')stage='loss';
   else if(canonical?.state==='postpartum')stage='postpartum';
   else if(yes(s,'inLabor')&&canonical?.state==='confirmed')stage='labor';
@@ -23,11 +24,14 @@ export function getPregnancyJourney():PregnancyJourney|null{
   else if(canonical?.state==='possible')stage='possible';
   else if(canonical?.state==='trying')stage='trying';
 
+  const possibleDay=canonical?.possibleDay||0;
+  const testEarliest=Math.max(possibleDay?possibleDay+10:0,n(flag(s,'pregnancyTestEarliestDay'),0));
+  const signsEarliest=possibleDay?possibleDay+7:0;
   const d=(id:string,label:string,available:boolean,sensitive=false,surprise=false):PregnancyStep=>({id,label,available,done:yes(s,`preg_${id}_done`)||yes(s,`preg_${id}`),sensitive,surprise});
   const confirmed=stage==='first-trimester'||stage==='second-trimester'||stage==='third-trimester'||stage==='labor'||stage==='postpartum';
   const steps:PregnancyStep[]=[
-    d('notice-signs','Remarquer un retard ou des signes possibles',stage==='possible',false,true),
-    d('test','Faire un test de grossesse',stage==='possible'),
+    d('notice-signs','Remarquer un retard ou des signes possibles',stage==='possible'&&!!signsEarliest&&day>=signsEarliest,false,true),
+    d('test','Faire un test de grossesse',stage==='possible'&&!!testEarliest&&day>=testEarliest),
     d('tell-lucas','Décider quand et comment l’annoncer à Lucas',confirmed,false,true),
     d('care-choice','Choisir le suivi médical / la maternité',confirmed),
     d('first-visit','Premier rendez-vous médical',confirmed),
