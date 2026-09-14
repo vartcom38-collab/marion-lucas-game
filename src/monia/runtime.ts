@@ -18,7 +18,6 @@ import './long-term-social-life';
 import './adult-life-rhythm';
 import './long-horizon-integrity';
 import './visio-call-ui';
-import './visio-test-route';
 import './france-spain-life-transition';
 import './spain-life-engine';
 import './madrid-home-life';
