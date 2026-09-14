@@ -14,6 +14,7 @@ import './family-life-layer';
 import './france-spain-life-transition';
 import './spain-life-engine';
 import './madrid-home-life';
+import './residence-base-life';
 import './property-agency-ui';
 import './finca-home-life';
 import './finca-scene-ambient';
