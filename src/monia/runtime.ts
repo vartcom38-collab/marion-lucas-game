@@ -14,6 +14,7 @@ import './family-life-layer';
 import './intimacy-life-layer';
 import './conception-bridge';
 import './child-development-life';
+import './long-term-social-life';
 import './france-spain-life-transition';
 import './spain-life-engine';
 import './madrid-home-life';
