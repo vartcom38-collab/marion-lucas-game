@@ -31,7 +31,7 @@ jobs:
         run: sudo apt-get update -qq && sudo apt-get install -y ffmpeg
 
       - name: Install MonIA native French voice dependencies
-        run: python -m pip install --disable-pip-version-check gradio_client requests pillow
+        run: python -m pip install --disable-pip-version-check edge-tts gradio_client requests pillow
 
       - name: Generate fluid French Lucas candidate
         run: python -m scripts.monia_lucas_voice_native_fr --publish-candidate
@@ -53,6 +53,6 @@ jobs:
           echo "Candidate only: true"
           echo "Narrative authority: false"
           echo "Live manifest mutation: forbidden"
-          echo "French source: conversational native French donor"
+          echo "French source: Chatterbox conversational donor guided by fr-FR pronunciation scaffold"
           echo "Timbre target: Lucas V3 speaking reference"
           echo "Seed-VC convert_style: false (do not import English accent/style)"
