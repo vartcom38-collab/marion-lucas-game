@@ -8,7 +8,7 @@ on:
       - ".github/workflows/monia-visio-layout-test.yml"
       - "scripts/monia_visio_layout_test.py"
       - "scripts/monia_video_engine.py"
-      - "resources/monia/canon/lucas/visio-layout-reference.jpg"
+      - "resources/monia/canon/lucas/visio-layout-parts/**"
 
 permissions:
   contents: read
@@ -34,13 +34,20 @@ jobs:
       - name: Install MonIA video dependencies
         run: python -m pip install --disable-pip-version-check gradio_client pillow requests
 
-      - name: Validate layout reference
+      - name: Reconstruct and validate layout reference
         run: |
           python - <<'PY'
+          import base64
           from pathlib import Path
           from PIL import Image
-          p=Path('resources/monia/canon/lucas/visio-layout-reference.jpg')
-          im=Image.open(p); im.load()
+
+          root = Path('resources/monia/canon/lucas/visio-layout-parts')
+          prefix_b64 = ''.join((root / f'part-{i:02d}.txt').read_text().strip() for i in range(4))
+          prefix = base64.b64decode(prefix_b64)
+          suffix = (root / 'part-04.bin').read_bytes() + (root / 'part-05.bin').read_bytes()
+          p = Path('resources/monia/canon/lucas/visio-layout-reference.jpg')
+          p.write_bytes(prefix + suffix)
+          im = Image.open(p); im.load()
           if im.width < 300 or im.height < 500:
               raise SystemExit(f'layout reference too small: {im.width}x{im.height}')
           print(f'layout reference valid: {im.width}x{im.height}, {p.stat().st_size} bytes')
