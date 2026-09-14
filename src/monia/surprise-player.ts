@@ -4,6 +4,7 @@ import { consumeSurpriseScene, isSurpriseDeliveryContextValid, peekNextSurpriseS
 const OVERLAY_ID='moniaSurpriseScenePlayer';
 const SAVE_KEY='marion-lucas-save-v4';
 const AUTO_COOLDOWN_MS=45000;
+const HUMAN_APPROVAL_MODE='atomic-whole-scene';
 let playing=false;
 let lastPlaybackFinishedAt=0;
 let lastSaveSignature='';
@@ -68,15 +69,15 @@ function clearGameplayCinematicRequest(){
 }
 
 function routeAllowedNow(delivery:SurpriseDelivery){
+  if(delivery.approvalMode!==HUMAN_APPROVAL_MODE)return false;
   const save=readSave();
   if(save){
     if(!save.metLucas)return false;
     if(save.flags?.moniaSmsPending)return false;
   }
-  // A visually approved scene is not enough to make it narratively valid.
-  // Full-screen cinematics require an explicit same-day gameplay request whose
-  // route matches the approved delivery. This prevents queued or stale media
-  // from appearing just because another piece of game state changed.
+  // Visual approval alone never grants narrative authority. Full-screen
+  // cinematics require explicit human media approval plus a same-day gameplay
+  // request whose route matches the approved delivery.
   if(!gameplayCinematicAuthorized(delivery))return false;
   return isSurpriseDeliveryContextValid(delivery);
 }
