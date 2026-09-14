@@ -1,4 +1,4 @@
-name: MonIA Lucas Visio V10-A Direct Speaking
+name: MonIA Lucas Visio V7 + V10-A
 
 on:
   workflow_dispatch:
@@ -12,7 +12,7 @@ permissions:
   contents: read
 
 jobs:
-  build-direct-speaking:
+  build-v7-v10a:
     runs-on: ubuntu-latest
     timeout-minutes: 35
     env:
@@ -28,35 +28,34 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install MonIA direct-speaking dependencies
+      - name: Install MonIA V7 plus V10-A dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y ffmpeg
           python -m pip install --disable-pip-version-check --upgrade pip
           python -m pip install --disable-pip-version-check requests pillow gradio_client
 
-      - name: Generate true visio feed and preserve native lip timing with V10-A timbre
+      - name: Keep exact validated V7 video and convert only speech timbre to V10-A
         run: python -m scripts.monia_visio_v10a_direct --publish-candidate
 
       - name: Verify candidate publicly
         run: |
           python - <<'PY'
           import requests
-          url = "https://marion-lucas.marionbolomey.fr/resources/monia/generated/visio-lucas-v10a-direct-speaking-candidate.mp4"
+          url = "https://marion-lucas.marionbolomey.fr/resources/monia/generated/visio-lucas-v7-v10a-timing-candidate.mp4"
           r = requests.get(url, timeout=60, headers={"Range":"bytes=0-127", "Cache-Control":"no-cache", "Accept":"video/*,*/*"})
           ok = r.status_code in (200,206) and len(r.content) >= 16 and (b"ftyp" in r.content[:64] or r.content.startswith(b"RIFF") or r.content.startswith(b"\x1aE\xdf\xa3"))
           print("candidate", url, "status", r.status_code, "bytes", len(r.content), "ok", ok)
           if not ok:
-              raise SystemExit("V10-A direct-speaking visio candidate public verification failed")
+              raise SystemExit("V7 + V10-A visio candidate public verification failed")
           PY
 
       - name: Candidate-only policy
         run: |
           echo "Candidate only: true"
           echo "Live manifest mutation: forbidden"
-          echo "Media is raw Lucas remote-camera feed only; validated visio UI stays runtime-side"
-          echo "Generation method: original MonIA native speaking video generation"
+          echo "Visual source: exact validated V7 visio candidate run 34826963016"
           echo "Voice target: V10-A timbre"
-          echo "Speech timing: native generated audio preserved through timbre-only conversion"
+          echo "Speech timing and mouth motion: exact V7 native timing preserved"
           echo "Post lip replacement: forbidden"
           echo "Playback-rate warping: forbidden"
