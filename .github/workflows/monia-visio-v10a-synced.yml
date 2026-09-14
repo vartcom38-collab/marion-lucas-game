@@ -14,7 +14,7 @@ permissions:
 jobs:
   build-synced-preview:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 60
     env:
       INFOMANIAK_FTP_HOST: ${{ secrets.INFOMANIAK_FTP_HOST }}
       INFOMANIAK_FTP_USER: ${{ secrets.INFOMANIAK_FTP_USER }}
