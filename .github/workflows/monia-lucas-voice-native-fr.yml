@@ -31,21 +31,21 @@ jobs:
         run: sudo apt-get update -qq && sudo apt-get install -y ffmpeg
 
       - name: Install MonIA native French voice dependencies
-        run: python -m pip install --disable-pip-version-check edge-tts gradio_client requests pillow
+        run: python -m pip install --disable-pip-version-check gradio_client requests pillow
 
-      - name: Generate native French Lucas candidate
+      - name: Generate fluid French Lucas candidate
         run: python -m scripts.monia_lucas_voice_native_fr --publish-candidate
 
       - name: Verify candidate publicly
         run: |
           python - <<'PY'
           import requests
-          url='https://marion-lucas.marionbolomey.fr/resources/monia/generated/lucas-voice-v3-french-native-candidate.wav'
+          url='https://marion-lucas.marionbolomey.fr/resources/monia/generated/lucas-voice-v4-french-fluid-candidate.wav'
           r=requests.get(url,timeout=30,headers={'Range':'bytes=0-127','Cache-Control':'no-cache','Accept':'audio/*,*/*'})
           ok=r.status_code in (200,206) and len(r.content)>=44 and r.content.startswith(b'RIFF')
           print(f'candidate={url} verified={ok} status={r.status_code} bytes={len(r.content)}')
           if not ok:
-              raise SystemExit('MonIA Lucas native French candidate public verification failed')
+              raise SystemExit('MonIA Lucas fluid French candidate public verification failed')
           PY
 
       - name: Candidate-only policy
@@ -53,6 +53,6 @@ jobs:
           echo "Candidate only: true"
           echo "Narrative authority: false"
           echo "Live manifest mutation: forbidden"
-          echo "French source pronunciation: native fr-FR"
+          echo "French source: conversational native French donor"
           echo "Timbre target: Lucas V3 speaking reference"
           echo "Seed-VC convert_style: false (do not import English accent/style)"
