@@ -14,7 +14,7 @@ permissions:
 jobs:
   build-direct-speaking:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 35
     env:
       INFOMANIAK_FTP_HOST: ${{ secrets.INFOMANIAK_FTP_HOST }}
       INFOMANIAK_FTP_USER: ${{ secrets.INFOMANIAK_FTP_USER }}
@@ -35,7 +35,7 @@ jobs:
           python -m pip install --disable-pip-version-check --upgrade pip
           python -m pip install --disable-pip-version-check requests pillow gradio_client
 
-      - name: Generate native Lucas speaking performance and attach V10-A voice
+      - name: Generate true visio feed and preserve native lip timing with V10-A timbre
         run: python -m scripts.monia_visio_v10a_direct --publish-candidate
 
       - name: Verify candidate publicly
@@ -54,7 +54,9 @@ jobs:
         run: |
           echo "Candidate only: true"
           echo "Live manifest mutation: forbidden"
+          echo "Media is raw Lucas remote-camera feed only; validated visio UI stays runtime-side"
           echo "Generation method: original MonIA native speaking video generation"
-          echo "Selected voice: V10-A"
+          echo "Voice target: V10-A timbre"
+          echo "Speech timing: native generated audio preserved through timbre-only conversion"
           echo "Post lip replacement: forbidden"
           echo "Playback-rate warping: forbidden"
