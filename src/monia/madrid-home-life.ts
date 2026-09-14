@@ -3,13 +3,14 @@ import './madrid-life-moments';
 import './madrid-scene-ambient';
 import './madrid-region-life';
 import {getPropertyLifeSnapshot} from './property-life';
+import {getFranceSpainState} from './france-spain-life-transition';
 
 const SAVE_KEY='marion-lucas-save-v4';
 const STATE_KEY='marion-lucas-madrid-home-v1';
 
 type Space='terrace'|'living'|'kitchen'|'bedroom'|'study';
 type MadridMode='visit'|'home';
-type Save={day?:number;time?:string;place?:string;screen?:string;energy?:number;stress?:number;relationship?:number;flags?:Record<string,unknown>};
+type Save={day?:number;time?:string;place?:string;screen?:string;energy?:number;stress?:number;relationship?:number;metLucas?:boolean;official?:boolean;flags?:Record<string,unknown>};
 type State={version:1;settledDay?:number;sharedMoments:number;spaceUses:Record<Space,number>};
 const DEFAULT:State={version:1,sharedMoments:0,spaceUses:{terrace:0,living:0,kitchen:0,bedroom:0,study:0}};
 
@@ -43,12 +44,17 @@ function madridMode(save=readSave()):MadridMode|null{
   const f=save.flags||{};
   return Boolean(f.visitingLucasMadrid||f.atLucasMadridHome||f.madridHomeVisit||f.stayingWithLucasMadrid)?'visit':null;
 }
+function canEnterMadridHomeVisit(save:Save){
+  if(save.place!=='madrid'||!save.metLucas||!save.official)return false;
+  const transition=getFranceSpainState();
+  return Boolean(transition&&(transition.phase==='transitioning'||transition.phase==='spain-opening'||transition.phase==='spain-rooted'||transition.phase==='between-bases'));
+}
 function active(){return Boolean(madridMode())}
 function esc(v:string){return v.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]||c))}
 function currentView(save:Save){const raw=save.flags?.lastMadridHomeSpace;return raw==='terrace'||raw==='living'||raw==='kitchen'||raw==='bedroom'||raw==='study'?raw:'hero'}
 function syncMadridVisual(){const save=readSave();if(!save||!madridMode(save))return;const key=currentView(save),src=MADRID_VIEWS[key];const photo=document.querySelector<HTMLImageElement>('img.worldPhoto,.worldPhoto img,img[data-world-photo]');if(photo&&photo.dataset.madridViewKey!==key){photo.dataset.madridViewKey=key;photo.src=src;photo.alt='Maison de Lucas près de Madrid'}const background=document.querySelector<HTMLElement>('.worldPhoto:not(img),.worldBackdrop,.worldSceneBackground');if(background&&background.dataset.madridViewKey!==key){background.dataset.madridViewKey=key;background.style.backgroundImage=`url("${src}")`}}
 
-export function enterLucasMadridHomeVisit(){const save=readSave();if(!save)return false;const f=save.flags||(save.flags={});f.visitingLucasMadrid=true;f.atLucasMadridHome=true;delete f.lastMadridHomeSpace;save.place='madrid';return writeSave(save)}
+export function enterLucasMadridHomeVisit(){const save=readSave();if(!save||!canEnterMadridHomeVisit(save))return false;const f=save.flags||(save.flags={});f.visitingLucasMadrid=true;f.atLucasMadridHome=true;delete f.lastMadridHomeSpace;return writeSave(save)}
 export function leaveLucasMadridHomeVisit(){const save=readSave();if(!save)return false;const f=save.flags||(save.flags={});delete f.visitingLucasMadrid;delete f.atLucasMadridHome;delete f.madridHomeVisit;delete f.stayingWithLucasMadrid;delete f.lastMadridHomeSpace;return writeSave(save)}
 
 export function doMadridHomeAction(space:Space){const save=readSave(),mode=madridMode(save);if(!save||!mode)return false;const state=readState();if(mode==='home'&&!state.settledDay)state.settledDay=Number(save.day||1);const a=ACTIONS[space];addMinutes(save,a.minutes);save.energy=clamp(Number(save.energy??70)+a.energy);save.stress=clamp(Number(save.stress??20)+a.stress);save.relationship=clamp(Number(save.relationship??50)+a.relationship);const f=save.flags||(save.flags={});f.lastMadridHomeSpace=space;f.madridHomeShared=true;state.sharedMoments++;state.spaceUses[space]=(state.spaceUses[space]||0)+1;writeState(state);writeSave(save);syncMadridVisual();return true}
