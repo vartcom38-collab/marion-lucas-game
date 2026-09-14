@@ -2,6 +2,7 @@ import { moniaExperience } from './experience-runtime';
 import { materializeLongDrama, playLongDrama, type MonIALongDrama } from './long-drama';
 import { GAMEPLAY_DRAMA_EVENT, type GameplayDramaTrigger } from './gameplay-drama-trigger';
 import { approvedDramaForSignature, saveDramaCandidate } from './drama-approval';
+import { getLucasPresence } from './lucas-presence-engine';
 
 const runtime=moniaExperience as any;
 let gameplayRunning=false;
@@ -20,9 +21,18 @@ function dramaPassesQualityGate(drama:MonIALongDrama|null){
   return true;
 }
 
-function playRuntimeDrama(drama:MonIALongDrama,source:'approved'|'generated'){
+function lucasCanAppearNow(){
+  const presence=getLucasPresence();
+  return presence?.together===true;
+}
+
+function playApprovedRuntimeDrama(drama:MonIALongDrama){
+  if(!lucasCanAppearNow()){
+    console.warn('[Drama] approved scene blocked because Lucas is not physically with Marion');
+    return false;
+  }
   if(!dramaPassesQualityGate(drama)){
-    console.warn(`[Drama] ${source} asset failed runtime integrity gate; gameplay continues`,drama.id);
+    console.warn('[Drama] approved asset failed runtime integrity gate; gameplay continues',drama.id);
     return false;
   }
   if(document.visibilityState==='visible'&&!document.getElementById('moniaVisioOverlay')){
@@ -72,7 +82,7 @@ function kaggleJobForTrigger(trigger:GameplayDramaTrigger){
       {id:'marion',canonRef:MARION_CANON,wardrobe:trigger.outfit||'current gameplay outfit'},
       {id:'lucas',canonRef:LUCAS_CANON,wardrobe:'canon gameplay wardrobe'}
     ],
-    motion:{referenceId:'gameplay-auto',tags:['natural-motion','micro-expression'],copyIdentity:false},
+    motion:{referenceId:'gameplay-candidate',tags:['natural-motion','micro-expression'],copyIdentity:false},
     generation:{provider:'kaggle',router:'ltx',width:320,height:512,frames:17,steps:8,fps:12,seconds:1.4,seed:Math.abs(hash(id))||240907},
     output:{candidatePath:`public/resources/monia/candidates/${id}/`}
   };
@@ -88,7 +98,7 @@ async function dispatchKagglePair(trigger:GameplayDramaTrigger):Promise<{id:stri
   });
   if(!response.ok){
     const detail=await response.json().catch(()=>null) as any;
-    console.warn('[Drama] Kaggle dispatch unavailable; falling back to runtime generator',response.status,detail?.error||'');
+    console.warn('[Drama] Kaggle dispatch unavailable; falling back to runtime candidate generator',response.status,detail?.error||'');
     return null;
   }
   return{id:job.id};
@@ -121,59 +131,71 @@ async function waitForKagglePair(id:string):Promise<MonIALongDrama|null>{
   return null;
 }
 
-async function generateAndPlayViaRuntime(trigger:GameplayDramaTrigger){
+async function generateCandidateViaRuntime(trigger:GameplayDramaTrigger){
   const dialogue=trigger.dialogue.length?trigger.dialogue.join(' · '):trigger.body;
   const result=await runtime.respond({
     actor:'Lucas',
     requestedChannel:'scene',
     context:{
       speaker:'Marion',place:trigger.place,time:trigger.time,day:trigger.day,
-      recentAction:`Le gameplay vient de déclencher cette scène : ${trigger.title}. ${trigger.body}`,
-      activeObjective:'Matérialiser automatiquement cet événement déjà décidé par le gameplay en une courte scène cinématographique jouable, sans inventer un nouveau tournant.',
+      recentAction:`Le gameplay vient d'autoriser cette scène candidate : ${trigger.title}. ${trigger.body}`,
+      activeObjective:'Matérialiser cet événement déjà décidé par le gameplay en candidat cinématographique à réviser. Ne jamais publier ni jouer automatiquement ce candidat.',
       relationship:relationLabel(trigger.relationship),
       memories:[...trigger.memories,dialogue].filter(Boolean).slice(0,10),recentEvents:trigger.recentEvents,
       rules:[
         'Le gameplay est l’autorité narrative : ne jamais remplacer, retarder ou inventer l’événement déclencheur.',
-        'La joueuse ne doit pas avoir à valider manuellement cette scène : elle doit la découvrir uniquement au moment où elle arrive dans le jeu.',
+        'Toute génération fraîche reste un candidat hors-live jusqu’à approbation explicite.',
         'Ne jamais révéler un événement futur ou une surprise.','Lucas reste absolument fidèle.',
         'Préserver les identités canoniques de Marion et Lucas dans chaque plan.',
         `Conserver la tenue actuelle de Marion : ${trigger.outfit||'tenue du gameplay'}.`,
         `Respecter le ton ${trigger.tone} et la présentation ${trigger.presentation}.`,
-        'La scène doit rester courte et rendre le contrôle au gameplay immédiatement après.','Pas de texte, sous-titres, watermark ou UI dans les images générées.'
+        'La scène doit rester courte. Pas de texte, sous-titres, watermark ou UI dans les images générées.'
       ],
     },
     availableMedia:['lucas-intro.mp4','appartement-nimes.png'],
   },'auto',true);
   const channel=result?.response?.channel;
   const cinematic=result?.mediaPlan?.mode==='cinematic-drama'||channel==='scene'||channel==='video';
-  if(!cinematic||!result?.mediaPlan?.visual?.required)return;
+  if(!cinematic||!result?.mediaPlan?.visual?.required)return null;
   const generated=await materializeLongDrama(result);
   saveDramaCandidate(trigger.signature,generated);
-  playRuntimeDrama(generated,'generated');
+  console.info('[Drama] runtime candidate saved for review; never auto-played',trigger.signature);
+  return generated;
 }
 
-async function generateAndPlay(trigger:GameplayDramaTrigger){
+async function generateCandidate(trigger:GameplayDramaTrigger){
+  if(!lucasCanAppearNow()){
+    console.info('[Drama] candidate generation skipped: Lucas is not physically with Marion',trigger.requestId);
+    return;
+  }
   const dispatched=await dispatchKagglePair(trigger).catch(()=>null);
   if(dispatched){
     const generated=await waitForKagglePair(dispatched.id);
     if(generated){
       saveDramaCandidate(trigger.signature,generated);
-      if(playRuntimeDrama(generated,'generated'))console.info('[Drama] Kaggle surprise pair auto-played',trigger.signature);
+      console.info('[Drama] Kaggle candidate saved for review; never auto-played',trigger.signature);
       return;
     }
-    console.warn('[Drama] Kaggle surprise pair timed out; using runtime fallback',trigger.signature);
+    console.warn('[Drama] Kaggle candidate timed out; using runtime candidate fallback',trigger.signature);
   }
-  await generateAndPlayViaRuntime(trigger);
+  await generateCandidateViaRuntime(trigger);
 }
 
 async function handleGameplayDrama(trigger:GameplayDramaTrigger){
   if(gameplayRunning||document.hidden)return;
   gameplayRunning=true;
   try{
+    if(!lucasCanAppearNow()){
+      console.info('[Drama] explicit request ignored because current cast no longer matches',trigger.requestId);
+      return;
+    }
     const approved=await approvedDramaForSignature(trigger.signature);
-    if(approved&&playRuntimeDrama(approved,'approved'))return;
-    await generateAndPlay(trigger);
-  }catch(error){console.warn('[Drama] Gameplay-triggered Drama generation failed; gameplay continues normally',error)}
+    if(approved){
+      playApprovedRuntimeDrama(approved);
+      return;
+    }
+    await generateCandidate(trigger);
+  }catch(error){console.warn('[Drama] Gameplay-triggered candidate generation failed; gameplay continues normally',error)}
   finally{gameplayRunning=false}
 }
 
@@ -184,4 +206,4 @@ window.addEventListener(GAMEPLAY_DRAMA_EVENT,((event:Event)=>{
 
 function hash(value:string){let h=0;for(let i=0;i<value.length;i++)h=((h<<5)-h+value.charCodeAt(i))|0;return h}
 
-console.info('[Drama] Surprise Kaggle runtime active: gameplay dispatches a two-clip continuity-linked pair and auto-plays it after safety checks; manual review is debug-only');
+console.info('[Drama] Gameplay-only cinematic pipeline active: approved assets may play; fresh generations are candidate-only');
