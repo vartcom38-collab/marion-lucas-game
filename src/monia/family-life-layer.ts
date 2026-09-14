@@ -63,10 +63,10 @@ export function markFamilyDecision(decision:FamilyDecision){
     if(current!=='trying'||pregnancy?.state!=='possible')return false;
   }
   if(decision==='labor'){
-    if(pregnancy?.state!=='confirmed')return false;
+    if(pregnancy?.state!=='confirmed'||f.inLabor===true)return false;
   }
   if(decision==='postpartum'){
-    if(pregnancy?.state!=='labor')return false;
+    if(pregnancy?.state!=='confirmed'||f.inLabor!==true)return false;
   }
   try{
     localStorage.setItem(SAVE_KEY,JSON.stringify(s));
