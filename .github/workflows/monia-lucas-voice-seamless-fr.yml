@@ -39,7 +39,8 @@ jobs:
             soundfile \
             scipy \
             requests \
-            gradio_client
+            gradio_client \
+            pillow
 
       - name: Generate direct speech-to-speech Lucas French candidate
         run: python -m scripts.monia_lucas_voice_seamless_fr --publish-candidate
