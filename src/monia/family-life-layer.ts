@@ -50,7 +50,7 @@ export function markFamilyDecision(decision:FamilyDecision){
   }
   if(decision==='stop'){
     if(current!=='thinking'&&current!=='trying')return false;
-    f.familyState=n(s.children,0)>0?'parenting':'closed';f.familyChoiceStoppedDay=day;
+    f.familyState=n(s.children,0)>0?'parenting':'closed';f.familyChoiceStoppedDay=day;f.contraceptionMode='protected';f.qualifyingConceptionEvent=false;
   }
   if(decision==='parenting'){
     if(n(s.children,0)<1||pregnancy?.state!=='postpartum')return false;
@@ -58,6 +58,7 @@ export function markFamilyDecision(decision:FamilyDecision){
   }
   if(decision==='try'){
     if(current!=='thinking'||!opportunity?.eligible)return false;
+    f.contraceptionMode='trying';f.qualifyingConceptionEvent=false;
   }
   if(decision==='pregnant'){
     if(current!=='trying'||pregnancy?.state!=='possible')return false;
@@ -74,7 +75,7 @@ export function markFamilyDecision(decision:FamilyDecision){
     if(decision==='open')setPregnancyState('none',day);
     if(decision==='try'){
       if(!setPregnancyState('trying',day))return false;
-      const fresh=readSave();if(fresh){const ff=fresh.flags||(fresh.flags={});ff.familyTryingDay=day;ff.familyNextCheckDay=day+28;localStorage.setItem(SAVE_KEY,JSON.stringify(fresh))}
+      const fresh=readSave();if(fresh){const ff=fresh.flags||(fresh.flags={});ff.familyTryingDay=day;ff.familyNextCheckDay=day+28;ff.contraceptionMode='trying';ff.qualifyingConceptionEvent=false;localStorage.setItem(SAVE_KEY,JSON.stringify(fresh))}
     }
     if(decision==='pregnant')setPregnancyState('confirmed',day);
     if(decision==='labor')return startLabor();
