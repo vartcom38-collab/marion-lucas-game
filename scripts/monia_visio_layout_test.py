@@ -9,27 +9,28 @@ from PIL import Image
 import scripts.monia_video_engine as engine
 
 REFERENCE_IMAGE = Path("resources/monia/canon/lucas/visio-layout-reference.jpg")
-OUTPUT_NAME = "visio-lucas-speaking-fr-layout-v5-candidate.mp4"
+OUTPUT_NAME = "visio-lucas-speaking-fr-layout-v6-candidate.mp4"
 
 PROMPT = (
     "Animate the supplied reference as a REAL smartphone front-camera video call with Lucas. "
-    "The supplied frame is the composition authority: preserve the same upper-torso framing, the visible shoulder and forearm, "
-    "the sense that Lucas is physically holding the phone at arm's length, the intimate phone-camera distance and the warm lived-in room depth. "
-    "Do NOT turn this into a head-only portrait or beauty close-up. Keep Lucas recognizably the same man and preserve natural skin texture, dark wavy hair, brown-hazel eyes, short stubble and olive skin. "
-    "Lucas is in a relaxed dark shirt and behaves like a real person on a private video call: tiny handheld micro-shake, minute framing drift, natural breathing, irregular blinks, subtle autofocus/exposure breathing, and small gaze shifts between Marion on the screen and the lens. "
-    "His emotional intention is warm, intimate and quietly happy to see Marion. His eyes should feel alive and attentive, with a soft direct gaze, a restrained half-smile, tiny eyebrow responses and brief moments where his eyes brighten before he speaks. "
-    "Avoid a blank neutral stare, presenter energy or model-like posing. He should look as if he is genuinely listening to and looking at someone he cares about on the screen. "
-    "State: SPEAKING IN NATURAL EVERYDAY FRENCH. For most of the clip Lucas casually says: 'Ah, ça me fait plaisir de te voir... T'as passé une bonne journée, toi ?' "
-    "The French delivery must sound like spontaneous adult conversation, not text-to-speech: connected speech, contractions, uneven pacing, tiny breaths, natural micro-pauses, soft sentence melody, slight hesitation before the question, and no announcer cadence or syllable-by-syllable delivery. "
-    "His speech must also be unmistakable when muted: visible jaw opening and closing, changing lip shapes, occasional natural teeth visibility, cheek motion, brief breaths, tiny eyebrow and head movements synchronized with conversational emphasis. "
-    "Avoid long closed-mouth pauses. No theatrical acting. No cinematic dolly. No frozen pose. No head-only crop. "
-    "Treat any phone UI already present in the source as static framing reference only; do not invent extra text, captions, subtitles or new interface elements."
+    "The supplied frame is the composition authority: preserve the same upper-torso framing, visible shoulder and forearm, "
+    "phone held naturally at arm's length, intimate front-camera distance and warm lived-in room depth. "
+    "Do NOT turn this into a head-only portrait or beauty close-up. Keep Lucas recognizably the same man with natural skin texture, dark wavy hair, brown-hazel eyes, short stubble and olive skin. "
+    "Keep the V5 visual feeling: relaxed dark shirt, tiny handheld micro-shake, minute framing drift, natural breathing, irregular blinks, subtle autofocus/exposure breathing and small gaze shifts between Marion on screen and the lens. "
+    "His emotional intention is warm, private and gently amused, like he is genuinely happy to see Marion. His gaze is soft and attentive, with a restrained half-smile, tiny eyebrow reactions and brief eye-brightening before he speaks. "
+    "State: SPEAKING IN VERY NATURAL CASUAL FRENCH. Lucas casually says: 'Hey... ça va, toi ? T'as l'air un peu crevée.' "
+    "This must feel like spontaneous private conversation, NOT a written sentence being read. He starts softly, lets 'hey' fall out naturally, leaves a tiny imperfect pause, slightly swallows some syllables in connected speech, breathes between thought groups, and lets the final words trail naturally rather than landing like an announcer. "
+    "Use everyday French rhythm: contractions, linked words, unequal word lengths, slight reductions, soft consonants, tiny hesitation, small breath noises and natural sentence melody. "
+    "Absolutely avoid careful textbook diction, perfectly separated words, evenly timed syllables, synthetic TTS rhythm, presenter voice or radio delivery. "
+    "His speech must also read visually when muted: natural jaw motion, varied lip shapes, occasional teeth visibility, cheek movement, tiny head and eyebrow reactions aligned with emphasis. "
+    "No theatrical acting, no cinematic dolly, no frozen pose, no head-only crop. "
+    "Treat any phone UI already present in the source as static framing reference only; do not invent extra text, captions, subtitles or interface elements."
 )
 
 NEGATIVE = (
-    "head-only portrait, extreme close-up, studio portrait, beauty lighting, blank stare, neutral mannequin gaze, presenter gaze, frozen mouth, silent speaking pose, weak lip movement, "
-    "robotic speech cadence, text-to-speech rhythm, syllable-by-syllable speech, announcer voice, mouth nearly closed while speaking, exaggerated acting, identity drift, different man, face morphing, text mutation, caption mutation, "
-    "new subtitles, new UI, extra people, extra hands, cinematic camera move, dolly shot, zoom-in"
+    "head-only portrait, extreme close-up, studio portrait, beauty lighting, blank stare, presenter gaze, frozen mouth, weak lip movement, "
+    "robotic speech, text-to-speech cadence, careful textbook French, over-articulated consonants, separated words, evenly timed syllables, announcer voice, radio voice, "
+    "exaggerated acting, identity drift, different man, face morphing, text mutation, caption mutation, new subtitles, new UI, extra people, extra hands, cinematic camera move, dolly shot, zoom-in"
 )
 
 
@@ -52,7 +53,7 @@ def generate() -> tuple[Path, str]:
     base = engine.LUCAS_VISIO_TEST1
     profile = replace(
         base,
-        key="lucas-visio-speaking-fr-layout-v5",
+        key="lucas-visio-speaking-fr-layout-v6",
         prompt=PROMPT,
         negative=NEGATIVE,
         width=576,
@@ -82,14 +83,14 @@ def generate() -> tuple[Path, str]:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Generate MonIA Lucas layout-based natural French visio candidate V5")
+    parser = argparse.ArgumentParser(description="Generate MonIA Lucas natural casual French visio candidate V6")
     parser.add_argument("--publish-candidate", action="store_true")
     args = parser.parse_args()
     path, provider = generate()
-    print(f"MONIA_VISIO_LAYOUT_V5 compute={provider} output={path} bytes={path.stat().st_size}")
+    print(f"MONIA_VISIO_LAYOUT_V6 compute={provider} output={path} bytes={path.stat().st_size}")
     if args.publish_candidate:
         url = engine.publish_candidate(path)
-        print(f"MONIA_VISIO_LAYOUT_V5_CANDIDATE url={url}")
+        print(f"MONIA_VISIO_LAYOUT_V6_CANDIDATE url={url}")
 
 
 if __name__ == "__main__":
