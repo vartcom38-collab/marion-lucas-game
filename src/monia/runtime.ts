@@ -15,6 +15,7 @@ import './intimacy-life-layer';
 import './conception-bridge';
 import './child-development-life';
 import './long-term-social-life';
+import './adult-life-rhythm';
 import './france-spain-life-transition';
 import './spain-life-engine';
 import './madrid-home-life';
