@@ -1,0 +1,69 @@
+{
+  "version": 1,
+  "scope": "Original performance language references for Marion & Lucas / MonIA",
+  "source_policy": "Use uploaded drama excerpts only to extract broad performance, pacing, framing, gaze, blocking, tension and wardrobe-context traits. Do not reproduce copyrighted footage, dialogue, actor identity, exact likeness, exact voice, or shot-for-shot staging.",
+  "lucas_performance": {
+    "presence": [
+      "calm, controlled, low-effort masculine presence",
+      "attraction comes from restraint rather than overt performance",
+      "micro-expressions matter more than large gestures",
+      "brief half-smiles, small eyebrow shifts, slight jaw tension, subtle breath changes",
+      "eye contact can be intense but should break naturally rather than stay fixed"
+    ],
+    "gaze": [
+      "direct eye contact used selectively",
+      "short downward or side glances before returning to the other person",
+      "listening should remain visibly active: blinking, breathing, tiny focus shifts",
+      "reaction often begins in the eyes before the mouth"
+    ],
+    "pacing": [
+      "allow silences and beats before answers",
+      "avoid constant motion or constant smiling",
+      "emotional tension should build through pauses, proximity and withholding",
+      "speech turns should feel measured, not presenter-like"
+    ],
+    "body_language": [
+      "relaxed shoulders and contained gestures",
+      "leaning slightly closer only when context warrants it",
+      "hands/forearms occasionally enter frame naturally",
+      "subtle changes in distance can carry intimacy or tension"
+    ],
+    "wardrobe_context": [
+      "formal tailoring can signal public/social settings",
+      "open-collar white or dark shirts can signal private or late-evening contexts",
+      "wardrobe must vary with story context; no permanent black-shirt uniform"
+    ]
+  },
+  "scene_language": {
+    "intimacy": [
+      "close framing can work when motivated by the scene, but avoid permanent extreme close-up",
+      "use proximity, gaze breaks, pauses and body positioning before overt gestures",
+      "keep interactions original to Marion & Lucas and context-driven"
+    ],
+    "camera": [
+      "favor human, imperfect framing over polished advertising composition",
+      "for visio specifically, use believable front-camera grammar rather than cinematic coverage",
+      "micro-movements and slight framing drift help sell liveness"
+    ],
+    "lighting": [
+      "warm practical light can support intimate/private moments",
+      "higher-contrast evening lighting can add tension without becoming stylized or artificial"
+    ]
+  },
+  "visio_translation": {
+    "always_alive": [
+      "Lucas must remain visually alive while listening: blinking, breathing, tiny gaze shifts, posture adjustments",
+      "do not freeze on a single frame while the player chooses a response",
+      "listening, reacting, speaking and transition states must blend without obvious hard cuts"
+    ],
+    "speaking": [
+      "spoken reply must correspond to the visible mouth performance",
+      "never overlay unrelated audio on a looping speaking clip",
+      "preserve validated Lucas identity, eyes and current approved voice baseline"
+    ],
+    "interaction": [
+      "player choices may drive intent, but Lucas should react visually before and during his spoken response",
+      "the result should feel like a person present on the other end of a live call, not a visual novel overlay"
+    ]
+  }
+}
