@@ -1,0 +1,62 @@
+name: MonIA Lucas Voice Seamless FR
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/monia_lucas_voice_seamless_fr.py"
+      - ".github/workflows/monia-lucas-voice-seamless-fr.yml"
+  workflow_dispatch:
+
+jobs:
+  generate-lucas-seamless-fr-voice:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      INFOMANIAK_FTP_HOST: ${{ secrets.INFOMANIAK_FTP_HOST }}
+      INFOMANIAK_FTP_USER: ${{ secrets.INFOMANIAK_FTP_USER }}
+      INFOMANIAK_FTP_PASSWORD: ${{ secrets.INFOMANIAK_FTP_PASSWORD }}
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install ffmpeg
+        run: sudo apt-get update -qq && sudo apt-get install -y ffmpeg
+
+      - name: Install MonIA speech dependencies
+        run: |
+          python -m pip install --disable-pip-version-check --upgrade pip
+          python -m pip install --disable-pip-version-check \
+            torch==2.4.1 \
+            transformers==4.45.2 \
+            sentencepiece \
+            protobuf \
+            soundfile \
+            scipy \
+            requests \
+            gradio_client
+
+      - name: Generate direct speech-to-speech Lucas French candidate
+        run: python -m scripts.monia_lucas_voice_seamless_fr --publish-candidate
+
+      - name: Verify candidate publicly
+        run: |
+          python - <<'PY'
+          import requests
+          url = "https://marion-lucas.marionbolomey.fr/resources/monia/generated/lucas-voice-v6-seamless-fr-candidate.wav"
+          r = requests.get(url, timeout=60, headers={"Cache-Control":"no-cache"})
+          r.raise_for_status()
+          assert len(r.content) > 4096, len(r.content)
+          assert r.content[:4] == b"RIFF", r.content[:12]
+          print("verified", url, len(r.content))
+          PY
+
+      - name: Candidate-only policy
+        run: |
+          echo "Candidate only. Do not mutate config/monia-visio-approved.json."
+          echo "Reference is Lucas V3 English voice; French speech comes from direct S2ST before timbre conversion."
