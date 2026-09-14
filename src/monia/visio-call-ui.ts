@@ -1,5 +1,12 @@
 const OVERLAY_ID='moniaVisioOverlay';
+const SAVE_KEY='marion-lucas-save-v4';
 let localStream:MediaStream|null=null;
+let conversationTurn=0;
+let speakingTimer=0;
+
+type MonIAResult={text?:string;spokenText?:string;emotion?:string};
+
+declare global{interface Window{__moniaRuntime?:{direct:(request:any)=>Promise<MonIAResult>}}}
 
 function ensureStyle(){if(document.getElementById('moniaRealVisioStyle'))return;const style=document.createElement('style');style.id='moniaRealVisioStyle';style.textContent=`
 #moniaVisioOverlay{background:#050505!important}
@@ -17,49 +24,37 @@ function ensureStyle(){if(document.getElementById('moniaRealVisioStyle'))return;
 #moniaVisioOverlay .moniaLocalPreview{position:absolute;z-index:17;top:max(58px,calc(env(safe-area-inset-top) + 42px));right:18px;width:min(25vw,112px);aspect-ratio:3/4;border-radius:17px;overflow:hidden;background:#111;border:1px solid rgba(255,255,255,.24);box-shadow:0 8px 28px rgba(0,0,0,.35);display:none}
 #moniaVisioOverlay .moniaLocalPreview.is-on{display:block}
 #moniaVisioOverlay .moniaLocalPreview video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1);display:block}
-#moniaVisioOverlay .moniaReferenceControls{position:absolute;z-index:16;left:50%;bottom:max(28px,calc(env(safe-area-inset-bottom) + 18px));transform:translateX(-50%);display:flex;align-items:center;gap:46px;background:transparent;border:0;padding:0}
+#moniaVisioOverlay .moniaReferenceControls{position:absolute;z-index:16;left:50%;bottom:max(24px,calc(env(safe-area-inset-bottom) + 14px));transform:translateX(-50%);display:flex;align-items:center;gap:46px;background:transparent;border:0;padding:0;transition:opacity .18s ease}
 #moniaVisioOverlay .moniaReferenceBtn{width:64px;height:64px;border:0;border-radius:50%;display:grid;place-items:center;background:rgba(28,28,30,.78);color:white;font:700 24px/1 system-ui,sans-serif;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.28);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
 #moniaVisioOverlay .moniaReferenceBtn.end{width:72px;height:72px;background:#f23d36;font-size:28px}
 #moniaVisioOverlay .moniaReferenceBtn.is-off{background:rgba(245,245,247,.92);color:#161616}
+#moniaVisioOverlay .moniaConversation{position:absolute;z-index:18;left:14px;right:14px;bottom:max(116px,calc(env(safe-area-inset-bottom) + 104px));display:flex;flex-direction:column;align-items:center;gap:10px;pointer-events:none}
+#moniaVisioOverlay .moniaLucasLine{max-width:min(92%,560px);padding:10px 14px;border-radius:16px;background:rgba(8,8,10,.56);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);color:#fff;text-align:center;text-shadow:0 1px 8px rgba(0,0,0,.5);font:500 15px/1.38 system-ui,sans-serif;opacity:0;transform:translateY(8px);transition:.2s ease}
+#moniaVisioOverlay .moniaLucasLine.is-on{opacity:1;transform:none}
+#moniaVisioOverlay .moniaChoices{width:min(92%,520px);display:grid;gap:8px;pointer-events:auto;opacity:0;transform:translateY(10px);transition:.2s ease}
+#moniaVisioOverlay .moniaChoices.is-on{opacity:1;transform:none}
+#moniaVisioOverlay .moniaChoice{border:1px solid rgba(255,255,255,.19);border-radius:15px;padding:11px 14px;background:rgba(18,18,20,.72);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);color:#fff;font:600 14px/1.2 system-ui,sans-serif;text-align:left;cursor:pointer;box-shadow:0 7px 24px rgba(0,0,0,.16)}
+#moniaVisioOverlay .moniaChoice:active{transform:scale(.985)}
+#moniaVisioOverlay .moniaThinking{font:600 13px/1.2 system-ui,sans-serif;color:rgba(255,255,255,.75);text-shadow:0 2px 8px rgba(0,0,0,.5);padding:8px 10px;background:rgba(0,0,0,.28);border-radius:999px;backdrop-filter:blur(8px)}
 #moniaVisioOverlay video#moniaVisioVideo,#moniaVisioOverlay .iphoneApprovedVisioVideo{object-position:center 42%;transform:scale(1.035);transform-origin:center center}
-@media(max-width:520px){#moniaVisioOverlay .moniaReferenceStatus{left:16px;right:16px}.moniaReferenceControls{gap:34px!important}.moniaReferenceBtn{width:58px!important;height:58px!important}.moniaReferenceBtn.end{width:66px!important;height:66px!important}.moniaLocalPreview{right:12px!important;width:92px!important}}
+@media(max-width:520px){#moniaVisioOverlay .moniaReferenceStatus{left:16px;right:16px}.moniaReferenceControls{gap:34px!important}.moniaReferenceBtn{width:58px!important;height:58px!important}.moniaReferenceBtn.end{width:66px!important;height:66px!important}.moniaLocalPreview{right:12px!important;width:92px!important}.moniaConversation{bottom:max(105px,calc(env(safe-area-inset-bottom) + 92px))!important}.moniaChoice{font-size:13px!important;padding:10px 12px!important}}
 `;document.head.appendChild(style)}
 
-function stopLocalCamera(overlay?:HTMLElement|null){
- if(localStream){localStream.getTracks().forEach(track=>track.stop());localStream=null}
- const preview=overlay?.querySelector<HTMLElement>('.moniaLocalPreview');
- const video=preview?.querySelector<HTMLVideoElement>('video');
- if(video)video.srcObject=null;
- preview?.classList.remove('is-on');
-}
+function readSave(){try{return JSON.parse(localStorage.getItem(SAVE_KEY)||'{}')}catch{return{}}}
+function compactContext(){const s=readSave();return{action:'visio_conversation',place:String(s.place||'home'),time:String(s.time||''),day:Number(s.day||1),relationship:String(s.relationship||0),trust:Number(s.trust||0),chemistry:Number(s.chemistry||0),stress:Number(s.stress||0),energy:Number(s.energy||0),official:Boolean(s.official),metLucas:Boolean(s.metLucas),memories:Array.isArray(s.memories)?s.memories.slice(-8).map(String):[]}}
+function stopLocalCamera(overlay?:HTMLElement|null){if(localStream){localStream.getTracks().forEach(track=>track.stop());localStream=null}const preview=overlay?.querySelector<HTMLElement>('.moniaLocalPreview');const video=preview?.querySelector<HTMLVideoElement>('video');if(video)video.srcObject=null;preview?.classList.remove('is-on')}
+async function toggleLocalCamera(overlay:HTMLElement,button:HTMLButtonElement){const preview=overlay.querySelector<HTMLElement>('.moniaLocalPreview');const video=preview?.querySelector<HTMLVideoElement>('video');if(!preview||!video)return;if(localStream){stopLocalCamera(overlay);button.classList.add('is-off');return}if(!navigator.mediaDevices?.getUserMedia){button.classList.add('is-off');button.title='Caméra indisponible sur cet appareil';return}try{const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false});if(!document.body.contains(overlay)){stream.getTracks().forEach(track=>track.stop());return}localStream=stream;video.srcObject=stream;video.muted=true;video.playsInline=true;await video.play().catch(()=>{});preview.classList.add('is-on');button.classList.remove('is-off')}catch{button.classList.add('is-off');button.title='Autorisation caméra refusée'}}
 
-async function toggleLocalCamera(overlay:HTMLElement,button:HTMLButtonElement){
- const preview=overlay.querySelector<HTMLElement>('.moniaLocalPreview');
- const video=preview?.querySelector<HTMLVideoElement>('video');
- if(!preview||!video)return;
- if(localStream){stopLocalCamera(overlay);button.classList.add('is-off');return}
- if(!navigator.mediaDevices?.getUserMedia){button.classList.add('is-off');button.title='Caméra indisponible sur cet appareil';return}
- try{
-  const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false});
-  if(!document.body.contains(overlay)){stream.getTracks().forEach(track=>track.stop());return}
-  localStream=stream;video.srcObject=stream;video.muted=true;video.playsInline=true;await video.play().catch(()=>{});preview.classList.add('is-on');button.classList.remove('is-off');
- }catch{button.classList.add('is-off');button.title='Autorisation caméra refusée'}
-}
+function choicesFor(turn:number,last=''){const warm=/manqu|plais|sour|content|envie|bien/i.test(last);if(turn<=0)return['Ça va, et toi ?','Je voulais juste te voir','Tu fais quoi là ?'];if(warm)return['Moi aussi…','Raconte-moi un peu','Tu me fais sourire'];if(turn===1)return['Oui, tranquille','Et toi ta journée ?','Je te dérange pas au moins ?'];return['Continue','Je vois','Attends, explique-moi']}
+function hideChoices(overlay:HTMLElement){overlay.querySelector('.moniaChoices')?.classList.remove('is-on')}
+function showLucasLine(overlay:HTMLElement,text:string){const line=overlay.querySelector<HTMLElement>('.moniaLucasLine');if(!line)return;line.textContent=text;line.classList.add('is-on');window.clearTimeout(speakingTimer);speakingTimer=window.setTimeout(()=>line.classList.remove('is-on'),Math.max(2600,Math.min(6000,text.length*65)))}
+function showChoices(overlay:HTMLElement,items:string[]){const box=overlay.querySelector<HTMLElement>('.moniaChoices');if(!box)return;box.innerHTML='';for(const text of items.slice(0,3)){const b=document.createElement('button');b.className='moniaChoice';b.textContent=text;b.addEventListener('click',()=>void choose(overlay,text));box.appendChild(b)}requestAnimationFrame(()=>box.classList.add('is-on'))}
+function setThinking(overlay:HTMLElement,on:boolean){let chip=overlay.querySelector<HTMLElement>('.moniaThinking');if(on&&!chip){chip=document.createElement('div');chip.className='moniaThinking';chip.textContent='Lucas…';overlay.querySelector('.moniaConversation')?.prepend(chip)}if(!on)chip?.remove()}
+async function choose(overlay:HTMLElement,text:string){hideChoices(overlay);setThinking(overlay,true);conversationTurn+=1;window.dispatchEvent(new CustomEvent('monia-visio-speech',{detail:{type:'end'}}));const runtime=window.__moniaRuntime;let reply='';try{if(runtime){const result=await runtime.direct({actor:'Lucas',playerText:text,requestedChannel:'visio',context:compactContext(),availableMedia:['approved-lucas-v7-v10a-speaking']});reply=String(result?.spokenText||result?.text||'').trim()}}catch{}if(!reply){reply=text.includes('dérange')?'Non, ça va. Je suis là.':text.includes('journée')?'Ça va… un peu longue, mais ça va.':text.includes('voir')?'Ça me fait plaisir que tu m’appelles.':'Oui… je t’écoute.'}setThinking(overlay,false);showLucasLine(overlay,reply);window.dispatchEvent(new CustomEvent('monia-visio-speech',{detail:{type:'start'}}));window.clearTimeout(speakingTimer);speakingTimer=window.setTimeout(()=>{window.dispatchEvent(new CustomEvent('monia-visio-speech',{detail:{type:'end'}}));showChoices(overlay,choicesFor(conversationTurn,reply))},Math.max(3000,Math.min(6500,reply.length*70)))}
 
-function decorate(overlay:HTMLElement){if(overlay.dataset.realVisioUi==='3')return;overlay.dataset.realVisioUi='3';ensureStyle();
- const oldEnd=overlay.querySelector<HTMLButtonElement>('#endMoniaVisio');
- const oldReplay=overlay.querySelector<HTMLButtonElement>('#replayMoniaVoice');
- const oldPanel=oldEnd?.parentElement?.parentElement as HTMLElement|null;if(oldPanel)oldPanel.dataset.moniaDemoCopy='1';
- const existingTop=overlay.querySelector<HTMLElement>('div[style*="top:22px"]');if(existingTop)existingTop.dataset.moniaDemoCopy='1';
- overlay.querySelector('.moniaRealCallTop')?.remove();overlay.querySelector('.moniaSelfView')?.remove();overlay.querySelector('.moniaRealCallControls')?.remove();overlay.querySelector('.moniaReferenceStatus')?.remove();overlay.querySelector('.moniaReferenceControls')?.remove();overlay.querySelector('.moniaLocalPreview')?.remove();
- const status=document.createElement('div');status.className='moniaReferenceStatus';status.innerHTML='<div class="moniaStatusLeft"><span class="moniaSignal">▮▮▮▮</span><span class="moniaWifi">⌁</span></div><div class="moniaStatusRight"><i class="moniaPrivacyDot"></i><i class="moniaBattery"></i></div>';overlay.appendChild(status);
- const preview=document.createElement('div');preview.className='moniaLocalPreview';preview.innerHTML='<video autoplay muted playsinline aria-label="Votre caméra"></video>';overlay.appendChild(preview);
- const controls=document.createElement('div');controls.className='moniaReferenceControls';controls.innerHTML='<button class="moniaReferenceBtn is-off" data-call-camera aria-label="Caméra">▣</button><button class="moniaReferenceBtn end" data-call-end aria-label="Raccrocher">⌕</button><button class="moniaReferenceBtn" data-call-mic aria-label="Micro">♩</button>';overlay.appendChild(controls);
- const camera=controls.querySelector<HTMLButtonElement>('[data-call-camera]');camera?.addEventListener('click',()=>toggleLocalCamera(overlay,camera));
- controls.querySelector<HTMLButtonElement>('[data-call-mic]')?.addEventListener('click',event=>(event.currentTarget as HTMLButtonElement).classList.toggle('is-off'));
- controls.querySelector<HTMLButtonElement>('[data-call-end]')?.addEventListener('click',()=>{stopLocalCamera(overlay);oldEnd?.click()});
- if(oldReplay)oldReplay.tabIndex=-1;
-}
+function installConversation(overlay:HTMLElement){overlay.querySelector('.moniaConversation')?.remove();const wrap=document.createElement('div');wrap.className='moniaConversation';wrap.innerHTML='<div class="moniaLucasLine"></div><div class="moniaChoices"></div>';overlay.appendChild(wrap);conversationTurn=0;window.setTimeout(()=>{if(document.body.contains(overlay))showChoices(overlay,choicesFor(0))},4600)}
+
+function decorate(overlay:HTMLElement){if(overlay.dataset.realVisioUi==='4')return;overlay.dataset.realVisioUi='4';ensureStyle();const oldEnd=overlay.querySelector<HTMLButtonElement>('#endMoniaVisio');const oldReplay=overlay.querySelector<HTMLButtonElement>('#replayMoniaVoice');const oldPanel=oldEnd?.parentElement?.parentElement as HTMLElement|null;if(oldPanel)oldPanel.dataset.moniaDemoCopy='1';const existingTop=overlay.querySelector<HTMLElement>('div[style*="top:22px"]');if(existingTop)existingTop.dataset.moniaDemoCopy='1';overlay.querySelector('.moniaRealCallTop')?.remove();overlay.querySelector('.moniaSelfView')?.remove();overlay.querySelector('.moniaRealCallControls')?.remove();overlay.querySelector('.moniaReferenceStatus')?.remove();overlay.querySelector('.moniaReferenceControls')?.remove();overlay.querySelector('.moniaLocalPreview')?.remove();const status=document.createElement('div');status.className='moniaReferenceStatus';status.innerHTML='<div class="moniaStatusLeft"><span class="moniaSignal">▮▮▮▮</span><span class="moniaWifi">⌁</span></div><div class="moniaStatusRight"><i class="moniaPrivacyDot"></i><i class="moniaBattery"></i></div>';overlay.appendChild(status);const preview=document.createElement('div');preview.className='moniaLocalPreview';preview.innerHTML='<video autoplay muted playsinline aria-label="Votre caméra"></video>';overlay.appendChild(preview);const controls=document.createElement('div');controls.className='moniaReferenceControls';controls.innerHTML='<button class="moniaReferenceBtn is-off" data-call-camera aria-label="Caméra">▣</button><button class="moniaReferenceBtn end" data-call-end aria-label="Raccrocher">⌕</button><button class="moniaReferenceBtn" data-call-mic aria-label="Micro">♩</button>';overlay.appendChild(controls);const camera=controls.querySelector<HTMLButtonElement>('[data-call-camera]');camera?.addEventListener('click',()=>toggleLocalCamera(overlay,camera));controls.querySelector<HTMLButtonElement>('[data-call-mic]')?.addEventListener('click',event=>(event.currentTarget as HTMLButtonElement).classList.toggle('is-off'));controls.querySelector<HTMLButtonElement>('[data-call-end]')?.addEventListener('click',()=>{stopLocalCamera(overlay);oldEnd?.click()});if(oldReplay)oldReplay.tabIndex=-1;installConversation(overlay)}
 function scan(){const overlay=document.getElementById(OVERLAY_ID);if(overlay)decorate(overlay);else stopLocalCamera(null)}
 new MutationObserver(scan).observe(document.documentElement,{childList:true,subtree:true});
 window.setTimeout(scan,400);
