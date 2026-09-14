@@ -9,14 +9,16 @@ from PIL import Image
 import scripts.monia_video_engine as engine
 
 REFERENCE_IMAGE = Path("resources/monia/canon/lucas/visio-layout-reference.jpg")
-OUTPUT_NAME = "visio-lucas-speaking-fr-layout-v6-candidate.mp4"
+OUTPUT_NAME = "visio-lucas-speaking-fr-layout-v7-candidate.mp4"
 
 PROMPT = (
     "Animate the supplied reference as a REAL smartphone front-camera video call with Lucas. "
     "The supplied frame is the composition authority: preserve the same upper-torso framing, visible shoulder and forearm, "
     "phone held naturally at arm's length, intimate front-camera distance and warm lived-in room depth. "
-    "Do NOT turn this into a head-only portrait or beauty close-up. Keep Lucas recognizably the same man with natural skin texture, dark wavy hair, brown-hazel eyes, short stubble and olive skin. "
-    "Keep the V5 visual feeling: relaxed dark shirt, tiny handheld micro-shake, minute framing drift, natural breathing, irregular blinks, subtle autofocus/exposure breathing and small gaze shifts between Marion on screen and the lens. "
+    "Do NOT turn this into a head-only portrait or beauty close-up. Keep Lucas recognizably the same man with natural skin texture, dark wavy hair, short stubble and olive skin. "
+    "EYE COLOR IS CANONICAL AND MUST NOT DRIFT: Lucas has deep cool green-hazel eyes, an outer gray-green/olive iris, a subtle warm amber-brown ring close to the pupil, and a darker limbal rim. "
+    "The overall impression must be green-gray/olive hazel rather than brown. Never make the irises uniformly brown, bright blue, turquoise, emerald green or unnaturally luminous. Preserve realistic low-light variation. "
+    "Keep the V6 visual feeling: relaxed dark shirt, tiny handheld micro-shake, minute framing drift, natural breathing, irregular blinks, subtle autofocus/exposure breathing and small gaze shifts between Marion on screen and the lens. "
     "His emotional intention is warm, private and gently amused, like he is genuinely happy to see Marion. His gaze is soft and attentive, with a restrained half-smile, tiny eyebrow reactions and brief eye-brightening before he speaks. "
     "State: SPEAKING IN VERY NATURAL CASUAL FRENCH. Lucas casually says: 'Hey... ça va, toi ? T'as l'air un peu crevée.' "
     "This must feel like spontaneous private conversation, NOT a written sentence being read. He starts softly, lets 'hey' fall out naturally, leaves a tiny imperfect pause, slightly swallows some syllables in connected speech, breathes between thought groups, and lets the final words trail naturally rather than landing like an announcer. "
@@ -29,6 +31,7 @@ PROMPT = (
 
 NEGATIVE = (
     "head-only portrait, extreme close-up, studio portrait, beauty lighting, blank stare, presenter gaze, frozen mouth, weak lip movement, "
+    "uniform brown eyes, dark brown irises, bright blue eyes, turquoise eyes, emerald green eyes, neon eyes, glowing irises, eye color drift, "
     "robotic speech, text-to-speech cadence, careful textbook French, over-articulated consonants, separated words, evenly timed syllables, announcer voice, radio voice, "
     "exaggerated acting, identity drift, different man, face morphing, text mutation, caption mutation, new subtitles, new UI, extra people, extra hands, cinematic camera move, dolly shot, zoom-in"
 )
@@ -53,7 +56,7 @@ def generate() -> tuple[Path, str]:
     base = engine.LUCAS_VISIO_TEST1
     profile = replace(
         base,
-        key="lucas-visio-speaking-fr-layout-v6",
+        key="lucas-visio-speaking-fr-layout-v7",
         prompt=PROMPT,
         negative=NEGATIVE,
         width=576,
@@ -83,14 +86,14 @@ def generate() -> tuple[Path, str]:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Generate MonIA Lucas natural casual French visio candidate V6")
+    parser = argparse.ArgumentParser(description="Generate MonIA Lucas natural casual French visio candidate V7 with locked green-hazel eyes")
     parser.add_argument("--publish-candidate", action="store_true")
     args = parser.parse_args()
     path, provider = generate()
-    print(f"MONIA_VISIO_LAYOUT_V6 compute={provider} output={path} bytes={path.stat().st_size}")
+    print(f"MONIA_VISIO_LAYOUT_V7 compute={provider} output={path} bytes={path.stat().st_size}")
     if args.publish_candidate:
         url = engine.publish_candidate(path)
-        print(f"MONIA_VISIO_LAYOUT_V6_CANDIDATE url={url}")
+        print(f"MONIA_VISIO_LAYOUT_V7_CANDIDATE url={url}")
 
 
 if __name__ == "__main__":
