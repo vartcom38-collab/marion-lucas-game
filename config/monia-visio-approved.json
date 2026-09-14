@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "character": "lucas",
   "status": "locked",
   "fallback": null,
@@ -8,6 +8,39 @@
     "speaking": null,
     "reaction": null,
     "thinking": null
+  },
+  "approved_reference": {
+    "visual_base": "https://marion-lucas.marionbolomey.fr/resources/monia/generated/visio-lucas-speaking-fr-layout-v7-candidate.mp4?run=34826963016",
+    "validated_sync_sample": "https://marion-lucas.marionbolomey.fr/resources/monia/generated/visio-lucas-v7-v10a-timing-candidate.mp4?run=34859820027",
+    "visual_status": "approved",
+    "voice_status": "approved_for_current_baseline_but_revisable",
+    "identity": "approved_lucas_visio_face",
+    "eyes": "approved green-hazel / gray-green olive with subtle amber-brown center and darker limbal rim",
+    "note": "This is the validated quality and identity reference, not a universal clip to reuse for every call. Wardrobe, location, lighting, pose and call context must vary canonically."
+  },
+  "interaction": {
+    "default_player_input": "contextual_choice_buttons",
+    "microphone": "optional_future_or_explicit_mode",
+    "ai_role": [
+      "interpret current save state and call context",
+      "decide Lucas intent and next conversational beat",
+      "select only approved media matching context",
+      "generate contextual player response choices",
+      "keep conversation state coherent across turns"
+    ],
+    "outgoing_call": [
+      "check Lucas canonical availability and presence",
+      "ring or decline naturally depending on context",
+      "if answered choose an approved opening matching place, time, mood and relationship state",
+      "continue through AI-selected conversational beats and player choices"
+    ],
+    "incoming_call": [
+      "Lucas may call only when story and presence rules allow it",
+      "player can answer or decline",
+      "opening and follow-up depend on current context rather than a fixed script"
+    ],
+    "runtime_generation_rule": "Never make the player wait for heavy video generation during a live call. Heavy media is generated and approved upstream; runtime AI handles meaning, branching, selection and continuity.",
+    "surprise_rule": "The player must never be shown the hidden media catalog, branch map or future call possibilities."
   },
   "adaptive": {
     "enabled": true,
@@ -18,17 +51,22 @@
       "relationship_state",
       "recent_events",
       "emotion",
-      "call_state"
+      "call_state",
+      "season",
+      "wardrobe_context"
     ],
     "identity_anchor": "approved_lucas_visio_face",
     "must_keep": [
       "same Lucas identity",
+      "validated eye color",
       "no tattoos",
       "no facial scar",
       "natural front-camera realism",
-      "subtle human micro-movements"
+      "subtle human micro-movements",
+      "real visio framing rather than cinematic camera grammar"
     ],
     "must_vary": [
+      "wardrobe",
       "expression",
       "pose",
       "gesture rhythm",
@@ -42,10 +80,12 @@
     "Only explicitly approved visio clips may be shown live.",
     "Generated listening, speaking, reaction and thinking clips are candidates until approval.",
     "Never use playback-rate warping or random seeking to fake lip synchronization.",
+    "Never use pasted-mouth or post-hoc lip replacement as the primary Lucas visio method.",
     "If an approved state clip is missing, show a neutral call state without unapproved video rather than any candidate fallback.",
     "Lucas identity must come from the locked Lucas canon pack and approved Lucas visio face reference.",
     "Lucas has no tattoos and no facial scar.",
     "Every visio must adapt to the current gameplay context and must not be a visually identical loop reused for every call.",
+    "The approved V7 black-shirt sample defines quality and identity, not permanent wardrobe or permanent location.",
     "Visio output must remain natural, photorealistic and free of identity drift."
   ]
 }
