@@ -1,3 +1,5 @@
+import { createTravelPlan } from './travel-continuity-engine';
+
 const SAVE_KEY='marion-lucas-save-v4';
 const PROPERTY_KEY='marion-lucas-properties-v1';
 const VISIT_KEY='marion-lucas-property-visits-v1';
@@ -34,27 +36,9 @@ export type PropertyOffer={
   distanceNote:string;
   firstHomeEligible:boolean;
 };
-export type PropertyNegotiation={
-  offerId:string;
-  askingPrice:number;
-  proposedPrice:number;
-  acceptedPrice?:number;
-  counterPrice?:number;
-  status:'submitted'|'countered'|'accepted';
-  submittedDay:number;
-};
-type PropertyState={
-  version:1;
-  searchOpen:boolean;
-  searchOpenedDay?:number;
-  searchReason?:'joint-home'|'secondary-home'|'investment';
-  shortlisted:string[];
-  negotiations?:Record<string,PropertyNegotiation>;
-  owned:PropertyRecord[];
-  lastOfferRefreshDay:number;
-  offerSeed:number;
-};
-type Save={day?:number;place?:string;relationship?:number;official?:boolean;flags?:Record<string,unknown>};
+export type PropertyNegotiation={offerId:string;askingPrice:number;proposedPrice:number;acceptedPrice?:number;counterPrice?:number;status:'submitted'|'countered'|'accepted';submittedDay:number};
+type PropertyState={version:1;searchOpen:boolean;searchOpenedDay?:number;searchReason?:'joint-home'|'secondary-home'|'investment';shortlisted:string[];negotiations?:Record<string,PropertyNegotiation>;owned:PropertyRecord[];lastOfferRefreshDay:number;offerSeed:number};
+type Save={day?:number;time?:string;place?:string;relationship?:number;official?:boolean;flags?:Record<string,unknown>};
 
 const CATALOG:Omit<PropertyOffer,'id'>[]=[
   {title:'Finca de chênes et pâtures',kind:'finca',city:'Salamanque',region:'Castille-et-León',country:'Espagne',price:1180000,hectares:34,bedrooms:6,character:'Maison en pierre, grands prés, dépendances et beaucoup d’intimité.',distanceNote:'À l’ouest de Madrid, environnement rural très ouvert.',firstHomeEligible:true},
@@ -72,10 +56,7 @@ function readSave():Save|null{try{const raw=localStorage.getItem(SAVE_KEY);retur
 function writeSave(s:Save){try{localStorage.setItem(SAVE_KEY,JSON.stringify(s));window.dispatchEvent(new Event('storage'));window.dispatchEvent(new CustomEvent('monia:property-changed'));return true}catch{return false}}
 function dayOf(s:Save|null){return Math.max(1,Number(s?.day||1)||1)}
 function hasVisitedOffer(offerIdValue:string){try{const raw=localStorage.getItem(VISIT_KEY);if(!raw)return false;const parsed=JSON.parse(raw) as {visited?:Record<string,number>};return Boolean(parsed.visited?.[offerIdValue])}catch{return false}}
-function initialState():PropertyState{const s=readSave(),day=dayOf(s);return{version:1,searchOpen:false,shortlisted:[],negotiations:{},lastOfferRefreshDay:0,offerSeed:day,owned:[
-  {id:'marion-nimes-apartment',name:'Appartement de Marion',kind:'apartment',owner:'marion',city:'Nîmes',region:'Occitanie',country:'France',use:'primary',acquiredDay:1,canonicalPlace:'home'},
-  {id:'lucas-madrid-house',name:'Maison de Lucas',kind:'house',owner:'lucas',city:'Madrid',region:'Communauté de Madrid',country:'Espagne',use:'available',acquiredDay:1,canonicalPlace:'madrid'},
-]}}
+function initialState():PropertyState{const s=readSave(),day=dayOf(s);return{version:1,searchOpen:false,shortlisted:[],negotiations:{},lastOfferRefreshDay:0,offerSeed:day,owned:[{id:'marion-nimes-apartment',name:'Appartement de Marion',kind:'apartment',owner:'marion',city:'Nîmes',region:'Occitanie',country:'France',use:'primary',acquiredDay:1,canonicalPlace:'home'},{id:'lucas-madrid-house',name:'Maison de Lucas',kind:'house',owner:'lucas',city:'Madrid',region:'Communauté de Madrid',country:'Espagne',use:'available',acquiredDay:1,canonicalPlace:'madrid'}]}}
 function readState():PropertyState{try{const raw=localStorage.getItem(PROPERTY_KEY);if(!raw)return initialState();const parsed=JSON.parse(raw) as Partial<PropertyState>;const base=initialState();return{...base,...parsed,version:1,shortlisted:Array.isArray(parsed.shortlisted)?parsed.shortlisted:[],negotiations:parsed.negotiations&&typeof parsed.negotiations==='object'?parsed.negotiations:{},owned:Array.isArray(parsed.owned)&&parsed.owned.length?parsed.owned:base.owned}}catch{return initialState()}}
 function writeState(state:PropertyState){try{localStorage.setItem(PROPERTY_KEY,JSON.stringify(state));window.dispatchEvent(new CustomEvent('monia:property-changed'));return true}catch{return false}}
 function hasJointFinca(state:PropertyState){return state.owned.some(p=>p.owner==='joint'&&p.kind==='finca'&&p.use!=='sold')}
@@ -85,28 +66,18 @@ function offerId(index:number,seed:number){return`property-${index}-${seed%997}`
 function availableOffers(state:PropertyState,s:Save|null){const firstJoint=!hasJointFinca(state);const offset=(state.offerSeed+Math.floor(dayOf(s)/21))%CATALOG.length;const ordered=CATALOG.map((_,i)=>CATALOG[(i+offset)%CATALOG.length]);const filtered=firstJoint?ordered.filter(o=>o.firstHomeEligible):ordered;return filtered.slice(0,firstJoint?4:6).map(o=>({...o,id:offerId(CATALOG.indexOf(o),state.offerSeed)}))}
 function negotiationFor(state:PropertyState,id:string){return state.negotiations?.[id]||null}
 function jointSearchReady(s:Save|null){if(!s?.official)return false;const f=s.flags||{};const established=Boolean(f.spainHomeEstablished||f.livingWithLucas||f.movedToMadrid||f.cohabitingMadrid);return established&&Number(s.relationship||0)>=40}
+function scheduleFincaMove(s:Save,propertyId:string){const f=s.flags||(s.flags={});f.estateMovePending=true;f.estateMovePropertyId=propertyId;f.primaryPropertyId=propertyId;f.estateMoved=false;const from=String(s.place||'madrid');if(from.toLowerCase()==='estate')return true;const owner:fincaMoveOwner=Boolean(f.lucasWithMarion)?'together':'Marion';return Boolean(createTravelPlan({owner,from,to:'estate',departDay:dayOf(s),departTime:String(s.time||'09:00'),source:'choice',purpose:'personal'}))}
+type fincaMoveOwner='Marion'|'together';
 
 export function getPropertyLifeSnapshot(){const s=readSave();let state=readState();const before=JSON.stringify(state);state=normalizePrimaryForCohabitation(state,s);if(JSON.stringify(state)!==before)writeState(state);return{searchOpen:state.searchOpen,searchReason:state.searchReason||null,firstJointPurchasePending:!hasJointFinca(state),primary:currentPrimary(state),owned:state.owned.filter(p=>p.use!=='sold'),history:state.owned,shortlisted:state.shortlisted,negotiations:state.negotiations||{},offers:state.searchOpen?availableOffers(state,s):[]}}
 export function openPropertySearch(reason:'joint-home'|'secondary-home'|'investment'='joint-home'){const s=readSave();if(!s)return false;const state=normalizePrimaryForCohabitation(readState(),s);if(reason==='joint-home'&&!hasJointFinca(state)&&!jointSearchReady(s))return false;if(reason!=='joint-home'&&!hasJointFinca(state))return false;state.searchOpen=true;state.searchReason=reason;state.searchOpenedDay=dayOf(s);state.offerSeed=(dayOf(s)*37+state.owned.length*101)%10007;state.lastOfferRefreshDay=dayOf(s);return writeState(state)}
 export function closePropertySearch(){const state=readState();state.searchOpen=false;return writeState(state)}
 export function refreshPropertyOffers(){const s=readSave();if(!s)return false;const state=readState();const day=dayOf(s);if(!state.searchOpen||day-state.lastOfferRefreshDay<7)return false;state.offerSeed=(state.offerSeed+137+day)%10007;state.lastOfferRefreshDay=day;return writeState(state)}
 export function shortlistProperty(offerIdValue:string){const s=readSave();const state=readState();if(!state.searchOpen)return false;const offer=availableOffers(state,s).find(o=>o.id===offerIdValue);if(!offer)return false;state.shortlisted=[offerIdValue,...state.shortlisted.filter(x=>x!==offerIdValue)].slice(0,5);return writeState(state)}
-export function submitPropertyOffer(offerIdValue:string,mode:'asking'|'careful'|'firm'='careful'){
-  const s=readSave();if(!s)return null;const state=readState();if(!state.searchOpen)return null;const offer=availableOffers(state,s).find(o=>o.id===offerIdValue);if(!offer||!hasVisitedOffer(offerIdValue))return null;
-  const discount=mode==='asking'?0:mode==='careful'?0.035:0.07;const proposed=Math.round(offer.price*(1-discount)/1000)*1000;const deterministic=(state.offerSeed+dayOf(s)+CATALOG.findIndex(x=>x.title===offer.title)*17)%100;
-  let negotiation:PropertyNegotiation;
-  if(mode==='asking'||deterministic>55){negotiation={offerId:offer.id,askingPrice:offer.price,proposedPrice:proposed,acceptedPrice:proposed,status:'accepted',submittedDay:dayOf(s)}}
-  else{const counter=Math.round((proposed+(offer.price-proposed)*0.55)/1000)*1000;negotiation={offerId:offer.id,askingPrice:offer.price,proposedPrice:proposed,counterPrice:counter,status:'countered',submittedDay:dayOf(s)}}
-  state.negotiations={...(state.negotiations||{}),[offer.id]:negotiation};writeState(state);return negotiation;
-}
+export function submitPropertyOffer(offerIdValue:string,mode:'asking'|'careful'|'firm'='careful'){const s=readSave();if(!s)return null;const state=readState();if(!state.searchOpen)return null;const offer=availableOffers(state,s).find(o=>o.id===offerIdValue);if(!offer||!hasVisitedOffer(offerIdValue))return null;const discount=mode==='asking'?0:mode==='careful'?0.035:0.07;const proposed=Math.round(offer.price*(1-discount)/1000)*1000;const deterministic=(state.offerSeed+dayOf(s)+CATALOG.findIndex(x=>x.title===offer.title)*17)%100;let negotiation:PropertyNegotiation;if(mode==='asking'||deterministic>55){negotiation={offerId:offer.id,askingPrice:offer.price,proposedPrice:proposed,acceptedPrice:proposed,status:'accepted',submittedDay:dayOf(s)}}else{const counter=Math.round((proposed+(offer.price-proposed)*0.55)/1000)*1000;negotiation={offerId:offer.id,askingPrice:offer.price,proposedPrice:proposed,counterPrice:counter,status:'countered',submittedDay:dayOf(s)}}state.negotiations={...(state.negotiations||{}),[offer.id]:negotiation};writeState(state);return negotiation}
 export function acceptPropertyCounter(offerIdValue:string){const state=readState();if(!state.searchOpen)return false;const current=negotiationFor(state,offerIdValue);if(!current||current.status!=='countered'||!current.counterPrice)return false;current.acceptedPrice=current.counterPrice;current.status='accepted';state.negotiations={...(state.negotiations||{}),[offerIdValue]:current};return writeState(state)}
-export function purchaseProperty(offerIdValue:string,makePrimary=false){
-  const s=readSave();if(!s)return false;const state=normalizePrimaryForCohabitation(readState(),s);if(!state.searchOpen)return false;const offer=availableOffers(state,s).find(o=>o.id===offerIdValue),negotiation=negotiationFor(state,offerIdValue);if(!offer||!hasVisitedOffer(offerIdValue)||!negotiation||negotiation.status!=='accepted'||!negotiation.acceptedPrice)return false;
-  const firstJoint=!hasJointFinca(state);if(firstJoint&&!jointSearchReady(s))return false;if(firstJoint&&!offer.firstHomeEligible)return false;if(makePrimary)for(const p of state.owned)if(p.use==='primary')p.use='available';
-  const id=`owned-${offer.id}-${dayOf(s)}`;state.owned.push({id,name:offer.title,kind:offer.kind,owner:'joint',city:offer.city,region:offer.region,country:'Espagne',use:makePrimary?'primary':'secondary',acquiredDay:dayOf(s),purchasePrice:negotiation.acceptedPrice,sourceOfferId:offer.id,canonicalPlace:offer.kind==='finca'?'estate':undefined});state.searchOpen=false;state.shortlisted=state.shortlisted.filter(x=>x!==offer.id);if(state.negotiations)delete state.negotiations[offer.id];
-  const f=s.flags||(s.flags={});f.propertyPortfolioStarted=true;f.lastPropertyPurchaseDay=dayOf(s);if(firstJoint){f.firstJointPropertyPurchased=true;f.firstJointPropertyId=id}if(makePrimary&&offer.kind==='finca'){f.estateMoved=true;f.primaryPropertyId=id;f.sharedHomePlace='estate';f.spainHomePlace='estate';f.spainHomeEstablished=true;s.place='estate'}writeState(state);writeSave(s);return true;
-}
-export function setPrimaryProperty(propertyId:string){const s=readSave();if(!s)return false;const state=readState();const target=state.owned.find(p=>p.id===propertyId&&p.use!=='sold');if(!target)return false;for(const p of state.owned)if(p.use==='primary')p.use=p.id===target.id?'primary':'available';target.use='primary';const f=s.flags||(s.flags={});f.primaryPropertyId=target.id;if(target.canonicalPlace)s.place=target.canonicalPlace;if(target.owner==='joint'&&target.kind==='finca'){f.estateMoved=true;f.sharedHomePlace='estate';f.spainHomePlace='estate';f.spainHomeEstablished=true}writeState(state);writeSave(s);return true}
+export function purchaseProperty(offerIdValue:string,makePrimary=false){const s=readSave();if(!s)return false;const state=normalizePrimaryForCohabitation(readState(),s);if(!state.searchOpen)return false;const offer=availableOffers(state,s).find(o=>o.id===offerIdValue),negotiation=negotiationFor(state,offerIdValue);if(!offer||!hasVisitedOffer(offerIdValue)||!negotiation||negotiation.status!=='accepted'||!negotiation.acceptedPrice)return false;const firstJoint=!hasJointFinca(state);if(firstJoint&&!jointSearchReady(s))return false;if(firstJoint&&!offer.firstHomeEligible)return false;if(makePrimary)for(const p of state.owned)if(p.use==='primary')p.use='available';const id=`owned-${offer.id}-${dayOf(s)}`;state.owned.push({id,name:offer.title,kind:offer.kind,owner:'joint',city:offer.city,region:offer.region,country:'Espagne',use:makePrimary?'primary':'secondary',acquiredDay:dayOf(s),purchasePrice:negotiation.acceptedPrice,sourceOfferId:offer.id,canonicalPlace:offer.kind==='finca'?'estate':undefined});state.searchOpen=false;state.shortlisted=state.shortlisted.filter(x=>x!==offer.id);if(state.negotiations)delete state.negotiations[offer.id];const f=s.flags||(s.flags={});f.propertyPortfolioStarted=true;f.lastPropertyPurchaseDay=dayOf(s);if(firstJoint){f.firstJointPropertyPurchased=true;f.firstJointPropertyId=id}writeState(state);writeSave(s);if(makePrimary&&offer.kind==='finca')scheduleFincaMove(s,id);return true}
+export function setPrimaryProperty(propertyId:string){const s=readSave();if(!s)return false;const state=readState();const target=state.owned.find(p=>p.id===propertyId&&p.use!=='sold');if(!target)return false;for(const p of state.owned)if(p.use==='primary')p.use=p.id===target.id?'primary':'available';target.use='primary';const f=s.flags||(s.flags={});f.primaryPropertyId=target.id;writeState(state);writeSave(s);if(target.owner==='joint'&&target.kind==='finca')scheduleFincaMove(s,target.id);return true}
 export function sellProperty(propertyId:string){const s=readSave();if(!s)return false;const state=readState();const target=state.owned.find(p=>p.id===propertyId&&p.use!=='sold');if(!target||target.id==='marion-nimes-apartment'||target.id==='lucas-madrid-house'||target.use==='primary')return false;target.use='sold';target.soldDay=dayOf(s);writeState(state);const f=s.flags||(s.flags={});f.lastPropertySaleDay=dayOf(s);writeSave(s);return true}
 
 declare global{interface Window{__moniaProperties?:()=>ReturnType<typeof getPropertyLifeSnapshot>;__moniaOpenPropertySearch?:(reason?:'joint-home'|'secondary-home'|'investment')=>boolean;__moniaClosePropertySearch?:()=>boolean;__moniaRefreshPropertyOffers?:()=>boolean;__moniaShortlistProperty?:(offerId:string)=>boolean;__moniaSubmitPropertyOffer?:(offerId:string,mode?:'asking'|'careful'|'firm')=>PropertyNegotiation|null;__moniaAcceptPropertyCounter?:(offerId:string)=>boolean;__moniaPurchaseProperty?:(offerId:string,makePrimary?:boolean)=>boolean;__moniaSetPrimaryProperty?:(propertyId:string)=>boolean;__moniaSellProperty?:(propertyId:string)=>boolean}}
