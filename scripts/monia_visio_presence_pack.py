@@ -62,6 +62,7 @@ SPEAKING_STATES = {
     "warm": "Ah ouais ? Ça me fait plaisir que tu m'appelles juste pour ça.",
     "busy": "Je viens de me poser deux minutes. J'allais justement souffler un peu.",
 }
+ALL_STATES = tuple(SILENT_STATES) + tuple(f"speaking-{k}" for k in SPEAKING_STATES)
 
 
 def download(url: str, target: Path) -> None:
@@ -103,11 +104,17 @@ def generate_video(key: str, prompt_tail: str, duration: int, anchor: Path) -> t
         output_name=output.name,
     )
     output.unlink(missing_ok=True)
+    errors: list[str] = []
     try:
         provider = engine._run_ltx(profile, anchor, output)
-    except Exception:
+    except Exception as exc:
+        errors.append(f"LTX: {exc}")
         output.unlink(missing_ok=True)
-        provider = engine._run_wan(profile, anchor, output)
+        try:
+            provider = engine._run_wan(profile, anchor, output)
+        except Exception as wexc:
+            errors.append(f"WAN: {wexc}")
+            raise RuntimeError("No MonIA video compute available: " + " | ".join(errors)) from wexc
     if not engine.worker.looks_like_video(output):
         raise RuntimeError(f"Invalid generated video for {key}")
     return output, provider
@@ -171,8 +178,36 @@ def mux(video: Path, audio: Path, output: Path) -> None:
         raise RuntimeError("Final speaking candidate invalid")
 
 
+def build_one(state: str, anchor: Path, v10a: Path) -> tuple[Path, str]:
+    if state in SILENT_STATES:
+        duration, prompt = SILENT_STATES[state]
+        return generate_video(state, prompt, duration, anchor)
+
+    key = state.removeprefix("speaking-")
+    line = SPEAKING_STATES[key]
+    native_video, provider = generate_video(
+        f"speaking-{key}-native",
+        (
+            f"STATE: SPEAKING. Lucas says exactly in natural casual native French: '{line}' "
+            "Generate the speech natively together with the face so jaw, lips, cheeks, eyebrows and breath timing are coherent. "
+            "Use relaxed connected contemporary French, restrained melody and imperfect human micro-pauses. After the sentence, settle naturally back toward attentive listening."
+        ),
+        6,
+        anchor,
+    )
+    native_audio = engine.WORK_DIR / f"visio-lucas-v2-speaking-{key}-native.wav"
+    converted = engine.WORK_DIR / f"visio-lucas-v2-speaking-{key}-v10a.wav"
+    final = engine.WORK_DIR / f"visio-lucas-v2-speaking-{key}-candidate.mp4"
+    extract_audio(native_video, native_audio)
+    seed = Client(SEED_VC_SPACE, token=(os.environ.get("HF_TOKEN", "").strip() or None), verbose=False, download_files=True)
+    convert_to_v10a(seed, native_audio, v10a, converted)
+    mux(native_video, converted, final)
+    return final, provider + "+SeedVC-V10A"
+
+
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Generate candidate-only MonIA Visio 2.0 presence states")
+    parser = argparse.ArgumentParser(description="Generate one candidate-only MonIA Visio 2.0 presence state")
+    parser.add_argument("--state", choices=ALL_STATES, required=True)
     parser.add_argument("--publish-candidate", action="store_true")
     args = parser.parse_args()
 
@@ -183,36 +218,10 @@ def main() -> None:
     extract_anchor(v7, anchor)
     download(V10A_URL, v10a)
 
-    outputs: list[Path] = []
-    for key, (duration, prompt) in SILENT_STATES.items():
-        path, provider = generate_video(key, prompt, duration, anchor)
-        outputs.append(path)
-        print(f"MONIA_VISIO_V2 state={key} provider={provider} output={path}")
-
-    seed = Client(SEED_VC_SPACE, token=(os.environ.get("HF_TOKEN", "").strip() or None), verbose=False, download_files=True)
-    for key, line in SPEAKING_STATES.items():
-        native_video, provider = generate_video(
-            f"speaking-{key}-native",
-            (
-                f"STATE: SPEAKING. Lucas says exactly in natural casual native French: '{line}' "
-                "Generate the speech natively together with the face so jaw, lips, cheeks, eyebrows and breath timing are coherent. "
-                "Use relaxed connected contemporary French, restrained melody and imperfect human micro-pauses. After the sentence, settle naturally back toward attentive listening."
-            ),
-            6,
-            anchor,
-        )
-        native_audio = engine.WORK_DIR / f"visio-lucas-v2-speaking-{key}-native.wav"
-        converted = engine.WORK_DIR / f"visio-lucas-v2-speaking-{key}-v10a.wav"
-        final = engine.WORK_DIR / f"visio-lucas-v2-speaking-{key}-candidate.mp4"
-        extract_audio(native_video, native_audio)
-        convert_to_v10a(seed, native_audio, v10a, converted)
-        mux(native_video, converted, final)
-        outputs.append(final)
-        print(f"MONIA_VISIO_V2 state=speaking-{key} provider={provider}+SeedVC-V10A output={final}")
-
+    path, provider = build_one(args.state, anchor, v10a)
+    print(f"MONIA_VISIO_V2 state={args.state} provider={provider} output={path}")
     if args.publish_candidate:
-        for path in outputs:
-            print(f"MONIA_VISIO_V2_CANDIDATE state={path.stem} url={engine.publish_candidate(path)}")
+        print(f"MONIA_VISIO_V2_CANDIDATE state={args.state} url={engine.publish_candidate(path)}")
 
 
 if __name__ == "__main__":
