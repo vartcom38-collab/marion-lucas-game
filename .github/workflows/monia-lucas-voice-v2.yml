@@ -1,0 +1,59 @@
+name: MonIA Lucas Voice V2
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/monia-lucas-voice-v2.yml"
+      - "scripts/monia_lucas_voice_v2.py"
+      - "scripts/monia_video_engine.py"
+
+permissions:
+  contents: read
+
+jobs:
+  generate-lucas-voice-v2:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      INFOMANIAK_FTP_HOST: ${{ secrets.INFOMANIAK_FTP_HOST }}
+      INFOMANIAK_FTP_USER: ${{ secrets.INFOMANIAK_FTP_USER }}
+      INFOMANIAK_FTP_PASSWORD: ${{ secrets.INFOMANIAK_FTP_PASSWORD }}
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install ffmpeg
+        run: sudo apt-get update -qq && sudo apt-get install -y ffmpeg
+
+      - name: Install MonIA voice dependencies
+        run: python -m pip install --disable-pip-version-check gradio_client requests pillow
+
+      - name: Generate three Lucas French voice variants
+        run: python -m scripts.monia_lucas_voice_v2 --publish-candidate
+
+      - name: Verify voice variants publicly
+        run: |
+          python - <<'PY'
+          import requests
+          base='https://marion-lucas.marionbolomey.fr/resources/monia/generated/'
+          for name in ['lucas-voice-v2-soft-candidate.wav','lucas-voice-v2-warm-candidate.wav','lucas-voice-v2-suave-candidate.wav']:
+              url=base+name
+              r=requests.get(url,timeout=30,headers={'Range':'bytes=0-127','Cache-Control':'no-cache','Accept':'audio/*,*/*'})
+              ok=r.status_code in (200,206) and len(r.content)>=44 and (r.content.startswith(b'RIFF') or r.content.startswith(b'ID3'))
+              print(f'candidate={url} verified={ok} status={r.status_code} bytes={len(r.content)}')
+              if not ok:
+                  raise SystemExit(f'MonIA Lucas voice V2 public verification failed for {name}')
+          PY
+
+      - name: Candidate-only policy
+        run: |
+          echo "Candidate only: true"
+          echo "Narrative authority: false"
+          echo "Live manifest mutation: forbidden"
+          echo "Reference source: preferred Lucas V3 voice audio"
+          echo "Purpose: compare soft, warm and suave Chatterbox French Lucas voice variants before any video integration"
