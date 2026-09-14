@@ -1,6 +1,7 @@
 import './surprise-approval';
 import './surprise-player';
 import './surprise-aftermath';
+import './cinematic-approval-guard';
 import './early-game-phone-guard';
 import './iphone-shell';
 import './iphone-interactions';
