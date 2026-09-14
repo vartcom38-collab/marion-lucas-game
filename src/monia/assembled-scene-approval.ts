@@ -62,10 +62,10 @@ function factsFromCandidate(candidate:AssembledSceneCandidate):SurpriseCandidate
   };
 }
 
-function reviewFromFacts(candidate:AssembledSceneCandidate,facts:SurpriseCandidateFacts,decision:'pending'|'approved'='pending'):AssembledSceneReview{
+function reviewFromFacts(candidate:AssembledSceneCandidate,facts:SurpriseCandidateFacts):AssembledSceneReview{
   return{
     candidateId:candidate.id,
-    decision,
+    decision:'pending',
     updatedAt:Date.now(),
     checks:{
       lucasIdentity:facts.lucasIdentity,
@@ -77,7 +77,7 @@ function reviewFromFacts(candidate:AssembledSceneCandidate,facts:SurpriseCandida
       canon:facts.canon,
       completeAssembly:facts.completeAssembly,
     },
-    notes:decision==='approved'?'Approved automatically by MonIA Surprise Mode quality gate.':'',
+    notes:'Human approval required before any generated cinematic can enter the live delivery queue.',
   };
 }
 
@@ -98,7 +98,8 @@ export function saveAssembledSceneReview(review:AssembledSceneReview){
 
 function allChecksPass(review:AssembledSceneReview){return Object.values(review.checks).every(Boolean)}
 
-async function registerApprovedAsset(candidate:AssembledSceneCandidate,review:AssembledSceneReview,approvalMode:'atomic-whole-scene'|'surprise-mode-monIA',notes=''){
+async function registerApprovedAsset(candidate:AssembledSceneCandidate,review:AssembledSceneReview,notes=''){
+  const approvalMode='atomic-whole-scene' as const;
   const asset=await moniaCreativeVault.registerAsset({
     id:`approved-scene-${candidate.id}`,
     kind:'video',
@@ -129,14 +130,15 @@ export async function evaluateAssembledSceneForSurprise(candidate=readAssembledS
   if(!candidate)return{decision:'human-review' as const,reason:'no-candidate'};
   const facts=factsFromCandidate(candidate);
   const gate=surpriseGate(facts);
-  if(gate.decision!=='monia-approved'){
-    const existing=readAssembledSceneReview();
-    if(!existing||existing.candidateId!==candidate.id)saveAssembledSceneReview(reviewFromFacts(candidate,facts));
-    window.dispatchEvent(new CustomEvent('monia:assembled-scene-human-review-required',{detail:{candidate,gate}}));
-    return gate;
-  }
-  const review=reviewFromFacts(candidate,facts,'approved');
-  return registerApprovedAsset(candidate,review,'surprise-mode-monIA',`Surprise Mode: ${gate.reason}`);
+  const existing=readAssembledSceneReview();
+  if(!existing||existing.candidateId!==candidate.id||existing.decision!=='pending')saveAssembledSceneReview(reviewFromFacts(candidate,facts));
+  window.dispatchEvent(new CustomEvent('monia:assembled-scene-human-review-required',{detail:{candidate,gate,autoApprovalDisabled:true}}));
+  return{
+    decision:'human-review' as const,
+    reason:gate.reason,
+    advisoryDecision:gate.decision,
+    autoApprovalDisabled:true,
+  };
 }
 
 export async function approveAssembledScene(candidateId:string,notes=''){
@@ -145,7 +147,7 @@ export async function approveAssembledScene(candidateId:string,notes=''){
   if(!candidate||candidate.id!==candidateId)throw new Error('Assembled scene candidate not found');
   if(!review||review.candidateId!==candidateId)throw new Error('Review missing for assembled scene');
   if(!allChecksPass(review))throw new Error('All assembled-scene review checks must pass before approval');
-  const asset=await registerApprovedAsset(candidate,review,'atomic-whole-scene',notes);
+  const asset=await registerApprovedAsset(candidate,review,notes);
   const facts=factsFromCandidate(candidate);
   facts.lucasIdentity=review.checks.lucasIdentity;
   facts.marionIdentity=review.checks.marionIdentity;
