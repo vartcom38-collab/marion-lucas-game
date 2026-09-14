@@ -9,7 +9,7 @@ from PIL import Image
 import scripts.monia_video_engine as engine
 
 REFERENCE_IMAGE = Path("resources/monia/canon/lucas/visio-layout-reference.jpg")
-OUTPUT_NAME = "visio-lucas-speaking-fr-layout-candidate.mp4"
+OUTPUT_NAME = "visio-lucas-speaking-fr-layout-v5-candidate.mp4"
 
 PROMPT = (
     "Animate the supplied reference as a REAL smartphone front-camera video call with Lucas. "
@@ -17,15 +17,18 @@ PROMPT = (
     "the sense that Lucas is physically holding the phone at arm's length, the intimate phone-camera distance and the warm lived-in room depth. "
     "Do NOT turn this into a head-only portrait or beauty close-up. Keep Lucas recognizably the same man and preserve natural skin texture, dark wavy hair, brown-hazel eyes, short stubble and olive skin. "
     "Lucas is in a relaxed dark shirt and behaves like a real person on a private video call: tiny handheld micro-shake, minute framing drift, natural breathing, irregular blinks, subtle autofocus/exposure breathing, and small gaze shifts between Marion on the screen and the lens. "
-    "State: SPEAKING IN FRENCH. For most of the clip Lucas is clearly saying in natural conversational French: 'Ça me fait plaisir de te voir. T'as passé une bonne journée ?' "
-    "His speech must be unmistakable even muted: visible jaw opening and closing, changing lip shapes, occasional natural teeth visibility, cheek motion, brief breaths, tiny eyebrow and head movements. "
+    "His emotional intention is warm, intimate and quietly happy to see Marion. His eyes should feel alive and attentive, with a soft direct gaze, a restrained half-smile, tiny eyebrow responses and brief moments where his eyes brighten before he speaks. "
+    "Avoid a blank neutral stare, presenter energy or model-like posing. He should look as if he is genuinely listening to and looking at someone he cares about on the screen. "
+    "State: SPEAKING IN NATURAL EVERYDAY FRENCH. For most of the clip Lucas casually says: 'Ah, ça me fait plaisir de te voir... T'as passé une bonne journée, toi ?' "
+    "The French delivery must sound like spontaneous adult conversation, not text-to-speech: connected speech, contractions, uneven pacing, tiny breaths, natural micro-pauses, soft sentence melody, slight hesitation before the question, and no announcer cadence or syllable-by-syllable delivery. "
+    "His speech must also be unmistakable when muted: visible jaw opening and closing, changing lip shapes, occasional natural teeth visibility, cheek motion, brief breaths, tiny eyebrow and head movements synchronized with conversational emphasis. "
     "Avoid long closed-mouth pauses. No theatrical acting. No cinematic dolly. No frozen pose. No head-only crop. "
     "Treat any phone UI already present in the source as static framing reference only; do not invent extra text, captions, subtitles or new interface elements."
 )
 
 NEGATIVE = (
-    "head-only portrait, extreme close-up, studio portrait, beauty lighting, frozen mouth, silent speaking pose, weak lip movement, "
-    "mouth nearly closed while speaking, exaggerated acting, identity drift, different man, face morphing, text mutation, caption mutation, "
+    "head-only portrait, extreme close-up, studio portrait, beauty lighting, blank stare, neutral mannequin gaze, presenter gaze, frozen mouth, silent speaking pose, weak lip movement, "
+    "robotic speech cadence, text-to-speech rhythm, syllable-by-syllable speech, announcer voice, mouth nearly closed while speaking, exaggerated acting, identity drift, different man, face morphing, text mutation, caption mutation, "
     "new subtitles, new UI, extra people, extra hands, cinematic camera move, dolly shot, zoom-in"
 )
 
@@ -49,7 +52,7 @@ def generate() -> tuple[Path, str]:
     base = engine.LUCAS_VISIO_TEST1
     profile = replace(
         base,
-        key="lucas-visio-speaking-fr-layout",
+        key="lucas-visio-speaking-fr-layout-v5",
         prompt=PROMPT,
         negative=NEGATIVE,
         width=576,
@@ -79,14 +82,14 @@ def generate() -> tuple[Path, str]:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Generate MonIA Lucas layout-based French visio candidate")
+    parser = argparse.ArgumentParser(description="Generate MonIA Lucas layout-based natural French visio candidate V5")
     parser.add_argument("--publish-candidate", action="store_true")
     args = parser.parse_args()
     path, provider = generate()
-    print(f"MONIA_VISIO_LAYOUT compute={provider} output={path} bytes={path.stat().st_size}")
+    print(f"MONIA_VISIO_LAYOUT_V5 compute={provider} output={path} bytes={path.stat().st_size}")
     if args.publish_candidate:
         url = engine.publish_candidate(path)
-        print(f"MONIA_VISIO_LAYOUT_CANDIDATE url={url}")
+        print(f"MONIA_VISIO_LAYOUT_V5_CANDIDATE url={url}")
 
 
 if __name__ == "__main__":
