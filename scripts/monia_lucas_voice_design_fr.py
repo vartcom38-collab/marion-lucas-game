@@ -13,33 +13,35 @@ SPACE = "Qwen/Qwen3-TTS"
 TEXT = "Salut... ça va, toi ? Qu'est-ce que tu racontes ?"
 LANGUAGE = "French"
 
-# V9 refines V8-A from the user's uploaded drama excerpts. The target is not
-# an exact clone of any performer: we use only broad acoustic/performance traits
-# observed in the reference — lower natural placement, restrained melody,
-# deliberate pauses, chest resonance, slight roughness and quiet authority.
+# V10 keeps V9-A as the creative base and refines it using only broad,
+# non-identifying performance traits observed in the user's uploaded drama
+# excerpts: dark low-mid resonance, restrained melody, minimal breathiness,
+# relaxed articulation, slight dry grain, deliberate pacing and quiet authority.
 VARIANTS = {
     "a": (
-        "A native French adult male voice with a naturally low baritone placement, dark warm chest resonance and a subtle rough edge. "
-        "He is extremely calm and grounded, speaking a little slower than average with deliberate micro-pauses and almost no nervous melodic movement. "
-        "The seductive effect comes from restraint and quiet authority: he sounds self-contained, masculine and magnetic, never eager and never performative. "
-        "Keep attacks soft but not breathy, consonants relaxed, words strongly connected and the tone dense rather than bright. "
-        "Use a narrow, controlled intonation range with small human variations; do not sing the question and do not drop every ending dramatically. "
-        "No smiling radio voice, no perfume-ad seduction, no forced bass, no whispering, no theatrical growl, no TTS cadence and no foreign accent."
+        "A native French adult male voice with dark low-mid resonance, naturally masculine and compact rather than exaggeratedly deep. "
+        "The timbre is dense, slightly dry and lightly rough at the edges, with very little breathiness. "
+        "He speaks slowly but never lazily, with deliberate micro-pauses, relaxed articulation and connected contemporary French. "
+        "The seductive quality comes from composure and restraint: he sounds calm, self-contained, faintly insolent and completely at ease. "
+        "Keep the pitch range narrow and controlled, with tiny natural movements only. Let some word endings feel slightly unfinished or casually released instead of perfectly polished. "
+        "Use soft, unhurried phrase attacks, subtle chest resonance and a low-key intimate presence. "
+        "No smiling presenter tone, no velvety perfume-ad acting, no forced bass, no whispering, no theatrical growl, no bright question melody, no robotic cadence and no foreign accent."
     ),
     "b": (
-        "A native French adult male voice, low, warm, slightly rough and physically present, with strong chest resonance and a dry velvet texture. "
-        "He speaks with slow confidence and measured silences, like a man who never rushes to fill space. "
-        "Keep the voice emotionally contained but subtly charged, with a faint intimate warmth underneath a cool, controlled surface. "
-        "The rhythm should feel effortless and masculine, with connected contemporary French, soft consonants and very little pitch flutter. "
-        "Avoid playful brightness, obvious smiling, exaggerated sensual breathing, presenter diction, forced gravel, heavy downward endings, robotic timing or a foreign accent."
+        "A native French adult male voice, dark, close and grounded, centered in the low-mid register with firm chest resonance and a faint dry rasp. "
+        "The delivery is extremely controlled and economical: few melodic gestures, no unnecessary emphasis, no eagerness. "
+        "Articulation is slightly relaxed and natural, with softened consonants, linked words, tiny swallowed transitions and calm intentional silences. "
+        "He should sound like someone who does not need to perform confidence because it is already there. The attraction comes from stillness, gravity and understated tension. "
+        "Keep the voice almost matter-of-fact while preserving intimate warmth underneath. Sentence endings should be composed, occasionally a little clipped or casually dropped, never theatrically descending. "
+        "No radio warmth, no overt lover voice, no breathy seduction, no exaggerated gravel, no polished TTS diction, no sing-song intonation and no foreign accent."
     ),
     "c": (
-        "A native French adult male voice with quiet dangerous charisma: naturally low, chesty, warm and lightly husky, never artificially deep. "
-        "He speaks close and calmly, with intentional pauses, restrained breath and a compact melodic range. "
-        "His delivery should feel controlled, slightly aloof and deeply attentive at the same time, creating tension without trying to sound seductive. "
-        "Use a dark rounded timbre, gentle phrase onsets, linked syllables and tiny irregularities that make the voice human. "
-        "Keep sentence endings composed rather than theatrical, and keep questions level and intimate instead of rising brightly. "
-        "No lover caricature, no radio host, no breathy whisper, no forced growl, no synthetic cadence and no foreign accent."
+        "A native French adult male voice with quiet magnetic authority, a dark compact timbre, low-mid chest placement and a slight textured grain. "
+        "He speaks with restrained energy, minimal breath, very steady pacing and controlled pauses that create tension without acting seductive. "
+        "The articulation is a touch lazy in a natural way: smooth links, softened releases, occasional imperfect phrase endings, and no over-pronounced consonants. "
+        "Keep him emotionally contained but attentive, with a subtle undertone of challenge and intimacy. Use only small pitch inflections and keep questions low-key and almost level. "
+        "The overall effect should be masculine, self-possessed and difficult to ignore, not polished, sweet or theatrical. "
+        "No forced deep voice, no whisper, no growl performance, no presenter polish, no bright smiling tone, no robotic timing and no foreign accent."
     ),
 }
 
@@ -70,7 +72,7 @@ def generate_variant(client: Client, key: str, description: str) -> Path:
         api_name="/generate_voice_design",
     )
     source = _resolve_audio(result)
-    target = engine.WORK_DIR / f"lucas-voice-v9-reference-tuned-fr-{key}-candidate.wav"
+    target = engine.WORK_DIR / f"lucas-voice-v10-drama-tuned-fr-{key}-candidate.wav"
     shutil.copyfile(source, target)
     if target.stat().st_size < 4096:
         raise RuntimeError(f"Candidate {key} is too small")
@@ -78,7 +80,7 @@ def generate_variant(client: Client, key: str, description: str) -> Path:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Generate reference-tuned native French Lucas voice candidates")
+    parser = argparse.ArgumentParser(description="Generate drama-tuned native French Lucas voice candidates")
     parser.add_argument("--publish-candidate", action="store_true")
     args = parser.parse_args()
 
@@ -87,10 +89,10 @@ def main() -> None:
 
     for key, description in VARIANTS.items():
         target = generate_variant(client, key, description)
-        print(f"MONIA_LUCAS_REFERENCE_TUNED_FR variant={key} output={target} bytes={target.stat().st_size}")
+        print(f"MONIA_LUCAS_DRAMA_TUNED_FR variant={key} output={target} bytes={target.stat().st_size}")
         if args.publish_candidate:
             url = engine.publish_candidate(target)
-            print(f"MONIA_LUCAS_REFERENCE_TUNED_FR_CANDIDATE variant={key} url={url}")
+            print(f"MONIA_LUCAS_DRAMA_TUNED_FR_CANDIDATE variant={key} url={url}")
 
 
 if __name__ == "__main__":
