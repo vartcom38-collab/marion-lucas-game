@@ -27,27 +27,28 @@ export function getPregnancyJourney():PregnancyJourney|null{
   const possibleDay=canonical?.possibleDay||0;
   const testEarliest=Math.max(possibleDay?possibleDay+10:0,n(flag(s,'pregnancyTestEarliestDay'),0));
   const signsEarliest=possibleDay?possibleDay+7:0;
+  const gest=(min:number,max=Number.POSITIVE_INFINITY)=>g!==null&&g>=min&&g<=max;
   const d=(id:string,label:string,available:boolean,sensitive=false,surprise=false):PregnancyStep=>({id,label,available,done:yes(s,`preg_${id}_done`)||yes(s,`preg_${id}`),sensitive,surprise});
   const confirmed=stage==='first-trimester'||stage==='second-trimester'||stage==='third-trimester'||stage==='labor'||stage==='postpartum';
   const steps:PregnancyStep[]=[
     d('notice-signs','Remarquer un retard ou des signes possibles',stage==='possible'&&!!signsEarliest&&day>=signsEarliest,false,true),
     d('test','Faire un test de grossesse',stage==='possible'&&!!testEarliest&&day>=testEarliest),
-    d('tell-lucas','Décider quand et comment l’annoncer à Lucas',confirmed,false,true),
-    d('care-choice','Choisir le suivi médical / la maternité',confirmed),
-    d('first-visit','Premier rendez-vous médical',confirmed),
-    d('first-ultrasound','Première échographie',confirmed),
-    d('screening','Examens et suivi du premier trimestre',stage==='first-trimester'),
-    d('second-ultrasound','Échographie morphologique',stage==='second-trimester'),
-    d('sex-reveal','Décider de connaître ou non le sexe du bébé',stage==='second-trimester',false,true),
-    d('baby-name','Réfléchir aux prénoms',stage==='second-trimester'||stage==='third-trimester'),
-    d('nursery','Préparer l’arrivée du bébé',stage==='second-trimester'||stage==='third-trimester'),
-    d('birth-plan','Préparer le projet de naissance',stage==='third-trimester'),
-    d('late-checks','Rendez-vous et contrôles de fin de grossesse',stage==='third-trimester'),
-    d('labor-start','Début du travail',stage==='third-trimester'||stage==='labor',false,true),
+    d('tell-lucas','Décider quand et comment l’annoncer à Lucas',confirmed&&gest(10),false,true),
+    d('care-choice','Choisir le suivi médical / la maternité',confirmed&&gest(14,70)),
+    d('first-visit','Premier rendez-vous médical',confirmed&&gest(21,84)),
+    d('first-ultrasound','Première échographie',confirmed&&gest(35,98)),
+    d('screening','Examens et suivi du premier trimestre',stage==='first-trimester'&&gest(56,83)),
+    d('second-ultrasound','Échographie morphologique',stage==='second-trimester'&&gest(126,175)),
+    d('sex-reveal','Décider de connaître ou non le sexe du bébé',stage==='second-trimester'&&gest(119,175),false,true),
+    d('baby-name','Réfléchir aux prénoms',(stage==='second-trimester'||stage==='third-trimester')&&gest(112)),
+    d('nursery','Préparer l’arrivée du bébé',(stage==='second-trimester'||stage==='third-trimester')&&gest(140)),
+    d('birth-plan','Préparer le projet de naissance',stage==='third-trimester'&&gest(203)),
+    d('late-checks','Rendez-vous et contrôles de fin de grossesse',stage==='third-trimester'&&gest(224)),
+    d('labor-start','Début du travail',(stage==='third-trimester'||stage==='labor')&&gest(245),false,true),
     d('birth','Accouchement',stage==='labor',true,true),
     d('first-hours','Premières heures avec le bébé',stage==='postpartum',false,true),
-    d('homecoming','Retour à la maison',stage==='postpartum'),
-    d('new-rhythm','Nouvelle vie de famille',stage==='postpartum'),
+    d('homecoming','Retour à la maison',stage==='postpartum'&&n(flag(s,'lastBirthDay'),day)<=day),
+    d('new-rhythm','Nouvelle vie de famille',stage==='postpartum'&&n(flag(s,'lastBirthDay'),day)+3<=day),
     d('loss-care','Prise en charge et récupération après une perte',stage==='loss',true)
   ];
   const birthWindow=stage==='third-trimester'&&(g!==null&&g>=245);
