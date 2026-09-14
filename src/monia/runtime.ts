@@ -37,6 +37,7 @@ import {
 } from './director';
 
 export type MonIAMode = 'auto' | 'light' | 'advanced';
+export type { MonIADirectorRequest, MonIADirectorResult } from './director';
 export type MonIAStatus = {
   status: 'idle' | 'loading' | 'ready' | 'error' | 'unsupported';
   progress: number;
@@ -211,6 +212,8 @@ class MonIARuntime {
 }
 
 export const moniaRuntime = new MonIARuntime();
+// Backward-compatible alias used by experience-runtime and older MonIA integration layers.
+export const monia = moniaRuntime;
 
 if (typeof window !== 'undefined') {
   (window as any).__moniaRuntime = moniaRuntime;
