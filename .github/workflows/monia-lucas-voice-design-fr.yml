@@ -30,7 +30,7 @@ jobs:
           python -m pip install --disable-pip-version-check --upgrade pip
           python -m pip install --disable-pip-version-check gradio_client requests pillow
 
-      - name: Generate native French Lucas voice-design candidates
+      - name: Generate seductive native French Lucas voice candidates
         run: python -m scripts.monia_lucas_voice_design_fr --publish-candidate
 
       - name: Verify candidates publicly
@@ -39,7 +39,7 @@ jobs:
           import requests
           base = "https://marion-lucas.marionbolomey.fr/resources/monia/generated/"
           for key in ("a", "b", "c"):
-              url = base + f"lucas-voice-v7-design-fr-{key}-candidate.wav"
+              url = base + f"lucas-voice-v8-seductive-fr-{key}-candidate.wav"
               r = requests.get(url, timeout=60, headers={"Cache-Control":"no-cache"})
               r.raise_for_status()
               assert len(r.content) > 4096, (key, len(r.content))
@@ -49,6 +49,6 @@ jobs:
 
       - name: Candidate-only policy
         run: |
-          echo "Voice-design candidates only. No live manifest mutation."
+          echo "Voice candidates only. No live manifest mutation."
           echo "Native French generation only; no English prosody transfer and no speech-to-speech translation."
-          echo "V3 is used only as a human creative target for timbre/intonation qualities, not as an audio conditioning source."
+          echo "Target: composed, warm, velvety, seductive Lucas presence without caricature."
