@@ -41,7 +41,8 @@ LUCAS = CharacterProfile(
         "The supplied Lucas reference is the absolute identity authority. Do not redesign, "
         "beautify, reinterpret, age-shift or substitute him. Preserve the same facial geometry, "
         "eye spacing, nose, lips, jaw, cheekbones, hairline, thick dark wavy hair with natural strands, "
-        "intense brown-hazel eyes, short stubble and tanned olive skin. Lucas has no tattoos and no facial scar. "
+        "cool green-hazel eyes with gray-green olive outer irises, a subtle warm amber-brown ring around the pupils and a darker limbal ring, short stubble and tanned olive skin. "
+        "Lucas has no tattoos and no facial scar. His eyes must never become uniformly brown, bright artificial green or clearly blue. "
         "Horizontal 16:9 desktop composition, chest-up framing, Lucas alone, realistic neutral interior, "
         "soft natural daylight. Motion is deliberately minimal to protect identity: natural breathing, "
         "one or two realistic blinks, a tiny eye shift, a very small controlled head inclination and at "
@@ -50,7 +51,7 @@ LUCAS = CharacterProfile(
     ),
     negative=(
         "different man, changed identity, generic male model, beauty filter, altered jaw, altered eyes, "
-        "altered nose, altered mouth, altered hairline, tattoos, body ink, facial scar, nose scar, altered ears, "
+        "uniform brown eyes, bright green eyes, neon green eyes, vivid blue eyes, altered nose, altered mouth, altered hairline, tattoos, body ink, facial scar, nose scar, altered ears, "
         "ear holes, gauges, piercings, earrings, deformed ears, woman, second person, extra hands, talking, open mouth, "
         "cartoon, illustration, text, subtitles, title, watermark, UI, jitter, morphing, identity drift"
     ),
@@ -68,8 +69,8 @@ LUCAS_VISIO_TEST1 = CharacterProfile(
         "Create a brand-new photorealistic live-action video-call shot of Lucas for Marion & Lucas. "
         "The supplied still image is identity reference only, never a motion source and never a clip to copy. "
         "Invent a new moment and new movement while preserving Lucas exactly: same facial geometry, eye spacing, "
-        "nose, lips, jaw, cheekbones, hairline, dark wavy hair with a few natural strands, brown-hazel eyes, "
-        "short stubble and olive skin. Lucas has absolutely no tattoos and no facial scar. "
+        "nose, lips, jaw, cheekbones, hairline, dark wavy hair with a few natural strands, cool green-hazel eyes with gray-green olive outer irises, a subtle warm amber-brown ring around the pupils and a darker limbal ring, "
+        "short stubble and olive skin. Lucas has absolutely no tattoos and no facial scar. His eyes must never become uniformly brown, bright artificial green or clearly blue. "
         "Vertical 9:16 phone-video-call composition, chest-up framing with his complete face clearly visible, "
         "not an extreme close-up and never only a fragment of his face. Lucas is alone in a believable warm home "
         "interior different from the reference background, wearing a plain black shirt with a clean visible neck. "
@@ -81,7 +82,7 @@ LUCAS_VISIO_TEST1 = CharacterProfile(
     ),
     negative=(
         "source-video replay, copied motion, identical source framing, identical source background, different man, "
-        "changed identity, generic male model, beauty filter, altered jaw, altered eyes, altered nose, altered mouth, "
+        "changed identity, generic male model, beauty filter, altered jaw, altered eyes, uniform brown eyes, bright green eyes, neon green eyes, vivid blue eyes, altered nose, altered mouth, "
         "altered hairline, tattoo, tattoos, body ink, facial scar, nose scar, cropped face, partial face, extreme close-up, "
         "ear holes, gauges, piercings, earrings, deformed ears, second person, extra person, extra hands, talking, open mouth, "
         "lip movement, cartoon, illustration, text, subtitles, title, watermark, UI overlay, jitter, morphing, identity drift, "
