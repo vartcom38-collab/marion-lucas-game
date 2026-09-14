@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import argparse
-import multiprocessing as mp
 import os
 import shutil
+import subprocess
 from pathlib import Path
 
 import requests
@@ -13,19 +13,14 @@ import scripts.monia_video_engine as engine
 
 VIDEO_URL = "https://marion-lucas.marionbolomey.fr/resources/monia/generated/visio-lucas-speaking-fr-layout-v7-candidate.mp4?run=34826963016"
 VOICE_URL = "https://marion-lucas.marionbolomey.fr/resources/monia/generated/lucas-voice-v10-drama-tuned-fr-a-candidate.wav"
-OUTPUT_NAME = "visio-lucas-v10a-synced-candidate.mp4"
-PROVIDER_TIMEOUT_SECONDS = 180
+OUTPUT_NAME = "visio-lucas-v10a-musetalk-candidate.mp4"
+MUSE_SPACE = "henrybit/musetalk-1-5"
 
-# MonIA stays the orchestration/policy layer. These are hidden compute adapters
-# only; none of them can publish directly to live gameplay. We rotate through
-# currently-running Wav2Lip Spaces instead of waiting forever on one queue.
-LIPSYNC_SPACES = (
-    "guardiancc/gradio-lipsync-wav2lip",
-    "smartdigitalnetworks/gradio-lipsync-wav2lip",
-    "KingMilkMan/gradio-lipsync-wav2lip",
-    "lmh07072000/gradio-lipsync-wav2lip",
-    "manavisrani07/gradio-lipsync-wav2lip",
-)
+# This test deliberately abandons Wav2Lip. The previous result visibly pasted a
+# synthetic mouth region over Lucas and also returned a smaller-looking frame.
+# MuseTalk 1.5 edits the face region and composites it back into the original
+# full video frame, so the V7 framing/body/eyes remain the visual foundation.
+# MonIA remains the policy/orchestration layer and publication stays candidate-only.
 
 
 def download(url: str, target: Path) -> None:
@@ -61,100 +56,93 @@ def _resolve_video(result) -> Path:
                         p = Path(str(raw))
                         if p.exists() and p.stat().st_size > 4096:
                             return p
-    raise RuntimeError(f"Lipsync provider returned no usable video: {type(result).__name__}")
+    raise RuntimeError(f"MuseTalk returned no usable video: {type(result).__name__}")
 
 
-def _provider_worker(space: str, video_s: str, voice_s: str, output_s: str, queue: mp.Queue) -> None:
-    video = Path(video_s)
-    voice = Path(voice_s)
-    output = Path(output_s)
+def normalize_source(video: Path, target: Path) -> None:
+    """Keep the original 9:16 frame and convert only timing/codec for MuseTalk."""
+    target.unlink(missing_ok=True)
+    subprocess.run(
+        [
+            "ffmpeg", "-y", "-i", str(video),
+            "-vf", "fps=25",
+            "-c:v", "libx264", "-preset", "veryfast", "-crf", "18",
+            "-pix_fmt", "yuv420p", "-an", str(target),
+        ],
+        check=True,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    if not engine.worker.looks_like_video(target):
+        raise RuntimeError("25fps source preparation failed")
+
+
+def run_musetalk(video: Path, voice: Path, output: Path) -> str:
     token = os.environ.get("HF_TOKEN", "").strip() or None
-    try:
-        client = Client(space, token=token, verbose=False, download_files=True)
-        # Forks of this Gradio Space expose either a 9-input callback or the
-        # older 8-input wiring where no_smooth disappeared from click inputs.
-        attempts = [
-            (handle_file(str(video)), handle_file(str(voice)), "wav2lip_gan", False, 1, 0, 20, 0, 0),
-            (handle_file(str(video)), handle_file(str(voice)), "wav2lip_gan", 0, 20, 0, 0, 1),
-            # Lower-resolution fallback is much faster and is acceptable for a
-            # sync test; the original V7 face/eyes remain the visual source.
-            (handle_file(str(video)), handle_file(str(voice)), "wav2lip_gan", False, 2, 0, 20, 0, 0),
-            (handle_file(str(video)), handle_file(str(voice)), "wav2lip_gan", 0, 20, 0, 0, 2),
-        ]
-        api_names = ("/generate", "/predict", None)
-        last: Exception | None = None
-        for args in attempts:
-            for api_name in api_names:
-                try:
-                    if api_name:
-                        result = client.predict(*args, api_name=api_name)
-                    else:
-                        result = client.predict(*args)
-                    source = _resolve_video(result)
-                    shutil.copyfile(source, output)
-                    if engine.worker.looks_like_video(output):
-                        queue.put((True, space))
-                        return
-                except Exception as exc:
-                    last = exc
-                    output.unlink(missing_ok=True)
-        raise RuntimeError(str(last or "no compatible lipsync endpoint"))
-    except Exception as exc:
-        queue.put((False, f"{space}: {exc}"))
+    client = Client(MUSE_SPACE, token=token, verbose=True, download_files=True)
 
-
-def _try_provider(space: str, video: Path, voice: Path, output: Path) -> tuple[bool, str]:
-    queue: mp.Queue = mp.Queue()
-    proc = mp.Process(target=_provider_worker, args=(space, str(video), str(voice), str(output), queue), daemon=True)
-    proc.start()
-    proc.join(PROVIDER_TIMEOUT_SECONDS)
-    if proc.is_alive():
-        proc.terminate()
-        proc.join(10)
-        output.unlink(missing_ok=True)
-        return False, f"{space}: timed out after {PROVIDER_TIMEOUT_SECONDS}s"
-    if not queue.empty():
-        ok, message = queue.get()
-        return bool(ok), str(message)
-    output.unlink(missing_ok=True)
-    return False, f"{space}: worker exited without a result (exit={proc.exitcode})"
-
-
-def run_lipsync(video: Path, voice: Path, output: Path) -> str:
+    # API order from the Space: audio, video, bbox_shift, extra_margin,
+    # parsing_mode, left_cheek_width, right_cheek_width. We deliberately use
+    # jaw parsing and conservative cheek widths so the edited region blends
+    # inside Lucas' lower face rather than looking like pasted lips.
+    variants = (
+        (0, 8, "jaw", 65, 65),
+        (-2, 6, "jaw", 60, 60),
+        (2, 8, "jaw", 70, 70),
+    )
+    api_names = ("/inference", "/generate", "/predict", None)
     errors: list[str] = []
-    for space in LIPSYNC_SPACES:
-        print(f"MONIA_LIPSYNC_TRY provider={space} timeout={PROVIDER_TIMEOUT_SECONDS}s", flush=True)
-        ok, message = _try_provider(space, video, voice, output)
-        if ok and engine.worker.looks_like_video(output):
-            print(f"MONIA_LIPSYNC_OK provider={space}", flush=True)
-            return space
-        errors.append(message)
-        print(f"MONIA_LIPSYNC_SKIP {message}", flush=True)
-    raise RuntimeError("No MonIA lipsync compute available: " + " | ".join(errors[-5:]))
+
+    for bbox_shift, extra_margin, parsing_mode, left_cheek, right_cheek in variants:
+        for api_name in api_names:
+            try:
+                args = (
+                    handle_file(str(voice)),
+                    handle_file(str(video)),
+                    bbox_shift,
+                    extra_margin,
+                    parsing_mode,
+                    left_cheek,
+                    right_cheek,
+                )
+                result = client.predict(*args, api_name=api_name) if api_name else client.predict(*args)
+                source = _resolve_video(result)
+                shutil.copyfile(source, output)
+                if engine.worker.looks_like_video(output):
+                    return f"{MUSE_SPACE}:{bbox_shift}/{extra_margin}/{left_cheek}"
+            except Exception as exc:
+                errors.append(f"api={api_name} params={bbox_shift}/{extra_margin}/{left_cheek}: {exc}")
+                output.unlink(missing_ok=True)
+
+    raise RuntimeError("MuseTalk sync failed: " + " | ".join(errors[-6:]))
 
 
 def build_synced() -> tuple[Path, str]:
-    video = engine.WORK_DIR / "visio-v7-visual-source.mp4"
+    raw_video = engine.WORK_DIR / "visio-v7-visual-source.mp4"
+    video = engine.WORK_DIR / "visio-v7-visual-source-25fps.mp4"
     voice = engine.WORK_DIR / "lucas-v10a-voice-source.wav"
     output = engine.WORK_DIR / OUTPUT_NAME
-    download(VIDEO_URL, video)
+
+    download(VIDEO_URL, raw_video)
     download(VOICE_URL, voice)
+    normalize_source(raw_video, video)
     output.unlink(missing_ok=True)
-    provider = run_lipsync(video, voice, output)
+
+    provider = run_musetalk(video, voice, output)
     if not engine.worker.looks_like_video(output):
-        raise RuntimeError("Synced visio output is not a valid video")
+        raise RuntimeError("MuseTalk visio output is not a valid video")
     return output, provider
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Build MonIA Lucas V10-A visio candidate with true audio-driven mouth sync")
+    parser = argparse.ArgumentParser(description="Build MonIA Lucas V10-A visio with full-frame MuseTalk audio-driven sync")
     parser.add_argument("--publish-candidate", action="store_true")
     args = parser.parse_args()
     output, provider = build_synced()
-    print(f"MONIA_VISIO_V10A_SYNCED compute={provider} output={output} bytes={output.stat().st_size}")
+    print(f"MONIA_VISIO_V10A_MUSETALK compute={provider} output={output} bytes={output.stat().st_size}")
     if args.publish_candidate:
         url = engine.publish_candidate(output)
-        print(f"MONIA_VISIO_V10A_SYNCED_CANDIDATE url={url}")
+        print(f"MONIA_VISIO_V10A_MUSETALK_CANDIDATE url={url}")
 
 
 if __name__ == "__main__":
