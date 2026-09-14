@@ -12,12 +12,12 @@ function read():Save|null{try{const raw=localStorage.getItem(SAVE_KEY);return ra
 function n(v:unknown,f=0){const x=Number(v);return Number.isFinite(x)?x:f}
 function recent(s:Save,rx:RegExp){return (s.eventHistory||[]).slice(-30).some(e=>rx.test(String(e)))}
 function installationBase(s:Save){const f=s.flags||{};const candidates=[f.sharedHomePlace,f.coupleHomePlace,f.lucasHomePlace].map(v=>String(v||'').trim()).filter(Boolean);return candidates.find(isSpainPlace)||null}
-function looksLikeFamilyBase(place:string){const p=place.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');return/finca|family estate|maison familiale|family home/.test(p)}
+function looksLikeFamilyBase(place:string){const p=place.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');return/family estate|maison familiale|family home|family-base|propriete familiale|domaine familial/.test(p)}
 
 export function getSpainInstallationReadiness():SpainInstallationReadiness{
   const s=read();if(!s)return{eligible:false,daysSinceOpening:0,livedMoments:0,basePlace:null,baseKind:null,reason:'Aucune partie active.'};
   const f=s.flags||{},openedDay=n(f.spainLifeOpenedDay),daysSinceOpening=openedDay?Math.max(0,n(s.day,1)-openedDay):0;
-  const livedMoments=(s.eventHistory||[]).filter(e=>/spain-place:|spain-familiar-place:|spain-social-|spain-life-opened:|place-lived:(madrid|seville|salamanca|finca)/i.test(String(e))).length;
+  const livedMoments=(s.eventHistory||[]).filter(e=>/spain-place:|spain-familiar-place:|spain-social-|spain-life-opened:|place-lived:(madrid|seville|salamanca)/i.test(String(e))).length;
   const basePlace=installationBase(s),base=basePlace?getResidenceSnapshot(basePlace):null;
   if(f.spainHomeEstablished===true)return{eligible:false,daysSinceOpening,livedMoments,basePlace,baseKind:base?.kind||null,reason:'Une base espagnole est déjà établie.'};
   if(!s.official)return{eligible:false,daysSinceOpening,livedMoments,basePlace,baseKind:base?.kind||null,reason:'La relation n’est pas encore dans une phase où une installation commune peut être posée.'};
@@ -26,6 +26,7 @@ export function getSpainInstallationReadiness():SpainInstallationReadiness{
   if(n(s.relationship)<40||n(s.trust)<30)return{eligible:false,daysSinceOpening,livedMoments,basePlace,baseKind:base?.kind||null,reason:'Le quotidien commun n’est pas encore assez stable pour transformer un séjour en installation.'};
   if(!basePlace||!base)return{eligible:false,daysSinceOpening,livedMoments,basePlace:null,baseKind:null,reason:'Il faut qu’une vraie base résidentielle espagnole ait été choisie avant de parler d’installation.'};
   if(looksLikeFamilyBase(basePlace)||base.kind==='family-base')return{eligible:false,daysSinceOpening,livedMoments,basePlace,baseKind:'family-base',reason:'La maison familiale reste une base familiale : elle ne devient jamais automatiquement le domicile du couple.'};
+  if(/\bfinca\b/i.test(basePlace))return{eligible:false,daysSinceOpening,livedMoments,basePlace,baseKind:base.kind,reason:'La finca appartient à une progression immobilière distincte et ne peut pas servir de raccourci à l’installation progressive.'};
   if(!base.isHome||base.isTemporary)return{eligible:false,daysSinceOpening,livedMoments,basePlace,baseKind:base.kind,reason:'Un hôtel, une ville ou un lieu de passage ne peut pas devenir un domicile par simple répétition.'};
   return{eligible:true,daysSinceOpening,livedMoments,basePlace,baseKind:base.kind,reason:'La vie sur place a eu le temps de devenir un quotidien et une vraie base résidentielle existe. Le gameplay peut maintenant confirmer l’installation.'};
 }
