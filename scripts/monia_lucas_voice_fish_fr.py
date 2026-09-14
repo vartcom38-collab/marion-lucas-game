@@ -16,7 +16,7 @@ REFERENCE_VIDEO_URL = (
     "https://marion-lucas.marionbolomey.fr/resources/monia/generated/"
     "visio-lucas-speaking-candidate.mp4?run=34821590907"
 )
-FISH_SPACE = "fguilleme/fish-s2-pro-zero"
+FISH_SPACE = "artificialguybr/fish-s2-pro-zero"
 FISH_API = "/tts_inference"
 TEXT = "Salut, ça va toi ? Qu'est-ce que tu racontes ?"
 OUTPUT_NAME = "lucas-voice-v5-fish-fr-candidate.wav"
@@ -100,13 +100,10 @@ def generate_french(reference_wav: Path, ref_text: str, target: Path) -> str:
         api_name=FISH_API,
     )
 
-    # Gradio Audio(type=numpy) can return a temporary file or a filepath wrapper,
-    # depending on client/server versions. Prefer returned file when available.
     try:
         source = result_path(result)
         shutil.copyfile(source, target)
     except RuntimeError:
-        # Some Gradio versions return (sample_rate, numpy-array) directly.
         if isinstance(result, (list, tuple)) and len(result) == 2 and isinstance(result[0], int):
             import wave
             import numpy as np
