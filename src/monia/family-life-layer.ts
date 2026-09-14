@@ -61,7 +61,8 @@ export function markFamilyDecision(decision:FamilyDecision){
     f.contraceptionMode='trying';f.qualifyingConceptionEvent=false;
   }
   if(decision==='pregnant'){
-    if(current!=='trying'||pregnancy?.state!=='possible')return false;
+    const earliest=Math.max(1,n(f.pregnancyTestEarliestDay,0));
+    if(current!=='trying'||pregnancy?.state!=='possible'||!earliest||day<earliest)return false;
   }
   if(decision==='labor'){
     if(pregnancy?.state!=='confirmed'||f.inLabor===true)return false;
