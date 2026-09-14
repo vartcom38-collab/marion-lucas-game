@@ -14,6 +14,8 @@ function same(a:unknown,b:unknown){const x=norm(a),y=norm(b);return!!x&&!!y&&x==
 function transientPlace(p:string){return/hotel|trajet|aeroport|airport|route|transfert|arena|arene|corrida|gare|station|cafe/.test(p)}
 function n(v:unknown,f=0){const x=Number(v);return Number.isFinite(x)?x:f}
 function familyKey(place:string){return norm(place).replace(/[^a-z0-9]+/g,'-').slice(0,40)||'family-base'}
+function isFamilyBaseLabel(p:string){return/family estate|maison familiale|family home|family-base|propriete familiale|domaine familial/.test(p)}
+function isFincaLabel(p:string){return/\bfinca\b/.test(p)}
 
 export function getResidenceSnapshot(place?:string):ResidenceSnapshot{
   const s=read();const raw=String(place||s?.place||'');const p=norm(raw),f=s?.flags||{};
@@ -24,7 +26,8 @@ export function getResidenceSnapshot(place?:string):ResidenceSnapshot{
   if(lucas&&same(raw,lucas))return{place:raw,kind:'private-base',isHome:true,isTemporary:false,canFeelAtHome:true,reason:'Ce lieu est une base privée durable de Lucas.'};
   if(/appart.*nimes|nimes.*appart|home.*nimes|nimes-home|chez marion/.test(p))return{place:raw,kind:'marion-home',isHome:true,isTemporary:false,canFeelAtHome:true,reason:'L’appartement de Nîmes est une vraie base de vie de Marion, pas une étape de voyage.'};
   if(/maison commune|chez eux|domicile commun|shared-home|couple-home/.test(p))return{place:raw,kind:'shared-home',isHome:true,isTemporary:false,canFeelAtHome:true,reason:'Le libellé désigne explicitement leur domicile commun.'};
-  if(/finca|family estate|maison familiale|family home/.test(p))return{place:raw,kind:'family-base',isHome:false,isTemporary:false,canFeelAtHome:true,reason:'La maison familiale peut devenir très familière et intime sans jamais être confondue automatiquement avec le domicile principal de Marion et Lucas.'};
+  if(isFamilyBaseLabel(p))return{place:raw,kind:'family-base',isHome:false,isTemporary:false,canFeelAtHome:true,reason:'La maison familiale peut devenir très familière et intime sans jamais être confondue automatiquement avec le domicile principal de Marion et Lucas.'};
+  if(isFincaLabel(p))return{place:raw,kind:'visit',isHome:false,isTemporary:true,canFeelAtHome:false,reason:'Une finca reste un lieu visité tant que le gameplay immobilier ne l’a pas explicitement établie comme propriété ou domicile. Elle n’est jamais assimilée à la maison familiale.'};
   if(/madrid|nimes|sevill|salam|pamplona|ville|city/.test(p))return{place:raw,kind:'visit',isHome:false,isTemporary:true,canFeelAtHome:false,reason:'Une ville connue n’est pas automatiquement un domicile : il faut une maison ou une base explicitement établie.'};
   if(/trajet|aeroport|airport|route|transfert/.test(p))return{place:raw,kind:'visit',isHome:false,isTemporary:true,canFeelAtHome:false,reason:'Ce lieu appartient au déplacement, pas à leur résidence.'};
   return{place:raw,kind:'unknown',isHome:false,isTemporary:true,canFeelAtHome:false,reason:'Aucune base résidentielle durable n’est établie pour ce lieu.'};
@@ -53,7 +56,7 @@ export function getResidenceReadiness(place?:string):ResidenceReadiness{
   return{place:raw,eligible:deeplyLived,recommendedKind,historyTier:history?.tier||'new',score,visits,meaningfulMoments:moments,reason:deeplyLived?(coupleEligible?'Le lieu a accumulé assez de quotidien et de moments vécus pour pouvoir devenir une base commune si le gameplay le décide.':'Le lieu est assez vécu pour devenir une base durable, mais il ne change pas de statut automatiquement.'):'Le lieu peut compter émotionnellement sans être encore assez vécu pour devenir une résidence durable.'};
 }
 
-export function setResidenceBase(kind:'marion-home'|'shared-home'|'private-base',place:string){const s=read();if(!s||!place.trim())return false;if(getResidenceSnapshot(place).kind==='family-base'&&kind==='shared-home')return false;const f=s.flags||(s.flags={});if(kind==='marion-home')f.marionHomePlace=place;else if(kind==='shared-home')f.sharedHomePlace=place;else f.lucasHomePlace=place;s.eventHistory=[...(s.eventHistory||[]),`residence-base:${kind}:${place}:${Number(s.day||1)}`].slice(-420);try{localStorage.setItem(SAVE_KEY,JSON.stringify(s));window.dispatchEvent(new CustomEvent('monia:save-changed',{detail:{key:SAVE_KEY}}));return true}catch{return false}}
+export function setResidenceBase(kind:'marion-home'|'shared-home'|'private-base',place:string){const s=read();if(!s||!place.trim())return false;if(getResidenceSnapshot(place).kind==='family-base')return false;const f=s.flags||(s.flags={});if(kind==='marion-home')f.marionHomePlace=place;else if(kind==='shared-home')f.sharedHomePlace=place;else f.lucasHomePlace=place;s.eventHistory=[...(s.eventHistory||[]),`residence-base:${kind}:${place}:${Number(s.day||1)}`].slice(-420);try{localStorage.setItem(SAVE_KEY,JSON.stringify(s));window.dispatchEvent(new CustomEvent('monia:save-changed',{detail:{key:SAVE_KEY}}));return true}catch{return false}}
 
 function syncFamilyBaseArrival(){
   const s=read();if(!s||getResidenceSnapshot(s.place).kind!=='family-base')return;const events=s.eventHistory||[];const last=[...events].reverse().find(e=>String(e).startsWith('travel-arrival-moment:family-base:'));if(!last)return;const key=familyKey(String(s.place||'')),f=s.flags||(s.flags={}),token=`${n(s.day,1)}:${key}:${last}`;if(String(f.lastFamilyBaseArrivalToken||'')===token)return;f.lastFamilyBaseArrivalToken=token;try{localStorage.setItem(SAVE_KEY,JSON.stringify(s));recordFamilyBaseStay(String(s.place||''),true)}catch{/* optional continuity layer */}
