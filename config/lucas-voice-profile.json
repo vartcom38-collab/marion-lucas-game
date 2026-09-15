@@ -2,28 +2,34 @@
   "character": "lucas",
   "status": "reference-profile",
   "source": "user-provided Lucas reference recordings",
-  "purpose": "Guide synthetic voice generation toward Lucas's vocal character without reproducing a biometric voiceprint.",
+  "purpose": "Guide original Lucas voice generation toward the measured vocal character and conversational dynamics without reproducing a biometric voiceprint.",
   "measured_reference": {
-    "duration_seconds": 18.46,
-    "median_f0_hz": 75.6,
-    "mean_f0_hz": 88.4,
-    "f0_p10_hz": 65.4,
-    "f0_p90_hz": 156.0,
-    "voiced_fraction": 0.55
+    "segment_scope": "isolated Lucas-only speech segment from the user-provided 18.47 s reference clip",
+    "segment_duration_seconds": 2.17,
+    "median_f0_hz": 97.3,
+    "f0_p10_hz": 76.8,
+    "f0_p90_hz": 123.2,
+    "f0_std_hz": 25.9,
+    "pause_ratio": 0.0,
+    "rms_variation_coefficient": 0.53,
+    "interpretation": "naturally low but not forced; continuous connected speech with strong human pitch and energy variation"
   },
   "target_character": {
-    "register": "low young-adult male",
-    "delivery": "relaxed private conversation, continuous phrases, never syllabic or choppy",
-    "energy": "restrained, warm, spontaneous",
-    "prosody": "noticeable pitch variation, irregular human micro-pauses, soft phrase endings",
-    "breathing": "subtle natural breaths, not inserted theatrically",
+    "register": "naturally low young-adult male, never artificially pushed downward",
+    "delivery": "relaxed private conversation, connected thought groups, continuous phrases, never syllabic or choppy",
+    "energy": "restrained, warm, spontaneous, dynamically alive rather than flat",
+    "prosody": "clear natural pitch movement, almost no dead air inside short phrases, soft falling phrase endings and small irregular timing changes",
+    "breathing": "subtle natural breaths between thought groups only, never inserted theatrically",
+    "performance_source_rule": "For approval candidates, prefer a naturally performed speech source. Do not use a visibly robotic TTS performance as the timing/prosody donor.",
     "avoid": [
       "robotic cadence",
       "over-articulated diction",
       "uniform timing",
+      "unnaturally low forced pitch",
       "dramatic trailer delivery",
       "exaggerated breath markers",
-      "word-by-word resets"
+      "word-by-word resets",
+      "long dead pauses inside short conversational phrases"
     ]
   }
 }
