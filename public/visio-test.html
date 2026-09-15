@@ -10,7 +10,7 @@
 </head>
 <body>
 <div class="phone" id="phone">
-  <video id="lucasVideo" muted playsinline preload="auto"></video>
+  <video id="lucasVideo" playsinline preload="auto"></video>
   <div class="shade"></div>
   <div class="status"><div class="left">▮▮▮▮ <span>⌁</span></div><div class="right"><i class="dot"></i><i class="battery"></i></div></div>
   <div class="name">Lucas<small>visio</small></div>
@@ -45,49 +45,62 @@ const scenes={
 };
 function showChoices(items){choices.innerHTML='';items.forEach(([label,next])=>{const b=document.createElement('button');b.className='choice';b.textContent=label;b.onclick=()=>select(next);choices.appendChild(b)});requestAnimationFrame(()=>choices.classList.add('show'))}
 function waitFor(el,event,timeout=1800){return new Promise(resolve=>{let done=false;const finish=()=>{if(done)return;done=true;clearTimeout(t);el.removeEventListener(event,finish);resolve()};const t=setTimeout(finish,timeout);el.addEventListener(event,finish,{once:true})})}
-async function prepareVisual(key){
+async function prepareVisual(key,{muted=true}={}){
   const wanted=VISUALS[key]||BASE_VISIO;
   const absolute=new URL(wanted,location.href).href;
-  video.pause();video.muted=true;video.playbackRate=1;
+  video.pause();video.muted=muted;video.playbackRate=1;
   if(video.src!==absolute){video.src=wanted;video.load();await waitFor(video,'loadedmetadata')}
   try{video.currentTime=0}catch{}
   if(video.readyState<2)await waitFor(video,'canplay');
   try{video.currentTime=0}catch{}
 }
-function resetVisioToListening(){video.pause();try{video.currentTime=0}catch{}listening.classList.add('show')}
+function resetVisioToListening(){video.pause();video.muted=true;try{video.currentTime=0}catch{}listening.classList.add('show')}
 function audioUrl(key,version){return BASE+`lucas-visio-dialogue-${version}-${key}-candidate.wav?v=${version}`}
+async function playOpeningNative(onend,token){
+  if(audio){audio.pause();audio=null}
+  await prepareVisual('opening',{muted:false});
+  if(token!==playToken)return;
+  choices.classList.remove('show');listening.classList.remove('show');
+  video.onended=()=>{if(token!==playToken)return;video.muted=true;resetVisioToListening();onend?.()};
+  try{video.currentTime=0;video.volume=1;await video.play()}catch{video.muted=true;resetVisioToListening();listening.textContent='Touchez une fois l’écran pour autoriser le son'}
+}
 async function startPair(key,version,onend,token){
   const a=new Audio(audioUrl(key,version));audio=a;a.preload='auto';
   const audioReady=waitFor(a,'canplaythrough',1800);
-  await Promise.all([prepareVisual(key),audioReady]);
-  if(token!==playToken||audio!==a)return;
-  a.onended=()=>{if(token!==playToken)return;resetVisioToListening();onend?.()};
-  try{
-    video.currentTime=0;a.currentTime=0;
-    const vp=video.play();
-    const ap=a.play();
-    await Promise.allSettled([vp,ap]);
-  }catch{resetVisioToListening();listening.textContent='Touchez une fois l’écran pour autoriser le son'}
-  return a;
+  await Promise.all([prepareVisual(key,{muted:true}),audioReady]);
+  if(token!==playToken||audio!==a)return null;
+  return new Promise(resolve=>{
+    let failed=false;
+    const fail=()=>{if(failed)return;failed=true;a.pause();resolve(null)};
+    a.onerror=fail;
+    a.onended=()=>{if(token!==playToken)return;resetVisioToListening();onend?.();resolve(a)};
+    try{
+      video.currentTime=0;a.currentTime=0;
+      video.muted=true;
+      Promise.allSettled([video.play(),a.play()]).then(results=>{
+        if(results[1].status==='rejected')fail();
+      });
+    }catch{fail()}
+  });
 }
-function playLucas(key,onend){
+async function playLucas(key,onend){
   const token=++playToken;
   if(audio){audio.pause();audio=null}
   choices.classList.remove('show');listening.classList.remove('show');
-  const preferred=key==='warm'?'v3':'v2';
-  startPair(key,preferred,onend,token).then(a=>{
-    if(!a||token!==playToken)return;
-    a.onerror=()=>{
-      if(preferred==='v3'){
-        a.pause();startPair(key,'v2',onend,token);
-      }else{resetVisioToListening();listening.textContent='Audio Lucas en préparation…';onend?.()}
-    };
-  });
+  if(key==='opening'){await playOpeningNative(onend,token);return}
+  const versions=key==='warm'?['v4','v3','v2']:['v4','v2'];
+  for(const version of versions){
+    if(token!==playToken)return;
+    const result=await startPair(key,version,onend,token);
+    if(result)return;
+  }
+  if(token!==playToken)return;
+  resetVisioToListening();listening.textContent='Audio Lucas en préparation…';onend?.();
 }
 function enter(key){if(key==='finish'){finish();return}const s=scenes[key];if(!s)return;playLucas(s.audio,()=>showChoices(s.choices))}
 function select(next){choices.classList.remove('show');listening.classList.remove('show');setTimeout(()=>enter(next),220)}
-function finish(){playToken++;if(audio){audio.pause();audio=null}video.pause();ended.classList.add('show')}
-function begin(){ended.classList.remove('show');startgate.style.display='none';video.muted=true;video.loop=false;video.src=BASE_VISIO;video.load();resetVisioToListening();enter('opening')}
+function finish(){playToken++;if(audio){audio.pause();audio=null}video.onended=null;video.pause();ended.classList.add('show')}
+function begin(){ended.classList.remove('show');startgate.style.display='none';video.loop=false;video.src=BASE_VISIO;video.load();resetVisioToListening();enter('opening')}
 function restart(){resetVisioToListening();begin()}
 document.getElementById('startCall').onclick=begin;document.getElementById('end').onclick=finish;document.getElementById('restart').onclick=restart;document.getElementById('camera').onclick=e=>{const self=document.getElementById('selfView');self.style.display=self.style.display==='none'?'grid':'none';e.currentTarget.classList.toggle('off')};document.getElementById('mic').onclick=e=>e.currentTarget.classList.toggle('off');
 video.muted=true;video.loop=false;video.src=BASE_VISIO;video.load();resetVisioToListening();
