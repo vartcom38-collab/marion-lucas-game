@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "status": "french-target-locked",
+  "character": "lucas",
+  "goal": "Preserve the accepted Lucas timbre while making delivery warmer, softer and naturally French.",
+  "timbre_reference": "lucas_voice_bank_v2_softer",
+  "french_delivery": {
+    "language": "fr-FR",
+    "register": "young adult male, naturally low, never forced downward",
+    "tone": "warm, intimate, softer than the raw reference, relaxed rather than dry",
+    "phrasing": "connected conversational French with natural liaison and reductions",
+    "attacks": "soft, no hard word-by-word resets",
+    "consonants": "clear but not clipped or percussive",
+    "endings": "relaxed and slightly falling, not announcer-like",
+    "breathing": "subtle and integrated",
+    "forbidden": [
+      "robotic syllabic cadence",
+      "textbook French diction",
+      "forced bass",
+      "over-articulation",
+      "uniform rhythm",
+      "dramatic trailer delivery"
+    ]
+  },
+  "first_test_line": "Ah ouais... ça me fait plaisir que tu m'appelles juste pour ça.",
+  "approval": "one-line candidate only; human approval required before dialogue pack or runtime use"
+}
