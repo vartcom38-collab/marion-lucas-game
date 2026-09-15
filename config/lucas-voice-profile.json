@@ -1,0 +1,29 @@
+{
+  "character": "lucas",
+  "status": "reference-profile",
+  "source": "user-provided Lucas reference recordings",
+  "purpose": "Guide synthetic voice generation toward Lucas's vocal character without reproducing a biometric voiceprint.",
+  "measured_reference": {
+    "duration_seconds": 18.46,
+    "median_f0_hz": 75.6,
+    "mean_f0_hz": 88.4,
+    "f0_p10_hz": 65.4,
+    "f0_p90_hz": 156.0,
+    "voiced_fraction": 0.55
+  },
+  "target_character": {
+    "register": "low young-adult male",
+    "delivery": "relaxed private conversation, continuous phrases, never syllabic or choppy",
+    "energy": "restrained, warm, spontaneous",
+    "prosody": "noticeable pitch variation, irregular human micro-pauses, soft phrase endings",
+    "breathing": "subtle natural breaths, not inserted theatrically",
+    "avoid": [
+      "robotic cadence",
+      "over-articulated diction",
+      "uniform timing",
+      "dramatic trailer delivery",
+      "exaggerated breath markers",
+      "word-by-word resets"
+    ]
+  }
+}
