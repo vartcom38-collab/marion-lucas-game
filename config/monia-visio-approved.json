@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "character": "lucas",
   "status": "locked",
   "fallback": null,
@@ -13,7 +13,10 @@
     "visual_base": "https://marion-lucas.marionbolomey.fr/resources/monia/generated/visio-lucas-speaking-fr-layout-v7-candidate.mp4?run=34826963016",
     "validated_sync_sample": "https://marion-lucas.marionbolomey.fr/resources/monia/generated/visio-lucas-v7-v10a-timing-candidate.mp4?run=34859820027",
     "visual_status": "approved",
-    "voice_status": "approved_for_current_baseline_but_revisable",
+    "voice_status": "direct_v10a_clone_preferred_candidate_direction",
+    "voice_reference": "https://marion-lucas.marionbolomey.fr/resources/monia/generated/lucas-voice-v10-drama-tuned-fr-a-candidate.wav",
+    "voice_strategy": "Generate new Lucas dialogue by direct cloning from the exact V10-A reference. Do not synthesize a separate donor voice and repaint it with Seed-VC.",
+    "lip_sync_status": "deferred_until_voice_identity_and_naturalness_are_approved",
     "identity": "approved_lucas_visio_face",
     "eyes": "approved green-hazel / gray-green olive with subtle amber-brown center and darker limbal rim",
     "note": "This is the validated quality and identity reference, not a universal clip to reuse for every call. Wardrobe, location, lighting, pose and call context must vary canonically."
@@ -79,6 +82,9 @@
   "rules": [
     "Only explicitly approved visio clips may be shown live.",
     "Generated listening, speaking, reaction and thinking clips are candidates until approval.",
+    "Prefer direct cloning from the exact validated V10-A voice reference for new Lucas dialogue.",
+    "Do not use a synthetic donor voice plus Seed-VC repaint as the preferred Lucas dialogue method.",
+    "Do not optimize lip sync until Lucas voice identity and conversational naturalness are approved.",
     "Never use playback-rate warping or random seeking to fake lip synchronization.",
     "Never use pasted-mouth or post-hoc lip replacement as the primary Lucas visio method.",
     "If an approved state clip is missing, show a neutral call state without unapproved video rather than any candidate fallback.",
