@@ -8,24 +8,34 @@
   <style>
     *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;background:#000;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",system-ui,sans-serif;color:#fff;overflow:hidden}
     #app{position:fixed;inset:0;background:#000}
-    .remote{position:absolute;inset:0;overflow:hidden;background:#000}
-    .remote video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000;transition:opacity .12s linear}
+    .remote{position:absolute;inset:0;overflow:hidden;background:#050505;display:grid;place-items:center}
+    .remote::before{content:"";position:absolute;inset:-4%;background:var(--remote-bg,none) center/cover no-repeat;filter:blur(34px) brightness(.42);transform:scale(1.08);opacity:.72}
+    .remote video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center center;background:transparent;transition:opacity .18s ease}
     #videoB{opacity:0}
-    .shade{position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(0,0,0,.38),transparent 25%,transparent 66%,rgba(0,0,0,.62))}
+    .shade{position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(0,0,0,.32),transparent 24%,transparent 70%,rgba(0,0,0,.58))}
     .top{position:absolute;z-index:4;top:max(18px,env(safe-area-inset-top));left:20px;right:20px;display:flex;justify-content:space-between;align-items:flex-start}
     .identity .name{font-weight:700;font-size:24px;text-shadow:0 1px 5px #000}.identity .status{font-size:14px;opacity:.82;margin-top:3px;text-shadow:0 1px 4px #000}
     #localWrap{width:91px;height:132px;border-radius:18px;overflow:hidden;background:rgba(22,22,22,.9);box-shadow:0 5px 24px rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:12px;color:#aaa;text-align:center}
     #local{width:100%;height:100%;object-fit:cover;transform:scaleX(-1);display:none}
-    .choices{position:absolute;z-index:5;left:16px;right:16px;bottom:calc(122px + env(safe-area-inset-bottom));display:grid;gap:9px;transition:opacity .18s ease,transform .18s ease}
-    .choices.hidden{opacity:0;pointer-events:none;transform:translateY(10px)}
+    .choices{position:absolute;z-index:5;left:50%;width:min(620px,calc(100vw - 32px));bottom:calc(122px + env(safe-area-inset-bottom));display:grid;gap:9px;transition:opacity .18s ease,transform .18s ease;transform:translateX(-50%)}
+    .choices.hidden{opacity:0;pointer-events:none;transform:translate(-50%,10px)}
     .choice{border:1px solid rgba(255,255,255,.26);background:rgba(12,12,12,.70);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);color:#fff;border-radius:18px;min-height:58px;padding:14px 18px;text-align:left;font-size:17px;font-weight:600;box-shadow:0 5px 18px rgba(0,0,0,.18)}
     .choice:active{transform:scale(.985);background:rgba(45,45,45,.78)}
     .controls{position:absolute;z-index:6;left:0;right:0;bottom:max(22px,env(safe-area-inset-bottom));display:flex;justify-content:center;gap:28px}
     .ctrl{width:64px;height:64px;border-radius:50%;border:none;background:rgba(28,28,28,.82);color:white;font-size:24px;display:grid;place-items:center;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
     .ctrl.end{background:#ff3b30;font-size:22px}.ctrl.on{background:#f2f2f2;color:#111}
-    #start{position:absolute;z-index:10;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.34);backdrop-filter:blur(3px)}
+    #start{position:absolute;z-index:10;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.28);backdrop-filter:blur(2px)}
     #start button{border:0;border-radius:999px;background:rgba(20,20,20,.86);color:#fff;padding:16px 24px;font-size:18px;font-weight:700;box-shadow:0 8px 30px rgba(0,0,0,.35)}
-    #debug{position:absolute;z-index:8;left:16px;top:calc(max(18px,env(safe-area-inset-top)) + 64px);font-size:11px;opacity:.0;pointer-events:none}
+    #debug{position:absolute;z-index:8;left:16px;top:calc(max(18px,env(safe-area-inset-top)) + 64px);font-size:11px;opacity:0;pointer-events:none}
+    @media (orientation:portrait) and (max-width:760px){
+      .remote video{object-fit:cover;object-position:center center}
+      .choices{width:calc(100vw - 32px)}
+    }
+    @media (orientation:landscape) and (min-width:900px){
+      .remote video{width:min(100vw,calc(100vh * .66));height:100%;left:50%;right:auto;transform:translateX(-50%);object-fit:cover;object-position:center center;border-radius:0}
+      .top{left:28px;right:28px}.identity .name{font-size:22px}
+      #localWrap{width:118px;height:158px}
+    }
   </style>
 </head>
 <body>
@@ -60,23 +70,11 @@
     busy:BASE+'visio-lucas-v2-speaking-busy-candidate.mp4'
   };
   const A=document.getElementById('videoA'),B=document.getElementById('videoB'),choices=document.getElementById('choices'),status=document.getElementById('status');
-  let front=A,back=B,mode='idle',busy=false,round=0,stream=null,micOn=true;
+  let front=A,back=B,busy=false,round=0,stream=null,micOn=true,idleToken=0;
   const sets=[
-    [
-      ['Ça va, et toi ?','calm'],
-      ['Je voulais juste te voir','warm'],
-      ['Tu fais quoi là ?','busy']
-    ],
-    [
-      ['Pas grand-chose, je me pose aussi','calm'],
-      ['Ça me fait plaisir de te voir','warm'],
-      ['T’as l’air crevé','thinking']
-    ],
-    [
-      ['Raconte-moi ta journée','calm'],
-      ['Encore une minute…','warm'],
-      ['Je te laisse, on se reparle après','end']
-    ]
+    [['Ça va, et toi ?','calm'],['Je voulais juste te voir','warm'],['Tu fais quoi là ?','busy']],
+    [['Pas grand-chose, je me pose aussi','calm'],['Ça me fait plaisir de te voir','warm'],['T’as l’air crevé','thinking']],
+    [['Raconte-moi ta journée','calm'],['Encore une minute…','warm'],['Je te laisse, on se reparle après','end']]
   ];
   Object.values(clips).forEach(src=>{const v=document.createElement('video');v.preload='auto';v.src=src;});
 
@@ -89,6 +87,7 @@
 
   async function swap(src,{loop=false,audio=false}={}){
     back.pause();back.src=src;back.loop=loop;back.muted=!audio;back.currentTime=0;
+    document.querySelector('.remote').style.setProperty('--remote-bg',`url("${src}")`);
     try{await back.play()}catch(e){console.warn('play failed',e)}
     back.style.opacity='1';front.style.opacity='0';
     const old=front;front=back;back=old;
@@ -97,14 +96,26 @@
     }
   }
 
+  async function idlePresence(token){
+    const sequence=['listening','thinking','listening','reaction'];
+    let i=0;
+    while(token===idleToken&&!busy){
+      const key=sequence[i++%sequence.length];
+      await swap(clips[key],{loop:false,audio:false});
+      if(token!==idleToken||busy)return;
+    }
+  }
+
   async function returnListening(){
-    mode='listening';status.textContent='Lucas écoute';
-    await swap(clips.listening,{loop:true,audio:false});
-    if(!busy){setChoices(sets[Math.min(round,sets.length-1)])}
+    status.textContent='Lucas écoute';
+    const token=++idleToken;
+    if(!busy)setChoices(sets[Math.min(round,sets.length-1)]);
+    idlePresence(token);
   }
 
   async function choose(key){
-    if(busy)return;busy=true;hideChoices();
+    if(busy)return;
+    busy=true;idleToken++;hideChoices();
     if(key==='end'){status.textContent='appel terminé';setTimeout(()=>location.href='about:blank',500);return;}
     status.textContent='Lucas écoute';
     await swap(clips.reaction,{loop:false,audio:false});
@@ -120,8 +131,8 @@
 
   document.querySelector('#start button').onclick=async()=>{
     document.getElementById('start').style.display='none';
-    busy=true;
-    status.textContent='Lucas';
+    busy=true;idleToken++;
+    status.textContent='Lucas parle';
     await swap(clips.warm,{loop:false,audio:true});
     busy=false;
     await returnListening();
@@ -133,7 +144,7 @@
     try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false});local.srcObject=stream;local.style.display='block';hint.style.display='none';btn.classList.add('on')}catch(err){hint.textContent='caméra indisponible'}
   };
   document.getElementById('mic').onclick=e=>{micOn=!micOn;e.currentTarget.classList.toggle('on',!micOn);};
-  document.getElementById('hang').onclick=()=>{if(stream)stream.getTracks().forEach(t=>t.stop());status.textContent='appel terminé';front.pause();back.pause();choices.innerHTML='';setTimeout(()=>location.href='about:blank',400)};
+  document.getElementById('hang').onclick=()=>{idleToken++;if(stream)stream.getTracks().forEach(t=>t.stop());status.textContent='appel terminé';front.pause();back.pause();choices.innerHTML='';setTimeout(()=>location.href='about:blank',400)};
 })();
 </script>
 </body>
