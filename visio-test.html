@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#000000" />
+  <title>Lucas — Visio 2.0</title>
+  <style>
+    *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;background:#000;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",system-ui,sans-serif;color:#fff;overflow:hidden}
+    #app{position:fixed;inset:0;background:#000}
+    .remote{position:absolute;inset:0;overflow:hidden;background:#000}
+    .remote video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000;transition:opacity .12s linear}
+    #videoB{opacity:0}
+    .shade{position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(0,0,0,.38),transparent 25%,transparent 66%,rgba(0,0,0,.62))}
+    .top{position:absolute;z-index:4;top:max(18px,env(safe-area-inset-top));left:20px;right:20px;display:flex;justify-content:space-between;align-items:flex-start}
+    .identity .name{font-weight:700;font-size:24px;text-shadow:0 1px 5px #000}.identity .status{font-size:14px;opacity:.82;margin-top:3px;text-shadow:0 1px 4px #000}
+    #localWrap{width:91px;height:132px;border-radius:18px;overflow:hidden;background:rgba(22,22,22,.9);box-shadow:0 5px 24px rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:12px;color:#aaa;text-align:center}
+    #local{width:100%;height:100%;object-fit:cover;transform:scaleX(-1);display:none}
+    .choices{position:absolute;z-index:5;left:16px;right:16px;bottom:calc(122px + env(safe-area-inset-bottom));display:grid;gap:9px;transition:opacity .18s ease,transform .18s ease}
+    .choices.hidden{opacity:0;pointer-events:none;transform:translateY(10px)}
+    .choice{border:1px solid rgba(255,255,255,.26);background:rgba(12,12,12,.70);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);color:#fff;border-radius:18px;min-height:58px;padding:14px 18px;text-align:left;font-size:17px;font-weight:600;box-shadow:0 5px 18px rgba(0,0,0,.18)}
+    .choice:active{transform:scale(.985);background:rgba(45,45,45,.78)}
+    .controls{position:absolute;z-index:6;left:0;right:0;bottom:max(22px,env(safe-area-inset-bottom));display:flex;justify-content:center;gap:28px}
+    .ctrl{width:64px;height:64px;border-radius:50%;border:none;background:rgba(28,28,28,.82);color:white;font-size:24px;display:grid;place-items:center;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+    .ctrl.end{background:#ff3b30;font-size:22px}.ctrl.on{background:#f2f2f2;color:#111}
+    #start{position:absolute;z-index:10;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.34);backdrop-filter:blur(3px)}
+    #start button{border:0;border-radius:999px;background:rgba(20,20,20,.86);color:#fff;padding:16px 24px;font-size:18px;font-weight:700;box-shadow:0 8px 30px rgba(0,0,0,.35)}
+    #debug{position:absolute;z-index:8;left:16px;top:calc(max(18px,env(safe-area-inset-top)) + 64px);font-size:11px;opacity:.0;pointer-events:none}
+  </style>
+</head>
+<body>
+<div id="app">
+  <div class="remote">
+    <video id="videoA" playsinline preload="auto"></video>
+    <video id="videoB" playsinline preload="auto"></video>
+    <div class="shade"></div>
+  </div>
+  <div class="top">
+    <div class="identity"><div class="name">Lucas</div><div id="status" class="status">visio</div></div>
+    <div id="localWrap"><video id="local" autoplay muted playsinline></video><span id="localHint">caméra<br>désactivée</span></div>
+  </div>
+  <div id="choices" class="choices hidden"></div>
+  <div class="controls">
+    <button id="camera" class="ctrl" aria-label="Caméra">▣</button>
+    <button id="hang" class="ctrl end" aria-label="Raccrocher">⌕</button>
+    <button id="mic" class="ctrl" aria-label="Micro">♪</button>
+  </div>
+  <div id="start"><button>Démarrer l’appel</button></div>
+  <div id="debug"></div>
+</div>
+<script>
+(() => {
+  const BASE='/resources/monia/generated/';
+  const clips={
+    listening:BASE+'visio-lucas-v2-listening-candidate.mp4',
+    reaction:BASE+'visio-lucas-v2-reaction-candidate.mp4',
+    thinking:BASE+'visio-lucas-v2-thinking-candidate.mp4',
+    calm:BASE+'visio-lucas-v2-speaking-calm-candidate.mp4',
+    warm:BASE+'visio-lucas-v2-speaking-warm-candidate.mp4',
+    busy:BASE+'visio-lucas-v2-speaking-busy-candidate.mp4'
+  };
+  const A=document.getElementById('videoA'),B=document.getElementById('videoB'),choices=document.getElementById('choices'),status=document.getElementById('status');
+  let front=A,back=B,mode='idle',busy=false,round=0,stream=null,micOn=true;
+  const sets=[
+    [
+      ['Ça va, et toi ?','calm'],
+      ['Je voulais juste te voir','warm'],
+      ['Tu fais quoi là ?','busy']
+    ],
+    [
+      ['Pas grand-chose, je me pose aussi','calm'],
+      ['Ça me fait plaisir de te voir','warm'],
+      ['T’as l’air crevé','thinking']
+    ],
+    [
+      ['Raconte-moi ta journée','calm'],
+      ['Encore une minute…','warm'],
+      ['Je te laisse, on se reparle après','end']
+    ]
+  ];
+  Object.values(clips).forEach(src=>{const v=document.createElement('video');v.preload='auto';v.src=src;});
+
+  function setChoices(items){
+    choices.innerHTML='';
+    items.forEach(([label,key])=>{const b=document.createElement('button');b.className='choice';b.textContent=label;b.onclick=()=>choose(key);choices.appendChild(b);});
+    choices.classList.remove('hidden');
+  }
+  function hideChoices(){choices.classList.add('hidden')}
+
+  async function swap(src,{loop=false,audio=false}={}){
+    back.pause();back.src=src;back.loop=loop;back.muted=!audio;back.currentTime=0;
+    try{await back.play()}catch(e){console.warn('play failed',e)}
+    back.style.opacity='1';front.style.opacity='0';
+    const old=front;front=back;back=old;
+    if(!loop){
+      await new Promise(resolve=>{const done=()=>{front.removeEventListener('ended',done);resolve()};front.addEventListener('ended',done,{once:true});setTimeout(done,10000)});
+    }
+  }
+
+  async function returnListening(){
+    mode='listening';status.textContent='Lucas écoute';
+    await swap(clips.listening,{loop:true,audio:false});
+    if(!busy){setChoices(sets[Math.min(round,sets.length-1)])}
+  }
+
+  async function choose(key){
+    if(busy)return;busy=true;hideChoices();
+    if(key==='end'){status.textContent='appel terminé';setTimeout(()=>location.href='about:blank',500);return;}
+    status.textContent='Lucas écoute';
+    await swap(clips.reaction,{loop:false,audio:false});
+    if(key==='thinking'){
+      await swap(clips.thinking,{loop:false,audio:false});
+      key='calm';
+    }
+    status.textContent='Lucas parle';
+    await swap(clips[key],{loop:false,audio:true});
+    round=Math.min(round+1,sets.length-1);busy=false;
+    await returnListening();
+  }
+
+  document.querySelector('#start button').onclick=async()=>{
+    document.getElementById('start').style.display='none';
+    busy=true;
+    status.textContent='Lucas';
+    await swap(clips.warm,{loop:false,audio:true});
+    busy=false;
+    await returnListening();
+  };
+
+  document.getElementById('camera').onclick=async(e)=>{
+    const btn=e.currentTarget,local=document.getElementById('local'),hint=document.getElementById('localHint');
+    if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;local.srcObject=null;local.style.display='none';hint.style.display='inline';btn.classList.remove('on');return;}
+    try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false});local.srcObject=stream;local.style.display='block';hint.style.display='none';btn.classList.add('on')}catch(err){hint.textContent='caméra indisponible'}
+  };
+  document.getElementById('mic').onclick=e=>{micOn=!micOn;e.currentTarget.classList.toggle('on',!micOn);};
+  document.getElementById('hang').onclick=()=>{if(stream)stream.getTracks().forEach(t=>t.stop());status.textContent='appel terminé';front.pause();back.pause();choices.innerHTML='';setTimeout(()=>location.href='about:blank',400)};
+})();
+</script>
+</body>
+</html>
