@@ -1,58 +1,51 @@
 {
-  "version": 2,
-  "status": "accepted-timbre-base",
+  "version": 3,
+  "status": "accepted-timbre-and-flow-base",
   "character": "lucas",
-  "goal": "Keep the accepted Lucas vocal color, soften harshness slightly, and build natural conversational French without changing vocal identity.",
+  "goal": "Preserve the accepted Lucas timbre and fluidity exactly, soften dryness only slightly, and carry that same natural movement into French.",
   "reference_use": {
     "uploaded_lucas_clips": "primary timbre, rhythm and presence reference",
-    "lucas_voice_bank_v1": "accepted timbre base from user-provided Lucas speech moments",
-    "lucas_voice_bank_v1_soft": "preferred tonal direction for warmth and reduced dryness; EQ only, no pitch or speed change",
-    "validated_v10a": "legacy visio anchor only; do not let it override the newer accepted timbre base"
+    "lucas_voice_bank_v1": "accepted timbre and fluidity base from user-provided Lucas speech moments",
+    "lucas_voice_bank_v3_subtle_soft": "preferred tonal direction: only 10-15 percent softer than the accepted base, with no pitch, speed or phrase-timing change",
+    "validated_v10a": "legacy visio anchor only; do not let it override the newer accepted base"
   },
   "accepted_characteristics": {
     "register": "naturally low male voice, not artificially deep",
-    "tone": "direct and masculine, with slightly warmer and softer edges than the raw references",
-    "delivery": "connected, fluid, conversational",
-    "variation": "natural pitch and energy movement; never monotone",
-    "diction": "casual spoken French, linked words and relaxed consonants",
+    "tone": "same accepted masculine vocal color, only slightly warmer and rounder",
+    "delivery": "same accepted connected, fluid, conversational movement",
+    "variation": "preserve natural pitch and energy movement exactly; never flatten it",
+    "diction": "casual spoken French, linked words, relaxed consonants, no textbook diction",
     "endings": "soft, relaxed phrase endings",
     "breathing": "subtle and integrated",
+    "softening_limit": "subtle only; approximately 10-15 percent perceptual softening, never enough to blur identity or articulation",
     "avoid": [
       "dry or brittle upper-mid tone",
+      "over-softened or muffled tone",
       "over-articulated French",
       "syllable-by-syllable cadence",
       "forced bass",
+      "slower delivery",
+      "flattened prosody",
       "announcer delivery",
       "uniform timing"
     ]
   },
-  "rejected_routes": [
-    {
-      "route": "Qwen voice design / profile-guided TTS",
-      "reason": "robotic, synthetic cadence"
-    },
-    {
-      "route": "Chatterbox direct TTS",
-      "reason": "robotic and saccadic in visio tests"
-    },
-    {
-      "route": "TTS donor -> Seed-VC",
-      "reason": "voice conversion preserves the donor's synthetic performance defects"
-    }
-  ],
   "next_route": {
-    "principle": "preserve accepted timbre, improve interpretation",
+    "principle": "preserve accepted timbre and flow, improve only language and slight warmth",
     "source_requirement": "Use a natural continuous French performance as the source whenever a new line is created.",
-    "processing": "Only light tonal softening and normalization before candidate review; do not alter pitch, tempo or phrase timing.",
-    "french_target": "Natural metropolitan French conversational prosody with contractions, linked phrasing, relaxed consonants and irregular human timing.",
+    "processing": "Only subtle tonal softening and normalization before candidate review; do not alter pitch, tempo, phrase timing or prosodic contour.",
+    "french_target": "Natural conversational metropolitan French with linked phrasing, contractions, relaxed consonants, soft endings and irregular human timing while preserving the accepted Lucas vocal movement.",
     "forbidden": [
       "playback-rate warping",
       "pitch shifting to make the voice deeper",
+      "tempo changes",
+      "prosody flattening",
       "word-by-word resynthesis",
       "syllable-by-syllable timing fixes",
+      "heavy EQ that changes identity",
       "auto-promotion to live",
       "replacing the accepted timbre base with a new voice identity"
     ]
   },
-  "approval_rule": "One short French candidate must be approved by the user before expanding to a dialogue pack or changing live visio priorities."
+  "approval_rule": "One short French candidate must preserve the accepted timbre and fluidity before any dialogue pack expansion or live visio change."
 }
