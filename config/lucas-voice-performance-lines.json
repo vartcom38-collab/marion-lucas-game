@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "status": "recording-source-required",
+  "purpose": "Human-performance-first source lines for Lucas visio validation.",
+  "rules": {
+    "one_line_first": true,
+    "source_must_sound_natural_before_any_processing": true,
+    "no_tts_source": true,
+    "no_word_by_word_editing": true,
+    "no_speed_warping": true,
+    "human_approval_before_next_line": true
+  },
+  "first_validation_line": {
+    "key": "warm",
+    "text": "Ah ouais... ça me fait plaisir que tu m'appelles juste pour ça.",
+    "direction": "Private late-evening phone call. Relaxed, warm, understated. One connected thought, tiny natural hesitation after 'ouais', soft ending. No acting voice, no presenter diction."
+  },
+  "later_lines": {
+    "calm": "Ça va... journée un peu longue, mais tranquille. Et toi, t'as fait quoi ?",
+    "busy": "Je viens de me poser deux minutes. J'allais justement souffler un peu.",
+    "tease": "Je fais pas le malin... enfin, pas tant que ça.",
+    "miss": "Toi aussi... un peu.",
+    "end": "D'accord. On se reparle après."
+  }
+}
