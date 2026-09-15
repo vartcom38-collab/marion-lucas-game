@@ -28,14 +28,18 @@ IDENTITY = (
     "Preserve the exact validated Lucas identity from the supplied V7-derived frame: same facial geometry, dark wavy hair, short stubble, olive skin, no tattoos, no facial scar. "
     "His eyes are canonical cool green-hazel: gray-green/olive outer iris, subtle warm amber-brown center near the pupil and darker limbal rim; never uniformly brown, bright blue or neon green. "
     "Keep the same believable smartphone front-camera grammar, black shirt and warm private-room baseline for this mechanics test. "
-    "Upper torso, shoulders and a little forearm remain naturally visible; never turn this into a head-only beauty portrait. "
+    "IMPORTANT CAMERA DISTANCE: this is a normal real-life video call, not an intimate close-up. The phone is roughly 55 to 75 cm from Lucas. Show his full head, neck, both shoulders, upper chest and a little forearm or hand when natural. His face should occupy only about 35 to 45 percent of the frame height. Leave visible room/background around him. Never crop the forehead, chin or shoulders. "
 )
 ALIVE = (
     "He must feel continuously alive: natural quiet breathing, irregular blinks, tiny changes of focus between Marion on screen and the lens, minute eye movements, tiny jaw relaxation, small posture settling and subtle handheld/framing drift. "
     "Performance is restrained and private. Reactions start in the eyes before the mouth. No presenter performance, no constant smile, no theatrical gestures. "
 )
+VOICE_PERFORMANCE = (
+    "VOICE PERFORMANCE MUST MATCH THE SELECTED LUCAS V10-A DIRECTION BEFORE CONVERSION: native French, low to low-mid register, dark warm chest resonance, slightly dry/rough human grain, calm and self-contained, restrained melody, deliberate small pauses, little breathiness, relaxed connected articulation, subtle insolence from restraint. "
+    "Avoid bright upward question melody, presenter cadence, perfume-ad smoothness, theatrical growl, over-enunciation, foreign prosody, sing-song rhythm or generic TTS timing. "
+)
 NEGATIVE = (
-    "different man, identity drift, face morphing, tattoos, scar, uniform brown eyes, blue eyes, neon green eyes, head-only crop, extreme close-up, beauty filter, plastic skin, frozen face, blank stare, repeated mechanical blink, exaggerated smile, theatrical acting, big gesture, subtitles, captions, text, UI, watermark, second person, extra hands, cinematic dolly, zoom, lip-sync patch, pasted mouth"
+    "different man, identity drift, face morphing, tattoos, scar, uniform brown eyes, blue eyes, neon green eyes, head-only crop, extreme close-up, face filling frame, cropped forehead, cropped chin, cropped shoulders, beauty filter, plastic skin, frozen face, blank stare, repeated mechanical blink, exaggerated smile, theatrical acting, big gesture, subtitles, captions, text, UI, watermark, second person, extra hands, cinematic dolly, zoom, lip-sync patch, pasted mouth"
 )
 
 SILENT_STATES = {
@@ -190,7 +194,8 @@ def build_one(state: str, anchor: Path, v10a: Path) -> tuple[Path, str]:
         (
             f"STATE: SPEAKING. Lucas says exactly in natural casual native French: '{line}' "
             "Generate the speech natively together with the face so jaw, lips, cheeks, eyebrows and breath timing are coherent. "
-            "Use relaxed connected contemporary French, restrained melody and imperfect human micro-pauses. After the sentence, settle naturally back toward attentive listening."
+            + VOICE_PERFORMANCE +
+            "After the sentence, settle naturally back toward attentive listening."
         ),
         6,
         anchor,
