@@ -17,27 +17,27 @@ V10A_URL = (
     "lucas-voice-v10-drama-tuned-fr-a-candidate.wav"
 )
 
-# IMPORTANT: V10-A is the selected Lucas voice reference. We do NOT redesign the
-# voice from a text description here. For every new sentence, we create only a
-# native-French timing/prosody source, then convert its timbre toward the exact
-# V10-A reference with Seed-VC. Style conversion stays off so French prosody is
-# driven by the new French source rather than copied from another sentence.
+# V10-A remains the selected Lucas voice identity. New dialogue must NOT inherit
+# the chopped timing of an older video. We first generate one continuous,
+# conversational French performance, then transfer only the V10-A timbre.
 LINES = {
     "opening": "Salut... ça va, toi ? Qu'est-ce que tu racontes ?",
-    "calm": "Ça va... journée un peu longue, mais tranquille. Et toi, t'as fait quoi ?",
-    "warm": "Ah ouais ? Ça me fait plaisir que tu m'appelles juste pour ça.",
-    "busy": "Je viens de me poser deux minutes. J'allais justement souffler un peu.",
-    "tease": "Je fais pas le malin. Enfin... pas tant que ça.",
+    "calm": "Ça va, journée un peu longue mais tranquille. Et toi, t'as fait quoi ?",
+    "warm": "Ah ouais, ça me fait plaisir que tu m'appelles juste pour ça.",
+    "busy": "Je viens de me poser deux minutes, j'allais justement souffler un peu.",
+    "tease": "Je fais pas le malin... enfin, pas tant que ça.",
     "miss": "Toi aussi, un peu.",
-    "end": "D'accord... on se reparle après."
+    "end": "D'accord, on se reparle après."
 }
 
-# This voice is only a temporary native-French timing carrier. Its identity is
-# intentionally irrelevant because Seed-VC replaces the timbre with V10-A.
+# The carrier supplies timing/prosody only. Ask explicitly for a single flowing
+# utterance so punctuation does not turn the line into stitched fragments.
 SOURCE_DESCRIPTION = (
-    "A native French adult male speaking naturally in a private phone call. "
-    "Calm contemporary French, relaxed articulation, restrained melody, short natural pauses, "
-    "no announcer tone, no theatrical acting, no exaggerated bass, no foreign accent."
+    "A native French adult male in his early twenties speaking spontaneously during a private video call. "
+    "Natural contemporary conversational French, warm and relaxed, connected phrasing, fluid breath, "
+    "one continuous thought per sentence, almost no pause inside a sentence, subtle smile in the voice, "
+    "slightly quick everyday rhythm, soft natural consonants, no announcer tone, no theatrical acting, "
+    "no exaggerated emphasis, no word-by-word delivery, no robotic pauses, no foreign accent."
 )
 
 
@@ -77,12 +77,12 @@ def convert_to_v10a(client: Client, source: Path, v10a: Path, target: Path) -> N
     result = client.predict(
         source_audio_path=handle_file(source),
         target_audio_path=handle_file(v10a),
-        diffusion_steps=30,
+        diffusion_steps=36,
         length_adjust=1.0,
         intelligebility_cfg_rate=0.0,
-        similarity_cfg_rate=0.72,
-        top_p=0.92,
-        temperature=0.72,
+        similarity_cfg_rate=0.68,
+        top_p=0.94,
+        temperature=0.78,
         repetition_penalty=1.0,
         convert_style=False,
         anonymization_only=False,
@@ -99,8 +99,7 @@ def main() -> None:
     v10a = engine.WORK_DIR / "lucas-v10a-exact-reference.wav"
     download(V10A_URL, v10a)
 
-    # Opening uses the exact selected V10-A sample, byte-for-byte, because the
-    # sentence is the one for which that voice was explicitly selected.
+    # Keep the exact selected reference sample available as the opening anchor.
     opening_target = engine.WORK_DIR / "lucas-visio-dialogue-v2-opening-candidate.wav"
     shutil.copyfile(v10a, opening_target)
     print("VISIO_DIALOGUE_VOICE v2 key=opening source=exact_v10a")
@@ -117,7 +116,7 @@ def main() -> None:
         generate_native_source(qwen, text, native)
         convert_to_v10a(seed, native, v10a, target)
         url = engine.publish_candidate(target)
-        print(f"VISIO_DIALOGUE_VOICE v2 key={key} source=native_fr target=exact_v10a url={url}")
+        print(f"VISIO_DIALOGUE_VOICE v2 key={key} source=continuous_native_fr target=exact_v10a url={url}")
 
 
 if __name__ == "__main__":
