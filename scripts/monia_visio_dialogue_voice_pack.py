@@ -18,8 +18,6 @@ V10A_URL = (
 V10A_REFERENCE_TEXT = "Salut, ça va toi ? Qu'est-ce que tu racontes ?"
 PUBLIC_BASE = "https://marion-lucas.marionbolomey.fr/resources/monia/generated/"
 
-# V10-A is the selected Lucas identity. New dialogue is cloned DIRECTLY from
-# this exact reference. No synthetic donor voice and no Seed-VC timbre repaint.
 LINES = {
     "opening": "Salut, ça va toi ? Qu'est-ce que tu racontes ?",
     "calm": "Ça va, journée un peu longue mais tranquille. Et toi, t'as fait quoi ?",
@@ -29,6 +27,10 @@ LINES = {
     "miss": "Toi aussi, un peu.",
     "end": "D'accord, on se reparle après."
 }
+
+# Focused V3 experiment: same selected Lucas identity, but a looser,
+# more human delivery. This never overwrites the V2 pack.
+V3_WARM_TEXT = "[inhale] Ah ouais... [short pause] ça me fait plaisir que tu m'appelles juste pour ça."
 
 
 def download(url: str, target: Path) -> None:
@@ -59,19 +61,16 @@ def result_path(result) -> Path:
     raise RuntimeError(f"Fish S2 Pro returned no usable audio file: {type(result).__name__}")
 
 
-def generate_direct_clone(client: Client, text: str, reference: Path, target: Path) -> None:
-    # Keep the clone anchored to V10-A, but do not over-constrain sampling.
-    # Slightly higher top-p/temperature restores conversational micro-variation
-    # and breath while repetition control stays moderate to avoid synthetic loops.
+def clone(client: Client, text: str, reference: Path, target: Path, *, top_p: float, repetition_penalty: float, temperature: float) -> None:
     result = client.predict(
         text,
         handle_file(reference),
         V10A_REFERENCE_TEXT,
         1024,
         200,
-        0.72,
-        1.10,
-        0.66,
+        top_p,
+        repetition_penalty,
+        temperature,
         api_name=FISH_API,
     )
     source = result_path(result)
@@ -80,8 +79,8 @@ def generate_direct_clone(client: Client, text: str, reference: Path, target: Pa
         raise RuntimeError("Direct V10-A clone output is too small")
 
 
-def public_candidate_exists(key: str) -> bool:
-    url = PUBLIC_BASE + f"lucas-visio-dialogue-v2-{key}-candidate.wav"
+def public_candidate_exists(version: str, key: str) -> bool:
+    url = PUBLIC_BASE + f"lucas-visio-dialogue-{version}-{key}-candidate.wav"
     try:
         r = requests.get(url, timeout=30, headers={"Range": "bytes=0-63", "Cache-Control": "no-cache"})
         return r.status_code in (200, 206) and len(r.content) >= 44 and r.content[:4] == b"RIFF"
@@ -94,7 +93,6 @@ def main() -> None:
     v10a = engine.WORK_DIR / "lucas-v10a-exact-reference.wav"
     download(V10A_URL, v10a)
 
-    # Opening stays byte-for-byte identical to the selected reference.
     opening_target = engine.WORK_DIR / "lucas-visio-dialogue-v2-opening-candidate.wav"
     shutil.copyfile(v10a, opening_target)
     print("VISIO_DIALOGUE_VOICE v2 key=opening source=exact_v10a")
@@ -107,17 +105,26 @@ def main() -> None:
             continue
         target = engine.WORK_DIR / f"lucas-visio-dialogue-v2-{key}-candidate.wav"
         try:
-            generate_direct_clone(fish, text, v10a, target)
+            clone(fish, text, v10a, target, top_p=0.72, repetition_penalty=1.10, temperature=0.66)
             url = engine.publish_candidate(target)
             print(f"VISIO_DIALOGUE_VOICE v2 key={key} source=direct_v10a_fish_clone_natural url={url}")
         except Exception as exc:
-            # Never replace a known-good Lucas voice with a failed/partial render.
-            # If Fish/ZeroGPU is temporarily unavailable, keep the last public
-            # direct-clone candidate live and let CI finish successfully.
-            if public_candidate_exists(key):
+            if public_candidate_exists("v2", key):
                 print(f"VISIO_DIALOGUE_VOICE v2 key={key} source=preserved_last_good reason={type(exc).__name__}: {exc}")
                 continue
             failures.append(f"{key}: {type(exc).__name__}: {exc}")
+
+    # V3 warm candidate: more breathing/prosodic freedom, candidate-only.
+    v3_target = engine.WORK_DIR / "lucas-visio-dialogue-v3-warm-candidate.wav"
+    try:
+        clone(fish, V3_WARM_TEXT, v10a, v3_target, top_p=0.78, repetition_penalty=1.08, temperature=0.74)
+        url = engine.publish_candidate(v3_target)
+        print(f"VISIO_DIALOGUE_VOICE v3 key=warm source=direct_v10a_expressive_candidate url={url}")
+    except Exception as exc:
+        if public_candidate_exists("v3", "warm"):
+            print(f"VISIO_DIALOGUE_VOICE v3 key=warm source=preserved_last_good reason={type(exc).__name__}: {exc}")
+        else:
+            print(f"VISIO_DIALOGUE_VOICE v3 key=warm source=not_published reason={type(exc).__name__}: {exc}")
 
     if failures:
         raise RuntimeError("No safe fallback for: " + " | ".join(failures))
