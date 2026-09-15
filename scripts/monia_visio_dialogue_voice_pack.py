@@ -2,15 +2,17 @@ from __future__ import annotations
 
 import os
 import shutil
+import wave
 from pathlib import Path
 
+import numpy as np
 import requests
 from gradio_client import Client, handle_file
 
 import scripts.monia_video_engine as engine
 
-FISH_SPACE = "artificialguybr/fish-s2-pro-zero"
-FISH_API = "/tts_inference"
+QWEN_SPACE = "Qwen/Qwen3-TTS"
+QWEN_CLONE_API = "/generate_voice_clone"
 CHATTERBOX_SPACE = "ResembleAI/Chatterbox-Multilingual-TTS"
 CHATTERBOX_API = "/generate_tts_audio"
 V10A_URL = (
@@ -20,8 +22,8 @@ V10A_URL = (
 V10A_REFERENCE_TEXT = "Salut, ça va toi ? Qu'est-ce que tu racontes ?"
 PUBLIC_BASE = "https://marion-lucas.marionbolomey.fr/resources/monia/generated/"
 
-# Existing V2 pack is preserved as a fallback. V4 is a candidate-only pass aimed
-# at conversational naturalness using the exact selected V10-A reference.
+# Existing V2/V3 packs stay untouched. V5 is a structurally different test:
+# Qwen3-TTS Base voice cloning from the exact selected V10-A reference.
 LINES = {
     "calm": "Ça va... journée un peu longue, mais tranquille. Et toi, t'as fait quoi ?",
     "warm": "Ah ouais... ça me fait plaisir que tu m'appelles juste pour ça.",
@@ -29,18 +31,6 @@ LINES = {
     "tease": "Je fais pas le malin... enfin, pas tant que ça.",
     "miss": "Toi aussi... un peu.",
     "end": "D'accord. On se reparle après."
-}
-
-# Per-line settings stay deliberately restrained: less exaggeration, moderate
-# sampling, and slightly stronger guidance than the V3 experiment. The goal is
-# a private phone-call cadence, not a performed TTS read.
-V4_SETTINGS = {
-    "calm": (0.28, 0.69, 5113, 0.30),
-    "warm": (0.31, 0.71, 5227, 0.28),
-    "busy": (0.26, 0.68, 5347, 0.31),
-    "tease": (0.30, 0.72, 5471, 0.28),
-    "miss": (0.27, 0.70, 5581, 0.30),
-    "end": (0.24, 0.67, 5693, 0.32),
 }
 
 
@@ -52,69 +42,84 @@ def download(url: str, target: Path) -> None:
         raise RuntimeError(f"Downloaded file too small: {url}")
 
 
+def _write_audio_tuple(result, target: Path) -> bool:
+    # Gradio Audio(type='numpy') usually comes back as (sample_rate, ndarray).
+    if not (isinstance(result, (list, tuple)) and len(result) >= 1):
+        return False
+    candidate = result[0] if len(result) == 2 and isinstance(result[1], str) else result
+    if not (isinstance(candidate, (list, tuple)) and len(candidate) == 2):
+        return False
+    sr, audio = candidate
+    if not isinstance(sr, (int, np.integer)):
+        return False
+    arr = np.asarray(audio)
+    if arr.ndim > 1:
+        arr = arr.mean(axis=-1)
+    if np.issubdtype(arr.dtype, np.floating):
+        arr = np.clip(arr, -1.0, 1.0)
+        arr = (arr * 32767.0).astype(np.int16)
+    elif arr.dtype != np.int16:
+        arr = arr.astype(np.int16)
+    with wave.open(str(target), "wb") as wf:
+        wf.setnchannels(1)
+        wf.setsampwidth(2)
+        wf.setframerate(int(sr))
+        wf.writeframes(arr.tobytes())
+    return target.exists() and target.stat().st_size > 4096
+
+
 def result_path(result) -> Path:
-    if isinstance(result, str):
-        p = Path(result)
-        if p.exists() and p.stat().st_size > 4096:
-            return p
-    if isinstance(result, dict):
-        raw = result.get("path") or result.get("name")
-        if raw and Path(str(raw)).exists():
-            return Path(str(raw))
-    if isinstance(result, (list, tuple)):
-        for item in result:
-            if isinstance(item, str) and Path(item).exists():
-                return Path(item)
-            if isinstance(item, dict):
-                raw = item.get("path") or item.get("name")
-                if raw and Path(str(raw)).exists():
-                    return Path(str(raw))
+    items = result if isinstance(result, (list, tuple)) else [result]
+    for item in items:
+        if isinstance(item, str):
+            p = Path(item)
+            if p.exists() and p.stat().st_size > 4096:
+                return p
+        if isinstance(item, dict):
+            raw = item.get("path") or item.get("name")
+            if raw:
+                p = Path(str(raw))
+                if p.exists() and p.stat().st_size > 4096:
+                    return p
     raise RuntimeError(f"Voice provider returned no usable audio file: {type(result).__name__}")
 
 
-def clone_fish(client: Client, text: str, reference: Path, target: Path, *, top_p: float, repetition_penalty: float, temperature: float) -> None:
+def clone_qwen(client: Client, text: str, reference: Path, target: Path) -> None:
     result = client.predict(
-        text,
         handle_file(reference),
         V10A_REFERENCE_TEXT,
-        1024,
-        200,
-        top_p,
-        repetition_penalty,
-        temperature,
-        api_name=FISH_API,
+        text,
+        "French",
+        False,
+        "1.7B",
+        api_name=QWEN_CLONE_API,
     )
+    target.unlink(missing_ok=True)
+    if _write_audio_tuple(result, target):
+        return
     source = result_path(result)
     shutil.copyfile(source, target)
     if not target.exists() or target.stat().st_size < 4096:
-        raise RuntimeError("Direct V10-A Fish clone output is too small")
+        raise RuntimeError("Qwen Base V10-A clone output is too small")
 
 
-def clone_chatterbox(
-    client: Client,
-    text: str,
-    reference: Path,
-    target: Path,
-    *,
-    exaggeration: float,
-    temperature: float,
-    seed: int,
-    cfg: float,
-) -> None:
+def clone_chatterbox(client: Client, text: str, reference: Path, target: Path) -> None:
+    # Safety fallback only. It is not preferred because the user rejected the
+    # V4 Chatterbox pack as robotic/saccadic.
     result = client.predict(
         text,
         "fr",
         handle_file(reference),
-        exaggeration,
-        temperature,
-        seed,
-        cfg,
+        0.31,
+        0.71,
+        6221,
+        0.28,
         api_name=CHATTERBOX_API,
     )
     source = result_path(result)
     shutil.copyfile(source, target)
     if not target.exists() or target.stat().st_size < 4096:
-        raise RuntimeError("V10-A Chatterbox clone output is too small")
+        raise RuntimeError("Fallback Chatterbox output is too small")
 
 
 def public_candidate_exists(version: str, key: str) -> bool:
@@ -131,43 +136,26 @@ def main() -> None:
     v10a = engine.WORK_DIR / "lucas-v10a-exact-reference.wav"
     download(V10A_URL, v10a)
 
-    # Preserve the validated opening reference. The test page now uses the
-    # synchronized audio already embedded in the validated V7/V10-A MP4.
-    opening_target = engine.WORK_DIR / "lucas-visio-dialogue-v2-opening-candidate.wav"
-    shutil.copyfile(v10a, opening_target)
-    print("VISIO_DIALOGUE_VOICE v2 key=opening source=exact_v10a_preserved")
+    # Opening stays native in the validated MP4; no separate synthesized audio.
+    print("VISIO_DIALOGUE_VOICE opening=native_validated_mp4")
 
-    chatterbox = Client(CHATTERBOX_SPACE, token=token, verbose=False, download_files=True)
-    v4_failures: list[str] = []
+    qwen = Client(QWEN_SPACE, token=token, verbose=False, download_files=True)
+    failures: list[str] = []
     for key, text in LINES.items():
-        target = engine.WORK_DIR / f"lucas-visio-dialogue-v4-{key}-candidate.wav"
-        exaggeration, temperature, seed, cfg = V4_SETTINGS[key]
+        target = engine.WORK_DIR / f"lucas-visio-dialogue-v5-{key}-candidate.wav"
         try:
-            clone_chatterbox(
-                chatterbox,
-                text,
-                v10a,
-                target,
-                exaggeration=exaggeration,
-                temperature=temperature,
-                seed=seed,
-                cfg=cfg,
-            )
+            clone_qwen(qwen, text, v10a, target)
             url = engine.publish_candidate(target)
-            print(
-                f"VISIO_DIALOGUE_VOICE v4 key={key} source=v10a_chatterbox_natural "
-                f"exaggeration={exaggeration} temp={temperature} cfg={cfg} url={url}"
-            )
+            print(f"VISIO_DIALOGUE_VOICE v5 key={key} source=qwen_base_1_7b_v10a_clone url={url}")
         except Exception as exc:
-            if public_candidate_exists("v4", key):
-                print(f"VISIO_DIALOGUE_VOICE v4 key={key} source=preserved_last_good reason={type(exc).__name__}: {exc}")
+            if public_candidate_exists("v5", key):
+                print(f"VISIO_DIALOGUE_VOICE v5 key={key} source=preserved_last_good reason={type(exc).__name__}: {exc}")
             else:
-                v4_failures.append(f"{key}: {type(exc).__name__}: {exc}")
+                failures.append(f"{key}: {type(exc).__name__}: {exc}")
 
-    # Do not mutate any approved/live manifest. Existing V2/V3 files remain
-    # available as fallbacks while V4 is evaluated in the standalone test page.
-    if v4_failures:
-        raise RuntimeError("V4 candidate generation incomplete: " + " | ".join(v4_failures))
+    # Candidate-only: no live manifest mutation and no auto-promotion.
+    if failures:
+        raise RuntimeError("V5 Qwen clone candidate generation incomplete: " + " | ".join(failures))
 
 
 if __name__ == "__main__":
