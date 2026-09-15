@@ -1,0 +1,66 @@
+name: MonIA Lucas Human Performance Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_url:
+        description: "HTTPS URL of a natural human spoken performance WAV/M4A/MP3"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  validate-and-publish-candidate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      INFOMANIAK_FTP_HOST: ${{ secrets.INFOMANIAK_FTP_HOST }}
+      INFOMANIAK_FTP_USER: ${{ secrets.INFOMANIAK_FTP_USER }}
+      INFOMANIAK_FTP_PASSWORD: ${{ secrets.INFOMANIAK_FTP_PASSWORD }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install FFmpeg and Python dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg
+          python -m pip install --disable-pip-version-check requests pillow gradio_client
+
+      - name: Download human performance source
+        env:
+          SOURCE_URL: ${{ inputs.source_url }}
+        run: |
+          python - <<'PY'
+          import os
+          from urllib.parse import urlparse
+          import requests
+
+          url=os.environ['SOURCE_URL'].strip()
+          p=urlparse(url)
+          if p.scheme!='https' or not p.netloc:
+              raise SystemExit('Only HTTPS source URLs are accepted')
+          r=requests.get(url,timeout=60,headers={'Cache-Control':'no-cache'})
+          r.raise_for_status()
+          if len(r.content)<4096 or len(r.content)>24*1024*1024:
+              raise SystemExit(f'Invalid source size: {len(r.content)}')
+          open('/tmp/lucas-human-performance-source','wb').write(r.content)
+          print('downloaded',len(r.content),'bytes')
+          PY
+
+      - name: Validate and publish candidate
+        run: |
+          python -m scripts.monia_lucas_performance_candidate /tmp/lucas-human-performance-source --publish-candidate
+
+      - name: Candidate-only policy
+        run: |
+          echo "TTS source: forbidden"
+          echo "Playback-rate warping: forbidden"
+          echo "Word/syllable retiming: forbidden"
+          echo "Live manifest mutation: forbidden"
+          echo "Human listening approval required before any runtime use"
