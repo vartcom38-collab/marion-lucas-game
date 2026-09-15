@@ -24,15 +24,8 @@
 const choices=document.getElementById('choices'),ended=document.getElementById('ended'),video=document.getElementById('lucasVideo'),listening=document.getElementById('listening'),startgate=document.getElementById('startgate');
 const BASE='https://marion-lucas.marionbolomey.fr/resources/monia/generated/';
 const BASE_VISIO=BASE+'visio-lucas-v7-v10a-timing-candidate.mp4?run=34859820027';
-const VISUALS={
- opening:BASE_VISIO,
- calm:BASE+'visio-lucas-v2-speaking-calm-candidate.mp4',
- warm:BASE+'visio-lucas-v2-speaking-warm-candidate.mp4',
- busy:BASE+'visio-lucas-v2-speaking-busy-candidate.mp4',
- tease:BASE+'visio-lucas-v2-speaking-warm-candidate.mp4',
- miss:BASE+'visio-lucas-v2-speaking-warm-candidate.mp4',
- end:BASE+'visio-lucas-v2-speaking-calm-candidate.mp4'
-};
+// Keep one fixed phone-camera framing in the prototype. No cinematic zoom clips.
+const VISUALS={opening:BASE_VISIO,calm:BASE_VISIO,warm:BASE_VISIO,busy:BASE_VISIO,tease:BASE_VISIO,miss:BASE_VISIO,end:BASE_VISIO};
 let audio=null,playToken=0;
 const scenes={
  opening:{audio:'opening',choices:[['Ça va, et toi ?','calm'],['Je voulais juste te voir','warm'],['Tu fais quoi là ?','busy']]},
@@ -77,9 +70,7 @@ async function startPair(key,version,onend,token){
     try{
       video.currentTime=0;a.currentTime=0;
       video.muted=true;
-      Promise.allSettled([video.play(),a.play()]).then(results=>{
-        if(results[1].status==='rejected')fail();
-      });
+      Promise.allSettled([video.play(),a.play()]).then(results=>{if(results[1].status==='rejected')fail()});
     }catch{fail()}
   });
 }
@@ -88,7 +79,8 @@ async function playLucas(key,onend){
   if(audio){audio.pause();audio=null}
   choices.classList.remove('show');listening.classList.remove('show');
   if(key==='opening'){await playOpeningNative(onend,token);return}
-  const versions=key==='warm'?['v4','v3','v2']:['v4','v2'];
+  // V4 was rejected as robotic/saccadic. Keep the previously better candidates only.
+  const versions=key==='warm'?['v3','v2']:['v2'];
   for(const version of versions){
     if(token!==playToken)return;
     const result=await startPair(key,version,onend,token);
