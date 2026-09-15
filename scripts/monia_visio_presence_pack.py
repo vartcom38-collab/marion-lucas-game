@@ -36,7 +36,8 @@ ALIVE = (
 )
 VOICE_PERFORMANCE = (
     "VOICE PERFORMANCE MUST MATCH THE SELECTED LUCAS V10-A DIRECTION BEFORE CONVERSION: native French, low to low-mid register, dark warm chest resonance, slightly dry/rough human grain, calm and self-contained, restrained melody, deliberate small pauses, little breathiness, relaxed connected articulation, subtle insolence from restraint. "
-    "Avoid bright upward question melody, presenter cadence, perfume-ad smoothness, theatrical growl, over-enunciation, foreign prosody, sing-song rhythm or generic TTS timing. "
+    "It must sound like a real private phone call, not a read sentence: allow tiny hesitations, uneven phrase lengths, an occasional swallowed syllable, soft consonants, tiny breaths between thought groups, imperfect endings and natural changes of pace. Do not make every pause equal. Do not land every sentence cleanly. "
+    "Avoid bright upward question melody, presenter cadence, perfume-ad smoothness, theatrical growl, over-enunciation, foreign prosody, sing-song rhythm, generic TTS timing or polished announcer diction. "
 )
 NEGATIVE = (
     "different man, identity drift, face morphing, tattoos, scar, uniform brown eyes, blue eyes, neon green eyes, head-only crop, extreme close-up, face filling frame, cropped forehead, cropped chin, cropped shoulders, beauty filter, plastic skin, frozen face, blank stare, repeated mechanical blink, exaggerated smile, theatrical acting, big gesture, subtitles, captions, text, UI, watermark, second person, extra hands, cinematic dolly, zoom, lip-sync patch, pasted mouth"
@@ -44,10 +45,11 @@ NEGATIVE = (
 
 SILENT_STATES = {
     "listening": (
-        6,
+        10,
         "STATE: LISTENING. Lucas is silently listening to Marion. His lips stay naturally closed or slightly relaxed with no speech articulation. "
-        "He blinks once or twice irregularly, breathes, makes a tiny eye-focus change, briefly glances a few degrees away and returns, and subtly settles one shoulder. "
-        "The end pose should be close to the beginning pose so the clip can repeat without an obvious jump."
+        "He blinks irregularly, breathes, makes tiny eye-focus changes, briefly glances a few degrees away and returns, and subtly settles one shoulder. "
+        "This is pure attentive presence, not a reaction to new information: no smile appearing for no reason, no eyebrow reaction, no nod timed like an answer. "
+        "The final pose must be extremely close to the opening pose so the clip can loop with no obvious cut."
     ),
     "reaction": (
         3,
@@ -56,7 +58,7 @@ SILENT_STATES = {
     ),
     "thinking": (
         4,
-        "STATE: THINKING/LISTENING. Lucas stays silent, glances briefly down or to the side as if considering what Marion said, exhales subtly, then returns his gaze toward the screen. "
+        "STATE: THINKING/LISTENING. Lucas has actually just been asked or told something and stays silent for a beat, glances briefly down or to the side, exhales subtly, then returns his gaze toward the screen. "
         "Keep lips quiet and relaxed, no speech articulation."
     ),
 }
@@ -154,21 +156,28 @@ def convert_to_v10a(client: Client, source: Path, reference: Path, target: Path)
     result = client.predict(
         source_audio_path=handle_file(source),
         target_audio_path=handle_file(reference),
-        diffusion_steps=30,
+        diffusion_steps=32,
         length_adjust=1.0,
-        intelligebility_cfg_rate=0.0,
-        similarity_cfg_rate=0.72,
-        top_p=0.92,
-        temperature=0.72,
+        intelligebility_cfg_rate=0.08,
+        similarity_cfg_rate=0.66,
+        top_p=0.95,
+        temperature=0.78,
         repetition_penalty=1.0,
-        convert_style=False,
+        convert_style=True,
         anonymization_only=False,
         api_name="/predict",
     )
     converted = resolve_audio(result)
-    shutil.copyfile(converted, target)
+    raw_target = target.with_suffix('.raw.wav')
+    shutil.copyfile(converted, raw_target)
+    target.unlink(missing_ok=True)
+    subprocess.run([
+        "ffmpeg", "-hide_banner", "-loglevel", "error", "-y",
+        "-i", str(raw_target), "-af", "highpass=f=55,lowpass=f=14500", "-ar", "24000", str(target),
+    ], check=True, timeout=90)
+    raw_target.unlink(missing_ok=True)
     if target.stat().st_size < 4096:
-        raise RuntimeError("V10-A timbre conversion failed")
+        raise RuntimeError("V10-A natural timbre conversion failed")
 
 
 def mux(video: Path, audio: Path, output: Path) -> None:
@@ -195,7 +204,7 @@ def build_one(state: str, anchor: Path, v10a: Path) -> tuple[Path, str]:
             f"STATE: SPEAKING. Lucas says exactly in natural casual native French: '{line}' "
             "Generate the speech natively together with the face so jaw, lips, cheeks, eyebrows and breath timing are coherent. "
             + VOICE_PERFORMANCE +
-            "After the sentence, settle naturally back toward attentive listening."
+            "After the sentence, do not pose; just settle naturally back toward attentive listening."
         ),
         6,
         anchor,
@@ -207,7 +216,7 @@ def build_one(state: str, anchor: Path, v10a: Path) -> tuple[Path, str]:
     seed = Client(SEED_VC_SPACE, token=(os.environ.get("HF_TOKEN", "").strip() or None), verbose=False, download_files=True)
     convert_to_v10a(seed, native_audio, v10a, converted)
     mux(native_video, converted, final)
-    return final, provider + "+SeedVC-V10A"
+    return final, provider + "+SeedVC-V10A-natural-style"
 
 
 def main() -> None:
