@@ -27,7 +27,7 @@ jobs:
         run: |
           python -m pip install --disable-pip-version-check --upgrade pip
           python -m pip install --disable-pip-version-check gradio_client requests pillow
-      - name: Generate dialogue pack anchored to exact selected V10-A
+      - name: Generate dialogue pack by direct cloning from exact V10-A
         run: python -m scripts.monia_visio_dialogue_voice_pack
       - name: Verify public dialogue audio
         run: |
@@ -45,6 +45,6 @@ jobs:
       - name: Candidate-only policy
         run: |
           echo "Opening is exact V10-A selected sample."
-          echo "Other phrases use native-French timing plus Seed-VC timbre conversion toward exact V10-A."
-          echo "No new voice-design identity is accepted as Lucas."
+          echo "Other phrases use direct zero-shot cloning from exact V10-A."
+          echo "No donor TTS voice. No Seed-VC repaint."
           echo "No live manifest mutation. No browser speechSynthesis fallback."
