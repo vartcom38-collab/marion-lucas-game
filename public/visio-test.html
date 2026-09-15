@@ -24,7 +24,7 @@
 const choices=document.getElementById('choices'),ended=document.getElementById('ended'),video=document.getElementById('lucasVideo'),listening=document.getElementById('listening'),startgate=document.getElementById('startgate');
 const BASE='https://marion-lucas.marionbolomey.fr/resources/monia/generated/';
 const BASE_VISIO=BASE+'visio-lucas-v7-v10a-timing-candidate.mp4?run=34859820027';
-// Keep one fixed phone-camera framing in the prototype. No cinematic zoom clips.
+// One fixed phone-camera framing throughout the call: no cinematic zoom clips.
 const VISUALS={opening:BASE_VISIO,calm:BASE_VISIO,warm:BASE_VISIO,busy:BASE_VISIO,tease:BASE_VISIO,miss:BASE_VISIO,end:BASE_VISIO};
 let audio=null,playToken=0;
 const scenes={
@@ -38,20 +38,21 @@ const scenes={
 };
 function showChoices(items){choices.innerHTML='';items.forEach(([label,next])=>{const b=document.createElement('button');b.className='choice';b.textContent=label;b.onclick=()=>select(next);choices.appendChild(b)});requestAnimationFrame(()=>choices.classList.add('show'))}
 function waitFor(el,event,timeout=1800){return new Promise(resolve=>{let done=false;const finish=()=>{if(done)return;done=true;clearTimeout(t);el.removeEventListener(event,finish);resolve()};const t=setTimeout(finish,timeout);el.addEventListener(event,finish,{once:true})})}
-async function prepareVisual(key,{muted=true}={}){
+async function prepareVisual(key,{muted=true,rewind=true}={}){
   const wanted=VISUALS[key]||BASE_VISIO;
   const absolute=new URL(wanted,location.href).href;
   video.pause();video.muted=muted;video.playbackRate=1;
   if(video.src!==absolute){video.src=wanted;video.load();await waitFor(video,'loadedmetadata')}
-  try{video.currentTime=0}catch{}
+  if(rewind){try{video.currentTime=0}catch{}}
   if(video.readyState<2)await waitFor(video,'canplay');
-  try{video.currentTime=0}catch{}
+  if(rewind){try{video.currentTime=0}catch{}}
 }
-function resetVisioToListening(){video.pause();video.muted=true;try{video.currentTime=0}catch{}listening.classList.add('show')}
+// Listening keeps the exact frame where Lucas finished. No snap back to frame 0.
+function resetVisioToListening(){video.pause();video.muted=true;listening.classList.add('show')}
 function audioUrl(key,version){return BASE+`lucas-visio-dialogue-${version}-${key}-candidate.wav?v=${version}`}
 async function playOpeningNative(onend,token){
   if(audio){audio.pause();audio=null}
-  await prepareVisual('opening',{muted:false});
+  await prepareVisual('opening',{muted:false,rewind:true});
   if(token!==playToken)return;
   choices.classList.remove('show');listening.classList.remove('show');
   video.onended=()=>{if(token!==playToken)return;video.muted=true;resetVisioToListening();onend?.()};
@@ -60,7 +61,7 @@ async function playOpeningNative(onend,token){
 async function startPair(key,version,onend,token){
   const a=new Audio(audioUrl(key,version));audio=a;a.preload='auto';
   const audioReady=waitFor(a,'canplaythrough',1800);
-  await Promise.all([prepareVisual(key,{muted:true}),audioReady]);
+  await Promise.all([prepareVisual(key,{muted:true,rewind:true}),audioReady]);
   if(token!==playToken||audio!==a)return null;
   return new Promise(resolve=>{
     let failed=false;
@@ -79,7 +80,7 @@ async function playLucas(key,onend){
   if(audio){audio.pause();audio=null}
   choices.classList.remove('show');listening.classList.remove('show');
   if(key==='opening'){await playOpeningNative(onend,token);return}
-  // V4 was rejected as robotic/saccadic. Keep the previously better candidates only.
+  // Rejected V4 is excluded. Use only the previously less synthetic candidates.
   const versions=key==='warm'?['v3','v2']:['v2'];
   for(const version of versions){
     if(token!==playToken)return;
@@ -92,10 +93,10 @@ async function playLucas(key,onend){
 function enter(key){if(key==='finish'){finish();return}const s=scenes[key];if(!s)return;playLucas(s.audio,()=>showChoices(s.choices))}
 function select(next){choices.classList.remove('show');listening.classList.remove('show');setTimeout(()=>enter(next),220)}
 function finish(){playToken++;if(audio){audio.pause();audio=null}video.onended=null;video.pause();ended.classList.add('show')}
-function begin(){ended.classList.remove('show');startgate.style.display='none';video.loop=false;video.src=BASE_VISIO;video.load();resetVisioToListening();enter('opening')}
-function restart(){resetVisioToListening();begin()}
+function begin(){ended.classList.remove('show');startgate.style.display='none';video.loop=false;video.src=BASE_VISIO;video.load();video.muted=true;try{video.currentTime=0}catch{}enter('opening')}
+function restart(){begin()}
 document.getElementById('startCall').onclick=begin;document.getElementById('end').onclick=finish;document.getElementById('restart').onclick=restart;document.getElementById('camera').onclick=e=>{const self=document.getElementById('selfView');self.style.display=self.style.display==='none'?'grid':'none';e.currentTarget.classList.toggle('off')};document.getElementById('mic').onclick=e=>e.currentTarget.classList.toggle('off');
-video.muted=true;video.loop=false;video.src=BASE_VISIO;video.load();resetVisioToListening();
+video.muted=true;video.loop=false;video.src=BASE_VISIO;video.load();
 </script>
 </body>
 </html>
