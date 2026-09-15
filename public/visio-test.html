@@ -23,6 +23,16 @@
 <script>
 const choices=document.getElementById('choices'),ended=document.getElementById('ended'),video=document.getElementById('lucasVideo'),listening=document.getElementById('listening'),startgate=document.getElementById('startgate');
 const BASE='https://marion-lucas.marionbolomey.fr/resources/monia/generated/';
+const BASE_VISIO=BASE+'visio-lucas-v7-v10a-timing-candidate.mp4?run=34859820027';
+const VISUALS={
+ opening:BASE_VISIO,
+ calm:BASE+'visio-lucas-v2-speaking-calm-candidate.mp4',
+ warm:BASE+'visio-lucas-v2-speaking-warm-candidate.mp4',
+ busy:BASE+'visio-lucas-v2-speaking-busy-candidate.mp4',
+ tease:BASE+'visio-lucas-v2-speaking-warm-candidate.mp4',
+ miss:BASE+'visio-lucas-v2-speaking-warm-candidate.mp4',
+ end:BASE+'visio-lucas-v2-speaking-calm-candidate.mp4'
+};
 let audio=null;
 const scenes={
  opening:{audio:'opening',choices:[['Ça va, et toi ?','calm'],['Je voulais juste te voir','warm'],['Tu fais quoi là ?','busy']]},
@@ -35,17 +45,27 @@ const scenes={
 };
 function showChoices(items){choices.innerHTML='';items.forEach(([label,next])=>{const b=document.createElement('button');b.className='choice';b.textContent=label;b.onclick=()=>select(next);choices.appendChild(b)});requestAnimationFrame(()=>choices.classList.add('show'))}
 function resetVisioToListening(){video.pause();try{video.currentTime=0}catch{}listening.classList.add('show')}
-function startVisioWithVoice(){video.pause();try{video.currentTime=0}catch{}video.muted=true;video.playbackRate=1;video.play().catch(()=>{})}
+function setVisualFor(key){const wanted=VISUALS[key]||BASE_VISIO;if(video.src!==new URL(wanted,location.href).href){video.src=wanted;video.load()}video.onerror=()=>{if(video.src!==new URL(BASE_VISIO,location.href).href){video.src=BASE_VISIO;video.load()}}}
+function startVisioWithVoice(key){setVisualFor(key);video.pause();try{video.currentTime=0}catch{}video.muted=true;video.playbackRate=1;video.play().catch(()=>{})}
+function audioUrl(key,version){return BASE+`lucas-visio-dialogue-${version}-${key}-candidate.wav?v=${version}`}
 function playLucas(key,onend){
   if(audio){audio.pause();audio=null}
   choices.classList.remove('show');
   listening.classList.remove('show');
-  audio=new Audio(BASE+`lucas-visio-dialogue-v2-${key}-candidate.wav?v=2`);
-  audio.preload='auto';
-  audio.addEventListener('play',startVisioWithVoice,{once:true});
-  audio.onended=()=>{resetVisioToListening();onend?.()};
-  audio.onerror=()=>{resetVisioToListening();listening.textContent='Audio Lucas en préparation…';onend?.()};
-  audio.play().catch(()=>{resetVisioToListening();listening.textContent='Touchez une fois l’écran pour autoriser le son'});
+  const preferred=key==='warm'?'v3':'v2';
+  let triedFallback=false;
+  const start=(version)=>{
+    audio=new Audio(audioUrl(key,version));
+    audio.preload='auto';
+    audio.addEventListener('play',()=>startVisioWithVoice(key),{once:true});
+    audio.onended=()=>{resetVisioToListening();onend?.()};
+    audio.onerror=()=>{
+      if(version==='v3'&&!triedFallback){triedFallback=true;start('v2');audio.play().catch(()=>{}) ;return}
+      resetVisioToListening();listening.textContent='Audio Lucas en préparation…';onend?.()
+    };
+    audio.play().catch(()=>{resetVisioToListening();listening.textContent='Touchez une fois l’écran pour autoriser le son'});
+  };
+  start(preferred);
 }
 function enter(key){if(key==='finish'){finish();return}const s=scenes[key];if(!s)return;playLucas(s.audio,()=>showChoices(s.choices))}
 function select(next){choices.classList.remove('show');listening.classList.remove('show');setTimeout(()=>enter(next),250)}
