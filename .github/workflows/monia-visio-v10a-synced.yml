@@ -1,4 +1,4 @@
-name: MonIA Lucas Visio V10-A Synced
+name: MonIA Lucas Warm Visio Synced
 
 on:
   workflow_dispatch:
@@ -39,19 +39,19 @@ jobs:
           python -m pip install --disable-pip-version-check --upgrade pip
           python -m pip install --disable-pip-version-check requests pillow gradio_client
 
-      - name: Build full-frame MuseTalk Lucas visio candidate
+      - name: Build warm full-frame MuseTalk Lucas visio candidate
         run: python -m scripts.monia_visio_v10a_synced --publish-candidate
 
-      - name: Verify MuseTalk candidate publicly
+      - name: Verify warm MuseTalk candidate publicly
         run: |
           python - <<'PY'
           import requests
-          url = "https://marion-lucas.marionbolomey.fr/resources/monia/generated/visio-lucas-v10a-musetalk-candidate.mp4"
+          url = "https://marion-lucas.marionbolomey.fr/resources/monia/generated/visio-lucas-warm-directclone-musetalk-candidate.mp4"
           r = requests.get(url, timeout=60, headers={"Range":"bytes=0-127", "Cache-Control":"no-cache", "Accept":"video/*,*/*"})
           ok = r.status_code in (200,206) and len(r.content) >= 16 and (b"ftyp" in r.content[:64] or r.content.startswith(b"RIFF") or r.content.startswith(b"\x1aE\xdf\xa3"))
           print("candidate", url, "status", r.status_code, "bytes", len(r.content), "ok", ok)
           if not ok:
-              raise SystemExit("V10-A MuseTalk visio candidate public verification failed")
+              raise SystemExit("Warm direct-clone MuseTalk visio candidate public verification failed")
           PY
 
       - name: Candidate-only policy
@@ -59,7 +59,8 @@ jobs:
           echo "Candidate only: true"
           echo "Live manifest mutation: forbidden"
           echo "Source visual: V7 approved-layout candidate, full 9:16 frame preserved"
-          echo "Source voice: V10-A quasi-approved candidate"
-          echo "Mouth motion: MuseTalk 1.5 audio-driven face-region inpainting behind MonIA"
+          echo "Source voice: last-good direct-clone warm Lucas dialogue candidate"
+          echo "Voice retiming/resynthesis during sync: forbidden"
+          echo "Mouth motion: MuseTalk 1.5 conservative jaw-region inpainting"
           echo "Wav2Lip pasted-mouth path: rejected"
           echo "Playback-rate warping: forbidden"
