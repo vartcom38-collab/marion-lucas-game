@@ -20,19 +20,28 @@ V10A_URL = (
 V10A_REFERENCE_TEXT = "Salut, ça va toi ? Qu'est-ce que tu racontes ?"
 PUBLIC_BASE = "https://marion-lucas.marionbolomey.fr/resources/monia/generated/"
 
+# Existing V2 pack is preserved as a fallback. V4 is a candidate-only pass aimed
+# at conversational naturalness using the exact selected V10-A reference.
 LINES = {
-    "opening": "Salut, ça va toi ? Qu'est-ce que tu racontes ?",
-    "calm": "Ça va, journée un peu longue mais tranquille. Et toi, t'as fait quoi ?",
-    "warm": "Ah ouais, ça me fait plaisir que tu m'appelles juste pour ça.",
-    "busy": "Je viens de me poser deux minutes, j'allais justement souffler un peu.",
+    "calm": "Ça va... journée un peu longue, mais tranquille. Et toi, t'as fait quoi ?",
+    "warm": "Ah ouais... ça me fait plaisir que tu m'appelles juste pour ça.",
+    "busy": "Je viens de me poser deux minutes. J'allais justement souffler un peu.",
     "tease": "Je fais pas le malin... enfin, pas tant que ça.",
-    "miss": "Toi aussi, un peu.",
-    "end": "D'accord, on se reparle après."
+    "miss": "Toi aussi... un peu.",
+    "end": "D'accord. On se reparle après."
 }
 
-# Focused V3 experiment: same selected Lucas V10-A reference, but a looser,
-# more conversational performance. This never overwrites the V2 pack.
-V3_WARM_TEXT = "Ah ouais... ça me fait plaisir que tu m'appelles juste pour ça."
+# Per-line settings stay deliberately restrained: less exaggeration, moderate
+# sampling, and slightly stronger guidance than the V3 experiment. The goal is
+# a private phone-call cadence, not a performed TTS read.
+V4_SETTINGS = {
+    "calm": (0.28, 0.69, 5113, 0.30),
+    "warm": (0.31, 0.71, 5227, 0.28),
+    "busy": (0.26, 0.68, 5347, 0.31),
+    "tease": (0.30, 0.72, 5471, 0.28),
+    "miss": (0.27, 0.70, 5581, 0.30),
+    "end": (0.24, 0.67, 5693, 0.32),
+}
 
 
 def download(url: str, target: Path) -> None:
@@ -81,23 +90,31 @@ def clone_fish(client: Client, text: str, reference: Path, target: Path, *, top_
         raise RuntimeError("Direct V10-A Fish clone output is too small")
 
 
-def clone_chatterbox(client: Client, text: str, reference: Path, target: Path) -> None:
-    # Existing MonIA route already used elsewhere in the project. We feed the
-    # exact selected V10-A sample as the reference and loosen only performance.
+def clone_chatterbox(
+    client: Client,
+    text: str,
+    reference: Path,
+    target: Path,
+    *,
+    exaggeration: float,
+    temperature: float,
+    seed: int,
+    cfg: float,
+) -> None:
     result = client.predict(
         text,
         "fr",
         handle_file(reference),
-        0.42,
-        0.78,
-        4817,
-        0.20,
+        exaggeration,
+        temperature,
+        seed,
+        cfg,
         api_name=CHATTERBOX_API,
     )
     source = result_path(result)
     shutil.copyfile(source, target)
     if not target.exists() or target.stat().st_size < 4096:
-        raise RuntimeError("V10-A Chatterbox expressive clone output is too small")
+        raise RuntimeError("V10-A Chatterbox clone output is too small")
 
 
 def public_candidate_exists(version: str, key: str) -> bool:
@@ -114,58 +131,43 @@ def main() -> None:
     v10a = engine.WORK_DIR / "lucas-v10a-exact-reference.wav"
     download(V10A_URL, v10a)
 
+    # Preserve the validated opening reference. The test page now uses the
+    # synchronized audio already embedded in the validated V7/V10-A MP4.
     opening_target = engine.WORK_DIR / "lucas-visio-dialogue-v2-opening-candidate.wav"
     shutil.copyfile(v10a, opening_target)
-    print("VISIO_DIALOGUE_VOICE v2 key=opening source=exact_v10a")
-    print("VISIO_DIALOGUE_VOICE url=" + engine.publish_candidate(opening_target))
+    print("VISIO_DIALOGUE_VOICE v2 key=opening source=exact_v10a_preserved")
 
-    fish = Client(FISH_SPACE, token=token, verbose=False, download_files=True)
-    failures: list[str] = []
+    chatterbox = Client(CHATTERBOX_SPACE, token=token, verbose=False, download_files=True)
+    v4_failures: list[str] = []
     for key, text in LINES.items():
-        if key == "opening":
-            continue
-        target = engine.WORK_DIR / f"lucas-visio-dialogue-v2-{key}-candidate.wav"
+        target = engine.WORK_DIR / f"lucas-visio-dialogue-v4-{key}-candidate.wav"
+        exaggeration, temperature, seed, cfg = V4_SETTINGS[key]
         try:
-            clone_fish(fish, text, v10a, target, top_p=0.72, repetition_penalty=1.10, temperature=0.66)
-            url = engine.publish_candidate(target)
-            print(f"VISIO_DIALOGUE_VOICE v2 key={key} source=direct_v10a_fish_clone_natural url={url}")
-        except Exception as exc:
-            if public_candidate_exists("v2", key):
-                print(f"VISIO_DIALOGUE_VOICE v2 key={key} source=preserved_last_good reason={type(exc).__name__}: {exc}")
-                continue
-            failures.append(f"{key}: {type(exc).__name__}: {exc}")
-
-    # V3 warm candidate: try Fish first, then fall back to the existing MonIA
-    # Chatterbox route using the exact same V10-A reference. Candidate-only.
-    v3_target = engine.WORK_DIR / "lucas-visio-dialogue-v3-warm-candidate.wav"
-    try:
-        clone_fish(fish, V3_WARM_TEXT, v10a, v3_target, top_p=0.78, repetition_penalty=1.08, temperature=0.74)
-        url = engine.publish_candidate(v3_target)
-        print(f"VISIO_DIALOGUE_VOICE v3 key=warm source=direct_v10a_fish_expressive url={url}")
-    except Exception as fish_exc:
-        try:
-            chatterbox = Client(CHATTERBOX_SPACE, token=token, verbose=False, download_files=True)
-            clone_chatterbox(chatterbox, V3_WARM_TEXT, v10a, v3_target)
-            url = engine.publish_candidate(v3_target)
-            print(
-                "VISIO_DIALOGUE_VOICE v3 key=warm source=v10a_chatterbox_expressive "
-                f"fish_fallback={type(fish_exc).__name__} url={url}"
+            clone_chatterbox(
+                chatterbox,
+                text,
+                v10a,
+                target,
+                exaggeration=exaggeration,
+                temperature=temperature,
+                seed=seed,
+                cfg=cfg,
             )
-        except Exception as chatter_exc:
-            if public_candidate_exists("v3", "warm"):
-                print(
-                    "VISIO_DIALOGUE_VOICE v3 key=warm source=preserved_last_good "
-                    f"fish={type(fish_exc).__name__} chatterbox={type(chatter_exc).__name__}"
-                )
+            url = engine.publish_candidate(target)
+            print(
+                f"VISIO_DIALOGUE_VOICE v4 key={key} source=v10a_chatterbox_natural "
+                f"exaggeration={exaggeration} temp={temperature} cfg={cfg} url={url}"
+            )
+        except Exception as exc:
+            if public_candidate_exists("v4", key):
+                print(f"VISIO_DIALOGUE_VOICE v4 key={key} source=preserved_last_good reason={type(exc).__name__}: {exc}")
             else:
-                print(
-                    "VISIO_DIALOGUE_VOICE v3 key=warm source=not_published "
-                    f"fish={type(fish_exc).__name__}: {fish_exc} | "
-                    f"chatterbox={type(chatter_exc).__name__}: {chatter_exc}"
-                )
+                v4_failures.append(f"{key}: {type(exc).__name__}: {exc}")
 
-    if failures:
-        raise RuntimeError("No safe fallback for: " + " | ".join(failures))
+    # Do not mutate any approved/live manifest. Existing V2/V3 files remain
+    # available as fallbacks while V4 is evaluated in the standalone test page.
+    if v4_failures:
+        raise RuntimeError("V4 candidate generation incomplete: " + " | ".join(v4_failures))
 
 
 if __name__ == "__main__":
