@@ -59,15 +59,18 @@ def result_path(result) -> Path:
 
 
 def generate_direct_clone(client: Client, text: str, reference: Path, target: Path) -> None:
+    # Keep the clone anchored to V10-A, but do not over-constrain sampling.
+    # Slightly higher top-p/temperature restores conversational micro-variation
+    # and breath while repetition control stays moderate to avoid synthetic loops.
     result = client.predict(
         text,
         handle_file(reference),
         V10A_REFERENCE_TEXT,
         1024,
-        220,
+        200,
+        0.72,
+        1.10,
         0.66,
-        1.08,
-        0.58,
         api_name=FISH_API,
     )
     source = result_path(result)
@@ -94,7 +97,7 @@ def main() -> None:
         target = engine.WORK_DIR / f"lucas-visio-dialogue-v2-{key}-candidate.wav"
         generate_direct_clone(fish, text, v10a, target)
         url = engine.publish_candidate(target)
-        print(f"VISIO_DIALOGUE_VOICE v2 key={key} source=direct_v10a_fish_clone url={url}")
+        print(f"VISIO_DIALOGUE_VOICE v2 key={key} source=direct_v10a_fish_clone_natural url={url}")
 
 
 if __name__ == "__main__":
