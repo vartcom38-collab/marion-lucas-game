@@ -9,7 +9,7 @@ from PIL import Image
 import scripts.monia_video_engine as engine
 
 REFERENCE_IMAGE = Path("resources/monia/canon/lucas/visio-layout-reference.jpg")
-OUTPUT_NAME = "visio-lucas-speaking-fr-layout-v8-native-candidate.mp4"
+OUTPUT_NAME = "visio-lucas-speaking-fr-layout-v7-candidate.mp4"
 
 PROMPT = (
     "Animate the supplied reference as a REAL smartphone front-camera video call with Lucas. "
@@ -18,15 +18,13 @@ PROMPT = (
     "Do NOT turn this into a head-only portrait or beauty close-up. Keep Lucas recognizably the same man with natural skin texture, dark wavy hair, short stubble and olive skin. "
     "EYE COLOR IS CANONICAL AND MUST NOT DRIFT: Lucas has deep cool green-hazel eyes, an outer gray-green/olive iris, a subtle warm amber-brown ring close to the pupil, and a darker limbal rim. "
     "The overall impression must be green-gray/olive hazel rather than brown. Never make the irises uniformly brown, bright blue, turquoise, emerald green or unnaturally luminous. Preserve realistic low-light variation. "
-    "Keep the validated V7 visual feeling: relaxed dark shirt, tiny handheld micro-shake, minute framing drift, natural breathing, irregular blinks, subtle autofocus/exposure breathing and small gaze shifts between Marion on screen and the lens. "
-    "His emotional intention is warm, private and gently amused, genuinely happy to see Marion. His gaze is soft and attentive, with a restrained half-smile, tiny eyebrow reactions and brief eye-brightening before he speaks. "
-    "IMPORTANT: GENERATE HIS VOICE AND HIS FACIAL SPEECH PERFORMANCE TOGETHER IN THIS SAME TAKE. Do not treat the mouth as a silent animation to be dubbed later. The original generated take itself is the final speech performance. "
-    "Lucas says in natural everyday French: 'Ah ouais, ça me fait plaisir que tu m'appelles juste pour ça.' "
-    "VOICE IDENTITY: young adult French man, around twenty-two, naturally low-mid male register, warm slightly husky texture, close and intimate phone-call sound, relaxed chest resonance, subtle smile audible in the tone, never deep trailer voice, never nasal, never bright or adolescent, never polished radio voice. "
-    "DELIVERY: one continuous spontaneous thought. He begins with a soft, quick 'Ah ouais', flows directly into the rest of the sentence, links the words naturally, slightly compresses unstressed syllables, uses one normal breath only if needed, and finishes softly without a staged final cadence. "
-    "The timing must be fluid and conversational: no word-by-word delivery, no evenly spaced syllables, no artificial micro-pauses, no chopped phrasing, no punctuation-driven stops. The sentence should feel like it came out naturally in one breath during a real private call. "
-    "French pronunciation must be native and contemporary, with connected speech, soft consonants, ordinary contractions and a relaxed southern-European warmth without caricature or marked regional accent. "
-    "His mouth, jaw, cheeks, tiny head movements and eyebrows must follow the same continuous vocal performance naturally. Natural occasional teeth visibility is fine. Do not exaggerate lip shapes. "
+    "Keep the V6 visual feeling: relaxed dark shirt, tiny handheld micro-shake, minute framing drift, natural breathing, irregular blinks, subtle autofocus/exposure breathing and small gaze shifts between Marion on screen and the lens. "
+    "His emotional intention is warm, private and gently amused, like he is genuinely happy to see Marion. His gaze is soft and attentive, with a restrained half-smile, tiny eyebrow reactions and brief eye-brightening before he speaks. "
+    "State: SPEAKING IN VERY NATURAL CASUAL FRENCH. Lucas casually says: 'Hey... ça va, toi ? T'as l'air un peu crevée.' "
+    "This must feel like spontaneous private conversation, NOT a written sentence being read. He starts softly, lets 'hey' fall out naturally, leaves a tiny imperfect pause, slightly swallows some syllables in connected speech, breathes between thought groups, and lets the final words trail naturally rather than landing like an announcer. "
+    "Use everyday French rhythm: contractions, linked words, unequal word lengths, slight reductions, soft consonants, tiny hesitation, small breath noises and natural sentence melody. "
+    "Absolutely avoid careful textbook diction, perfectly separated words, evenly timed syllables, synthetic TTS rhythm, presenter voice or radio delivery. "
+    "His speech must also read visually when muted: natural jaw motion, varied lip shapes, occasional teeth visibility, cheek movement, tiny head and eyebrow reactions aligned with emphasis. "
     "No theatrical acting, no cinematic dolly, no frozen pose, no head-only crop. "
     "Treat any phone UI already present in the source as static framing reference only; do not invent extra text, captions, subtitles or interface elements."
 )
@@ -34,7 +32,7 @@ PROMPT = (
 NEGATIVE = (
     "head-only portrait, extreme close-up, studio portrait, beauty lighting, blank stare, presenter gaze, frozen mouth, weak lip movement, "
     "uniform brown eyes, dark brown irises, bright blue eyes, turquoise eyes, emerald green eyes, neon eyes, glowing irises, eye color drift, "
-    "robotic speech, text-to-speech cadence, careful textbook French, over-articulated consonants, separated words, evenly timed syllables, chopped phrasing, repeated micro-pauses, punctuation pauses, announcer voice, radio voice, trailer voice, very deep voice, nasal voice, adolescent voice, high-pitched male voice, foreign accent, dubbed feeling, asynchronous mouth, "
+    "robotic speech, text-to-speech cadence, careful textbook French, over-articulated consonants, separated words, evenly timed syllables, announcer voice, radio voice, "
     "exaggerated acting, identity drift, different man, face morphing, text mutation, caption mutation, new subtitles, new UI, extra people, extra hands, cinematic camera move, dolly shot, zoom-in"
 )
 
@@ -58,7 +56,7 @@ def generate() -> tuple[Path, str]:
     base = engine.LUCAS_VISIO_TEST1
     profile = replace(
         base,
-        key="lucas-visio-speaking-fr-layout-v8-native",
+        key="lucas-visio-speaking-fr-layout-v7",
         prompt=PROMPT,
         negative=NEGATIVE,
         width=576,
@@ -88,14 +86,14 @@ def generate() -> tuple[Path, str]:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Generate MonIA Lucas V8 native integrated visio candidate without external lip-sync")
+    parser = argparse.ArgumentParser(description="Generate MonIA Lucas natural casual French visio candidate V7 with locked green-hazel eyes")
     parser.add_argument("--publish-candidate", action="store_true")
     args = parser.parse_args()
     path, provider = generate()
-    print(f"MONIA_VISIO_LAYOUT_V8_NATIVE compute={provider} output={path} bytes={path.stat().st_size}")
+    print(f"MONIA_VISIO_LAYOUT_V7 compute={provider} output={path} bytes={path.stat().st_size}")
     if args.publish_candidate:
         url = engine.publish_candidate(path)
-        print(f"MONIA_VISIO_LAYOUT_V8_NATIVE_CANDIDATE url={url}")
+        print(f"MONIA_VISIO_LAYOUT_V7_CANDIDATE url={url}")
 
 
 if __name__ == "__main__":
