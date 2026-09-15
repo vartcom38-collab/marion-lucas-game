@@ -12,15 +12,15 @@ from gradio_client import Client, handle_file
 import scripts.monia_video_engine as engine
 
 VIDEO_URL = "https://marion-lucas.marionbolomey.fr/resources/monia/generated/visio-lucas-speaking-fr-layout-v7-candidate.mp4?run=34826963016"
-VOICE_URL = "https://marion-lucas.marionbolomey.fr/resources/monia/generated/lucas-voice-v10-drama-tuned-fr-a-candidate.wav"
-OUTPUT_NAME = "visio-lucas-v10a-musetalk-candidate.mp4"
+VOICE_URL = "https://marion-lucas.marionbolomey.fr/resources/monia/generated/lucas-visio-dialogue-v2-warm-candidate.wav"
+OUTPUT_NAME = "visio-lucas-warm-directclone-musetalk-candidate.mp4"
 MUSE_SPACE = "henrybit/musetalk-1-5"
 
-# This test deliberately abandons Wav2Lip. The previous result visibly pasted a
-# synthetic mouth region over Lucas and also returned a smaller-looking frame.
-# MuseTalk 1.5 edits the face region and composites it back into the original
-# full video frame, so the V7 framing/body/eyes remain the visual foundation.
-# MonIA remains the policy/orchestration layer and publication stays candidate-only.
+# The voice is now the best direct-clone Lucas dialogue candidate already used
+# by visio-test. We do not alter/re-time/re-synthesize that audio here.
+# MuseTalk 1.5 is used only to drive lower-face motion from the locked audio,
+# then composite it back into the approved V7 full-frame visual foundation.
+# This remains candidate-only until visually approved.
 
 
 def download(url: str, target: Path) -> None:
@@ -60,7 +60,7 @@ def _resolve_video(result) -> Path:
 
 
 def normalize_source(video: Path, target: Path) -> None:
-    """Keep the original 9:16 frame and convert only timing/codec for MuseTalk."""
+    """Keep the approved 9:16 framing; normalize only codec/fps for MuseTalk."""
     target.unlink(missing_ok=True)
     subprocess.run(
         [
@@ -81,14 +81,12 @@ def run_musetalk(video: Path, voice: Path, output: Path) -> str:
     token = os.environ.get("HF_TOKEN", "").strip() or None
     client = Client(MUSE_SPACE, token=token, verbose=True, download_files=True)
 
-    # API order from the Space: audio, video, bbox_shift, extra_margin,
-    # parsing_mode, left_cheek_width, right_cheek_width. We deliberately use
-    # jaw parsing and conservative cheek widths so the edited region blends
-    # inside Lucas' lower face rather than looking like pasted lips.
+    # Start conservative: keep edits centered on jaw/lower face, not the whole
+    # face. This minimizes identity drift and avoids the old pasted-mouth look.
     variants = (
-        (0, 8, "jaw", 65, 65),
-        (-2, 6, "jaw", 60, 60),
-        (2, 8, "jaw", 70, 70),
+        (0, 6, "jaw", 58, 58),
+        (-2, 5, "jaw", 55, 55),
+        (1, 7, "jaw", 62, 62),
     )
     api_names = ("/inference", "/generate", "/predict", None)
     errors: list[str] = []
@@ -117,32 +115,50 @@ def run_musetalk(video: Path, voice: Path, output: Path) -> str:
     raise RuntimeError("MuseTalk sync failed: " + " | ".join(errors[-6:]))
 
 
+def mux_locked_audio(video: Path, voice: Path, target: Path) -> None:
+    """Force final output to carry the exact approved candidate audio bytes/timing."""
+    target.unlink(missing_ok=True)
+    subprocess.run(
+        [
+            "ffmpeg", "-hide_banner", "-loglevel", "error", "-y",
+            "-i", str(video), "-i", str(voice),
+            "-map", "0:v:0", "-map", "1:a:0",
+            "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-shortest", str(target),
+        ],
+        check=True,
+        timeout=120,
+    )
+    if not engine.worker.looks_like_video(target):
+        raise RuntimeError("Final exact-audio mux failed")
+
+
 def build_synced() -> tuple[Path, str]:
-    raw_video = engine.WORK_DIR / "visio-v7-visual-source.mp4"
-    video = engine.WORK_DIR / "visio-v7-visual-source-25fps.mp4"
-    voice = engine.WORK_DIR / "lucas-v10a-voice-source.wav"
+    raw_video = engine.WORK_DIR / "visio-v7-warm-visual-source.mp4"
+    video = engine.WORK_DIR / "visio-v7-warm-visual-source-25fps.mp4"
+    voice = engine.WORK_DIR / "lucas-warm-directclone-voice.wav"
+    musetalk_raw = engine.WORK_DIR / "visio-lucas-warm-musetalk-raw.mp4"
     output = engine.WORK_DIR / OUTPUT_NAME
 
     download(VIDEO_URL, raw_video)
     download(VOICE_URL, voice)
     normalize_source(raw_video, video)
+    musetalk_raw.unlink(missing_ok=True)
     output.unlink(missing_ok=True)
 
-    provider = run_musetalk(video, voice, output)
-    if not engine.worker.looks_like_video(output):
-        raise RuntimeError("MuseTalk visio output is not a valid video")
+    provider = run_musetalk(video, voice, musetalk_raw)
+    mux_locked_audio(musetalk_raw, voice, output)
     return output, provider
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Build MonIA Lucas V10-A visio with full-frame MuseTalk audio-driven sync")
+    parser = argparse.ArgumentParser(description="Build Lucas warm visio synced to locked direct-clone audio with MuseTalk")
     parser.add_argument("--publish-candidate", action="store_true")
     args = parser.parse_args()
     output, provider = build_synced()
-    print(f"MONIA_VISIO_V10A_MUSETALK compute={provider} output={output} bytes={output.stat().st_size}")
+    print(f"MONIA_VISIO_WARM_MUSETALK compute={provider} output={output} bytes={output.stat().st_size}")
     if args.publish_candidate:
         url = engine.publish_candidate(output)
-        print(f"MONIA_VISIO_V10A_MUSETALK_CANDIDATE url={url}")
+        print(f"MONIA_VISIO_WARM_MUSETALK_CANDIDATE url={url}")
 
 
 if __name__ == "__main__":
