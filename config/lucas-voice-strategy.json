@@ -1,16 +1,35 @@
 {
-  "version": 1,
-  "status": "locked-for-next-tests",
+  "version": 2,
+  "status": "accepted-timbre-base",
   "character": "lucas",
-  "goal": "Natural conversational French that feels human first, with Lucas-like vocal characteristics second.",
+  "goal": "Keep the accepted Lucas vocal color, soften harshness slightly, and build natural conversational French without changing vocal identity.",
   "reference_use": {
-    "uploaded_lucas_clips": "prosody-and-presence-reference-only",
-    "validated_v10a": "legacy-identity-anchor-not-sufficient-for-naturalness"
+    "uploaded_lucas_clips": "primary timbre, rhythm and presence reference",
+    "lucas_voice_bank_v1": "accepted timbre base from user-provided Lucas speech moments",
+    "lucas_voice_bank_v1_soft": "preferred tonal direction for warmth and reduced dryness; EQ only, no pitch or speed change",
+    "validated_v10a": "legacy visio anchor only; do not let it override the newer accepted timbre base"
+  },
+  "accepted_characteristics": {
+    "register": "naturally low male voice, not artificially deep",
+    "tone": "direct and masculine, with slightly warmer and softer edges than the raw references",
+    "delivery": "connected, fluid, conversational",
+    "variation": "natural pitch and energy movement; never monotone",
+    "diction": "casual spoken French, linked words and relaxed consonants",
+    "endings": "soft, relaxed phrase endings",
+    "breathing": "subtle and integrated",
+    "avoid": [
+      "dry or brittle upper-mid tone",
+      "over-articulated French",
+      "syllable-by-syllable cadence",
+      "forced bass",
+      "announcer delivery",
+      "uniform timing"
+    ]
   },
   "rejected_routes": [
     {
       "route": "Qwen voice design / profile-guided TTS",
-      "reason": "robotic, synthetic cadence, does not match the natural speech in Lucas reference videos"
+      "reason": "robotic, synthetic cadence"
     },
     {
       "route": "Chatterbox direct TTS",
@@ -22,26 +41,18 @@
     }
   ],
   "next_route": {
-    "principle": "human-performance-first",
-    "source_requirement": "A genuinely human or human-like continuous spoken performance of the exact target line must exist before timbre conversion.",
-    "conversion": "Use existing MonIA Seed-VC only after the source performance sounds natural on its own.",
-    "length_adjust": 1.0,
+    "principle": "preserve accepted timbre, improve interpretation",
+    "source_requirement": "Use a natural continuous French performance as the source whenever a new line is created.",
+    "processing": "Only light tonal softening and normalization before candidate review; do not alter pitch, tempo or phrase timing.",
+    "french_target": "Natural metropolitan French conversational prosody with contractions, linked phrasing, relaxed consonants and irregular human timing.",
     "forbidden": [
       "playback-rate warping",
+      "pitch shifting to make the voice deeper",
       "word-by-word resynthesis",
       "syllable-by-syllable timing fixes",
       "auto-promotion to live",
-      "using a rejected TTS candidate as performance source"
+      "replacing the accepted timbre base with a new voice identity"
     ]
   },
-  "prosody_target": {
-    "register": "naturally low male voice, not forced downward",
-    "delivery": "connected conversational phrasing",
-    "variation": "visible natural pitch and energy variation",
-    "pauses": "small irregular pauses only when semantically natural",
-    "endings": "soft, relaxed phrase endings",
-    "diction": "casual French, never announcer or textbook diction",
-    "breathing": "subtle and integrated into phrase groups"
-  },
-  "approval_rule": "Generate one short candidate first. Human approval is required before producing a full dialogue pack or changing visio runtime priorities."
+  "approval_rule": "One short French candidate must be approved by the user before expanding to a dialogue pack or changing live visio priorities."
 }
