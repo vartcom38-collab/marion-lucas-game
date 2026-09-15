@@ -10,7 +10,7 @@
 </head>
 <body>
 <div class="phone" id="phone">
-  <video id="lucasVideo" autoplay muted playsinline loop preload="auto" src="https://marion-lucas.marionbolomey.fr/resources/monia/generated/visio-lucas-v7-v10a-timing-candidate.mp4?run=34859820027"></video>
+  <video id="lucasVideo" autoplay muted playsinline preload="auto" src="https://marion-lucas.marionbolomey.fr/resources/monia/generated/visio-lucas-v7-v10a-timing-candidate.mp4?run=34859820027"></video>
   <div class="shade"></div>
   <div class="status"><div class="left">▮▮▮▮ <span>⌁</span></div><div class="right"><i class="dot"></i><i class="battery"></i></div></div>
   <div class="name">Lucas<small>visio</small></div>
@@ -34,14 +34,26 @@ const scenes={
  end:{audio:'end',choices:[['Raccrocher','finish']]}
 };
 function showChoices(items){choices.innerHTML='';items.forEach(([label,next])=>{const b=document.createElement('button');b.className='choice';b.textContent=label;b.onclick=()=>select(next);choices.appendChild(b)});requestAnimationFrame(()=>choices.classList.add('show'))}
-function playLucas(key,onend){if(audio){audio.pause();audio=null}choices.classList.remove('show');listening.classList.remove('show');audio=new Audio(BASE+`lucas-visio-dialogue-v1-${key}-candidate.wav?v=1`);audio.preload='auto';audio.onended=()=>{listening.classList.add('show');onend?.()};audio.onerror=()=>{listening.textContent='Audio Lucas en préparation…';listening.classList.add('show');onend?.()};audio.play().catch(()=>{listening.textContent='Touchez une fois l’écran pour autoriser le son';listening.classList.add('show')})}
+function resetVisioToListening(){video.pause();try{video.currentTime=0}catch{}listening.classList.add('show')}
+function startVisioWithVoice(){video.pause();try{video.currentTime=0}catch{}video.muted=true;video.playbackRate=1;video.play().catch(()=>{})}
+function playLucas(key,onend){
+  if(audio){audio.pause();audio=null}
+  choices.classList.remove('show');
+  listening.classList.remove('show');
+  audio=new Audio(BASE+`lucas-visio-dialogue-v1-${key}-candidate.wav?v=1`);
+  audio.preload='auto';
+  audio.addEventListener('play',startVisioWithVoice,{once:true});
+  audio.onended=()=>{resetVisioToListening();onend?.()};
+  audio.onerror=()=>{resetVisioToListening();listening.textContent='Audio Lucas en préparation…';onend?.()};
+  audio.play().catch(()=>{resetVisioToListening();listening.textContent='Touchez une fois l’écran pour autoriser le son'});
+}
 function enter(key){if(key==='finish'){finish();return}const s=scenes[key];if(!s)return;playLucas(s.audio,()=>showChoices(s.choices))}
 function select(next){choices.classList.remove('show');listening.classList.remove('show');setTimeout(()=>enter(next),250)}
 function finish(){if(audio){audio.pause();audio=null}video.pause();ended.classList.add('show')}
-function begin(){ended.classList.remove('show');startgate.style.display='none';video.muted=true;video.play().catch(()=>{});enter('opening')}
-function restart(){video.currentTime=0;video.play().catch(()=>{});begin()}
+function begin(){ended.classList.remove('show');startgate.style.display='none';video.muted=true;video.loop=false;resetVisioToListening();enter('opening')}
+function restart(){resetVisioToListening();begin()}
 document.getElementById('startCall').onclick=begin;document.getElementById('end').onclick=finish;document.getElementById('restart').onclick=restart;document.getElementById('camera').onclick=e=>{const self=document.getElementById('selfView');self.style.display=self.style.display==='none'?'grid':'none';e.currentTarget.classList.toggle('off')};document.getElementById('mic').onclick=e=>e.currentTarget.classList.toggle('off');
-video.muted=true;video.play().catch(()=>{});
+video.muted=true;video.loop=false;resetVisioToListening();
 </script>
 </body>
 </html>
