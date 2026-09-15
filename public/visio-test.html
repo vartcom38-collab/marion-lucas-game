@@ -24,7 +24,6 @@
 const choices=document.getElementById('choices'),ended=document.getElementById('ended'),video=document.getElementById('lucasVideo'),listening=document.getElementById('listening'),startgate=document.getElementById('startgate');
 const BASE='https://marion-lucas.marionbolomey.fr/resources/monia/generated/';
 const BASE_VISIO=BASE+'visio-lucas-v7-v10a-timing-candidate.mp4?run=34859820027';
-// One fixed phone-camera framing throughout the call: no cinematic zoom clips.
 const VISUALS={opening:BASE_VISIO,calm:BASE_VISIO,warm:BASE_VISIO,busy:BASE_VISIO,tease:BASE_VISIO,miss:BASE_VISIO,end:BASE_VISIO};
 let audio=null,playToken=0;
 const scenes={
@@ -47,7 +46,6 @@ async function prepareVisual(key,{muted=true,rewind=true}={}){
   if(video.readyState<2)await waitFor(video,'canplay');
   if(rewind){try{video.currentTime=0}catch{}}
 }
-// Listening keeps the exact frame where Lucas finished. No snap back to frame 0.
 function resetVisioToListening(){video.pause();video.muted=true;listening.classList.add('show')}
 function audioUrl(key,version){return BASE+`lucas-visio-dialogue-${version}-${key}-candidate.wav?v=${version}`}
 async function playOpeningNative(onend,token){
@@ -80,8 +78,9 @@ async function playLucas(key,onend){
   if(audio){audio.pause();audio=null}
   choices.classList.remove('show');listening.classList.remove('show');
   if(key==='opening'){await playOpeningNative(onend,token);return}
-  // Rejected V4 is excluded. Use only the previously less synthetic candidates.
-  const versions=key==='warm'?['v3','v2']:['v2'];
+  // V5 = Qwen3-TTS Base voice clone from the exact V10-A reference.
+  // Previous packs remain safe fallbacks until the V5 candidates are approved.
+  const versions=key==='warm'?['v5','v3','v2']:['v5','v2'];
   for(const version of versions){
     if(token!==playToken)return;
     const result=await startPair(key,version,onend,token);
