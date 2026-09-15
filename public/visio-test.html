@@ -40,7 +40,7 @@ function playLucas(key,onend){
   if(audio){audio.pause();audio=null}
   choices.classList.remove('show');
   listening.classList.remove('show');
-  audio=new Audio(BASE+`lucas-visio-dialogue-v1-${key}-candidate.wav?v=1`);
+  audio=new Audio(BASE+`lucas-visio-dialogue-v2-${key}-candidate.wav?v=2`);
   audio.preload='auto';
   audio.addEventListener('play',startVisioWithVoice,{once:true});
   audio.onended=()=>{resetVisioToListening();onend?.()};
