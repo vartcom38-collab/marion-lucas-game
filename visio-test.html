@@ -26,42 +26,23 @@
     .ctrl.end{background:#ff3b30;font-size:22px}.ctrl.on{background:#f2f2f2;color:#111}
     #start{position:absolute;z-index:10;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.28);backdrop-filter:blur(2px)}
     #start button{border:0;border-radius:999px;background:rgba(20,20,20,.86);color:#fff;padding:16px 24px;font-size:18px;font-weight:700;box-shadow:0 8px 30px rgba(0,0,0,.35)}
-    #debug{position:absolute;z-index:8;left:16px;top:calc(max(18px,env(safe-area-inset-top)) + 64px);font-size:11px;opacity:0;pointer-events:none}
-    @media (orientation:portrait) and (max-width:760px){
-      .remote video{object-fit:cover;object-position:center center}
-      .choices{width:calc(100vw - 32px)}
-    }
-    @media (orientation:landscape) and (min-width:900px){
-      .remote video{width:min(100vw,calc(100vh * .66));height:100%;left:50%;right:auto;transform:translateX(-50%);object-fit:cover;object-position:center center;border-radius:0}
-      .top{left:28px;right:28px}.identity .name{font-size:22px}
-      #localWrap{width:118px;height:158px}
-    }
+    @media (orientation:portrait) and (max-width:760px){.remote video{object-fit:cover;object-position:center center}.choices{width:calc(100vw - 32px)}}
+    @media (orientation:landscape) and (min-width:900px){.remote video{width:min(100vw,calc(100vh * .66));height:100%;left:50%;right:auto;transform:translateX(-50%);object-fit:cover;object-position:center center}.top{left:28px;right:28px}.identity .name{font-size:22px}#localWrap{width:118px;height:158px}}
   </style>
 </head>
 <body>
 <div id="app">
-  <div class="remote">
-    <video id="videoA" playsinline preload="auto"></video>
-    <video id="videoB" playsinline preload="auto"></video>
-    <div class="shade"></div>
-  </div>
-  <div class="top">
-    <div class="identity"><div class="name">Lucas</div><div id="status" class="status">visio</div></div>
-    <div id="localWrap"><video id="local" autoplay muted playsinline></video><span id="localHint">caméra<br>désactivée</span></div>
-  </div>
+  <div class="remote"><video id="videoA" playsinline preload="auto"></video><video id="videoB" playsinline preload="auto"></video><div class="shade"></div></div>
+  <div class="top"><div class="identity"><div class="name">Lucas</div><div id="status" class="status">visio</div></div><div id="localWrap"><video id="local" autoplay muted playsinline></video><span id="localHint">caméra<br>désactivée</span></div></div>
   <div id="choices" class="choices hidden"></div>
-  <div class="controls">
-    <button id="camera" class="ctrl" aria-label="Caméra">▣</button>
-    <button id="hang" class="ctrl end" aria-label="Raccrocher">⌕</button>
-    <button id="mic" class="ctrl" aria-label="Micro">♪</button>
-  </div>
+  <div class="controls"><button id="camera" class="ctrl" aria-label="Caméra">▣</button><button id="hang" class="ctrl end" aria-label="Raccrocher">⌕</button><button id="mic" class="ctrl" aria-label="Micro">♪</button></div>
   <div id="start"><button>Démarrer l’appel</button></div>
-  <div id="debug"></div>
 </div>
 <script>
 (() => {
   const BASE='/resources/monia/generated/';
   const clips={
+    voiceAnchor:BASE+'visio-lucas-v7-v10a-timing-candidate.mp4',
     listening:BASE+'visio-lucas-v2-listening-candidate.mp4',
     reaction:BASE+'visio-lucas-v2-reaction-candidate.mp4',
     thinking:BASE+'visio-lucas-v2-thinking-candidate.mp4',
@@ -70,71 +51,22 @@
     busy:BASE+'visio-lucas-v2-speaking-busy-candidate.mp4'
   };
   const A=document.getElementById('videoA'),B=document.getElementById('videoB'),choices=document.getElementById('choices'),status=document.getElementById('status');
-  let front=A,back=B,busy=false,round=0,stream=null,micOn=true,idleToken=0;
+  let front=A,back=B,busy=false,round=0,stream=null,micOn=true;
   const sets=[
     [['Ça va, et toi ?','calm'],['Je voulais juste te voir','warm'],['Tu fais quoi là ?','busy']],
     [['Pas grand-chose, je me pose aussi','calm'],['Ça me fait plaisir de te voir','warm'],['T’as l’air crevé','thinking']],
     [['Raconte-moi ta journée','calm'],['Encore une minute…','warm'],['Je te laisse, on se reparle après','end']]
   ];
   Object.values(clips).forEach(src=>{const v=document.createElement('video');v.preload='auto';v.src=src;});
-
-  function setChoices(items){
-    choices.innerHTML='';
-    items.forEach(([label,key])=>{const b=document.createElement('button');b.className='choice';b.textContent=label;b.onclick=()=>choose(key);choices.appendChild(b);});
-    choices.classList.remove('hidden');
-  }
+  function setChoices(items){choices.innerHTML='';items.forEach(([label,key])=>{const b=document.createElement('button');b.className='choice';b.textContent=label;b.onclick=()=>choose(key);choices.appendChild(b)});choices.classList.remove('hidden')}
   function hideChoices(){choices.classList.add('hidden')}
-
-  async function swap(src,{loop=false,audio=false}={}){
-    back.pause();back.src=src;back.loop=loop;back.muted=!audio;back.currentTime=0;
-    document.querySelector('.remote').style.setProperty('--remote-bg',`url("${src}")`);
-    try{await back.play()}catch(e){console.warn('play failed',e)}
-    back.style.opacity='1';front.style.opacity='0';
-    const old=front;front=back;back=old;
-    if(!loop){
-      await new Promise(resolve=>{const done=()=>{front.removeEventListener('ended',done);resolve()};front.addEventListener('ended',done,{once:true});setTimeout(done,10000)});
-    }
-  }
-
-  async function returnListening(){
-    status.textContent='Lucas écoute';
-    ++idleToken;
-    await swap(clips.listening,{loop:true,audio:false});
-    if(!busy)setChoices(sets[Math.min(round,sets.length-1)]);
-  }
-
-  async function choose(key){
-    if(busy)return;
-    busy=true;idleToken++;hideChoices();
-    if(key==='end'){status.textContent='appel terminé';setTimeout(()=>location.href='about:blank',500);return;}
-    status.textContent='Lucas écoute';
-    await swap(clips.reaction,{loop:false,audio:false});
-    if(key==='thinking'){
-      await swap(clips.thinking,{loop:false,audio:false});
-      key='calm';
-    }
-    status.textContent='Lucas parle';
-    await swap(clips[key],{loop:false,audio:true});
-    round=Math.min(round+1,sets.length-1);busy=false;
-    await returnListening();
-  }
-
-  document.querySelector('#start button').onclick=async()=>{
-    document.getElementById('start').style.display='none';
-    busy=true;idleToken++;
-    status.textContent='Lucas parle';
-    await swap(clips.warm,{loop:false,audio:true});
-    busy=false;
-    await returnListening();
-  };
-
-  document.getElementById('camera').onclick=async(e)=>{
-    const btn=e.currentTarget,local=document.getElementById('local'),hint=document.getElementById('localHint');
-    if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;local.srcObject=null;local.style.display='none';hint.style.display='inline';btn.classList.remove('on');return;}
-    try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false});local.srcObject=stream;local.style.display='block';hint.style.display='none';btn.classList.add('on')}catch(err){hint.textContent='caméra indisponible'}
-  };
-  document.getElementById('mic').onclick=e=>{micOn=!micOn;e.currentTarget.classList.toggle('on',!micOn);};
-  document.getElementById('hang').onclick=()=>{idleToken++;if(stream)stream.getTracks().forEach(t=>t.stop());status.textContent='appel terminé';front.pause();back.pause();choices.innerHTML='';setTimeout(()=>location.href='about:blank',400)};
+  async function swap(src,{loop=false,audio=false}={}){back.pause();back.src=src;back.loop=loop;back.muted=!audio;back.currentTime=0;document.querySelector('.remote').style.setProperty('--remote-bg',`url("${src}")`);try{await back.play()}catch(e){console.warn(e)}back.style.opacity='1';front.style.opacity='0';const old=front;front=back;back=old;if(!loop){await new Promise(resolve=>{const done=()=>resolve();front.addEventListener('ended',done,{once:true});setTimeout(done,10000)})}}
+  async function returnListening(){status.textContent='Lucas écoute';await swap(clips.listening,{loop:true,audio:false});if(!busy)setChoices(sets[Math.min(round,sets.length-1)])}
+  async function choose(key){if(busy)return;busy=true;hideChoices();if(key==='end'){status.textContent='appel terminé';setTimeout(()=>location.href='about:blank',500);return}status.textContent='Lucas écoute';await swap(clips.reaction,{loop:false,audio:false});if(key==='thinking'){await swap(clips.thinking,{loop:false,audio:false});key='calm'}status.textContent='Lucas parle';await swap(clips[key],{loop:false,audio:true});round=Math.min(round+1,sets.length-1);busy=false;await returnListening()}
+  document.querySelector('#start button').onclick=async()=>{document.getElementById('start').style.display='none';busy=true;status.textContent='Lucas parle';await swap(clips.voiceAnchor,{loop:false,audio:true});busy=false;await returnListening()};
+  document.getElementById('camera').onclick=async(e)=>{const btn=e.currentTarget,local=document.getElementById('local'),hint=document.getElementById('localHint');if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;local.srcObject=null;local.style.display='none';hint.style.display='inline';btn.classList.remove('on');return}try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false});local.srcObject=stream;local.style.display='block';hint.style.display='none';btn.classList.add('on')}catch(err){hint.textContent='caméra indisponible'}};
+  document.getElementById('mic').onclick=e=>{micOn=!micOn;e.currentTarget.classList.toggle('on',!micOn)};
+  document.getElementById('hang').onclick=()=>{if(stream)stream.getTracks().forEach(t=>t.stop());status.textContent='appel terminé';front.pause();back.pause();choices.innerHTML='';setTimeout(()=>location.href='about:blank',400)};
 })();
 </script>
 </body>
