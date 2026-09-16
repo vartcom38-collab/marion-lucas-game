@@ -13,18 +13,19 @@ import scripts.monia_video_engine as engine
 
 QWEN_SPACE = "Qwen/Qwen3-TTS"
 QWEN_CLONE_API = "/generate_voice_clone"
-CHATTERBOX_SPACE = "ResembleAI/Chatterbox-Multilingual-TTS"
-CHATTERBOX_API = "/generate_tts_audio"
-V10A_URL = (
+V16_URL = (
     "https://marion-lucas.marionbolomey.fr/resources/monia/generated/"
-    "lucas-voice-v10-drama-tuned-fr-a-candidate.wav"
+    "lucas-voice-v16-b-smoother-flow-fr-candidate.wav"
 )
-V10A_REFERENCE_TEXT = "Salut, ça va toi ? Qu'est-ce que tu racontes ?"
+V16_REFERENCE_TEXT = "Je viens de me poser deux minutes et toi tu fais quoi ?"
 PUBLIC_BASE = "https://marion-lucas.marionbolomey.fr/resources/monia/generated/"
+VERSION = "v17"
 
-# Existing V2/V3 packs stay untouched. V5 is a structurally different test:
-# Qwen3-TTS Base voice cloning from the exact selected V10-A reference.
+# V17 is the first dialogue pack generated from the user-approved synthetic V16
+# Lucas voice. V16 defines the project voice timbre/tone/flow reference.
+# This is synthetic-to-synthetic cloning only. No real-person voice cloning.
 LINES = {
+    "opening": "Salut, ça va toi ? Qu'est-ce que tu racontes ?",
     "calm": "Ça va... journée un peu longue, mais tranquille. Et toi, t'as fait quoi ?",
     "warm": "Ah ouais... ça me fait plaisir que tu m'appelles juste pour ça.",
     "busy": "Je viens de me poser deux minutes. J'allais justement souffler un peu.",
@@ -43,7 +44,6 @@ def download(url: str, target: Path) -> None:
 
 
 def _write_audio_tuple(result, target: Path) -> bool:
-    # Gradio Audio(type='numpy') usually comes back as (sample_rate, ndarray).
     if not (isinstance(result, (list, tuple)) and len(result) >= 1):
         return False
     candidate = result[0] if len(result) == 2 and isinstance(result[1], str) else result
@@ -87,7 +87,7 @@ def result_path(result) -> Path:
 def clone_qwen(client: Client, text: str, reference: Path, target: Path) -> None:
     result = client.predict(
         handle_file(reference),
-        V10A_REFERENCE_TEXT,
+        V16_REFERENCE_TEXT,
         text,
         "French",
         False,
@@ -100,30 +100,11 @@ def clone_qwen(client: Client, text: str, reference: Path, target: Path) -> None
     source = result_path(result)
     shutil.copyfile(source, target)
     if not target.exists() or target.stat().st_size < 4096:
-        raise RuntimeError("Qwen Base V10-A clone output is too small")
+        raise RuntimeError("Qwen V16 synthetic clone output is too small")
 
 
-def clone_chatterbox(client: Client, text: str, reference: Path, target: Path) -> None:
-    # Safety fallback only. It is not preferred because the user rejected the
-    # V4 Chatterbox pack as robotic/saccadic.
-    result = client.predict(
-        text,
-        "fr",
-        handle_file(reference),
-        0.31,
-        0.71,
-        6221,
-        0.28,
-        api_name=CHATTERBOX_API,
-    )
-    source = result_path(result)
-    shutil.copyfile(source, target)
-    if not target.exists() or target.stat().st_size < 4096:
-        raise RuntimeError("Fallback Chatterbox output is too small")
-
-
-def public_candidate_exists(version: str, key: str) -> bool:
-    url = PUBLIC_BASE + f"lucas-visio-dialogue-{version}-{key}-candidate.wav"
+def public_candidate_exists(key: str) -> bool:
+    url = PUBLIC_BASE + f"lucas-visio-dialogue-{VERSION}-{key}-candidate.wav"
     try:
         r = requests.get(url, timeout=30, headers={"Range": "bytes=0-63", "Cache-Control": "no-cache"})
         return r.status_code in (200, 206) and len(r.content) >= 44 and r.content[:4] == b"RIFF"
@@ -133,29 +114,26 @@ def public_candidate_exists(version: str, key: str) -> bool:
 
 def main() -> None:
     token = os.environ.get("HF_TOKEN", "").strip() or None
-    v10a = engine.WORK_DIR / "lucas-v10a-exact-reference.wav"
-    download(V10A_URL, v10a)
-
-    # Opening stays native in the validated MP4; no separate synthesized audio.
-    print("VISIO_DIALOGUE_VOICE opening=native_validated_mp4")
+    v16 = engine.WORK_DIR / "lucas-v16-approved-synthetic-reference.wav"
+    download(V16_URL, v16)
 
     qwen = Client(QWEN_SPACE, token=token, verbose=False, download_files=True)
     failures: list[str] = []
     for key, text in LINES.items():
-        target = engine.WORK_DIR / f"lucas-visio-dialogue-v5-{key}-candidate.wav"
+        target = engine.WORK_DIR / f"lucas-visio-dialogue-{VERSION}-{key}-candidate.wav"
         try:
-            clone_qwen(qwen, text, v10a, target)
+            clone_qwen(qwen, text, v16, target)
             url = engine.publish_candidate(target)
-            print(f"VISIO_DIALOGUE_VOICE v5 key={key} source=qwen_base_1_7b_v10a_clone url={url}")
+            print(f"VISIO_DIALOGUE_VOICE {VERSION} key={key} source=qwen_base_1_7b_v16_synthetic_clone url={url}")
         except Exception as exc:
-            if public_candidate_exists("v5", key):
-                print(f"VISIO_DIALOGUE_VOICE v5 key={key} source=preserved_last_good reason={type(exc).__name__}: {exc}")
+            if public_candidate_exists(key):
+                print(f"VISIO_DIALOGUE_VOICE {VERSION} key={key} source=preserved_last_good reason={type(exc).__name__}: {exc}")
             else:
                 failures.append(f"{key}: {type(exc).__name__}: {exc}")
 
-    # Candidate-only: no live manifest mutation and no auto-promotion.
+    # Candidate-only: no live gameplay/runtime manifest mutation and no auto-promotion.
     if failures:
-        raise RuntimeError("V5 Qwen clone candidate generation incomplete: " + " | ".join(failures))
+        raise RuntimeError("V17 V16-based candidate generation incomplete: " + " | ".join(failures))
 
 
 if __name__ == "__main__":
