@@ -32,14 +32,14 @@ jobs:
           python -m pip install --disable-pip-version-check --upgrade pip
           python -m pip install --disable-pip-version-check gradio_client requests pillow
 
-      - name: Generate Lucas V15 B-timbre fluid French candidate
+      - name: Generate Lucas V16 smoother-flow French candidate
         run: python -m scripts.monia_lucas_voice_design_fr --publish-candidate
 
       - name: Verify candidate publicly
         run: |
           python - <<'PY'
           import requests
-          url = "https://marion-lucas.marionbolomey.fr/resources/monia/generated/lucas-voice-v15-b-fluid-fr-candidate.wav"
+          url = "https://marion-lucas.marionbolomey.fr/resources/monia/generated/lucas-voice-v16-b-smoother-flow-fr-candidate.wav"
           r = requests.get(url, timeout=60, headers={"Cache-Control":"no-cache"})
           r.raise_for_status()
           assert len(r.content) > 4096, len(r.content)
@@ -49,7 +49,7 @@ jobs:
 
       - name: Candidate-only policy
         run: |
-          echo "V15 tests the preferred V14-B timbre direction on a longer connected French line."
-          echo "V12 remains the flow benchmark; V15 must preserve connected delivery without conversion."
-          echo "No exact real-person voice cloning. No speed/pitch manipulation. No word or syllable stitching."
+          echo "V16 preserves the V15 voice direction and changes only French phrase continuity."
+          echo "No conversion, no speed/pitch manipulation, no word or syllable stitching."
+          echo "No exact real-person voice cloning."
           echo "No live manifest mutation. Human listening approval required."
