@@ -1,0 +1,87 @@
+{
+  "version": 1,
+  "status": "active",
+  "purpose": "Central MonIA media-intelligence policy. Every requested scene is classified before prompt construction or reference selection.",
+  "scene_types": {
+    "visio": {
+      "camera_grammar": "smartphone_front_camera",
+      "required_reference_classes": ["identity", "visio_camera", "motion", "performance"],
+      "preferred_lucas_roles": ["face", "gaze", "micro_expression", "gesture_rhythm", "speech_presence", "speech_rhythm"],
+      "hard_reject": ["visible_phone", "external_camera", "cinematic_portrait", "tripod_look", "dolly", "cinematic_pan", "generic_male_identity"]
+    },
+    "cinematic": {
+      "camera_grammar": "external_cinematic_camera",
+      "required_reference_classes": ["identity", "motion"],
+      "preferred_lucas_roles": ["identity", "posture", "body_movement", "gesture", "gaze", "micro_expression"],
+      "hard_reject": ["front_camera_selfie_grammar_unless_story_requires_it", "generic_male_identity"]
+    },
+    "gameplay_ambient": {
+      "camera_grammar": "player_world_camera",
+      "required_reference_classes": [],
+      "preferred_lucas_roles": ["posture", "body_movement"],
+      "hard_reject": ["forced_cinematic_coverage"]
+    },
+    "audio_call": {
+      "camera_grammar": "none",
+      "required_reference_classes": ["performance"],
+      "preferred_lucas_roles": ["speech_presence", "speech_rhythm"],
+      "hard_reject": ["unrequested_video_generation"]
+    },
+    "phone_message": {
+      "camera_grammar": "none",
+      "required_reference_classes": [],
+      "preferred_lucas_roles": [],
+      "hard_reject": ["unrequested_video_generation", "unrequested_voice_generation"]
+    },
+    "still_image": {
+      "camera_grammar": "photographic",
+      "required_reference_classes": ["identity"],
+      "preferred_lucas_roles": ["identity", "face", "gaze"],
+      "hard_reject": ["generic_male_identity"]
+    }
+  },
+  "classification": {
+    "explicit_type_has_priority": true,
+    "fail_closed_below_confidence": 0.58,
+    "signals": {
+      "visio": ["visio", "video call", "facetime", "appel video", "appel vidéo", "camera frontale", "caméra frontale", "selfie call", "front camera"],
+      "cinematic": ["cinematique", "cinématique", "cinematic", "scene", "scène", "mini drama", "cutscene", "plan serre", "plan serré", "camera exterieure", "caméra extérieure"],
+      "audio_call": ["appel audio", "audio call", "telephone sans video", "téléphone sans vidéo", "appel vocal"],
+      "phone_message": ["message", "sms", "texto", "imessage", "notification", "chat"],
+      "still_image": ["photo", "portrait", "image fixe", "still image"],
+      "gameplay_ambient": ["gameplay", "vie libre", "ambiance", "idle", "monde", "exploration"]
+    }
+  },
+  "reference_policy": {
+    "lucas_bank": "config/lucas-reference-bank.json",
+    "visio_policy": "config/monia-visio-approved.json",
+    "motion_bank": "config/motion-reference-bank.json",
+    "identity_first": true,
+    "text_description_secondary": true,
+    "never_train_on_unapproved_generation": true,
+    "never_promote_candidate_automatically": true,
+    "require_context_fit": ["scene_type", "place", "time", "emotion", "relationship_state", "action", "wardrobe_context"],
+    "fail_if_required_reference_class_missing": true
+  },
+  "planning_order": [
+    "classify_scene_type",
+    "extract_characters",
+    "extract_context",
+    "choose_camera_grammar",
+    "choose_identity_references",
+    "choose_motion_performance_references",
+    "build_constraints",
+    "build_prompt",
+    "validate_plan_before_generation",
+    "validate_candidate_after_generation"
+  ],
+  "post_generation_validation": {
+    "identity_required": true,
+    "camera_grammar_required": true,
+    "context_match_required": true,
+    "reject_identity_drift": true,
+    "reject_camera_grammar_mismatch": true,
+    "reject_reference_contamination": true,
+    "human_approval_required_before_reference_bank_promotion": true
+  }
+}
