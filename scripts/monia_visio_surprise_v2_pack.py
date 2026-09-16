@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import subprocess
 import time
 from pathlib import Path
@@ -9,11 +10,7 @@ import requests
 
 import scripts.monia_video_engine as engine
 
-VOICE_URL = (
-    "https://marion-lucas.marionbolomey.fr/resources/monia/generated/"
-    "lucas-voice-v4-surprise-call-fr-candidate.wav"
-)
-VOICE_NAME = "lucas-voice-v4-surprise-call-fr-candidate.wav"
+VOICE_STRATEGY_PATH = Path("config/lucas-voice-strategy.json")
 
 SCENE_CORE = (
     "Brand-new photorealistic live video-call feed of Lucas, seen DIRECTLY THROUGH THE FRONT-FACING CAMERA OF HIS OWN SMARTPHONE. "
@@ -28,10 +25,8 @@ SCENE_CORE = (
     "Lucas looks mainly at Marion's image on screen with occasional brief direct looks into the lens, creating natural screen-versus-lens eye shifts. "
     "Subtle breathing, normal irregular blinks, tiny head movement and minute upper-body shifts. Never frozen. "
     "No cinematic grammar: no zoom, push-in, dolly, pan, rack focus, cut, montage, artificial reframing or portrait posing. "
-    "NEW MOMENT: late afternoon after training on a quiet covered terrace/courtyard, soft natural daylight, muted stone and greenery in the distant background. "
-    "NEW LOOK: fitted charcoal training top, slightly tousled post-training hair, relaxed off-duty appearance. "
+    "SURPRISE MOMENT: MonIA may choose a plausible off-duty context coherent with Lucas's current life state, time and place, without revealing future story beats. "
     "Natural skin texture, believable smartphone exposure, slight front-camera softness, realistic compression feel, no glamour filter, no cinematic color grade. "
-    "Keep identity, wardrobe, setting, lighting and front-camera geometry coherent across all three state clips. "
     "No other person, no subtitles, no UI, no text, no watermark. "
 )
 
@@ -48,34 +43,44 @@ NEGATIVE = (
 STATE_SPECS = {
     "listening": {
         "duration": 5,
-        "output": "visio-lucas-surprise-v4-frontcam-listening-candidate.mp4",
+        "output": "visio-lucas-surprise-v5-frontcam-listening-candidate.mp4",
         "prompt": SCENE_CORE + (
             "STATE LISTENING. Marion is speaking. Lucas remains silent and attentive in the live front-camera feed. "
-            "He breathes naturally, blinks irregularly, makes one tiny unseen-hand framing correction, briefly checks Marion's image on screen, "
-            "then returns his eyes toward the lens and gives a very small acknowledging head movement. Mouth mostly closed."
+            "He breathes naturally, blinks irregularly, makes one tiny unseen-hand framing correction and reacts with restrained Lucas-specific micro-expressions."
         ),
     },
     "speaking": {
         "duration": 9,
-        "output": "visio-lucas-surprise-v4-frontcam-speaking-v4voice-candidate.mp4",
-        "silent": "visio-lucas-surprise-v4-frontcam-speaking-silent-candidate.mp4",
+        "output": "visio-lucas-surprise-v5-frontcam-speaking-v16-candidate.mp4",
+        "silent": "visio-lucas-surprise-v5-frontcam-speaking-silent-candidate.mp4",
         "prompt": SCENE_CORE + (
             "STATE SPEAKING. Lucas speaks directly to Marion in a relaxed, spontaneous live call. "
-            "He appears to say in natural connected French: 'Salut ma chérie… je pensais à toi, alors je t'appelle deux minutes. Tu fais quoi ?' "
-            "Keep natural breathing, tiny front-camera drift, normal blinks, slight head motion and a restrained affectionate half-smile. "
-            "No whisper, no dreamy slow delivery, no commercial acting."
+            "The spoken French is supplied by MonIA's approved Lucas V16 voice pipeline. "
+            "Do not imitate a different voice identity and do not infer dialogue text from the visual prompt. "
+            "Keep natural breathing, tiny front-camera drift, normal blinks, slight head motion and a restrained affectionate expression."
         ),
     },
     "reaction": {
         "duration": 4,
-        "output": "visio-lucas-surprise-v4-frontcam-reaction-candidate.mp4",
+        "output": "visio-lucas-surprise-v5-frontcam-reaction-candidate.mp4",
         "prompt": SCENE_CORE + (
             "STATE REACTION. Lucas has just finished speaking and listens to Marion. "
-            "He gives a tiny amused breath, slight eyebrow movement and faint half-smile, then settles back to attentive neutral. "
-            "One very subtle front-camera drift keeps the live-call feeling believable. No speaking."
+            "He gives a tiny natural reaction, then settles back to attentive neutral. One very subtle front-camera drift keeps the live-call feeling believable."
         ),
     },
 }
+
+
+def _approved_voice() -> tuple[str, str]:
+    data = json.loads(VOICE_STRATEGY_PATH.read_text(encoding="utf-8"))
+    approved = data.get("approved_reference") or {}
+    if data.get("status") != "approved-v16-voice-and-flow" or approved.get("status") != "approved-by-user":
+        raise RuntimeError("Lucas V16 voice is not locked as approved; refusing surprise visio generation")
+    name = str(approved.get("candidate") or "").strip()
+    url = str(approved.get("url") or "").strip()
+    if not name or not url or "v16" not in name.lower():
+        raise RuntimeError("Approved Lucas V16 voice reference is missing or invalid")
+    return name, url
 
 
 def _download(url: str, target: Path) -> None:
@@ -118,7 +123,7 @@ def _generate_state(state: str) -> tuple[Path, str]:
     spec = STATE_SPECS[state]
     silent_name = spec.get("silent", spec["output"])
     profile = engine.CharacterProfile(
-        key=f"lucas-visio-surprise-v4-frontcam-{state}",
+        key=f"lucas-visio-surprise-v5-frontcam-{state}",
         canon_url=f"{engine.SITE}/resources/monia/canon/lucas/reference.jpg",
         prompt=spec["prompt"],
         negative=NEGATIVE,
@@ -128,7 +133,7 @@ def _generate_state(state: str) -> tuple[Path, str]:
         duration=int(spec["duration"]),
         output_name=str(silent_name),
     )
-    source = engine.WORK_DIR / "lucas-visio-surprise-v4-canon.png"
+    source = engine.WORK_DIR / "lucas-visio-surprise-v5-canon.png"
     silent = engine.WORK_DIR / str(silent_name)
     engine._download_canon(profile, source)
     provider = _run_compute(profile, source, silent)
@@ -136,9 +141,10 @@ def _generate_state(state: str) -> tuple[Path, str]:
     if state != "speaking":
         return silent, provider
 
-    voice = engine.WORK_DIR / VOICE_NAME
+    voice_name, voice_url = _approved_voice()
+    voice = engine.WORK_DIR / voice_name
     if not voice.exists():
-        _download(VOICE_URL, voice)
+        _download(voice_url, voice)
     final = engine.WORK_DIR / str(spec["output"])
     final.unlink(missing_ok=True)
     _mux(silent, voice, final)
@@ -146,7 +152,7 @@ def _generate_state(state: str) -> tuple[Path, str]:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Generate true front-camera MonIA Lucas visio V4 state candidates")
+    parser = argparse.ArgumentParser(description="Generate true front-camera MonIA Lucas surprise visio candidates using approved V16 voice")
     parser.add_argument("--publish-candidate", action="store_true")
     parser.add_argument("--state", choices=list(STATE_SPECS) + ["all"], default="all")
     args = parser.parse_args()
@@ -158,17 +164,17 @@ def main() -> None:
             path, provider = _generate_state(state)
             if not path.exists() or path.stat().st_size < 10000:
                 raise RuntimeError(f"Invalid generated state: {state}")
-            print(f"MONIA_VISIO_SURPRISE_V4 state={state} compute={provider} output={path} bytes={path.stat().st_size}")
+            print(f"MONIA_VISIO_SURPRISE_V5 state={state} compute={provider} output={path} bytes={path.stat().st_size}")
             if args.publish_candidate:
                 url = engine.publish_candidate(path)
-                print(f"MONIA_VISIO_SURPRISE_V4_CANDIDATE state={state} url={url}")
+                print(f"MONIA_VISIO_SURPRISE_V5_CANDIDATE state={state} url={url}")
         except Exception as exc:
             failures.append(f"{state}: {exc}")
-            print(f"MONIA_VISIO_SURPRISE_V4_FAILED state={state} error={exc}")
+            print(f"MONIA_VISIO_SURPRISE_V5_FAILED state={state} error={exc}")
             if args.state != "all":
                 raise
     if failures:
-        raise RuntimeError("Some MonIA visio V4 states failed: " + " | ".join(failures))
+        raise RuntimeError("Some MonIA visio V5 states failed: " + " | ".join(failures))
 
 
 if __name__ == "__main__":
