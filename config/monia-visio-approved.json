@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 5,
   "character": "lucas",
   "status": "locked",
   "fallback": null,
@@ -13,13 +13,13 @@
     "visual_base": "https://marion-lucas.marionbolomey.fr/resources/monia/generated/visio-lucas-speaking-fr-layout-v7-candidate.mp4?run=34826963016",
     "validated_sync_sample": "https://marion-lucas.marionbolomey.fr/resources/monia/generated/visio-lucas-v7-v10a-timing-candidate.mp4?run=34859820027",
     "visual_status": "approved",
-    "voice_status": "direct_v10a_clone_preferred_candidate_direction",
-    "voice_reference": "https://marion-lucas.marionbolomey.fr/resources/monia/generated/lucas-voice-v10-drama-tuned-fr-a-candidate.wav",
-    "voice_strategy": "Generate new Lucas dialogue by direct cloning from the exact V10-A reference. Do not synthesize a separate donor voice and repaint it with Seed-VC.",
-    "lip_sync_status": "deferred_until_voice_identity_and_naturalness_are_approved",
+    "voice_status": "approved_v16_french_voice",
+    "voice_reference": "https://marion-lucas.marionbolomey.fr/resources/monia/generated/lucas-voice-v16-b-smoother-flow-fr-candidate.wav",
+    "voice_strategy": "Generate new Lucas French dialogue with the approved V16 synthetic voice direction: low, warm, close, intimate, calm and naturally fluid. Preserve V16 timbre, register, tone and connected French phrasing. Do not re-anchor to V10-A and do not use Seed-VC repaint as the preferred dialogue route.",
+    "lip_sync_status": "voice_approved_ready_for_sync_validation",
     "identity": "approved_lucas_visio_face",
     "eyes": "approved green-hazel / gray-green olive with subtle amber-brown center and darker limbal rim",
-    "note": "This is the validated quality and identity reference, not a universal clip to reuse for every call. Wardrobe, location, lighting, pose and call context must vary canonically."
+    "note": "The V7 black-shirt clip remains the validated visual quality/identity reference. V16 is now the approved French voice reference. Wardrobe, location, lighting, pose and call context must vary canonically."
   },
   "interaction": {
     "default_player_input": "contextual_choice_buttons",
@@ -82,9 +82,11 @@
   "rules": [
     "Only explicitly approved visio clips may be shown live.",
     "Generated listening, speaking, reaction and thinking clips are candidates until approval.",
-    "Prefer direct cloning from the exact validated V10-A voice reference for new Lucas dialogue.",
+    "Use the approved V16 French voice direction for new Lucas dialogue.",
+    "Preserve V16 timbre, warmth, register, close/intimate tone and natural connected French fluidity.",
+    "Do not re-anchor new dialogue to legacy V10-A.",
     "Do not use a synthetic donor voice plus Seed-VC repaint as the preferred Lucas dialogue method.",
-    "Do not optimize lip sync until Lucas voice identity and conversational naturalness are approved.",
+    "Do not optimize lip sync by altering voice timing; synchronize visuals around the approved voice performance instead.",
     "Never use playback-rate warping or random seeking to fake lip synchronization.",
     "Never use pasted-mouth or post-hoc lip replacement as the primary Lucas visio method.",
     "If an approved state clip is missing, show a neutral call state without unapproved video rather than any candidate fallback.",
