@@ -1,5 +1,5 @@
 {
-  "version": 11,
+  "version": 12,
   "status": "approved-v16-voice-and-flow",
   "character": "lucas",
   "goal": "Use V16 as the official approved synthetic Lucas French voice reference. Preserve its timbre, tone, register and conversational fluidity. Do not reopen voice identity or flow tuning unless the user explicitly requests a change.",
@@ -61,11 +61,24 @@
       "candidate": "lucas-voice-v13-v10a-anchored-fr-candidate.wav",
       "reason": "wrong timbre and reduced fluidity / more choppy delivery",
       "status": "rejected-do-not-build-on"
+    },
+    {
+      "route": "V17 phrase-by-phrase Qwen synthetic cloning from V16",
+      "candidate_pattern": "lucas-visio-dialogue-v17-*-candidate.wav",
+      "reason": "did not preserve the approved V16 Lucas voice identity or fluidity; user explicitly rejected the pack",
+      "status": "rejected-do-not-reuse-do-not-reference"
+    },
+    {
+      "route": "V18 continuous Qwen synthetic clone session from V16 followed by segmentation",
+      "candidate_pattern": "lucas-visio-dialogue-v18-*-candidate.wav",
+      "reason": "voice identity did not match approved V16. Opening and end had somewhat better continuity, but no V18 segment is approved; calm/warm/busy/tease/miss explicitly rejected",
+      "status": "rejected-do-not-reuse-do-not-reference"
     }
   ],
   "forbidden": [
     "reopening timbre selection without user request",
     "using V10-A or V13 as source or target for new Lucas dialogue",
+    "using V17 or V18 as a Lucas voice reference, source, fallback or approval anchor",
     "copying any uploaded real speaker timbre or identity",
     "real-person biometric voice cloning",
     "playback-rate warping",
@@ -76,5 +89,5 @@
     "audible edit joins",
     "music or other speakers in final voice references"
   ],
-  "approval_rule": "V16 is the approved Lucas French voice reference. Future candidates must preserve it unless the user explicitly requests a voice change."
+  "approval_rule": "V16 is the only approved Lucas French voice reference. V17 and V18 are rejected and must never supersede or inform the approved voice identity."
 }
