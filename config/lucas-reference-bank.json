@@ -1,0 +1,150 @@
+{
+  "version": 1,
+  "character": "lucas",
+  "status": "active",
+  "purpose": "Structured MonIA reference bank built from the user's Lucas video collection. MonIA must select references by task instead of generating Lucas from text alone.",
+  "identity_authority": {
+    "character": "Lucas / Dominic Castellano reference defined by the user from the drama source and the user's supplied clips",
+    "primary_still": "/resources/monia/canon/lucas/reference.jpg",
+    "approved_visio_visual": "https://marion-lucas.marionbolomey.fr/resources/monia/generated/visio-lucas-speaking-fr-layout-v7-candidate.mp4?run=34826963016",
+    "rule": "The supplied user clips and extracted canon frames are the identity and movement authority. Text descriptions are secondary constraints only."
+  },
+  "private_storage": {
+    "root": "/private/monia/lucas/reference-bank/",
+    "policy": "Video binaries stay private. GitHub stores metadata and routing rules only.",
+    "ingest_required": true
+  },
+  "references": [
+    {
+      "id": "lucas-2026-09-15-195616",
+      "source_name": "ScreenRecording_09-15-2026 19-56-16_1(1).mp4",
+      "duration_seconds": 29.133,
+      "roles": ["identity", "face", "gaze", "micro_expression", "movement"],
+      "priority": "high",
+      "classification": "pending_detailed_scene_tags"
+    },
+    {
+      "id": "lucas-2026-09-15-201730",
+      "source_name": "ScreenRecording_09-15-2026 20-17-30_1.mp4",
+      "duration_seconds": 17.433,
+      "roles": ["identity", "face", "gaze", "micro_expression", "movement"],
+      "priority": "high",
+      "classification": "pending_detailed_scene_tags"
+    },
+    {
+      "id": "lucas-2026-09-15-202903",
+      "source_name": "ScreenRecording_09-15-2026 20-29-03_1.mp4",
+      "duration_seconds": 11.633,
+      "roles": ["identity", "face", "gesture", "movement"],
+      "priority": "high",
+      "classification": "pending_detailed_scene_tags"
+    },
+    {
+      "id": "lucas-2026-09-15-203216",
+      "source_name": "ScreenRecording_09-15-2026 20-32-16_1.mp4",
+      "duration_seconds": 18.467,
+      "roles": ["identity", "posture", "gaze", "movement"],
+      "priority": "high",
+      "classification": "pending_detailed_scene_tags"
+    },
+    {
+      "id": "lucas-private-home-2026-09-15-203758",
+      "source_name": "ScreenRecording_09-15-2026 20-37-58_1.mp4",
+      "duration_seconds": 44.367,
+      "roles": ["identity", "full_body", "private_home", "relaxed_posture", "body_movement", "gesture_rhythm", "tattoos", "off_duty_wardrobe"],
+      "priority": "canonical_motion",
+      "classification": "private_home_reference",
+      "notes": "Strong reference for Lucas relaxed at home: silhouette, posture, body movement, natural gesture rhythm and canonical tattoos. Do not treat underwear/home clothing as universal wardrobe."
+    },
+    {
+      "id": "lucas-2026-09-15-210254",
+      "source_name": "ScreenRecording_09-15-2026 21-02-54_1.mp4",
+      "duration_seconds": 8.7,
+      "roles": ["identity", "face", "micro_expression", "movement"],
+      "priority": "high",
+      "classification": "pending_detailed_scene_tags"
+    },
+    {
+      "id": "lucas-2026-09-15-210634",
+      "source_name": "ScreenRecording_09-15-2026 21-06-34_1.mp4",
+      "duration_seconds": 16.067,
+      "roles": ["identity", "face", "gaze", "gesture", "movement"],
+      "priority": "high",
+      "classification": "pending_detailed_scene_tags"
+    },
+    {
+      "id": "lucas-2026-09-15-210953",
+      "source_name": "ScreenRecording_09-15-2026 21-09-53_1.mp4",
+      "duration_seconds": 28.0,
+      "roles": ["identity", "face", "posture", "gesture", "movement"],
+      "priority": "high",
+      "classification": "pending_detailed_scene_tags"
+    },
+    {
+      "id": "lucas-2026-09-15-214511",
+      "source_name": "ScreenRecording_09-15-2026 21-45-11_1.mp4",
+      "duration_seconds": 11.767,
+      "roles": ["identity", "face", "gaze", "micro_expression"],
+      "priority": "high",
+      "classification": "pending_detailed_scene_tags"
+    },
+    {
+      "id": "lucas-2026-09-15-214828",
+      "source_name": "ScreenRecording_09-15-2026 21-48-28_1.mp4",
+      "duration_seconds": 20.067,
+      "roles": ["identity", "face", "gaze", "micro_expression", "movement"],
+      "priority": "canonical_identity",
+      "classification": "frame_pack_available",
+      "derived_frames": ["lucas_214828/f0.jpg", "lucas_214828/f1.jpg", "lucas_214828/f2.jpg", "lucas_214828/f3.jpg", "lucas_214828/f4.jpg"]
+    },
+    {
+      "id": "lucas-2026-09-15-215205",
+      "source_name": "ScreenRecording_09-15-2026 21-52-05_1.mp4",
+      "duration_seconds": 29.5,
+      "roles": ["identity", "face", "posture", "gesture", "movement"],
+      "priority": "high",
+      "classification": "pending_detailed_scene_tags"
+    },
+    {
+      "id": "lucas-2026-09-16-120836",
+      "source_name": "ScreenRecording_09-16-2026 12-08-36_1(1).mp4",
+      "duration_seconds": 29.57,
+      "roles": ["identity", "face", "movement", "performance"],
+      "priority": "high",
+      "classification": "pending_detailed_scene_tags"
+    },
+    {
+      "id": "lucas-voice-performance-2026-09-16-171905",
+      "source_name": "ScreenRecording_09-16-2026 17-19-05_1(1).mp4",
+      "duration_seconds": 24.233,
+      "roles": ["identity", "face", "speech_presence", "speech_rhythm", "performance", "gaze"],
+      "priority": "canonical_performance",
+      "classification": "voice_and_presence_reference",
+      "notes": "Broad performance target: grave but alert/nerveuse, firm attacks, connected forward-moving speech, direct presence; avoid sleepy, overly soft or robotic delivery."
+    }
+  ],
+  "routing": {
+    "visio": {
+      "required": ["approved_visio_visual", "canonical_identity", "canonical_motion", "canonical_performance"],
+      "camera_contract": "viewer_is_phone_front_camera",
+      "preferred_roles": ["face", "gaze", "micro_expression", "gesture_rhythm", "speech_presence"],
+      "forbidden": ["external_camera", "visible_phone", "cinematic_portrait", "tripod_look", "generic_male_motion"]
+    },
+    "private_home": {
+      "preferred_roles": ["private_home", "relaxed_posture", "body_movement", "tattoos", "off_duty_wardrobe"]
+    },
+    "dialogue": {
+      "preferred_roles": ["speech_presence", "speech_rhythm", "gaze", "micro_expression"]
+    },
+    "cinematic": {
+      "preferred_roles": ["identity", "posture", "body_movement", "gesture", "gaze"]
+    }
+  },
+  "selection_policy": [
+    "Never generate Lucas from text alone when the reference bank is available.",
+    "Choose at least one identity reference and one motion/performance reference appropriate to the requested media type.",
+    "For visio, always bind the approved V7 visual grammar plus current Lucas identity/motion/performance references.",
+    "Use wardrobe and location as variable context; never let a reference clip permanently define wardrobe.",
+    "If required reference classes are unavailable, fail the plan instead of silently falling back to a generic Lucas."
+  ]
+}
