@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import subprocess
+import time
 from pathlib import Path
 
 import requests
@@ -94,6 +95,24 @@ def _mux(video: Path, audio: Path, output: Path) -> None:
     )
 
 
+def _run_compute(profile: engine.CharacterProfile, source: Path, target: Path) -> str:
+    errors: list[str] = []
+    for attempt in range(1, 4):
+        target.unlink(missing_ok=True)
+        try:
+            return engine._run_ltx(profile, source, target)
+        except Exception as exc:
+            errors.append(f"LTX attempt {attempt}: {exc}")
+            if attempt < 3:
+                time.sleep(18 * attempt)
+    target.unlink(missing_ok=True)
+    try:
+        return engine._run_wan(profile, source, target)
+    except Exception as exc:
+        errors.append(f"WAN fallback: {exc}")
+        raise RuntimeError("No MonIA video compute available: " + " | ".join(errors)) from exc
+
+
 def _generate_state(state: str) -> tuple[Path, str]:
     spec = STATE_SPECS[state]
     silent_name = spec.get("silent", spec["output"])
@@ -111,19 +130,7 @@ def _generate_state(state: str) -> tuple[Path, str]:
     source = engine.WORK_DIR / "lucas-visio-surprise-v2-canon.png"
     silent = engine.WORK_DIR / str(silent_name)
     engine._download_canon(profile, source)
-    silent.unlink(missing_ok=True)
-
-    errors: list[str] = []
-    try:
-        provider = engine._run_ltx(profile, source, silent)
-    except Exception as exc:
-        errors.append(f"primary: {exc}")
-        silent.unlink(missing_ok=True)
-        try:
-            provider = engine._run_wan(profile, source, silent)
-        except Exception as wexc:
-            errors.append(str(wexc))
-            raise RuntimeError("No MonIA video compute available: " + " | ".join(errors)) from wexc
+    provider = _run_compute(profile, source, silent)
 
     if state != "speaking":
         return silent, provider
@@ -138,22 +145,29 @@ def _generate_state(state: str) -> tuple[Path, str]:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Generate a three-state MonIA Lucas surprise visio pack")
+    parser = argparse.ArgumentParser(description="Generate MonIA Lucas surprise visio state candidates")
     parser.add_argument("--publish-candidate", action="store_true")
+    parser.add_argument("--state", choices=list(STATE_SPECS) + ["all"], default="all")
     args = parser.parse_args()
 
-    results: list[tuple[str, Path, str]] = []
-    for state in ("listening", "speaking", "reaction"):
-        path, provider = _generate_state(state)
-        if not path.exists() or path.stat().st_size < 10000:
-            raise RuntimeError(f"Invalid generated state: {state}")
-        results.append((state, path, provider))
-        print(f"MONIA_VISIO_SURPRISE_V2 state={state} compute={provider} output={path} bytes={path.stat().st_size}")
-
-    if args.publish_candidate:
-        for state, path, _ in results:
-            url = engine.publish_candidate(path)
-            print(f"MONIA_VISIO_SURPRISE_V2_CANDIDATE state={state} url={url}")
+    states = list(STATE_SPECS) if args.state == "all" else [args.state]
+    failures: list[str] = []
+    for state in states:
+        try:
+            path, provider = _generate_state(state)
+            if not path.exists() or path.stat().st_size < 10000:
+                raise RuntimeError(f"Invalid generated state: {state}")
+            print(f"MONIA_VISIO_SURPRISE_V2 state={state} compute={provider} output={path} bytes={path.stat().st_size}")
+            if args.publish_candidate:
+                url = engine.publish_candidate(path)
+                print(f"MONIA_VISIO_SURPRISE_V2_CANDIDATE state={state} url={url}")
+        except Exception as exc:
+            failures.append(f"{state}: {exc}")
+            print(f"MONIA_VISIO_SURPRISE_V2_FAILED state={state} error={exc}")
+            if args.state != "all":
+                raise
+    if failures:
+        raise RuntimeError("Some MonIA visio states failed: " + " | ".join(failures))
 
 
 if __name__ == "__main__":
