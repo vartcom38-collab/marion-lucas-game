@@ -33,6 +33,7 @@ import './rare-life-events';
 import { MARION_LUCAS_PROFILE, narrationPrompt, type MonIACompactContext } from './profile';
 import { moniaStorage } from './storage';
 import { askMonIAServerBrain } from './server-brain';
+import { planMonIAScene, assertMonIAScenePlan, type MonIAScenePlanningInput, type MonIAScenePlan } from './scene-intelligence';
 import {
   directorPrompt,
   fallbackDirector,
@@ -43,6 +44,7 @@ import {
 
 export type MonIAMode = 'auto' | 'light' | 'advanced';
 export type { MonIADirectorRequest, MonIADirectorResult } from './director';
+export type { MonIAScenePlanningInput, MonIAScenePlan } from './scene-intelligence';
 export type MonIAStatus = {
   status: 'idle' | 'loading' | 'ready' | 'error' | 'unsupported';
   progress: number;
@@ -136,6 +138,14 @@ class MonIARuntime {
     return typeof Worker !== 'undefined';
   }
 
+  planScene(input: MonIAScenePlanningInput): MonIAScenePlan {
+    return planMonIAScene(input);
+  }
+
+  requireScenePlan(input: MonIAScenePlanningInput): MonIAScenePlan {
+    return assertMonIAScenePlan(planMonIAScene(input));
+  }
+
   async init() {
     if (this.worker || this.status.status === 'loading') return;
     if (!this.supportsWorker()) {
@@ -197,7 +207,7 @@ class MonIARuntime {
     try {
       const server = await askMonIAServerBrain({ kind: 'director', prompt: directorPrompt(request), profile: MARION_LUCAS_PROFILE });
       if (server) {
-        const parsed = parseDirectorJSON(server);
+        const parsed = parseDirectorJSON(server, fb);
         if (parsed) return parsed;
       }
     } catch {}
@@ -217,10 +227,10 @@ class MonIARuntime {
 }
 
 export const moniaRuntime = new MonIARuntime();
-// Backward-compatible alias used by experience-runtime and older MonIA integration layers.
 export const monia = moniaRuntime;
 
 if (typeof window !== 'undefined') {
   (window as any).__moniaRuntime = moniaRuntime;
+  (window as any).__moniaPlanScene = (input: MonIAScenePlanningInput) => moniaRuntime.planScene(input);
   window.setTimeout(() => moniaRuntime.init(), 250);
 }
