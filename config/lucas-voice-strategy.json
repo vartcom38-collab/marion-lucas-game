@@ -1,12 +1,13 @@
 {
-  "version": 8,
-  "status": "timbre-lock-pending",
+  "version": 9,
+  "status": "timbre-preference-selected-full-line-validation-pending",
   "character": "lucas",
-  "goal": "Keep the best French conversational flow already reached, then lock the synthetic Lucas timbre independently before recombining the two. Do not keep changing timing and timbre at the same time.",
+  "goal": "Preserve the best French conversational flow already reached, while using V14-B close as the current preferred synthetic Lucas timbre checkpoint. Validate that combination on one full natural French line before any live use.",
   "reference_use": {
     "uploaded_lucas_clips": "PRIMARY reference for broad conversational movement, rhythm, relaxed presence, breathing and soft pitch movement only; never biometric voice cloning",
     "lucas_soft_reference_v2_strict": "PRIMARY approved rendering/color reference: low, warm, calm, intimate, rounded and not dry; use broad qualities only, never as a direct cloning target",
-    "lucas_v12_soft_natural_fr": "best current French-flow checkpoint; preserve its connected delivery concept, but its synthetic timbre is not approved",
+    "lucas_v12_soft_natural_fr": "best current French-flow checkpoint; preserve its connected delivery concept",
+    "lucas_v14_b_close": "CURRENT USER-PREFERRED synthetic timbre checkpoint from the V14 micro-audition; preferred over V14-A and V14-C for closeness/intimacy",
     "validated_v10a": "legacy visio anchor only; V13 showed that re-anchoring the new French line to V10-A does not recover the desired current Lucas timbre and can damage flow"
   },
   "approved_rendering": {
@@ -16,12 +17,12 @@
     "prosody": "continuous, relaxed and human, with restrained rises and soft endings",
     "delivery": "connected conversational phrasing with no audible joins or chopped segments",
     "energy": "soft everyday presence suitable for home, phone, visio and couple scenes",
-    "status": "rendering qualities approved independently of language and exact synthetic identity"
+    "status": "rendering qualities approved independently of language; V14-B currently preferred for synthetic timbre identity"
   },
   "prosody_priority": {
     "primary": "Lucas uploaded videos: natural flow, breathing, connected phrases, irregular micro-pauses, restrained pitch movement and relaxed endings",
     "secondary": "user French recording confirms that French must remain continuous and non-syllabic",
-    "rule": "Do not modify timing while evaluating timbre. Timbre auditions must be short and isolated from flow evaluation."
+    "rule": "Do not modify timing merely to force the timbre. The next full-line test must preserve the V12-style continuity and avoid conversion stages that introduced choppiness in V13."
   },
   "rejected_routes": [
     {
@@ -33,7 +34,7 @@
     {
       "route": "Qwen profile-guided French TTS as full-line final performance",
       "reason": "synthetic cadence remains audible on longer dialogue",
-      "status": "rejected-as-final-performance-source"
+      "status": "rejected-as-final-performance-source unless a new validation specifically proves otherwise"
     },
     {
       "route": "Chatterbox direct TTS",
@@ -48,22 +49,21 @@
     }
   ],
   "current_checkpoint": {
-    "flow": "V12 is the best current French-flow checkpoint, but still has a slight synthetic residue",
-    "timbre": "not locked yet; user says current candidates do not match the previously preferred Lucas tone/color",
-    "next_test": "timbre-only micro-audition before any new full sentence",
+    "flow": "V12 remains the best French-flow checkpoint; user previously described its fluidity as top even though a slight synthetic residue remained",
+    "timbre": "V14-B close is the current user-preferred micro-candidate",
+    "next_test": "one full natural French line combining V14-B timbre qualities with V12-style connected flow, without V13-style re-anchoring",
     "live_status": "unchanged; no candidate promoted"
   },
   "next_route": {
-    "principle": "timbre-first isolation",
-    "test_scope": "2 to 3 very short synthetic calibration utterances only, around 1 to 2 seconds each",
-    "content": "neutral intimate micro-lines such as 'Oui, je suis là.' so the user judges color rather than rhythm",
-    "target": "distinct synthetic young-adult male voice with the approved broad qualities: naturally low, warm, rounded, close, relaxed, slightly textured, not dry, not bright, not announcer-like",
-    "after_timbre_lock": "apply the chosen synthetic timbre to a natural continuous French performance while preserving timing, with no speed or pitch forcing",
+    "principle": "V14-B timbre + V12 flow",
+    "test_scope": "one short full conversational French line, long enough to judge continuity but still diagnostic",
+    "target": "preserve V14-B's close, warm, intimate synthetic timbre while matching V12-style connected French flow",
+    "implementation_rule": "do not use V13 as source or target; avoid conversion stages known to reintroduce choppiness; no speed warp, no pitch forcing, no syllable stitching",
     "approval_required": true
   },
   "forbidden": [
     "using V13 as a source or target",
-    "changing timing while judging timbre",
+    "changing timing to force the timbre",
     "robotic TTS as final timing/prosody donor",
     "copying any uploaded real speaker timbre or identity",
     "real-person biometric voice cloning",
@@ -76,5 +76,5 @@
     "music or other speakers in final voice references",
     "auto-promotion to live"
   ],
-  "approval_rule": "First approve the synthetic timbre alone. Only then evaluate the same timbre on a full natural French line. Nothing goes live before both are approved."
+  "approval_rule": "V14-B is a preference, not yet a live approval. The next approval must confirm that this timbre survives on a full natural French line without losing the V12-level continuity. Nothing goes live before that combined test is approved."
 }
