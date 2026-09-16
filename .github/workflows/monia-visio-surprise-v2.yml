@@ -28,9 +28,9 @@ jobs:
           python -m pip install --disable-pip-version-check gradio_client requests pillow numpy
           sudo apt-get update -qq
           sudo apt-get install -y -qq ffmpeg
-      - name: Generate three-state MonIA surprise visio pack
-        run: python -m scripts.monia_visio_surprise_v2_pack --publish-candidate
-      - name: Verify public state candidates
+      - name: Generate missing MonIA reaction state only
+        run: python -m scripts.monia_visio_surprise_v2_pack --state reaction --publish-candidate
+      - name: Verify full public three-state candidate set
         run: |
           python - <<'PY'
           import requests
@@ -50,6 +50,7 @@ jobs:
           PY
       - name: Candidate-only policy
         run: |
-          echo "Three-state MonIA-only visio pack."
+          echo "MonIA-only three-state visio candidate set complete."
+          echo "Listening and speaking states are preserved from successful prior generation."
+          echo "This run regenerates reaction only."
           echo "No official runtime mutation and no auto-promotion."
-          echo "V4 voice stays native-speed during the speaking state."
