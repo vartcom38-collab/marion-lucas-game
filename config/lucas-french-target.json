@@ -1,17 +1,23 @@
 {
-  "version": 1,
-  "status": "french-target-locked",
+  "version": 2,
+  "status": "approved-v16-french-target",
   "character": "lucas",
-  "goal": "Preserve the accepted Lucas timbre while making delivery warmer, softer and naturally French.",
-  "timbre_reference": "lucas_voice_bank_v2_softer",
+  "goal": "Use the approved V16 Lucas voice as the canonical French target for new dialogue while preserving its timbre, tone and fluidity.",
+  "voice_reference": {
+    "name": "lucas-voice-v16-b-smoother-flow-fr-candidate.wav",
+    "url": "https://marion-lucas.marionbolomey.fr/resources/monia/generated/lucas-voice-v16-b-smoother-flow-fr-candidate.wav",
+    "status": "approved-by-user"
+  },
   "french_delivery": {
     "language": "fr-FR",
     "register": "young adult male, naturally low, never forced downward",
-    "tone": "warm, intimate, softer than the raw reference, relaxed rather than dry",
-    "phrasing": "connected conversational French with natural liaison and reductions",
-    "attacks": "soft, no hard word-by-word resets",
-    "consonants": "clear but not clipped or percussive",
-    "endings": "relaxed and slightly falling, not announcer-like",
+    "tone": "warm, intimate, calm, close and effortless",
+    "timbre": "compact, soft slightly husky texture with smooth low-mid body and natural imperfect edges",
+    "phrasing": "continuous conversational French with natural linking and no perceptible clause reset",
+    "pauses": "tiny irregular breath-sized micro-pauses only when needed; no dead air",
+    "attacks": "soft, with no hard word-by-word resets",
+    "consonants": "relaxed and clear without clipped or percussive diction",
+    "endings": "soft, relaxed and slightly falling",
     "breathing": "subtle and integrated",
     "forbidden": [
       "robotic syllabic cadence",
@@ -19,9 +25,13 @@
       "forced bass",
       "over-articulation",
       "uniform rhythm",
-      "dramatic trailer delivery"
+      "dramatic trailer delivery",
+      "radio-announcer polish",
+      "metallic brightness",
+      "dry delivery",
+      "audible edit joins"
     ]
   },
-  "first_test_line": "Ah ouais... ça me fait plaisir que tu m'appelles juste pour ça.",
-  "approval": "one-line candidate only; human approval required before dialogue pack or runtime use"
+  "reference_test_line": "Je viens de me poser deux minutes et toi tu fais quoi ?",
+  "approval": "V16 approved for Lucas French timbre, tone and fluidity. New dialogue must preserve this voice direction."
 }
