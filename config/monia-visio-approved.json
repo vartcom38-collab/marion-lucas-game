@@ -1,8 +1,9 @@
 {
-  "version": 5,
+  "version": 6,
   "character": "lucas",
   "status": "locked",
   "fallback": null,
+  "reference_bank": "config/lucas-reference-bank.json",
   "states": {
     "listening": null,
     "speaking": null,
@@ -15,11 +16,31 @@
     "visual_status": "approved",
     "voice_status": "approved_v16_french_voice",
     "voice_reference": "https://marion-lucas.marionbolomey.fr/resources/monia/generated/lucas-voice-v16-b-smoother-flow-fr-candidate.wav",
-    "voice_strategy": "Generate new Lucas French dialogue with the approved V16 synthetic voice direction: low, warm, close, intimate, calm and naturally fluid. Preserve V16 timbre, register, tone and connected French phrasing. Do not re-anchor to V10-A and do not use Seed-VC repaint as the preferred dialogue route.",
+    "voice_strategy": "Generate new Lucas French dialogue with the approved synthetic Lucas voice direction and natural connected French phrasing. Voice changes require separate explicit approval.",
     "lip_sync_status": "voice_approved_ready_for_sync_validation",
     "identity": "approved_lucas_visio_face",
     "eyes": "approved green-hazel / gray-green olive with subtle amber-brown center and darker limbal rim",
-    "note": "The V7 black-shirt clip remains the validated visual quality/identity reference. V16 is now the approved French voice reference. Wardrobe, location, lighting, pose and call context must vary canonically."
+    "note": "The V7 black-shirt clip defines validated visual quality, Lucas identity and true front-camera grammar. It does not define permanent wardrobe, location or lighting."
+  },
+  "camera_contract": {
+    "semantic": "The viewer is the smartphone front-facing camera Lucas is using for the video call.",
+    "phone_visible": false,
+    "external_camera": false,
+    "framing": "head, shoulders and upper torso at natural arm-length distance",
+    "human_imperfections": [
+      "tiny handheld micro-shake",
+      "minute framing drift",
+      "small roll/perspective changes",
+      "subtle autofocus and exposure breathing",
+      "natural screen-to-lens gaze changes"
+    ],
+    "reject_if": [
+      "Lucas is filmed holding a phone",
+      "the phone is visible",
+      "the image looks like a portrait or cinematic shot",
+      "tripod or stabilized framing dominates",
+      "camera uses dolly, zoom, cinematic pan or coverage"
+    ]
   },
   "interaction": {
     "default_player_input": "contextual_choice_buttons",
@@ -62,10 +83,10 @@
     "must_keep": [
       "same Lucas identity",
       "validated eye color",
-      "no tattoos",
+      "canonical tattoos when visible",
       "no facial scar",
-      "natural front-camera realism",
-      "subtle human micro-movements",
+      "true smartphone front-camera viewpoint",
+      "subtle Lucas-specific human micro-movements",
       "real visio framing rather than cinematic camera grammar"
     ],
     "must_vary": [
@@ -82,18 +103,16 @@
   "rules": [
     "Only explicitly approved visio clips may be shown live.",
     "Generated listening, speaking, reaction and thinking clips are candidates until approval.",
-    "Use the approved V16 French voice direction for new Lucas dialogue.",
-    "Preserve V16 timbre, warmth, register, close/intimate tone and natural connected French fluidity.",
-    "Do not re-anchor new dialogue to legacy V10-A.",
-    "Do not use a synthetic donor voice plus Seed-VC repaint as the preferred Lucas dialogue method.",
+    "Lucas identity and movement selection must consult config/lucas-reference-bank.json.",
+    "For every Lucas visio candidate, bind the approved V7 front-camera grammar plus appropriate identity, movement and performance references from the Lucas bank.",
     "Do not optimize lip sync by altering voice timing; synchronize visuals around the approved voice performance instead.",
     "Never use playback-rate warping or random seeking to fake lip synchronization.",
     "Never use pasted-mouth or post-hoc lip replacement as the primary Lucas visio method.",
     "If an approved state clip is missing, show a neutral call state without unapproved video rather than any candidate fallback.",
-    "Lucas identity must come from the locked Lucas canon pack and approved Lucas visio face reference.",
-    "Lucas has no tattoos and no facial scar.",
-    "Every visio must adapt to the current gameplay context and must not be a visually identical loop reused for every call.",
-    "The approved V7 black-shirt sample defines quality and identity, not permanent wardrobe or permanent location.",
+    "Lucas identity must come from the locked Lucas canon pack, reference bank and approved Lucas visio face reference.",
+    "Every visio must adapt to current gameplay context and must not be a visually identical loop reused for every call.",
+    "The approved V7 black-shirt sample defines quality, identity and front-camera grammar, not permanent wardrobe or permanent location.",
+    "Reject any candidate that is not unmistakably a true phone-front-camera video call before presenting it for human approval.",
     "Visio output must remain natural, photorealistic and free of identity drift."
   ]
 }
