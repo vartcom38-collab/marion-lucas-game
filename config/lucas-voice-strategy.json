@@ -1,84 +1,80 @@
 {
-  "version": 7,
-  "status": "rendering-approved-language-pending",
+  "version": 8,
+  "status": "timbre-lock-pending",
   "character": "lucas",
-  "goal": "Preserve the approved soft Lucas rendering while using Lucas's own natural conversational flow from the uploaded videos as the primary prosody reference for French.",
+  "goal": "Keep the best French conversational flow already reached, then lock the synthetic Lucas timbre independently before recombining the two. Do not keep changing timing and timbre at the same time.",
   "reference_use": {
-    "uploaded_lucas_clips": "PRIMARY prosody, rhythm, conversational flow, micro-pauses, pitch movement and presence reference; use only broad performance characteristics, not biometric voice cloning",
-    "lucas_soft_reference_v2_strict": "approved timbre/rendering reference for calm, intimate, home, phone and visio speech; language not yet approved",
-    "lucas_french_fluidity_profile": "secondary confirmation of natural French continuity only; user recording is never the primary Lucas prosody reference and never a timbre/identity reference",
-    "validated_v10a": "legacy visio anchor only; do not let it override the newer approved soft rendering"
+    "uploaded_lucas_clips": "PRIMARY reference for broad conversational movement, rhythm, relaxed presence, breathing and soft pitch movement only; never biometric voice cloning",
+    "lucas_soft_reference_v2_strict": "PRIMARY approved rendering/color reference: low, warm, calm, intimate, rounded and not dry; use broad qualities only, never as a direct cloning target",
+    "lucas_v12_soft_natural_fr": "best current French-flow checkpoint; preserve its connected delivery concept, but its synthetic timbre is not approved",
+    "validated_v10a": "legacy visio anchor only; V13 showed that re-anchoring the new French line to V10-A does not recover the desired current Lucas timbre and can damage flow"
   },
   "approved_rendering": {
-    "tone": "low, warm, calm, intimate and fluid",
+    "tone": "low, warm, calm, intimate, rounded and close",
     "register": "naturally low male voice, never artificially deepened",
-    "prosody": "continuous, relaxed, close and human, with restrained pitch rises and no irritated/aggressive contour",
+    "texture": "soft low-mid body with slight natural grain, no brittle or metallic edge, no radio-announcer polish",
+    "prosody": "continuous, relaxed and human, with restrained rises and soft endings",
     "delivery": "connected conversational phrasing with no audible joins or chopped segments",
     "energy": "soft everyday presence suitable for home, phone, visio and couple scenes",
-    "status": "approved independently of language"
+    "status": "rendering qualities approved independently of language and exact synthetic identity"
   },
   "prosody_priority": {
     "primary": "Lucas uploaded videos: natural flow, breathing, connected phrases, irregular micro-pauses, restrained pitch movement and relaxed endings",
-    "secondary": "user French recording: confirms that French must remain continuous and non-syllabic",
-    "rule": "If the two references differ, preserve Lucas's own conversational movement and adapt only the linguistic articulation required for natural French."
+    "secondary": "user French recording confirms that French must remain continuous and non-syllabic",
+    "rule": "Do not modify timing while evaluating timbre. Timbre auditions must be short and isolated from flow evaluation."
   },
   "rejected_routes": [
     {
       "route": "SeamlessM4T direct speech-to-speech French candidate",
       "candidate": "lucas-voice-v6-seamless-fr-candidate.wav",
-      "reason": "robotic, choppy, non-fluid French prosody and clearly unlike the approved Lucas rendering",
-      "status": "rejected-do-not-reuse-as-source"
+      "reason": "robotic, choppy, non-fluid French prosody",
+      "status": "rejected-do-not-reuse"
     },
     {
-      "route": "Qwen profile-guided French TTS as final performance",
-      "reason": "robotic synthetic cadence",
-      "status": "rejected-as-performance-source"
+      "route": "Qwen profile-guided French TTS as full-line final performance",
+      "reason": "synthetic cadence remains audible on longer dialogue",
+      "status": "rejected-as-final-performance-source"
     },
     {
       "route": "Chatterbox direct TTS",
       "reason": "robotic and saccadic in prior visio tests",
       "status": "rejected"
+    },
+    {
+      "route": "V13 V10-A re-anchoring through voice conversion",
+      "candidate": "lucas-voice-v13-v10a-anchored-fr-candidate.wav",
+      "reason": "user reports wrong timbre and reduced fluidity / more choppy delivery",
+      "status": "rejected-do-not-build-on"
     }
   ],
-  "cleanup_requirements": {
-    "female_voice": "exclude completely from the final Lucas reference bank",
-    "background_music": "not part of Lucas identity and must be removed from final clean reference whenever separation is technically available",
-    "other_speakers": "exclude completely",
-    "editing": "prefer fewer clean continuous Lucas-only excerpts over longer contaminated compilations"
-  },
-  "french_target": {
-    "language": "natural conversational metropolitan French",
-    "continuity": "single continuous human-like performance per line; no audible cuts, word stitching or syllable assembly",
-    "diction": "relaxed French, linked words, natural contractions, soft consonants, no textbook diction",
-    "prosody_transfer": "Lucas video performance is authoritative for the feel and movement of the voice; French articulation must fit inside that flow rather than replace it",
-    "endings": "soft, relaxed phrase endings",
-    "breathing": "subtle and integrated"
+  "current_checkpoint": {
+    "flow": "V12 is the best current French-flow checkpoint, but still has a slight synthetic residue",
+    "timbre": "not locked yet; user says current candidates do not match the previously preferred Lucas tone/color",
+    "next_test": "timbre-only micro-audition before any new full sentence",
+    "live_status": "unchanged; no candidate promoted"
   },
   "next_route": {
-    "principle": "Lucas-video-prosody-first + distinct synthetic timbre + natural French articulation",
-    "implementation": "scripts/monia_lucas_human_prosody_fr.py",
-    "workflow": ".github/workflows/monia-lucas-human-prosody-fr.yml",
-    "source_role": "use natural human French only to carry language articulation when needed; do not let it redefine Lucas's conversational movement",
-    "timbre_role": "preserve the approved soft Lucas rendering: low, warm, calm, intimate, slightly textured and not dry",
-    "conversion": "keep timing/prosody continuous; no speed warp, no pitch forcing, no syllable stitching",
-    "candidate_scope": "one short line only",
+    "principle": "timbre-first isolation",
+    "test_scope": "2 to 3 very short synthetic calibration utterances only, around 1 to 2 seconds each",
+    "content": "neutral intimate micro-lines such as 'Oui, je suis là.' so the user judges color rather than rhythm",
+    "target": "distinct synthetic young-adult male voice with the approved broad qualities: naturally low, warm, rounded, close, relaxed, slightly textured, not dry, not bright, not announcer-like",
+    "after_timbre_lock": "apply the chosen synthetic timbre to a natural continuous French performance while preserving timing, with no speed or pitch forcing",
     "approval_required": true
   },
   "forbidden": [
-    "SeamlessM4T as final French performance source",
-    "robotic TTS as timing/prosody donor",
-    "copying the user's timbre or speaker identity",
+    "using V13 as a source or target",
+    "changing timing while judging timbre",
+    "robotic TTS as final timing/prosody donor",
+    "copying any uploaded real speaker timbre or identity",
     "real-person biometric voice cloning",
     "playback-rate warping",
     "pitch shifting to force a deeper voice",
     "tempo changes",
-    "prosody flattening",
     "word-by-word resynthesis",
-    "syllable-by-syllable timing fixes",
+    "syllable stitching",
     "audible edit joins",
-    "music baked into the voice reference",
-    "aggressive or irritated pitch contour for normal Lucas dialogue",
+    "music or other speakers in final voice references",
     "auto-promotion to live"
   ],
-  "approval_rule": "The timbre/rendering is approved. The next approval concerns only whether French preserves Lucas's own fluid conversational movement and the exact soft rendering before any dialogue-pack expansion or live visio change."
+  "approval_rule": "First approve the synthetic timbre alone. Only then evaluate the same timbre on a full natural French line. Nothing goes live before both are approved."
 }
