@@ -1,0 +1,46 @@
+{
+  "version": 1,
+  "status": "prosody-guide-from-user-recording",
+  "character": "lucas",
+  "purpose": "Use only as a French fluidity/prosody guide. Do not copy the user's timbre, identity, pitch or vocal color into Lucas.",
+  "source": {
+    "type": "user-provided natural French speech recording",
+    "duration_seconds": 105.024,
+    "voice_use": "prosody-only",
+    "timbre_use": "forbidden"
+  },
+  "measured_pause_profile": {
+    "silence_detection_threshold_db": -38,
+    "minimum_detected_pause_seconds": 0.12,
+    "detected_pause_count": 21,
+    "median_pause_seconds": 0.186,
+    "mean_pause_seconds": 0.204,
+    "p25_pause_seconds": 0.155,
+    "p75_pause_seconds": 0.215,
+    "p90_pause_seconds": 0.295,
+    "share_under_0_35_seconds": 0.952,
+    "share_over_0_6_seconds": 0.0
+  },
+  "target_behavior": {
+    "phrasing": "continuous conversational French with words linked inside thought groups",
+    "micro_pauses": "mostly around 0.15 to 0.30 seconds, used irregularly and semantically",
+    "long_pauses": "avoid in short Lucas dialogue unless emotionally motivated",
+    "cadence": "never word-by-word or syllable-by-syllable",
+    "energy": "smooth and human, without restart-like bursts between words",
+    "sentence_endings": "relaxed and falling rather than rising sharply",
+    "breathing": "subtle and integrated into phrase groups"
+  },
+  "first_validation_line": {
+    "text": "Ah ouais... ça me fait plaisir que tu m'appelles juste pour ça.",
+    "direction": "One connected thought. Tiny natural hesitation after 'ouais', then continuous linked delivery. Keep Lucas low, warm and calm. No hard reset before 'ça me fait plaisir'. Soft falling ending on 'ça'."
+  },
+  "guardrails": [
+    "Do not use the user's voice as a timbre or identity reference",
+    "Do not clone the user's pitch profile",
+    "Do not preserve speaker-specific vocal traits",
+    "Do not insert uniform pauses",
+    "Do not retime words independently",
+    "Do not stitch syllables",
+    "Do not use rejected SeamlessM4T French output as a performance source"
+  ]
+}
