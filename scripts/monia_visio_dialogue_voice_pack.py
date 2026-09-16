@@ -120,6 +120,10 @@ def main() -> None:
     qwen = Client(QWEN_SPACE, token=token, verbose=False, download_files=True)
     failures: list[str] = []
     for key, text in LINES.items():
+        if public_candidate_exists(key):
+            print(f"VISIO_DIALOGUE_VOICE {VERSION} key={key} source=already_public action=skip")
+            continue
+
         target = engine.WORK_DIR / f"lucas-visio-dialogue-{VERSION}-{key}-candidate.wav"
         try:
             clone_qwen(qwen, text, v16, target)
