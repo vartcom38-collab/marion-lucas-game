@@ -32,14 +32,14 @@ jobs:
           python -m pip install --disable-pip-version-check --upgrade pip
           python -m pip install --disable-pip-version-check gradio_client requests pillow
 
-      - name: Generate one soft-natural French Lucas candidate
+      - name: Generate V13 V10-A anchored French Lucas candidate
         run: python -m scripts.monia_lucas_voice_design_fr --publish-candidate
 
       - name: Verify candidate publicly
         run: |
           python - <<'PY'
           import requests
-          url = "https://marion-lucas.marionbolomey.fr/resources/monia/generated/lucas-voice-v12-soft-natural-fr-candidate.wav"
+          url = "https://marion-lucas.marionbolomey.fr/resources/monia/generated/lucas-voice-v13-v10a-anchored-fr-candidate.wav"
           r = requests.get(url, timeout=60, headers={"Cache-Control":"no-cache"})
           r.raise_for_status()
           assert len(r.content) > 4096, len(r.content)
@@ -49,8 +49,7 @@ jobs:
 
       - name: Candidate-only policy
         run: |
-          echo "One V12 diagnostic candidate only. No live manifest mutation."
-          echo "Lucas uploaded clips guide broad conversational flow; approved soft rendering guides tone color."
-          echo "Tone processing preserves timing and pitch."
+          echo "V12 supplies French flow. V10-A supplies the validated synthetic Lucas timbre anchor."
+          echo "No speed change, no pitch forcing, no word/syllable retiming."
           echo "No exact real-person voice cloning."
-          echo "Human listening approval required before any runtime use."
+          echo "No live manifest mutation. Human listening approval required."
