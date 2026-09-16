@@ -1,16 +1,20 @@
 {
-  "version": 1,
+  "version": 2,
   "status": "locked",
   "purpose": "Single MonIA production policy for cinematic, visio and voice candidates before anything can reach gameplay.",
   "pipeline": [
     "request",
+    "intent_classification",
     "plan",
+    "reference_selection",
     "identity_bind",
+    "motion_bind",
     "voice_bind",
     "generate_candidate",
     "technical_check",
     "identity_check",
     "motion_check",
+    "media_type_check",
     "voice_check",
     "human_approval",
     "publish_approved",
@@ -24,10 +28,13 @@
     "approvedMediaOnlyForStoryCinematics": true,
     "fakeLipSyncByPlaybackWarping": false,
     "randomSeekingToSimulateSpeech": false,
-    "identitySubstitution": false
+    "identitySubstitution": false,
+    "referenceBankRequiredForLucas": true,
+    "failClosedOnWrongMediaType": true
   },
   "lucas": {
-    "identityAuthority": "config/monia-reference-packs.json#characters.lucas",
+    "identityAuthority": "config/lucas-reference-bank.json",
+    "motionAuthority": "config/lucas-reference-bank.json",
     "voiceAuthority": "lucas-voice-reference",
     "mustPreserve": [
       "face geometry",
@@ -39,21 +46,23 @@
       "stubble",
       "skin tone",
       "age continuity",
-      "natural ears"
+      "natural ears",
+      "canonical neck and chest tattoos when visible"
     ],
     "mustNotInvent": [
       "facial scar",
-      "tattoos",
+      "non-canonical tattoos",
       "different eye shape",
       "different jaw",
       "different hairstyle identity",
       "older or younger-looking replacement actor"
     ],
     "minimumIdentityScore": 0.94,
-    "minimumTemporalIdentityScore": 0.92
+    "minimumTemporalIdentityScore": 0.92,
+    "scorePolicy": "Identity scores may only be asserted when a real comparison backend produced them. Otherwise the candidate remains unscored and requires human review."
   },
   "voice": {
-    "goal": "Human, fluid, intimate French speech that remains recognizably the same speaker across scenes.",
+    "goal": "Human, fluid French speech that remains recognizably the same synthetic Lucas speaker across scenes.",
     "preferActualCharacterReference": true,
     "genericSeedIsFallbackOnly": true,
     "requiredQualities": [
@@ -83,22 +92,48 @@
       "tired",
       "warm"
     ],
-    "camera": "credible desktop/video-call framing",
-    "motion": "micro-movements only unless a specific approved clip requires more",
-    "fallback": "approved canonical fallback only"
+    "camera_contract": {
+      "viewpoint": "viewer_is_the_phone_front_camera",
+      "phone_visible": false,
+      "external_camera": false,
+      "distance": "natural arm-length selfie/video-call distance",
+      "framing": "head, shoulders and upper torso with slightly imperfect human composition",
+      "movement": [
+        "tiny handheld micro-shake",
+        "minute framing drift",
+        "small perspective changes from the holding arm",
+        "subtle phone autofocus/exposure breathing"
+      ],
+      "gaze": "natural alternation between screen and lens",
+      "forbidden": [
+        "cinematic portrait grammar",
+        "tripod look",
+        "phone shown in frame",
+        "camera filming Lucas holding a phone",
+        "dolly",
+        "zoom",
+        "cinematic pan",
+        "beauty close-up"
+      ]
+    },
+    "motion": "Lucas-specific micro-movements must be selected from the reference bank; generic male motion is not acceptable.",
+    "fallback": "approved canonical fallback only",
+    "mediaTypeGate": "A candidate that looks like a portrait, cinematic shot or external camera view is rejected as NOT_VISIO even if Lucas identity is otherwise acceptable."
   },
   "rejectionReasons": [
     "identity drift",
     "face morphing between frames",
     "wrong age",
     "wrong facial features",
-    "invented scar or tattoo",
+    "non-canonical tattoo change",
     "rubbery mouth",
     "uncanny blinking",
     "robotic voice",
     "voice identity mismatch",
     "lip movement visibly unrelated to speech",
     "excessive camera motion",
+    "wrong media type",
+    "not true phone-front-camera visio",
     "text or watermark",
     "continuity mismatch"
   ]
