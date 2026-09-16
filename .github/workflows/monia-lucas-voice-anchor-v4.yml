@@ -1,4 +1,4 @@
-name: MonIA Lucas Fixed Voice Anchor V4
+name: MonIA Lucas V4 Surprise Call Voice
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  generate-anchor-v4:
+  generate-v4-surprise-call:
     runs-on: ubuntu-24.04
     env:
       INFOMANIAK_FTP_HOST: ${{ secrets.INFOMANIAK_FTP_HOST }}
@@ -24,13 +24,13 @@ jobs:
         run: |
           python -m pip install --disable-pip-version-check --upgrade pip
           python -m pip install --disable-pip-version-check gradio_client requests pillow numpy
-      - name: Generate one energetic Lucas anchor V4 candidate
-        run: python -m scripts.monia_lucas_voice_anchor_v4_energy --publish-candidate
-      - name: Verify public anchor V4 candidate
+      - name: Generate surprise call with fixed synthetic V4 identity
+        run: python -m scripts.monia_lucas_voice_anchor_v4_energy --surprise-call --publish-candidate
+      - name: Verify public V4 surprise-call candidate
         run: |
           python - <<'PY'
           import requests
-          url='https://marion-lucas.marionbolomey.fr/resources/monia/generated/lucas-voice-anchor-v4-energy-fr-candidate.wav'
+          url='https://marion-lucas.marionbolomey.fr/resources/monia/generated/lucas-voice-v4-surprise-call-fr-candidate.wav'
           r=requests.get(url,timeout=60,headers={'Cache-Control':'no-cache'})
           r.raise_for_status()
           assert len(r.content)>4096,len(r.content)
@@ -39,6 +39,6 @@ jobs:
           PY
       - name: Candidate-only policy
         run: |
-          echo "Single energetic synthetic Lucas V4 anchor candidate."
-          echo "Reference video informed broad acoustic/performance traits only; no biometric cloning."
-          echo "No visio/runtime mutation and no auto-promotion."
+          echo "Fixed synthetic Lucas V4 identity, new French surprise-call line."
+          echo "No real-person voice cloning."
+          echo "No official runtime mutation and no auto-promotion."
