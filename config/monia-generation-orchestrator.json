@@ -1,0 +1,117 @@
+{
+  "version": 1,
+  "status": "canonical",
+  "purpose": "MonIA is the creative and technical scene-generation orchestrator for Marion & Lucas. It must understand the requested experience, design the scene, choose the correct generation pipeline, bind canonical character/voice references, generate assets, validate candidates and expose only coherent outputs to the game.",
+  "principle": "plan -> bind canon -> generate -> validate -> use",
+  "generation_authority": {
+    "monia_creates": [
+      "cinematic scenes",
+      "video-call / visio scenes",
+      "ambient life scenes",
+      "living backgrounds and environmental motion",
+      "character reactions",
+      "dialogue performances",
+      "voice lines",
+      "supporting still images when appropriate",
+      "scene variants adapted to save-state context"
+    ],
+    "not_just_catalog_selection": true,
+    "runtime_or_upstream_generation": "MonIA may use pre-generated approved assets when they are the best fit, but absence of an existing asset is not a reason to stop. When the experience requires a new scene, MonIA creates a generation plan and invokes the appropriate generation path."
+  },
+  "scene_understanding": {
+    "inputs": [
+      "player request or gameplay trigger",
+      "current save state",
+      "characters present",
+      "relationship state",
+      "location",
+      "time and date",
+      "recent memories and events",
+      "emotion and dramatic intent",
+      "requested or inferred medium"
+    ],
+    "scene_types": [
+      "visio",
+      "cinematic",
+      "ambient",
+      "gameplay_life_moment",
+      "audio_call",
+      "voice_message",
+      "text_message",
+      "still_image"
+    ],
+    "rule": "Infer the medium from intent and context when not explicitly supplied. The scene type determines camera grammar, reference selection, voice behavior, generation model class and validation gates."
+  },
+  "lucas": {
+    "identity_bank": "config/lucas-reference-bank.json",
+    "motion_bank": "config/motion-reference-bank.json",
+    "visio_contract": "config/monia-visio-approved.json",
+    "voice_strategy": "config/lucas-voice-strategy.json",
+    "voice": {
+      "official_reference": "lucas-voice-v16-b-smoother-flow-fr-candidate.wav",
+      "status": "approved-by-user",
+      "language": "fr-FR",
+      "rule": "Whenever Lucas speaks in a newly generated scene, call, visio, cinematic or voice message, preserve the approved V16 Lucas voice identity, register, warmth and connected French flow. Emotion may change; core voice identity may not.",
+      "forbidden": [
+        "substituting V10-A for new dialogue",
+        "using rejected V17 or V18",
+        "redesigning Lucas voice per scene",
+        "pitch or playback-rate warping",
+        "robotic word-by-word stitching"
+      ]
+    }
+  },
+  "pipelines": {
+    "visio": {
+      "camera": "true smartphone front camera; viewer is the phone; phone invisible",
+      "references": ["canonical Lucas identity", "V7 front-camera grammar", "contextual Lucas motion/performance", "V16 voice when speaking"],
+      "generate": ["visual performance", "contextual environment", "Lucas voice if dialogue", "synchronization"],
+      "reject_if": ["external camera", "visible phone", "portrait/cinematic framing", "wrong Lucas identity", "wrong voice identity", "robotic delivery"]
+    },
+    "cinematic": {
+      "camera": "external cinematic camera chosen to serve the dramatic beat",
+      "references": ["canonical identities", "contextual motion/performance", "location/wardrobe canon", "V16 voice for Lucas dialogue"],
+      "generate": ["blocking", "camera movement", "character performance", "environment", "dialogue/voice when needed", "scene sound plan when available"],
+      "reject_if": ["identity drift", "wrong relationship continuity", "camera grammar inconsistent with intended beat", "generic or static slideshow look"]
+    },
+    "ambient": {
+      "camera": "environment-first; subtle, believable movement",
+      "references": ["current location", "time", "weather/season when known", "world continuity"],
+      "generate": ["light changes", "foliage movement", "curtains/fabrics", "distant traffic or people when appropriate", "small environmental motion"],
+      "rule": "Ambient generation exists to make the playable world feel alive; it must not invent major story events."
+    },
+    "gameplay_life_moment": {
+      "camera": "player/world camera unless a cinematic beat is explicitly promoted",
+      "generate": ["small contextual animation", "character reaction", "environmental response", "optional short dialogue"],
+      "rule": "Prefer seamless life simulation over cutting to a cinematic for ordinary actions."
+    },
+    "audio_call": {
+      "visual_generation": false,
+      "voice": "V16 for Lucas",
+      "generate": ["contextual Lucas dialogue", "natural performance", "call continuity"]
+    },
+    "voice_message": {
+      "visual_generation": false,
+      "voice": "V16 for Lucas",
+      "generate": ["contextual Lucas dialogue", "natural message-like performance"]
+    }
+  },
+  "reference_selection": {
+    "policy": "References are ingredients, not finished scenes. MonIA chooses references by function: identity, body/posture, motion, performance, camera grammar, voice, wardrobe and environment. A single source clip must never define all aspects of a generated scene unless explicitly intended.",
+    "minimum_for_lucas_video": ["identity anchor", "context-appropriate motion/performance"],
+    "additional_for_lucas_visio": ["V7 front-camera grammar"],
+    "additional_for_spoken_lucas": ["approved V16 voice direction"]
+  },
+  "validation": {
+    "before_use": [
+      "correct scene type and camera grammar",
+      "canonical character identity",
+      "continuity with save state",
+      "correct age/context/wardrobe constraints",
+      "correct Lucas voice identity when he speaks",
+      "natural motion and performance",
+      "no accidental adoption of rejected generated candidates as canon"
+    ],
+    "learning_rule": "Only user-approved or explicitly canonicalized outputs may be promoted into long-term reference banks. Generated candidates never teach MonIA character identity automatically."
+  }
+}
