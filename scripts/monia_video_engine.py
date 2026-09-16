@@ -5,8 +5,11 @@ import io
 import json
 import multiprocessing as mp
 import os
+import shutil
+import time
 from dataclasses import dataclass
 from pathlib import Path
+from queue import Empty
 from urllib.parse import quote
 
 import requests
@@ -18,6 +21,11 @@ import scripts.monia_intro_worker as worker
 SITE = "https://marion-lucas.marionbolomey.fr"
 WORK_DIR = Path(".monia-video")
 WORK_DIR.mkdir(exist_ok=True)
+
+RACE_TIMEOUT_SECONDS = int(os.environ.get("MONIA_RACE_TIMEOUT_SECONDS", "420"))
+LTX_UPLOAD_TIMEOUT_SECONDS = int(os.environ.get("MONIA_LTX_UPLOAD_TIMEOUT_SECONDS", "120"))
+LTX_SUBMIT_TIMEOUT_SECONDS = int(os.environ.get("MONIA_LTX_SUBMIT_TIMEOUT_SECONDS", "120"))
+WAN_PROVIDER_TIMEOUT_SECONDS = int(os.environ.get("MONIA_WAN_PROVIDER_TIMEOUT_SECONDS", "360"))
 
 
 @dataclass(frozen=True)
@@ -38,22 +46,14 @@ LUCAS = CharacterProfile(
     canon_url=f"{SITE}/resources/monia/canon/lucas/reference.jpg",
     prompt=(
         "Photorealistic live-action cinematic shot for the Marion & Lucas desktop game. "
-        "The supplied Lucas reference is the absolute identity authority. Do not redesign, "
-        "beautify, reinterpret, age-shift or substitute him. Preserve the same facial geometry, "
-        "eye spacing, nose, lips, jaw, cheekbones, hairline, thick dark wavy hair with natural strands, "
-        "cool green-hazel eyes with gray-green olive outer irises, a subtle warm amber-brown ring around the pupils and a darker limbal ring, short stubble and tanned olive skin. "
-        "Lucas has no tattoos and no facial scar. His eyes must never become uniformly brown, bright artificial green or clearly blue. "
-        "Horizontal 16:9 desktop composition, chest-up framing, Lucas alone, realistic neutral interior, "
-        "soft natural daylight. Motion is deliberately minimal to protect identity: natural breathing, "
-        "one or two realistic blinks, a tiny eye shift, a very small controlled head inclination and at "
-        "most a restrained closed-mouth half-smile. No speaking. Anatomically normal ears exactly as in "
-        "the reference: no holes, gauges, piercings or invented ear details."
+        "The supplied Lucas reference is the absolute identity authority. Preserve his facial geometry, "
+        "eye spacing, nose, lips, jaw, cheekbones, hairline, thick dark wavy hair, green-hazel eyes, short stubble and tanned olive skin. "
+        "Horizontal 16:9 desktop composition, chest-up framing, Lucas alone, realistic neutral interior, soft natural daylight. "
+        "Motion is minimal and human: natural breathing, realistic blinks, tiny eye shifts and a restrained head inclination."
     ),
     negative=(
-        "different man, changed identity, generic male model, beauty filter, altered jaw, altered eyes, "
-        "uniform brown eyes, bright green eyes, neon green eyes, vivid blue eyes, altered nose, altered mouth, altered hairline, tattoos, body ink, facial scar, nose scar, altered ears, "
-        "ear holes, gauges, piercings, earrings, deformed ears, woman, second person, extra hands, talking, open mouth, "
-        "cartoon, illustration, text, subtitles, title, watermark, UI, jitter, morphing, identity drift"
+        "different man, changed identity, generic male model, beauty filter, altered jaw, altered eyes, altered nose, altered mouth, altered hairline, "
+        "facial scar, deformed ears, second person, extra hands, cartoon, illustration, text, subtitles, title, watermark, UI, jitter, morphing, identity drift"
     ),
     width=960,
     height=544,
@@ -66,27 +66,14 @@ LUCAS_VISIO_TEST1 = CharacterProfile(
     key="lucas-visio-test1",
     canon_url=f"{SITE}/resources/monia/canon/lucas/reference.jpg",
     prompt=(
-        "Create a brand-new photorealistic live-action video-call shot of Lucas for Marion & Lucas. "
-        "The supplied still image is identity reference only, never a motion source and never a clip to copy. "
-        "Invent a new moment and new movement while preserving Lucas exactly: same facial geometry, eye spacing, "
-        "nose, lips, jaw, cheekbones, hairline, dark wavy hair with a few natural strands, cool green-hazel eyes with gray-green olive outer irises, a subtle warm amber-brown ring around the pupils and a darker limbal ring, "
-        "short stubble and olive skin. Lucas has absolutely no tattoos and no facial scar. His eyes must never become uniformly brown, bright artificial green or clearly blue. "
-        "Vertical 9:16 phone-video-call composition, chest-up framing with his complete face clearly visible, "
-        "not an extreme close-up and never only a fragment of his face. Lucas is alone in a believable warm home "
-        "interior different from the reference background, wearing a plain black shirt with a clean visible neck. "
-        "He feels like a real person currently on a live video call: subtle breathing, one natural irregular blink, "
-        "a tiny glance briefly away from the screen and back toward the camera, then a very small relaxed head movement "
-        "and restrained closed-mouth micro-expression. He does not speak in this identity test. The camera is stable "
-        "like a phone resting naturally. Natural skin texture, realistic eyes, realistic micro-movements, soft warm light. "
-        "This must be a newly generated scene, not a replay, trace, crop, reenactment or near-copy of any source video."
+        "Create a brand-new photorealistic live-action front-camera video-call shot of Lucas. "
+        "The supplied still is identity reference only. Preserve Lucas exactly. Vertical 9:16, chest-up, complete face visible, believable home interior, natural skin texture, "
+        "realistic phone-camera perspective, subtle breathing, irregular blink, tiny glance between screen and lens, restrained head movement and natural micro-expression. "
+        "Newly generated scene, never replay or trace a source video."
     ),
     negative=(
-        "source-video replay, copied motion, identical source framing, identical source background, different man, "
-        "changed identity, generic male model, beauty filter, altered jaw, altered eyes, uniform brown eyes, bright green eyes, neon green eyes, vivid blue eyes, altered nose, altered mouth, "
-        "altered hairline, tattoo, tattoos, body ink, facial scar, nose scar, cropped face, partial face, extreme close-up, "
-        "ear holes, gauges, piercings, earrings, deformed ears, second person, extra person, extra hands, talking, open mouth, "
-        "lip movement, cartoon, illustration, text, subtitles, title, watermark, UI overlay, jitter, morphing, identity drift, "
-        "plastic skin, frozen face, looped gesture, dramatic camera movement"
+        "source-video replay, copied motion, different man, changed identity, beauty filter, altered jaw, altered eyes, altered nose, altered mouth, cropped face, extreme close-up, "
+        "second person, extra hands, cartoon, illustration, text, subtitles, watermark, UI overlay, jitter, morphing, identity drift, plastic skin, frozen face, dramatic camera movement"
     ),
     width=576,
     height=1024,
@@ -99,14 +86,11 @@ MARION = CharacterProfile(
     key="marion",
     canon_url=f"{SITE}/resources/monia/canon/marion/reference.jpg",
     prompt=(
-        "Photorealistic live-action cinematic shot for the Marion & Lucas desktop game. "
-        "The supplied Marion reference is the absolute identity authority. Preserve her exact facial "
-        "proportions and recognizable appearance. Horizontal 16:9 desktop composition, natural soft "
-        "daylight, restrained cinematic movement, natural breathing and blinking, no identity drift."
+        "Photorealistic live-action cinematic shot for Marion & Lucas. Preserve Marion's exact recognizable appearance. "
+        "Horizontal 16:9, natural soft daylight, restrained cinematic movement, natural breathing and blinking, no identity drift."
     ),
     negative=(
-        "different woman, changed identity, generic model face, beauty filter, distorted face, cartoon, "
-        "illustration, text, subtitles, title, watermark, UI, jitter, morphing, identity drift"
+        "different woman, changed identity, generic model face, beauty filter, distorted face, cartoon, illustration, text, subtitles, title, watermark, UI, jitter, morphing"
     ),
     width=960,
     height=544,
@@ -116,8 +100,6 @@ MARION = CharacterProfile(
 )
 
 PROFILES = {p.key: p for p in (LUCAS, LUCAS_VISIO_TEST1, MARION)}
-
-# MonIA owns the orchestration and candidate/approval policy. The compute adapter stays hidden behind this engine.
 FREE_WAN_PROVIDERS = tuple(worker.WAN_PROVIDERS)
 FREE_LTX_SPACE = worker.LTX_SPACE
 
@@ -149,7 +131,7 @@ def _run_ltx(profile: CharacterProfile, source: Path, target: Path) -> str:
         upload = session.post(
             f"{FREE_LTX_SPACE}/gradio_api/upload",
             files={"files": (source.name, fh, "image/png")},
-            timeout=60,
+            timeout=(30, LTX_UPLOAD_TIMEOUT_SECONDS),
         )
     upload.raise_for_status()
     data = upload.json()
@@ -177,7 +159,7 @@ def _run_ltx(profile: CharacterProfile, source: Path, target: Path) -> str:
     submit = session.post(
         f"{FREE_LTX_SPACE}/gradio_api/call/run",
         json={"data": [json.dumps(payload)]},
-        timeout=60,
+        timeout=(30, LTX_SUBMIT_TIMEOUT_SECONDS),
     )
     submit.raise_for_status()
     event_id = submit.json().get("event_id")
@@ -187,7 +169,7 @@ def _run_ltx(profile: CharacterProfile, source: Path, target: Path) -> str:
     response = session.get(
         f"{FREE_LTX_SPACE}/gradio_api/call/run/{quote(str(event_id), safe='')}",
         headers={"Accept": "text/event-stream", **worker.hf_headers()},
-        timeout=worker.LTX_TIMEOUT_SECONDS,
+        timeout=(30, worker.LTX_TIMEOUT_SECONDS),
     )
     response.raise_for_status()
     for block in response.text.split("\n\n"):
@@ -213,56 +195,128 @@ def _run_ltx(profile: CharacterProfile, source: Path, target: Path) -> str:
     raise RuntimeError("Incomplete video compute response")
 
 
-def _wan_child(space: str, label: str, profile: CharacterProfile, source: str, target: str, queue) -> None:
+def _run_wan_provider(space: str, label: str, profile: CharacterProfile, source: Path, target: Path) -> str:
+    token = os.environ.get("HF_TOKEN", "").strip() or None
+    client = Client(space, token=token, verbose=False)
+    result = client.predict(
+        profile.prompt,
+        handle_file(str(source)),
+        profile.width,
+        profile.height,
+        33,
+        20,
+        5,
+        -1,
+        api_name=worker.WAN_API_NAME,
+    )
+    errors: list[str] = []
+    for candidate in worker.deep_candidates(result):
+        try:
+            worker.materialize(candidate, target)
+            if worker.looks_like_video(target):
+                return label
+        except Exception as exc:
+            errors.append(str(exc))
+    raise RuntimeError("No generated video recovered: " + " | ".join(errors[-3:]))
+
+
+def _provider_child(kind: str, space: str, label: str, profile: CharacterProfile, source: str, target: str, queue) -> None:
+    target_path = Path(target)
     try:
-        token = os.environ.get("HF_TOKEN", "").strip() or None
-        client = Client(space, token=token, verbose=False)
-        result = client.predict(
-            profile.prompt,
-            handle_file(source),
-            profile.width,
-            profile.height,
-            33,
-            20,
-            5,
-            -1,
-            api_name=worker.WAN_API_NAME,
-        )
-        errors: list[str] = []
-        for candidate in worker.deep_candidates(result):
-            try:
-                worker.materialize(candidate, Path(target))
-                if worker.looks_like_video(Path(target)):
-                    queue.put((True, label))
-                    return
-            except Exception as exc:
-                errors.append(str(exc))
-        raise RuntimeError("No generated video recovered: " + " | ".join(errors[-3:]))
+        target_path.unlink(missing_ok=True)
+        if kind == "ltx":
+            provider = _run_ltx(profile, Path(source), target_path)
+        else:
+            provider = _run_wan_provider(space, label, profile, Path(source), target_path)
+        if not worker.looks_like_video(target_path):
+            raise RuntimeError("provider returned invalid video")
+        queue.put({"ok": True, "label": provider, "target": str(target_path)})
     except Exception as exc:
-        queue.put((False, str(exc)))
+        queue.put({"ok": False, "label": label, "error": f"{type(exc).__name__}: {exc}"})
+
+
+def race_compute(profile: CharacterProfile, source: Path, target: Path) -> tuple[str, list[str]]:
+    """Run MonIA compute providers concurrently. First valid video wins."""
+    ctx = mp.get_context("fork")
+    queue = ctx.Queue()
+    specs = [("ltx", FREE_LTX_SPACE, worker.LTX_LABEL)] + [("wan", space, label) for space, label in FREE_WAN_PROVIDERS]
+    processes: list[tuple[str, mp.Process, Path]] = []
+    errors: list[str] = []
+
+    for index, (kind, space, label) in enumerate(specs):
+        temp = WORK_DIR / f"{target.stem}.race-{index}{target.suffix}"
+        temp.unlink(missing_ok=True)
+        p = ctx.Process(target=_provider_child, args=(kind, space, label, profile, str(source), str(temp), queue))
+        p.start()
+        processes.append((label, p, temp))
+        print(f"MONIA_RACE started provider={label} pid={p.pid}", flush=True)
+
+    deadline = time.monotonic() + RACE_TIMEOUT_SECONDS
+    winner: tuple[str, Path] | None = None
+    try:
+        while time.monotonic() < deadline and any(p.is_alive() for _, p, _ in processes):
+            try:
+                message = queue.get(timeout=1.0)
+            except Empty:
+                continue
+            if message.get("ok"):
+                candidate = Path(str(message["target"]))
+                if worker.looks_like_video(candidate):
+                    winner = (str(message["label"]), candidate)
+                    break
+            else:
+                errors.append(f"{message.get('label')}: {message.get('error')}")
+                print(f"MONIA_RACE failed provider={message.get('label')} error={message.get('error')}", flush=True)
+
+        while winner is None:
+            try:
+                message = queue.get_nowait()
+            except Empty:
+                break
+            if message.get("ok") and worker.looks_like_video(Path(str(message["target"]))):
+                winner = (str(message["label"]), Path(str(message["target"])))
+                break
+            if not message.get("ok"):
+                errors.append(f"{message.get('label')}: {message.get('error')}")
+    finally:
+        for _, process, _ in processes:
+            if process.is_alive():
+                process.terminate()
+            process.join(5)
+
+    if winner is None:
+        for label, _, temp in processes:
+            if worker.looks_like_video(temp):
+                winner = (label, temp)
+                break
+
+    if winner is None:
+        for label, _, _ in processes:
+            if not any(err.startswith(label + ":") for err in errors):
+                errors.append(f"{label}: no valid result before {RACE_TIMEOUT_SECONDS}s deadline")
+        raise RuntimeError("No MonIA video compute available: " + " | ".join(errors))
+
+    provider, winner_path = winner
+    target.unlink(missing_ok=True)
+    shutil.move(str(winner_path), str(target))
+    for _, _, temp in processes:
+        if temp != winner_path:
+            temp.unlink(missing_ok=True)
+    print(f"MONIA_RACE winner={provider} bytes={target.stat().st_size}", flush=True)
+    return provider, errors
 
 
 def _run_wan(profile: CharacterProfile, source: Path, target: Path) -> str:
     errors: list[str] = []
     for space, label in FREE_WAN_PROVIDERS:
-        ctx = mp.get_context("fork")
-        queue = ctx.Queue()
-        process = ctx.Process(target=_wan_child, args=(space, label, profile, str(source), str(target), queue))
-        process.start()
-        process.join(120)
-        if process.is_alive():
-            process.terminate()
-            process.join(5)
-            errors.append(f"{label}: timeout")
-            continue
-        if queue.empty():
-            errors.append(f"{label}: no result")
-            continue
-        ok, detail = queue.get()
-        if ok:
-            return str(detail)
-        errors.append(f"{label}: {detail}")
-        target.unlink(missing_ok=True)
+        temp = WORK_DIR / f"{target.stem}.{label.replace(' ', '-').lower()}{target.suffix}"
+        try:
+            provider = _run_wan_provider(space, label, profile, source, temp)
+            shutil.move(str(temp), str(target))
+            return provider
+        except Exception as exc:
+            errors.append(f"{label}: {exc}")
+            temp.unlink(missing_ok=True)
     raise RuntimeError(" | ".join(errors))
 
 
@@ -272,19 +326,7 @@ def generate_candidate(profile_key: str) -> tuple[Path, str]:
     target = WORK_DIR / profile.output_name
     _download_canon(profile, source)
     target.unlink(missing_ok=True)
-
-    errors: list[str] = []
-    try:
-        provider = _run_ltx(profile, source, target)
-    except Exception as exc:
-        errors.append(f"primary: {exc}")
-        target.unlink(missing_ok=True)
-        try:
-            provider = _run_wan(profile, source, target)
-        except Exception as wexc:
-            errors.append(str(wexc))
-            raise RuntimeError("No MonIA video compute available: " + " | ".join(errors)) from wexc
-
+    provider, _ = race_compute(profile, source, target)
     if not worker.looks_like_video(target):
         raise RuntimeError("Generated candidate is not a valid video")
     return target, provider
