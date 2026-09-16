@@ -28,8 +28,8 @@ jobs:
           python -m pip install --disable-pip-version-check gradio_client requests pillow numpy
           sudo apt-get update -qq
           sudo apt-get install -y -qq ffmpeg
-      - name: Generate true front-camera MonIA three-state visio V4
-        run: python -m scripts.monia_visio_surprise_v2_pack --state all --publish-candidate
+      - name: Generate missing true front-camera MonIA reaction state only
+        run: python -m scripts.monia_visio_surprise_v2_pack --state reaction --publish-candidate
       - name: Verify public front-camera V4 candidate set
         run: |
           python - <<'PY'
@@ -51,6 +51,8 @@ jobs:
       - name: Candidate-only policy
         run: |
           echo "MonIA-only true front-camera visio V4 candidate set."
+          echo "Listening and speaking are preserved from the successful FrontCam generation."
+          echo "This run regenerates reaction only."
           echo "The viewpoint itself is Lucas's smartphone front camera; no phone may appear in frame."
           echo "No official runtime mutation and no auto-promotion."
           echo "V4 voice remains native-speed during speaking state."
