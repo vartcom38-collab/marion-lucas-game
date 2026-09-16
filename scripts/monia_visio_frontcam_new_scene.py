@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import argparse
-import time
 from dataclasses import replace
 from pathlib import Path
 
@@ -67,25 +66,10 @@ def generate() -> tuple[Path, str]:
     target = engine.WORK_DIR / OUTPUT_NAME
     prepare_reference(source, profile.width, profile.height)
     target.unlink(missing_ok=True)
-    errors: list[str] = []
 
-    for attempt in range(1, 4):
-        try:
-            provider = engine._run_ltx(profile, source, target)
-            if engine.worker.looks_like_video(target):
-                return target, provider
-        except Exception as exc:
-            errors.append(f"LTX attempt {attempt}: {exc}")
-            target.unlink(missing_ok=True)
-            if attempt < 3:
-                time.sleep(8)
-
-    try:
-        provider = engine._run_wan(profile, source, target)
-    except Exception as wexc:
-        errors.append(f"WAN fallback: {wexc}")
-        raise RuntimeError("No MonIA video compute available: " + " | ".join(errors)) from wexc
-
+    provider, errors = engine.race_compute(profile, source, target)
+    if errors:
+        print("MONIA_VISIO_FRONTCAM_RACE_ERRORS " + " || ".join(errors), flush=True)
     if not engine.worker.looks_like_video(target):
         raise RuntimeError("Generated candidate is not a valid video")
     return target, provider
