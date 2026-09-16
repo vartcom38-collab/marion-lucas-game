@@ -1,0 +1,55 @@
+name: MonIA Lucas Surprise Visio V2 Pack
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/monia_visio_surprise_v2_pack.py'
+      - '.github/workflows/monia-visio-surprise-v2.yml'
+  workflow_dispatch:
+
+jobs:
+  generate-visio-pack:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      INFOMANIAK_FTP_HOST: ${{ secrets.INFOMANIAK_FTP_HOST }}
+      INFOMANIAK_FTP_USER: ${{ secrets.INFOMANIAK_FTP_USER }}
+      INFOMANIAK_FTP_PASSWORD: ${{ secrets.INFOMANIAK_FTP_PASSWORD }}
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          python -m pip install --disable-pip-version-check --upgrade pip
+          python -m pip install --disable-pip-version-check gradio_client requests pillow numpy
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+      - name: Generate three-state MonIA surprise visio pack
+        run: python -m scripts.monia_visio_surprise_v2_pack --publish-candidate
+      - name: Verify public state candidates
+        run: |
+          python - <<'PY'
+          import requests
+          base='https://marion-lucas.marionbolomey.fr/resources/monia/generated/'
+          files=[
+            'visio-lucas-surprise-v2-listening-candidate.mp4',
+            'visio-lucas-surprise-v2-speaking-v4voice-candidate.mp4',
+            'visio-lucas-surprise-v2-reaction-candidate.mp4',
+          ]
+          for name in files:
+              url=base+name
+              r=requests.get(url,timeout=90,headers={'Cache-Control':'no-cache'})
+              r.raise_for_status()
+              assert len(r.content)>10000,(name,len(r.content))
+              assert b'ftyp' in r.content[:64],(name,r.content[:64])
+              print('verified',url,len(r.content))
+          PY
+      - name: Candidate-only policy
+        run: |
+          echo "Three-state MonIA-only visio pack."
+          echo "No official runtime mutation and no auto-promotion."
+          echo "V4 voice stays native-speed during the speaking state."
