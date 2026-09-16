@@ -25,19 +25,21 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install MonIA voice-design dependencies
+      - name: Install FFmpeg and MonIA voice-design dependencies
         run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg
           python -m pip install --disable-pip-version-check --upgrade pip
           python -m pip install --disable-pip-version-check gradio_client requests pillow
 
-      - name: Generate one soft-flow French Lucas candidate
+      - name: Generate one soft-natural French Lucas candidate
         run: python -m scripts.monia_lucas_voice_design_fr --publish-candidate
 
       - name: Verify candidate publicly
         run: |
           python - <<'PY'
           import requests
-          url = "https://marion-lucas.marionbolomey.fr/resources/monia/generated/lucas-voice-v11-soft-flow-fr-candidate.wav"
+          url = "https://marion-lucas.marionbolomey.fr/resources/monia/generated/lucas-voice-v12-soft-natural-fr-candidate.wav"
           r = requests.get(url, timeout=60, headers={"Cache-Control":"no-cache"})
           r.raise_for_status()
           assert len(r.content) > 4096, len(r.content)
@@ -47,7 +49,8 @@ jobs:
 
       - name: Candidate-only policy
         run: |
-          echo "One diagnostic candidate only. No live manifest mutation."
-          echo "Lucas uploaded clips guide broad conversational flow; approved soft rendering guides tone."
+          echo "One V12 diagnostic candidate only. No live manifest mutation."
+          echo "Lucas uploaded clips guide broad conversational flow; approved soft rendering guides tone color."
+          echo "Tone processing preserves timing and pitch."
           echo "No exact real-person voice cloning."
           echo "Human listening approval required before any runtime use."
