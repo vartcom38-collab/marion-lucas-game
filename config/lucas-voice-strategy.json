@@ -1,51 +1,49 @@
 {
-  "version": 3,
-  "status": "accepted-timbre-and-flow-base",
+  "version": 4,
+  "status": "rendering-approved-language-pending",
   "character": "lucas",
-  "goal": "Preserve the accepted Lucas timbre and fluidity exactly, soften dryness only slightly, and carry that same natural movement into French.",
+  "goal": "Preserve the approved soft Lucas tone and fluidity exactly, remove contaminating music/other voices, and carry the same vocal movement into natural French.",
   "reference_use": {
     "uploaded_lucas_clips": "primary timbre, rhythm and presence reference",
-    "lucas_voice_bank_v1": "accepted timbre and fluidity base from user-provided Lucas speech moments",
-    "lucas_voice_bank_v3_subtle_soft": "preferred tonal direction: only 10-15 percent softer than the accepted base, with no pitch, speed or phrase-timing change",
-    "validated_v10a": "legacy visio anchor only; do not let it override the newer accepted base"
+    "lucas_soft_reference_v2_strict": "approved rendering reference for calm, intimate, home, phone and visio speech; language not yet approved",
+    "lucas_voice_bank_v1": "older accepted timbre base only",
+    "validated_v10a": "legacy visio anchor only; do not let it override the newer approved soft rendering"
   },
-  "accepted_characteristics": {
-    "register": "naturally low male voice, not artificially deep",
-    "tone": "same accepted masculine vocal color, only slightly warmer and rounder",
-    "delivery": "same accepted connected, fluid, conversational movement",
-    "variation": "preserve natural pitch and energy movement exactly; never flatten it",
-    "diction": "casual spoken French, linked words, relaxed consonants, no textbook diction",
+  "approved_rendering": {
+    "tone": "low, warm, calm, intimate and fluid",
+    "register": "naturally low male voice, never artificially deepened",
+    "prosody": "continuous, relaxed, close and human, with restrained pitch rises and no irritated/aggressive contour",
+    "delivery": "connected conversational phrasing with no audible joins or chopped segments",
+    "energy": "soft everyday presence suitable for home, phone, visio and couple scenes",
+    "status": "approved independently of language"
+  },
+  "cleanup_requirements": {
+    "female_voice": "exclude completely from the final reference bank",
+    "background_music": "not part of Lucas identity and must be removed from final clean reference whenever separation is technically available",
+    "other_speakers": "exclude completely",
+    "editing": "prefer fewer clean continuous Lucas-only excerpts over longer contaminated compilations"
+  },
+  "french_target": {
+    "language": "natural conversational metropolitan French",
+    "continuity": "single continuous human-like performance per line; no audible cuts, word stitching or syllable assembly",
+    "diction": "relaxed French, linked words, natural contractions, soft consonants, no textbook diction",
+    "prosody_transfer": "preserve the approved low, warm, calm contour and fluidity from the soft Lucas rendering instead of introducing higher, irritated pitch movement",
     "endings": "soft, relaxed phrase endings",
-    "breathing": "subtle and integrated",
-    "softening_limit": "subtle only; approximately 10-15 percent perceptual softening, never enough to blur identity or articulation",
-    "avoid": [
-      "dry or brittle upper-mid tone",
-      "over-softened or muffled tone",
-      "over-articulated French",
-      "syllable-by-syllable cadence",
-      "forced bass",
-      "slower delivery",
-      "flattened prosody",
-      "announcer delivery",
-      "uniform timing"
-    ]
+    "breathing": "subtle and integrated"
   },
-  "next_route": {
-    "principle": "preserve accepted timbre and flow, improve only language and slight warmth",
-    "source_requirement": "Use a natural continuous French performance as the source whenever a new line is created.",
-    "processing": "Only subtle tonal softening and normalization before candidate review; do not alter pitch, tempo, phrase timing or prosodic contour.",
-    "french_target": "Natural conversational metropolitan French with linked phrasing, contractions, relaxed consonants, soft endings and irregular human timing while preserving the accepted Lucas vocal movement.",
-    "forbidden": [
-      "playback-rate warping",
-      "pitch shifting to make the voice deeper",
-      "tempo changes",
-      "prosody flattening",
-      "word-by-word resynthesis",
-      "syllable-by-syllable timing fixes",
-      "heavy EQ that changes identity",
-      "auto-promotion to live",
-      "replacing the accepted timbre base with a new voice identity"
-    ]
-  },
-  "approval_rule": "One short French candidate must preserve the accepted timbre and fluidity before any dialogue pack expansion or live visio change."
+  "forbidden": [
+    "playback-rate warping",
+    "pitch shifting to force a deeper voice",
+    "tempo changes",
+    "prosody flattening",
+    "word-by-word resynthesis",
+    "syllable-by-syllable timing fixes",
+    "audible edit joins",
+    "music baked into the voice reference",
+    "female speech in the voice reference",
+    "aggressive or irritated pitch contour for normal Lucas dialogue",
+    "auto-promotion to live",
+    "replacing the approved vocal rendering with a new voice identity"
+  ],
+  "approval_rule": "The rendering is approved. The next approval concerns only French naturalness and preservation of this exact tone/flow before any dialogue-pack expansion or live visio change."
 }
