@@ -12,24 +12,25 @@ import scripts.monia_video_engine as engine
 
 SPACE = "Qwen/Qwen3-TTS"
 LANGUAGE = "French"
-TEXT = "Je viens de me poser deux minutes, et toi, tu fais quoi ?"
-OUTPUT_NAME = "lucas-voice-v15-b-fluid-fr-candidate.wav"
+TEXT = "Je viens de me poser deux minutes et toi tu fais quoi ?"
+OUTPUT_NAME = "lucas-voice-v16-b-smoother-flow-fr-candidate.wav"
 
-# V15 recombines two user-preferred checkpoints without voice conversion:
-# - V14-B broad synthetic timbre qualities: close, warm, compact, intimate,
-#   slightly husky, low-mid body, relaxed consonants, natural imperfect edges.
-# - V12 delivery concept: connected conversational French with almost no dead air.
-# This remains a distinct synthetic Lucas voice. No real-person voice cloning,
-# no timing warp, no pitch forcing, no word/syllable stitching.
+# V16 preserves the V15/V14-B synthetic timbre direction and changes only flow.
+# The punctuation is deliberately reduced so the whole line is produced as one
+# connected conversational thought group, especially across "deux minutes et toi".
+# No voice conversion, no speed/pitch manipulation, no word/syllable stitching.
 DESCRIPTION = (
-    "A distinct synthetic native French young adult male voice with the same broad qualities as the preferred B calibration: "
-    "low, warm and very close, compact intimate timbre, soft slightly husky texture, smooth low-mid resonance, relaxed consonants, "
-    "natural imperfect edges and very little brightness. Present and personal rather than polished; calm, affectionate and effortless. "
-    "Now speak the full sentence as one continuous private conversation, not as separate clauses. Keep the words linked naturally, "
-    "with almost no dead air and no reset after 'minutes'. The comma is only a tiny breath-sized transition, then continue immediately into 'et toi'. "
-    "Use restrained natural pitch movement, soft attacks and a relaxed low ending. Preserve human micro-variation without becoming theatrical. "
-    "No radio voice, no presenter diction, no perfume-ad seduction, no forced bass, no whisper, no metallic brightness, no synthetic sheen, "
-    "no syllabic cadence, no word-by-word rhythm, no choppy pauses, no robotic timing."
+    "Use exactly the same synthetic vocal direction as the approved V15 checkpoint: "
+    "a native French young adult male voice that is naturally low, warm, very close and intimate, "
+    "with a compact timbre, soft slightly husky texture, smooth low-mid resonance, relaxed consonants, "
+    "natural imperfect edges, very little brightness, calm affectionate effortless energy. "
+    "Do not reinterpret the voice or make it deeper, brighter, cleaner, more polished or more theatrical. "
+    "For this pass, improve only continuity: say the entire sentence as one connected conversational thought, "
+    "with natural French linking and no clause reset after 'deux minutes'. Flow directly through 'et toi tu fais quoi' "
+    "with only a tiny natural breath if absolutely needed, never dead air. Keep a human irregular micro-rhythm rather than a metronomic cadence. "
+    "Use restrained pitch movement, soft attacks and a relaxed low ending. "
+    "No radio voice, no presenter diction, no perfume-ad sensuality, no forced bass, no whisper, no metallic brightness, "
+    "no synthetic sheen, no syllabic cadence, no word-by-word rhythm, no choppy pauses, no robotic timing."
 )
 
 
@@ -50,8 +51,7 @@ def _resolve_audio(result) -> Path:
 
 
 def finish_tone(source: Path, target: Path) -> None:
-    # Keep the B-like soft/close color with only light spectral cleanup.
-    # No tempo change and no pitch manipulation.
+    # Keep the exact V15 tone-shaping chain. Flow is the only variable under test.
     subprocess.run([
         "ffmpeg", "-hide_banner", "-loglevel", "error", "-y",
         "-i", str(source), "-ac", "1", "-ar", "24000",
@@ -60,11 +60,11 @@ def finish_tone(source: Path, target: Path) -> None:
         str(target),
     ], check=True, timeout=90)
     if not target.exists() or target.stat().st_size < 4096:
-        raise RuntimeError(f"V15 candidate too small: {target}")
+        raise RuntimeError(f"V16 candidate too small: {target}")
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Generate one Lucas V15 B-timbre + fluid French candidate")
+    parser = argparse.ArgumentParser(description="Generate one Lucas V16 V15-tone + smoother-flow French candidate")
     parser.add_argument("--publish-candidate", action="store_true")
     args = parser.parse_args()
 
@@ -73,18 +73,18 @@ def main() -> None:
     result = client.predict(TEXT, LANGUAGE, DESCRIPTION, api_name="/generate_voice_design")
     generated = _resolve_audio(result)
 
-    raw = engine.WORK_DIR / "lucas-v15-b-fluid-fr-raw.wav"
+    raw = engine.WORK_DIR / "lucas-v16-b-smoother-flow-fr-raw.wav"
     target = engine.WORK_DIR / OUTPUT_NAME
     shutil.copyfile(generated, raw)
     target.unlink(missing_ok=True)
     finish_tone(raw, target)
     raw.unlink(missing_ok=True)
 
-    print(f"MONIA_LUCAS_V15_B_FLUID_FR output={target} bytes={target.stat().st_size}")
-    print("MONIA_LUCAS_V15_B_FLUID_FR timbre_direction=V14-B flow_direction=V12 direct_generation=true live_manifest_changed=false")
+    print(f"MONIA_LUCAS_V16_SMOOTHER_FLOW_FR output={target} bytes={target.stat().st_size}")
+    print("MONIA_LUCAS_V16_SMOOTHER_FLOW_FR timbre_direction=V15_locked flow_change=linking_only direct_generation=true live_manifest_changed=false")
     if args.publish_candidate:
         url = engine.publish_candidate(target)
-        print(f"MONIA_LUCAS_V15_B_FLUID_FR_CANDIDATE url={url}")
+        print(f"MONIA_LUCAS_V16_SMOOTHER_FLOW_FR_CANDIDATE url={url}")
 
 
 if __name__ == "__main__":
