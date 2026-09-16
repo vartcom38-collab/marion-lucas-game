@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "status": "prosody-guide-from-user-recording",
   "character": "lucas",
   "purpose": "Use only as a French fluidity/prosody guide. Do not copy the user's timbre, identity, pitch or vocal color into Lucas.",
@@ -7,7 +7,15 @@
     "type": "user-provided natural French speech recording",
     "duration_seconds": 105.024,
     "voice_use": "prosody-only",
-    "timbre_use": "forbidden"
+    "timbre_use": "forbidden",
+    "selected_donor_interval_seconds": {
+      "start": 12.48,
+      "end": 17.48,
+      "duration": 5.0
+    },
+    "selected_donor_reason": "Speech-dense continuous passage with very little dead air and no long pause; chosen as the primary French rhythm/flow guide for the next Lucas candidate.",
+    "local_extract_name": "lucas_french_prosody_donor.wav",
+    "privacy": "The user's raw recording and extracted voice audio must not be committed to the public repository or published as a Lucas voice asset. Only non-identifying prosody measurements and timing guidance may be stored."
   },
   "measured_pause_profile": {
     "silence_detection_threshold_db": -38,
@@ -21,6 +29,12 @@
     "share_under_0_35_seconds": 0.952,
     "share_over_0_6_seconds": 0.0
   },
+  "selected_donor_behavior": {
+    "window_seconds": 5.0,
+    "silence_share": 0.104,
+    "longest_silence_seconds": 0.10,
+    "meaning": "The chosen donor is intentionally continuous. Preserve connected phrasing and avoid restart-like gaps."
+  },
   "target_behavior": {
     "phrasing": "continuous conversational French with words linked inside thought groups",
     "micro_pauses": "mostly around 0.15 to 0.30 seconds, used irregularly and semantically",
@@ -31,13 +45,14 @@
     "breathing": "subtle and integrated into phrase groups"
   },
   "first_validation_line": {
-    "text": "Ah ouais... ça me fait plaisir que tu m'appelles juste pour ça.",
-    "direction": "One connected thought. Tiny natural hesitation after 'ouais', then continuous linked delivery. Keep Lucas low, warm and calm. No hard reset before 'ça me fait plaisir'. Soft falling ending on 'ça'."
+    "text": "Je viens de me poser deux minutes... et toi, tu fais quoi ?",
+    "direction": "One connected conversational thought. Keep Lucas low, warm and calm. Use only a tiny natural hesitation before the second clause, then continue without a hard reset. End softly and low, not with a bright question rise."
   },
   "guardrails": [
     "Do not use the user's voice as a timbre or identity reference",
     "Do not clone the user's pitch profile",
     "Do not preserve speaker-specific vocal traits",
+    "Do not publish the user's raw or extracted voice audio",
     "Do not insert uniform pauses",
     "Do not retime words independently",
     "Do not stitch syllables",
