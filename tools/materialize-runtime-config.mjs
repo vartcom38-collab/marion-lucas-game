@@ -6,7 +6,9 @@ const files = [
   ['config/drama-approved.json', 'public/config/drama-approved.json'],
   ['config/motion-reference-bank.json', 'public/config/motion-reference-bank.json'],
   ['config/lucas-reference-bank.json', 'public/config/lucas-reference-bank.json'],
+  ['config/lucas-voice-strategy.json', 'public/config/lucas-voice-strategy.json'],
   ['config/monia-scene-router.json', 'public/config/monia-scene-router.json'],
+  ['config/monia-generation-orchestrator.json', 'public/config/monia-generation-orchestrator.json'],
 ];
 
 for (const [source, target] of files) {
