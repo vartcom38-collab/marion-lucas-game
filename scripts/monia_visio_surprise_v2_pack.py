@@ -17,58 +17,63 @@ VOICE_NAME = "lucas-voice-anchor-v4-energy-fr-candidate.wav"
 
 SCENE_CORE = (
     "Brand-new photorealistic Lucas smartphone video call for Marion & Lucas. "
-    "Preserve the locked Lucas identity: early twenties, thick dark wavy hair with a few loose strands, strong brows, "
+    "Preserve the locked Lucas identity: early twenties, thick dark wavy hair with loose strands, strong brows, "
     "olive/tanned skin, green-hazel to gray-green eyes with a warmer amber center, short beard, youthful masculine face. "
     "Current canon allows Lucas's visible dark neck/chest tattoos when naturally exposed. "
-    "This is NOT a replay, trace, crop or reenactment of any user-supplied video and must invent a completely new visio moment. "
-    "Vertical 9:16 front-camera framing, Lucas alone, chest-up, complete face visible. "
-    "New situation: late evening after returning home, Lucas is in a warm but understated bedroom/dressing-area corner, "
-    "not the previous living-room setup. He wears a charcoal fitted crew-neck T-shirt under a light unbuttoned overshirt, "
-    "hair slightly messier than before as if he has just changed after a long day. A small bedside lamp and a dark wardrobe are softly out of focus behind him. "
-    "The phone is resting naturally at eye level. No cinematic camera grammar: no zoom, push-in, pan, crop change, cut or reframing. "
-    "Natural front-camera realism only: breathing, irregular blinks, tiny eye shifts, subtle head and shoulder micro-movements. "
-    "Keep lighting, wardrobe, background, framing and identity coherent across all state clips in this pack. "
+    "This must be an entirely new generated visio moment and NOT a replay, crop, trace or reenactment of any user-supplied video. "
+    "CRITICAL CAMERA RULE: Lucas is physically HOLDING his smartphone in one hand during the call, selfie/front-camera perspective. "
+    "The image must feel exactly like the view Marion would receive during a real live video call. "
+    "Show Lucas's full head, neck, shoulders and upper torso, roughly mid-chest upward, at natural arm-length selfie distance. "
+    "The camera is not mounted, not on a tripod, not resting on a table and not perfectly centered. "
+    "Use tiny irregular handheld drift from his wrist and arm, subtle breathing movement and occasional minute framing variation, never dramatic shake. "
+    "Lucas looks mainly at the phone screen/camera like a real person on a visio call, with tiny natural eye shifts to the screen. "
+    "No cinematic grammar: no zoom, push-in, dolly, pan, cut, montage, artificial reframing or beauty-shot posing. "
+    "New setting: early night at home near a softly lit hallway/bedroom doorway, warm practical light behind him, darker room beyond. "
+    "New look: fitted dark olive T-shirt, casually tousled hair, relaxed off-duty appearance. "
+    "Natural skin texture, believable phone-camera exposure, slight real-world depth of field, no glamour filter. "
+    "Keep wardrobe, lighting, background, handheld framing style and identity coherent across all three state clips. "
     "No other person, no subtitles, no UI, no text, no watermark. "
 )
 
 NEGATIVE = (
+    "phone on stand, tripod, static studio camera, table-mounted camera, webcam framing, portrait photoshoot, presenter shot, "
     "user-supplied source video replay, copied motion, copied background, different man, identity drift, generic male model, "
     "altered jaw, altered nose, altered lips, altered eye color, uniformly brown eyes, bright neon green eyes, blue eyes, "
-    "beauty filter, plastic skin, erased natural tattoos when visible, invented facial scar, second person, extra person, "
-    "extreme close-up, cropped face, dramatic camera motion, zoom, push-in, pan, cut, montage, reframing, presenter performance, "
-    "frozen face, repeated mechanical gesture, cartoon, illustration, subtitles, captions, title, watermark, app UI, morphing, jitter"
+    "beauty filter, plastic skin, invented facial scar, second person, extra person, extreme close-up, face crop, "
+    "dramatic camera motion, zoom, push-in, pan, cut, montage, reframing, frozen face, repeated mechanical gesture, "
+    "cartoon, illustration, subtitles, captions, title, watermark, app UI, morphing, jitter"
 )
 
 STATE_SPECS = {
     "listening": {
         "duration": 5,
-        "output": "visio-lucas-surprise-v2-listening-candidate.mp4",
-        "prompt": (
-            SCENE_CORE
-            + "STATE: LISTENING / WAITING. Lucas is quiet and attentive as if Marion is speaking. "
-              "He looks at the screen, briefly glances down for less than a second, returns to camera, blinks naturally, "
-              "and makes one tiny acknowledging head movement. Mouth remains mostly closed; no speaking. Calm but alive, never frozen."
+        "output": "visio-lucas-surprise-v3-handheld-listening-candidate.mp4",
+        "prompt": SCENE_CORE + (
+            "STATE LISTENING. Lucas is quiet while Marion speaks. He holds the phone naturally at arm's length, "
+            "breathes, blinks irregularly, makes one tiny wrist adjustment that shifts framing only slightly, "
+            "briefly glances at the screen and back to the camera, and gives a very small acknowledging head movement. "
+            "Mouth mostly closed. Alive and attentive, never frozen."
         ),
     },
     "speaking": {
         "duration": 9,
-        "output": "visio-lucas-surprise-v2-speaking-v4voice-candidate.mp4",
-        "silent": "visio-lucas-surprise-v2-speaking-silent-candidate.mp4",
-        "prompt": (
-            SCENE_CORE
-            + "STATE: SPEAKING. Lucas speaks directly to Marion with the lively, connected, energetic conversational rhythm of a real private call. "
-              "He should appear to say in natural French: 'Salut, ça va toi ? Je viens de me poser deux minutes. Journée un peu longue, mais tranquille. Ça me fait plaisir de t'entendre.' "
-              "Mouth motion is continuous and conversational rather than exaggerated. Include one natural blink, tiny eye movement, one small head shift, and a restrained half-smile near the end. "
-              "No slow dreamy delivery, no whispering, no seductive commercial acting."
+        "output": "visio-lucas-surprise-v3-handheld-speaking-v4voice-candidate.mp4",
+        "silent": "visio-lucas-surprise-v3-handheld-speaking-silent-candidate.mp4",
+        "prompt": SCENE_CORE + (
+            "STATE SPEAKING. Lucas talks directly to Marion while still holding the phone himself. "
+            "Natural connected French phone-call rhythm, lively and spontaneous. He appears to say: "
+            "'Salut, ça va toi ? Je viens de me poser deux minutes. Journée un peu longue, mais tranquille. Ça me fait plaisir de t'entendre.' "
+            "Keep natural upper-body breathing, one small hand-held framing correction, tiny head motion, normal blinks and a restrained half-smile. "
+            "No slow dreamy delivery, no whisper and no commercial acting."
         ),
     },
     "reaction": {
         "duration": 4,
-        "output": "visio-lucas-surprise-v2-reaction-candidate.mp4",
-        "prompt": (
-            SCENE_CORE
-            + "STATE: REACTION AFTER SPEAKING. Lucas stops talking, listens for Marion's response, gives a very slight amused exhale/half-smile, "
-              "tiny eyebrow movement, then returns to a neutral attentive look. Mouth closed except for a natural micro-expression. No speaking."
+        "output": "visio-lucas-surprise-v3-handheld-reaction-candidate.mp4",
+        "prompt": SCENE_CORE + (
+            "STATE REACTION. Lucas has just stopped speaking and keeps holding the phone. He listens to Marion, "
+            "lets out a tiny amused breath, gives a slight eyebrow movement and faint half-smile, then settles back to attentive neutral. "
+            "One subtle wrist drift makes the handheld nature believable. No speaking."
         ),
     },
 }
@@ -117,7 +122,7 @@ def _generate_state(state: str) -> tuple[Path, str]:
     spec = STATE_SPECS[state]
     silent_name = spec.get("silent", spec["output"])
     profile = engine.CharacterProfile(
-        key=f"lucas-visio-surprise-v2-{state}",
+        key=f"lucas-visio-surprise-v3-handheld-{state}",
         canon_url=f"{engine.SITE}/resources/monia/canon/lucas/reference.jpg",
         prompt=spec["prompt"],
         negative=NEGATIVE,
@@ -127,7 +132,7 @@ def _generate_state(state: str) -> tuple[Path, str]:
         duration=int(spec["duration"]),
         output_name=str(silent_name),
     )
-    source = engine.WORK_DIR / "lucas-visio-surprise-v2-canon.png"
+    source = engine.WORK_DIR / "lucas-visio-surprise-v3-canon.png"
     silent = engine.WORK_DIR / str(silent_name)
     engine._download_canon(profile, source)
     provider = _run_compute(profile, source, silent)
@@ -145,7 +150,7 @@ def _generate_state(state: str) -> tuple[Path, str]:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Generate MonIA Lucas surprise visio state candidates")
+    parser = argparse.ArgumentParser(description="Generate handheld MonIA Lucas visio V3 state candidates")
     parser.add_argument("--publish-candidate", action="store_true")
     parser.add_argument("--state", choices=list(STATE_SPECS) + ["all"], default="all")
     args = parser.parse_args()
@@ -157,17 +162,17 @@ def main() -> None:
             path, provider = _generate_state(state)
             if not path.exists() or path.stat().st_size < 10000:
                 raise RuntimeError(f"Invalid generated state: {state}")
-            print(f"MONIA_VISIO_SURPRISE_V2 state={state} compute={provider} output={path} bytes={path.stat().st_size}")
+            print(f"MONIA_VISIO_SURPRISE_V3 state={state} compute={provider} output={path} bytes={path.stat().st_size}")
             if args.publish_candidate:
                 url = engine.publish_candidate(path)
-                print(f"MONIA_VISIO_SURPRISE_V2_CANDIDATE state={state} url={url}")
+                print(f"MONIA_VISIO_SURPRISE_V3_CANDIDATE state={state} url={url}")
         except Exception as exc:
             failures.append(f"{state}: {exc}")
-            print(f"MONIA_VISIO_SURPRISE_V2_FAILED state={state} error={exc}")
+            print(f"MONIA_VISIO_SURPRISE_V3_FAILED state={state} error={exc}")
             if args.state != "all":
                 raise
     if failures:
-        raise RuntimeError("Some MonIA visio states failed: " + " | ".join(failures))
+        raise RuntimeError("Some MonIA visio V3 states failed: " + " | ".join(failures))
 
 
 if __name__ == "__main__":
