@@ -25,6 +25,7 @@ const choices=document.getElementById('choices'),ended=document.getElementById('
 const BASE='https://marion-lucas.marionbolomey.fr/resources/monia/generated/';
 const BASE_VISIO=BASE+'visio-lucas-v7-v10a-timing-candidate.mp4?run=34859820027';
 const VISUALS={opening:BASE_VISIO,calm:BASE_VISIO,warm:BASE_VISIO,busy:BASE_VISIO,tease:BASE_VISIO,miss:BASE_VISIO,end:BASE_VISIO};
+const VOICE_VERSION='v17';
 let audio=null,playToken=0;
 const scenes={
  opening:{audio:'opening',choices:[['Ça va, et toi ?','calm'],['Je voulais juste te voir','warm'],['Tu fais quoi là ?','busy']]},
@@ -46,18 +47,10 @@ async function prepareVisual(key,{muted=true,rewind=true}={}){
   if(video.readyState<2)await waitFor(video,'canplay');
   if(rewind){try{video.currentTime=0}catch{}}
 }
-function resetVisioToListening(){video.pause();video.muted=true;listening.classList.add('show')}
-function audioUrl(key,version){return BASE+`lucas-visio-dialogue-${version}-${key}-candidate.wav?v=${version}`}
-async function playOpeningNative(onend,token){
-  if(audio){audio.pause();audio=null}
-  await prepareVisual('opening',{muted:false,rewind:true});
-  if(token!==playToken)return;
-  choices.classList.remove('show');listening.classList.remove('show');
-  video.onended=()=>{if(token!==playToken)return;video.muted=true;resetVisioToListening();onend?.()};
-  try{video.currentTime=0;video.volume=1;await video.play()}catch{video.muted=true;resetVisioToListening();listening.textContent='Touchez une fois l’écran pour autoriser le son'}
-}
-async function startPair(key,version,onend,token){
-  const a=new Audio(audioUrl(key,version));audio=a;a.preload='auto';
+function resetVisioToListening(){video.pause();video.muted=true;listening.textContent='Lucas t’écoute…';listening.classList.add('show')}
+function audioUrl(key){return BASE+`lucas-visio-dialogue-${VOICE_VERSION}-${key}-candidate.wav?v=${VOICE_VERSION}`}
+async function startPair(key,onend,token){
+  const a=new Audio(audioUrl(key));audio=a;a.preload='auto';
   const audioReady=waitFor(a,'canplaythrough',1800);
   await Promise.all([prepareVisual(key,{muted:true,rewind:true}),audioReady]);
   if(token!==playToken||audio!==a)return null;
@@ -77,16 +70,8 @@ async function playLucas(key,onend){
   const token=++playToken;
   if(audio){audio.pause();audio=null}
   choices.classList.remove('show');listening.classList.remove('show');
-  if(key==='opening'){await playOpeningNative(onend,token);return}
-  // V5 = Qwen3-TTS Base voice clone from the exact V10-A reference.
-  // Previous packs remain safe fallbacks until the V5 candidates are approved.
-  const versions=key==='warm'?['v5','v3','v2']:['v5','v2'];
-  for(const version of versions){
-    if(token!==playToken)return;
-    const result=await startPair(key,version,onend,token);
-    if(result)return;
-  }
-  if(token!==playToken)return;
+  const result=await startPair(key,onend,token);
+  if(result||token!==playToken)return;
   resetVisioToListening();listening.textContent='Audio Lucas en préparation…';onend?.();
 }
 function enter(key){if(key==='finish'){finish();return}const s=scenes[key];if(!s)return;playLucas(s.audio,()=>showChoices(s.choices))}
