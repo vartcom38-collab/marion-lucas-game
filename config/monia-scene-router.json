@@ -1,40 +1,64 @@
 {
-  "version": 1,
+  "version": 2,
   "status": "active",
-  "purpose": "Central MonIA media-intelligence policy. Every requested scene is classified before prompt construction or reference selection.",
+  "purpose": "Central MonIA scene-intelligence router. Every requested experience is classified before scene design, reference binding and generation. The router chooses what MonIA must create, not merely which existing media to play.",
+  "generation_orchestrator": "config/monia-generation-orchestrator.json",
   "scene_types": {
     "visio": {
       "camera_grammar": "smartphone_front_camera",
-      "required_reference_classes": ["identity", "visio_camera", "motion", "performance"],
+      "generation_mode": "generate_contextual_visio_scene",
+      "required_reference_classes": ["identity", "visio_camera", "motion", "performance", "voice_if_speaking"],
       "preferred_lucas_roles": ["face", "gaze", "micro_expression", "gesture_rhythm", "speech_presence", "speech_rhythm"],
-      "hard_reject": ["visible_phone", "external_camera", "cinematic_portrait", "tripod_look", "dolly", "cinematic_pan", "generic_male_identity"]
+      "voice": "approved_v16_when_lucas_speaks",
+      "hard_reject": ["visible_phone", "external_camera", "cinematic_portrait", "tripod_look", "dolly", "cinematic_pan", "generic_male_identity", "wrong_lucas_voice"]
     },
     "cinematic": {
       "camera_grammar": "external_cinematic_camera",
-      "required_reference_classes": ["identity", "motion"],
+      "generation_mode": "generate_cinematic_scene",
+      "required_reference_classes": ["identity", "motion", "performance_if_needed", "voice_if_speaking"],
       "preferred_lucas_roles": ["identity", "posture", "body_movement", "gesture", "gaze", "micro_expression"],
-      "hard_reject": ["front_camera_selfie_grammar_unless_story_requires_it", "generic_male_identity"]
+      "voice": "approved_v16_when_lucas_speaks",
+      "hard_reject": ["front_camera_selfie_grammar_unless_story_requires_it", "generic_male_identity", "wrong_lucas_voice"]
     },
     "gameplay_ambient": {
       "camera_grammar": "player_world_camera",
+      "generation_mode": "generate_living_world_ambience",
       "required_reference_classes": [],
       "preferred_lucas_roles": ["posture", "body_movement"],
-      "hard_reject": ["forced_cinematic_coverage"]
+      "hard_reject": ["forced_cinematic_coverage", "major_story_event_invented_by_ambience"]
+    },
+    "gameplay_life_moment": {
+      "camera_grammar": "player_world_camera",
+      "generation_mode": "generate_contextual_life_moment",
+      "required_reference_classes": ["identity_if_character_visible"],
+      "voice": "approved_v16_when_lucas_speaks",
+      "hard_reject": ["unnecessary_full_cinematic_for_trivial_action", "identity_drift"]
     },
     "audio_call": {
       "camera_grammar": "none",
-      "required_reference_classes": ["performance"],
+      "generation_mode": "generate_audio_call",
+      "required_reference_classes": ["performance", "voice"],
       "preferred_lucas_roles": ["speech_presence", "speech_rhythm"],
-      "hard_reject": ["unrequested_video_generation"]
+      "voice": "approved_v16",
+      "hard_reject": ["unrequested_video_generation", "wrong_lucas_voice"]
+    },
+    "voice_message": {
+      "camera_grammar": "none",
+      "generation_mode": "generate_voice_message",
+      "required_reference_classes": ["performance", "voice"],
+      "voice": "approved_v16",
+      "hard_reject": ["unrequested_video_generation", "wrong_lucas_voice"]
     },
     "phone_message": {
       "camera_grammar": "none",
+      "generation_mode": "generate_text_only",
       "required_reference_classes": [],
       "preferred_lucas_roles": [],
       "hard_reject": ["unrequested_video_generation", "unrequested_voice_generation"]
     },
     "still_image": {
       "camera_grammar": "photographic",
+      "generation_mode": "generate_still_image",
       "required_reference_classes": ["identity"],
       "preferred_lucas_roles": ["identity", "face", "gaze"],
       "hard_reject": ["generic_male_identity"]
@@ -47,15 +71,18 @@
       "visio": ["visio", "video call", "facetime", "appel video", "appel vidéo", "camera frontale", "caméra frontale", "selfie call", "front camera"],
       "cinematic": ["cinematique", "cinématique", "cinematic", "scene", "scène", "mini drama", "cutscene", "plan serre", "plan serré", "camera exterieure", "caméra extérieure"],
       "audio_call": ["appel audio", "audio call", "telephone sans video", "téléphone sans vidéo", "appel vocal"],
+      "voice_message": ["message vocal", "vocal", "note vocale", "voice message"],
       "phone_message": ["message", "sms", "texto", "imessage", "notification", "chat"],
       "still_image": ["photo", "portrait", "image fixe", "still image"],
-      "gameplay_ambient": ["gameplay", "vie libre", "ambiance", "idle", "monde", "exploration"]
+      "gameplay_ambient": ["gameplay", "vie libre", "ambiance", "idle", "monde", "exploration", "fond vivant", "décor vivant"],
+      "gameplay_life_moment": ["petit geste", "interaction quotidienne", "moment de vie", "réaction en jeu"]
     }
   },
   "reference_policy": {
     "lucas_bank": "config/lucas-reference-bank.json",
     "visio_policy": "config/monia-visio-approved.json",
     "motion_bank": "config/motion-reference-bank.json",
+    "lucas_voice": "config/lucas-voice-strategy.json",
     "identity_first": true,
     "text_description_secondary": true,
     "never_train_on_unapproved_generation": true,
@@ -67,20 +94,26 @@
     "classify_scene_type",
     "extract_characters",
     "extract_context",
+    "choose_generation_pipeline",
     "choose_camera_grammar",
     "choose_identity_references",
     "choose_motion_performance_references",
+    "bind_approved_voice_if_dialogue",
+    "design_environment_and_ambience",
     "build_constraints",
-    "build_prompt",
-    "validate_plan_before_generation",
-    "validate_candidate_after_generation"
+    "build_generation_plan",
+    "invoke_required_generators",
+    "validate_candidate_after_generation",
+    "publish_or_retry"
   ],
   "post_generation_validation": {
     "identity_required": true,
     "camera_grammar_required": true,
     "context_match_required": true,
+    "voice_identity_required_when_lucas_speaks": true,
     "reject_identity_drift": true,
     "reject_camera_grammar_mismatch": true,
+    "reject_wrong_voice": true,
     "reject_reference_contamination": true,
     "human_approval_required_before_reference_bank_promotion": true
   }
