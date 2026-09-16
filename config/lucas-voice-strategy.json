@@ -1,30 +1,48 @@
 {
-  "version": 10,
-  "status": "v15-tone-approved-flow-refinement-only",
+  "version": 11,
+  "status": "approved-v16-voice-and-flow",
   "character": "lucas",
-  "goal": "Lock the V15 synthetic Lucas tone/timbre and improve only the remaining small French flow discontinuity. Do not reopen timbre selection unless the user explicitly changes direction.",
+  "goal": "Use V16 as the official approved synthetic Lucas French voice reference. Preserve its timbre, tone, register and conversational fluidity. Do not reopen voice identity or flow tuning unless the user explicitly requests a change.",
+  "approved_reference": {
+    "candidate": "lucas-voice-v16-b-smoother-flow-fr-candidate.wav",
+    "url": "https://marion-lucas.marionbolomey.fr/resources/monia/generated/lucas-voice-v16-b-smoother-flow-fr-candidate.wav",
+    "status": "approved-by-user",
+    "scope": [
+      "timbre",
+      "tone",
+      "register",
+      "French conversational fluidity",
+      "home dialogue",
+      "phone dialogue",
+      "visio dialogue",
+      "everyday couple dialogue"
+    ]
+  },
   "reference_use": {
     "uploaded_lucas_clips": "PRIMARY reference for broad conversational movement, rhythm, relaxed presence, breathing and soft pitch movement only; never biometric voice cloning",
     "lucas_soft_reference_v2_strict": "approved broad rendering/color reference: low, warm, calm, intimate, rounded and not dry; use broad qualities only, never as a direct cloning target",
-    "lucas_v12_soft_natural_fr": "historical best-flow checkpoint and continuity reference",
-    "lucas_v14_b_close": "preferred synthetic timbre checkpoint from the V14 micro-audition",
-    "lucas_v15_b_fluid_fr": "CURRENT combined checkpoint. User likes the voice tone/timbre and says the result is very good overall; only a small additional fluidity improvement remains.",
-    "validated_v10a": "legacy visio anchor only; do not use for the new French voice direction"
+    "lucas_v12_soft_natural_fr": "historical flow checkpoint only",
+    "lucas_v14_b_close": "historical preferred timbre checkpoint that led to V15/V16",
+    "lucas_v15_b_fluid_fr": "near-final combined checkpoint",
+    "lucas_v16_b_smoother_flow_fr": "OFFICIAL approved Lucas French voice reference for timbre, tone and fluidity",
+    "validated_v10a": "legacy visio anchor only; do not use for new Lucas French dialogue"
   },
   "locked_elements": {
-    "timbre": "V15 / V14-B direction is locked: low, warm, close, compact, intimate, soft slightly husky texture, smooth low-mid body, relaxed consonants, natural imperfect edges",
+    "timbre": "low, warm, close, compact and intimate with soft slightly husky texture, smooth low-mid body, relaxed consonants and natural imperfect edges",
     "tone": "calm, affectionate, effortless, private-conversation energy",
-    "register": "naturally low male voice, never artificially deepened",
+    "register": "naturally low young-adult male voice, never artificially deepened",
     "spectral_color": "soft and matte, not bright, metallic, dry, announcer-like or studio-polished",
-    "rule": "Do not change these while refining flow."
+    "flow": "continuous natural French phrasing, one connected thought group, natural linking, tiny irregular micro-pauses only when needed, no clause-reset effect",
+    "ending": "soft, relaxed and slightly low/falling",
+    "rule": "These qualities are approved and must be preserved across new Lucas dialogue."
   },
-  "flow_target": {
-    "continuity": "one connected thought group with no perceptible clause reset",
-    "transition_focus": "the transition around 'deux minutes et toi' should feel linked and immediate rather than segmented",
-    "pauses": "only tiny natural breath-sized micro-pauses when linguistically needed; no dead air",
-    "diction": "relaxed conversational French with linked words and soft consonants",
-    "ending": "soft relaxed low ending",
-    "prohibited_repairs": "no speed warp, no pitch shift, no word/syllable stitching, no posthoc retiming"
+  "runtime_direction": {
+    "language": "fr-FR",
+    "voice_reference": "lucas-voice-v16-b-smoother-flow-fr-candidate.wav",
+    "generation_style": "direct synthetic Lucas voice generation using the approved V16 broad voice direction",
+    "dialogue_behavior": "natural connected French, context-sensitive emotion without changing core voice identity",
+    "allowed_variation": "emotion, energy and conversational intent may vary naturally while preserving V16 identity, register, warmth and continuity",
+    "forbidden_variation": "do not make Lucas brighter, drier, more theatrical, more announcer-like, artificially deeper, robotic or syllabic"
   },
   "rejected_routes": [
     {
@@ -45,21 +63,9 @@
       "status": "rejected-do-not-build-on"
     }
   ],
-  "current_checkpoint": {
-    "timbre": "V15 tone/timbre accepted as the current target and should not be changed",
-    "flow": "very good / almost there; one small refinement remains",
-    "next_test": "one V16 direct-generation candidate preserving V15 timbre exactly while smoothing only the phrase linking",
-    "live_status": "unchanged; no candidate promoted"
-  },
-  "next_route": {
-    "principle": "V15 locked tone + micro flow refinement only",
-    "test_scope": "one candidate only",
-    "implementation_rule": "keep the same direct synthetic voice-design route and same spectral cleanup; modify only text punctuation/prosody instruction to encourage a single connected breath group",
-    "approval_required": true
-  },
   "forbidden": [
     "reopening timbre selection without user request",
-    "using V10-A/V13 as source or target for the new voice",
+    "using V10-A or V13 as source or target for new Lucas dialogue",
     "copying any uploaded real speaker timbre or identity",
     "real-person biometric voice cloning",
     "playback-rate warping",
@@ -68,8 +74,7 @@
     "word-by-word resynthesis",
     "syllable stitching",
     "audible edit joins",
-    "music or other speakers in final voice references",
-    "auto-promotion to live"
+    "music or other speakers in final voice references"
   ],
-  "approval_rule": "Treat V15 tone/timbre as locked. The next human approval concerns only whether V16 improves continuity without changing Lucas's voice. Nothing goes live before that confirmation."
+  "approval_rule": "V16 is the approved Lucas French voice reference. Future candidates must preserve it unless the user explicitly requests a voice change."
 }
