@@ -32,31 +32,24 @@ jobs:
           python -m pip install --disable-pip-version-check --upgrade pip
           python -m pip install --disable-pip-version-check gradio_client requests pillow
 
-      - name: Generate three Lucas V14 timbre micro-candidates
+      - name: Generate Lucas V15 B-timbre fluid French candidate
         run: python -m scripts.monia_lucas_voice_design_fr --publish-candidate
 
-      - name: Verify candidates publicly
+      - name: Verify candidate publicly
         run: |
           python - <<'PY'
           import requests
-          base = "https://marion-lucas.marionbolomey.fr/resources/monia/generated/"
-          names = [
-              "lucas-voice-v14-a-round-timbre-candidate.wav",
-              "lucas-voice-v14-b-close-timbre-candidate.wav",
-              "lucas-voice-v14-c-textured-timbre-candidate.wav",
-          ]
-          for name in names:
-              url = base + name
-              r = requests.get(url, timeout=60, headers={"Cache-Control":"no-cache"})
-              r.raise_for_status()
-              assert len(r.content) > 4096, (name, len(r.content))
-              assert r.content[:4] == b"RIFF", (name, r.content[:12])
-              print("verified", url, len(r.content))
+          url = "https://marion-lucas.marionbolomey.fr/resources/monia/generated/lucas-voice-v15-b-fluid-fr-candidate.wav"
+          r = requests.get(url, timeout=60, headers={"Cache-Control":"no-cache"})
+          r.raise_for_status()
+          assert len(r.content) > 4096, len(r.content)
+          assert r.content[:4] == b"RIFF", r.content[:12]
+          print("verified", url, len(r.content))
           PY
 
       - name: Candidate-only policy
         run: |
-          echo "V14 tests timbre only on one very short phrase."
-          echo "V12 remains the best French-flow checkpoint; do not judge V14 for long-form flow."
-          echo "No exact real-person voice cloning. No speed or pitch manipulation."
+          echo "V15 tests the preferred V14-B timbre direction on a longer connected French line."
+          echo "V12 remains the flow benchmark; V15 must preserve connected delivery without conversion."
+          echo "No exact real-person voice cloning. No speed/pitch manipulation. No word or syllable stitching."
           echo "No live manifest mutation. Human listening approval required."
