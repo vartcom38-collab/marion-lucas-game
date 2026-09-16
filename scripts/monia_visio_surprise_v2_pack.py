@@ -11,9 +11,9 @@ import scripts.monia_video_engine as engine
 
 VOICE_URL = (
     "https://marion-lucas.marionbolomey.fr/resources/monia/generated/"
-    "lucas-voice-anchor-v4-energy-fr-candidate.wav"
+    "lucas-voice-v4-surprise-call-fr-candidate.wav"
 )
-VOICE_NAME = "lucas-voice-anchor-v4-energy-fr-candidate.wav"
+VOICE_NAME = "lucas-voice-v4-surprise-call-fr-candidate.wav"
 
 SCENE_CORE = (
     "Brand-new photorealistic Lucas smartphone video call for Marion & Lucas. "
@@ -61,9 +61,9 @@ STATE_SPECS = {
         "silent": "visio-lucas-surprise-v3-handheld-speaking-silent-candidate.mp4",
         "prompt": SCENE_CORE + (
             "STATE SPEAKING. Lucas talks directly to Marion while still holding the phone himself. "
-            "Natural connected French phone-call rhythm, lively and spontaneous. He appears to say: "
-            "'Salut, ça va toi ? Je viens de me poser deux minutes. Journée un peu longue, mais tranquille. Ça me fait plaisir de t'entendre.' "
-            "Keep natural upper-body breathing, one small hand-held framing correction, tiny head motion, normal blinks and a restrained half-smile. "
+            "Natural connected French phone-call rhythm, relaxed and spontaneous. He appears to say: "
+            "'Salut ma chérie… je pensais à toi, alors je t'appelle deux minutes. Tu fais quoi ?' "
+            "Keep natural upper-body breathing, one small hand-held framing correction, tiny head motion, normal blinks and a restrained affectionate half-smile. "
             "No slow dreamy delivery, no whisper and no commercial acting."
         ),
     },
