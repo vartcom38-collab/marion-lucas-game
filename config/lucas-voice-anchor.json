@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "status": "candidate-anchor-not-yet-approved",
+  "character": "lucas",
+  "architecture": "fixed-synthetic-anchor",
+  "goal": "Use one stable synthetic Lucas voice identity for all future French dialogue. Do not regenerate a new identity per line or per scene.",
+  "candidate": {
+    "file": "lucas-voice-anchor-v1-candidate.wav",
+    "url": "https://marion-lucas.marionbolomey.fr/resources/monia/generated/lucas-voice-anchor-v1-candidate.wav",
+    "status": "candidate-only"
+  },
+  "reference_policy": {
+    "uploaded_lucas_media": "Use only for broad non-biometric performance qualities such as rhythm, breath, conversational energy, relaxed presence, articulation feel and general texture. Never use as a biometric cloning target.",
+    "validated_project_voices": "Use as historical checkpoints only. V16 remains the last user-approved project voice until this anchor is explicitly approved.",
+    "v17_v18_v19_v20": "Do not use as authoritative identity references unless explicitly re-approved by the user."
+  },
+  "future_runtime_rule": {
+    "identity": "After explicit user approval, every new Lucas line must preserve this same anchor identity.",
+    "performance": "Generate natural French timing and emotion separately when needed, then map only toward the approved synthetic anchor.",
+    "forbidden": [
+      "new voice identity per sentence",
+      "random voice redesign per scene",
+      "pitch shifting to fake consistency",
+      "playback-rate warping",
+      "word-by-word stitching",
+      "real-person biometric cloning"
+    ]
+  },
+  "approval_rule": "Do not promote this candidate to live/runtime until the user explicitly approves it by ear."
+}
