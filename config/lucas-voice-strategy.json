@@ -1,28 +1,30 @@
 {
-  "version": 9,
-  "status": "timbre-preference-selected-full-line-validation-pending",
+  "version": 10,
+  "status": "v15-tone-approved-flow-refinement-only",
   "character": "lucas",
-  "goal": "Preserve the best French conversational flow already reached, while using V14-B close as the current preferred synthetic Lucas timbre checkpoint. Validate that combination on one full natural French line before any live use.",
+  "goal": "Lock the V15 synthetic Lucas tone/timbre and improve only the remaining small French flow discontinuity. Do not reopen timbre selection unless the user explicitly changes direction.",
   "reference_use": {
     "uploaded_lucas_clips": "PRIMARY reference for broad conversational movement, rhythm, relaxed presence, breathing and soft pitch movement only; never biometric voice cloning",
-    "lucas_soft_reference_v2_strict": "PRIMARY approved rendering/color reference: low, warm, calm, intimate, rounded and not dry; use broad qualities only, never as a direct cloning target",
-    "lucas_v12_soft_natural_fr": "best current French-flow checkpoint; preserve its connected delivery concept",
-    "lucas_v14_b_close": "CURRENT USER-PREFERRED synthetic timbre checkpoint from the V14 micro-audition; preferred over V14-A and V14-C for closeness/intimacy",
-    "validated_v10a": "legacy visio anchor only; V13 showed that re-anchoring the new French line to V10-A does not recover the desired current Lucas timbre and can damage flow"
+    "lucas_soft_reference_v2_strict": "approved broad rendering/color reference: low, warm, calm, intimate, rounded and not dry; use broad qualities only, never as a direct cloning target",
+    "lucas_v12_soft_natural_fr": "historical best-flow checkpoint and continuity reference",
+    "lucas_v14_b_close": "preferred synthetic timbre checkpoint from the V14 micro-audition",
+    "lucas_v15_b_fluid_fr": "CURRENT combined checkpoint. User likes the voice tone/timbre and says the result is very good overall; only a small additional fluidity improvement remains.",
+    "validated_v10a": "legacy visio anchor only; do not use for the new French voice direction"
   },
-  "approved_rendering": {
-    "tone": "low, warm, calm, intimate, rounded and close",
+  "locked_elements": {
+    "timbre": "V15 / V14-B direction is locked: low, warm, close, compact, intimate, soft slightly husky texture, smooth low-mid body, relaxed consonants, natural imperfect edges",
+    "tone": "calm, affectionate, effortless, private-conversation energy",
     "register": "naturally low male voice, never artificially deepened",
-    "texture": "soft low-mid body with slight natural grain, no brittle or metallic edge, no radio-announcer polish",
-    "prosody": "continuous, relaxed and human, with restrained rises and soft endings",
-    "delivery": "connected conversational phrasing with no audible joins or chopped segments",
-    "energy": "soft everyday presence suitable for home, phone, visio and couple scenes",
-    "status": "rendering qualities approved independently of language; V14-B currently preferred for synthetic timbre identity"
+    "spectral_color": "soft and matte, not bright, metallic, dry, announcer-like or studio-polished",
+    "rule": "Do not change these while refining flow."
   },
-  "prosody_priority": {
-    "primary": "Lucas uploaded videos: natural flow, breathing, connected phrases, irregular micro-pauses, restrained pitch movement and relaxed endings",
-    "secondary": "user French recording confirms that French must remain continuous and non-syllabic",
-    "rule": "Do not modify timing merely to force the timbre. The next full-line test must preserve the V12-style continuity and avoid conversion stages that introduced choppiness in V13."
+  "flow_target": {
+    "continuity": "one connected thought group with no perceptible clause reset",
+    "transition_focus": "the transition around 'deux minutes et toi' should feel linked and immediate rather than segmented",
+    "pauses": "only tiny natural breath-sized micro-pauses when linguistically needed; no dead air",
+    "diction": "relaxed conversational French with linked words and soft consonants",
+    "ending": "soft relaxed low ending",
+    "prohibited_repairs": "no speed warp, no pitch shift, no word/syllable stitching, no posthoc retiming"
   },
   "rejected_routes": [
     {
@@ -32,11 +34,6 @@
       "status": "rejected-do-not-reuse"
     },
     {
-      "route": "Qwen profile-guided French TTS as full-line final performance",
-      "reason": "synthetic cadence remains audible on longer dialogue",
-      "status": "rejected-as-final-performance-source unless a new validation specifically proves otherwise"
-    },
-    {
       "route": "Chatterbox direct TTS",
       "reason": "robotic and saccadic in prior visio tests",
       "status": "rejected"
@@ -44,31 +41,29 @@
     {
       "route": "V13 V10-A re-anchoring through voice conversion",
       "candidate": "lucas-voice-v13-v10a-anchored-fr-candidate.wav",
-      "reason": "user reports wrong timbre and reduced fluidity / more choppy delivery",
+      "reason": "wrong timbre and reduced fluidity / more choppy delivery",
       "status": "rejected-do-not-build-on"
     }
   ],
   "current_checkpoint": {
-    "flow": "V12 remains the best French-flow checkpoint; user previously described its fluidity as top even though a slight synthetic residue remained",
-    "timbre": "V14-B close is the current user-preferred micro-candidate",
-    "next_test": "one full natural French line combining V14-B timbre qualities with V12-style connected flow, without V13-style re-anchoring",
+    "timbre": "V15 tone/timbre accepted as the current target and should not be changed",
+    "flow": "very good / almost there; one small refinement remains",
+    "next_test": "one V16 direct-generation candidate preserving V15 timbre exactly while smoothing only the phrase linking",
     "live_status": "unchanged; no candidate promoted"
   },
   "next_route": {
-    "principle": "V14-B timbre + V12 flow",
-    "test_scope": "one short full conversational French line, long enough to judge continuity but still diagnostic",
-    "target": "preserve V14-B's close, warm, intimate synthetic timbre while matching V12-style connected French flow",
-    "implementation_rule": "do not use V13 as source or target; avoid conversion stages known to reintroduce choppiness; no speed warp, no pitch forcing, no syllable stitching",
+    "principle": "V15 locked tone + micro flow refinement only",
+    "test_scope": "one candidate only",
+    "implementation_rule": "keep the same direct synthetic voice-design route and same spectral cleanup; modify only text punctuation/prosody instruction to encourage a single connected breath group",
     "approval_required": true
   },
   "forbidden": [
-    "using V13 as a source or target",
-    "changing timing to force the timbre",
-    "robotic TTS as final timing/prosody donor",
+    "reopening timbre selection without user request",
+    "using V10-A/V13 as source or target for the new voice",
     "copying any uploaded real speaker timbre or identity",
     "real-person biometric voice cloning",
     "playback-rate warping",
-    "pitch shifting to force a deeper voice",
+    "pitch shifting",
     "tempo changes",
     "word-by-word resynthesis",
     "syllable stitching",
@@ -76,5 +71,5 @@
     "music or other speakers in final voice references",
     "auto-promotion to live"
   ],
-  "approval_rule": "V14-B is a preference, not yet a live approval. The next approval must confirm that this timbre survives on a full natural French line without losing the V12-level continuity. Nothing goes live before that combined test is approved."
+  "approval_rule": "Treat V15 tone/timbre as locked. The next human approval concerns only whether V16 improves continuity without changing Lucas's voice. Nothing goes live before that confirmation."
 }
