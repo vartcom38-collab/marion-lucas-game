@@ -1,135 +1,90 @@
 {
-  "version": 1,
+  "version": 2,
   "character": "lucas",
   "status": "active",
-  "purpose": "Structured MonIA reference bank built from user-provided Lucas videos. These files are references for identity, movement, posture, gaze, micro-expressions, gesture rhythm, wardrobe context and performance. They are never output clips and must never be replayed as generated media.",
+  "purpose": "Structured MonIA reference bank built from user-provided Lucas videos. References teach identity, movement, posture, gaze, expressions, daily-life behavior, tenderness, family behavior, camera grammar and performance. They are never output clips and must never be replayed or copied shot-for-shot.",
   "identityAuthority": {
     "visual": "config/monia-canon.json#lucas",
     "approvedVisioGrammar": "config/monia-visio-approved.json#approved_reference.visual_base",
-    "rule": "Every generated Lucas scene must bind identity from the canonical Lucas pack and select movement/performance references from this bank according to intent. Never generate Lucas from text alone."
+    "rule": "Every generated Lucas scene must bind canonical Lucas identity and select behavior/performance references according to the current game context. User-confirmed Lucas clips may strengthen identity and Lucas-specific body-language authority."
   },
   "selectionRules": {
     "visio": ["front_camera", "gaze", "micro_expression", "head_movement", "gesture_rhythm", "presence"],
     "cinematic": ["posture", "body_movement", "gaze", "micro_expression", "wardrobe_context"],
-    "home_private": ["relaxed_posture", "body_movement", "tattoo_continuity", "off_duty_presence"],
-    "speaking": ["presence", "speech_rhythm", "gaze", "jaw_head_coordination"],
-    "identity_check": ["face_geometry", "hair", "eyes", "stubble", "skin_tone", "tattoo_continuity"]
+    "home_private": ["relaxed_posture", "body_movement", "tattoo_continuity", "off_duty_presence", "domestic"],
+    "speaking": ["presence", "speech_rhythm", "gaze", "jaw_head_coordination", "speaking_face"],
+    "identity_check": ["face_geometry", "hair", "eyes", "stubble", "skin_tone", "tattoo_continuity"],
+    "daily_couple": ["domestic", "close_proximity", "sustained_touch", "expression_shift", "quiet_intimacy"],
+    "tenderness": ["tender_embrace", "comforting_touch", "face_close", "sustained_contact", "hand_repositioning"],
+    "family_baby": ["father_baby", "gentle_handling", "caregiving_gesture", "careful_posture", "parental_smile", "attention_shift"]
   },
   "clips": [
+    {"id":"lucas-2026-09-15-195616","sourceFile":"ScreenRecording_09-15-2026 19-56-16_1(1).mp4","durationSeconds":29.133,"priority":"medium","roles":["identity","face_geometry","gaze","micro_expression","general_motion"],"storage":"user_chat_source"},
+    {"id":"lucas-2026-09-15-201730","sourceFile":"ScreenRecording_09-15-2026 20-17-30_1.mp4","durationSeconds":17.433,"priority":"medium","roles":["identity","gaze","head_movement","gesture_rhythm","general_motion"],"storage":"user_chat_source"},
+    {"id":"lucas-2026-09-15-202903","sourceFile":"ScreenRecording_09-15-2026 20-29-03_1.mp4","durationSeconds":11.633,"priority":"medium","roles":["identity","micro_expression","gaze","general_motion"],"storage":"user_chat_source"},
+    {"id":"lucas-2026-09-15-203216","sourceFile":"ScreenRecording_09-15-2026 20-32-16_1.mp4","durationSeconds":18.467,"priority":"medium","roles":["identity","posture","head_movement","gesture_rhythm","general_motion"],"storage":"user_chat_source"},
+    {"id":"lucas-home-private-44s","sourceFile":"ScreenRecording_09-15-2026 20-37-58_1.mp4","durationSeconds":44.367,"priority":"strong","roles":["identity","relaxed_posture","body_movement","off_duty_presence","tattoo_continuity","home_private","gesture_rhythm"],"storage":"user_chat_source"},
+    {"id":"lucas-2026-09-15-210254","sourceFile":"ScreenRecording_09-15-2026 21-02-54_1.mp4","durationSeconds":8.7,"priority":"medium","roles":["identity","micro_expression","gaze","reaction"],"storage":"user_chat_source"},
+    {"id":"lucas-2026-09-15-210634","sourceFile":"ScreenRecording_09-15-2026 21-06-34_1.mp4","durationSeconds":16.067,"priority":"medium","roles":["identity","gaze","head_movement","presence"],"storage":"user_chat_source"},
+    {"id":"lucas-2026-09-15-210953","sourceFile":"ScreenRecording_09-15-2026 21-09-53_1.mp4","durationSeconds":28,"priority":"medium","roles":["identity","posture","gesture_rhythm","presence","general_motion"],"storage":"user_chat_source"},
+    {"id":"lucas-2026-09-15-214511","sourceFile":"ScreenRecording_09-15-2026 21-45-11_1.mp4","durationSeconds":11.767,"priority":"medium","roles":["identity","micro_expression","reaction","gaze"],"storage":"user_chat_source"},
+    {"id":"lucas-2026-09-15-214828","sourceFile":"ScreenRecording_09-15-2026 21-48-28_1.mp4","durationSeconds":20.067,"priority":"medium","roles":["identity","presence","gaze","gesture_rhythm","general_motion"],"storage":"user_chat_source"},
+    {"id":"lucas-2026-09-15-215205","sourceFile":"ScreenRecording_09-15-2026 21-52-05_1.mp4","durationSeconds":29.5,"priority":"medium","roles":["identity","posture","body_movement","gaze","general_motion"],"storage":"user_chat_source"},
+    {"id":"lucas-2026-09-16-120836","sourceFile":"ScreenRecording_09-16-2026 12-08-36_1(1).mp4","durationSeconds":29.57,"priority":"medium","roles":["identity","presence","gaze","general_motion","wardrobe_context"],"storage":"user_chat_source"},
+    {"id":"lucas-presence-rhythm-2026-09-16","sourceFile":"ScreenRecording_09-16-2026 17-19-05_1(1).mp4","durationSeconds":24.233,"priority":"strong","roles":["identity","presence","speech_rhythm","gaze","jaw_head_coordination","gesture_rhythm","energy"],"storage":"user_chat_source"},
     {
-      "id": "lucas-2026-09-15-195616",
-      "sourceFile": "ScreenRecording_09-15-2026 19-56-16_1(1).mp4",
-      "durationSeconds": 29.133,
-      "priority": "medium",
-      "roles": ["identity", "face_geometry", "gaze", "micro_expression", "general_motion"],
-      "storage": "user_chat_source",
-      "notes": "General Lucas reference; use for identity and natural movement cues."
+      "id":"lucas-daily-close-proximity-2026-09-17-221109",
+      "sourceFile":"ScreenRecording_09-17-2026 22-11-09_1.mp4",
+      "priority":"strong_behavior",
+      "roles":["identity","domestic","close_proximity","protective_intimate_body_language","serious_conversation","face_close","gentle_face_guidance","sustained_touch","expression_shift","speaking_face"],
+      "storage":"user_chat_source",
+      "notes":"Daily couple behavior vocabulary. Learn proximity, gentle contact, withdrawal and expression transition; do not reproduce the source event verbatim."
     },
     {
-      "id": "lucas-2026-09-15-201730",
-      "sourceFile": "ScreenRecording_09-15-2026 20-17-30_1.mp4",
-      "durationSeconds": 17.433,
-      "priority": "medium",
-      "roles": ["identity", "gaze", "head_movement", "gesture_rhythm", "general_motion"],
-      "storage": "user_chat_source"
+      "id":"tenderness-motion-2026-09-17-221349",
+      "sourceFile":"ScreenRecording_09-17-2026 22-13-49_1.mp4",
+      "priority":"strong_behavior",
+      "roles":["tender_embrace","face_close","hand_on_neck_head","sustained_contact","comforting_touch","quiet_intimacy","hand_repositioning"],
+      "storage":"user_chat_source",
+      "identityPolicy":"behavior_only_unless_user_confirmed_lucas",
+      "notes":"Use the approach, sustained embrace and living hand movement as tenderness grammar. Ignore exaggerated partner reaction as Marion emotional authority."
     },
     {
-      "id": "lucas-2026-09-15-202903",
-      "sourceFile": "ScreenRecording_09-15-2026 20-29-03_1.mp4",
-      "durationSeconds": 11.633,
-      "priority": "medium",
-      "roles": ["identity", "micro_expression", "gaze", "general_motion"],
-      "storage": "user_chat_source"
+      "id":"lucas-family-baby-2026-09-17-221640",
+      "sourceFile":"ScreenRecording_09-17-2026 22-16-40_1.mp4",
+      "priority":"strong_behavior",
+      "userConfirmedLucas":true,
+      "roles":["identity","father_baby","domestic_family","baby_arrival_reaction","gentle_handling","caregiving_gesture","careful_posture","parental_smile","couple_to_parent_attention_shift"],
+      "storage":"user_chat_source",
+      "notes":"Lucas-specific family behavior authority. Baby must behave as a third presence in the room; use divided attention and careful body adaptation rather than static baby-holding poses."
     },
     {
-      "id": "lucas-2026-09-15-203216",
-      "sourceFile": "ScreenRecording_09-15-2026 20-32-16_1.mp4",
-      "durationSeconds": 18.467,
-      "priority": "medium",
-      "roles": ["identity", "posture", "head_movement", "gesture_rhythm", "general_motion"],
-      "storage": "user_chat_source"
+      "id":"lucas-close-couple-2026-09-17-221846",
+      "sourceFile":"ScreenRecording_09-17-2026 22-18-46_1.mp4",
+      "priority":"strong_behavior",
+      "userConfirmedLucas":true,
+      "roles":["identity","close_behind_partner","protective_embrace","face_near_temple","waist_arm_contact","sustained_touch","tender_intensity","close_couple_body_language","expression_shift_while_touching"],
+      "storage":"user_chat_source"
     },
     {
-      "id": "lucas-home-private-44s",
-      "sourceFile": "ScreenRecording_09-15-2026 20-37-58_1.mp4",
-      "durationSeconds": 44.367,
-      "priority": "strong",
-      "roles": ["identity", "relaxed_posture", "body_movement", "off_duty_presence", "tattoo_continuity", "home_private", "gesture_rhythm"],
-      "storage": "user_chat_source",
-      "notes": "Strong private/home reference. Use for silhouette, relaxed posture, natural body movement, off-duty behavior and canonical tattoo continuity. Do not treat its wardrobe as universal."
-    },
-    {
-      "id": "lucas-2026-09-15-210254",
-      "sourceFile": "ScreenRecording_09-15-2026 21-02-54_1.mp4",
-      "durationSeconds": 8.700,
-      "priority": "medium",
-      "roles": ["identity", "micro_expression", "gaze", "reaction"],
-      "storage": "user_chat_source"
-    },
-    {
-      "id": "lucas-2026-09-15-210634",
-      "sourceFile": "ScreenRecording_09-15-2026 21-06-34_1.mp4",
-      "durationSeconds": 16.067,
-      "priority": "medium",
-      "roles": ["identity", "gaze", "head_movement", "presence"],
-      "storage": "user_chat_source"
-    },
-    {
-      "id": "lucas-2026-09-15-210953",
-      "sourceFile": "ScreenRecording_09-15-2026 21-09-53_1.mp4",
-      "durationSeconds": 28.000,
-      "priority": "medium",
-      "roles": ["identity", "posture", "gesture_rhythm", "presence", "general_motion"],
-      "storage": "user_chat_source"
-    },
-    {
-      "id": "lucas-2026-09-15-214511",
-      "sourceFile": "ScreenRecording_09-15-2026 21-45-11_1.mp4",
-      "durationSeconds": 11.767,
-      "priority": "medium",
-      "roles": ["identity", "micro_expression", "reaction", "gaze"],
-      "storage": "user_chat_source"
-    },
-    {
-      "id": "lucas-2026-09-15-214828",
-      "sourceFile": "ScreenRecording_09-15-2026 21-48-28_1.mp4",
-      "durationSeconds": 20.067,
-      "priority": "medium",
-      "roles": ["identity", "presence", "gaze", "gesture_rhythm", "general_motion"],
-      "storage": "user_chat_source"
-    },
-    {
-      "id": "lucas-2026-09-15-215205",
-      "sourceFile": "ScreenRecording_09-15-2026 21-52-05_1.mp4",
-      "durationSeconds": 29.500,
-      "priority": "medium",
-      "roles": ["identity", "posture", "body_movement", "gaze", "general_motion"],
-      "storage": "user_chat_source"
-    },
-    {
-      "id": "lucas-2026-09-16-120836",
-      "sourceFile": "ScreenRecording_09-16-2026 12-08-36_1(1).mp4",
-      "durationSeconds": 29.570,
-      "priority": "medium",
-      "roles": ["identity", "presence", "gaze", "general_motion", "wardrobe_context"],
-      "storage": "user_chat_source"
-    },
-    {
-      "id": "lucas-presence-rhythm-2026-09-16",
-      "sourceFile": "ScreenRecording_09-16-2026 17-19-05_1(1).mp4",
-      "durationSeconds": 24.233,
-      "priority": "strong",
-      "roles": ["identity", "presence", "speech_rhythm", "gaze", "jaw_head_coordination", "gesture_rhythm", "energy"],
-      "storage": "user_chat_source",
-      "notes": "Strong recent reference for Lucas presence and performance rhythm: grounded low register, firm attacks, connected forward-moving delivery, direct presence, not sleepy or over-soft."
+      "id":"lucas-face-authority-2026-09-17-222048",
+      "sourceFile":"ScreenRecording_09-17-2026 22-20-48_1.mp4",
+      "priority":"canonical_identity_candidate",
+      "userConfirmedLucas":true,
+      "roles":["identity","face_geometry","expression_range","speaking_face","three_quarter_face","intense_gaze","hair","eyes","stubble","tattoo_continuity"],
+      "storage":"user_chat_source",
+      "notes":"Strong user-confirmed Lucas face reference. Prefer for close-face identity checks and expression continuity. No facial scar may be introduced."
     }
   ],
   "hardRules": [
-    "Never use a user-provided Lucas video itself as generated output.",
-    "Never copy a source clip shot-for-shot or motion-for-motion.",
-    "Use multiple compatible references when possible: identity plus motion/performance plus media grammar.",
-    "For visio, the validated black-shirt V7 defines camera grammar and quality, not permanent wardrobe or location.",
-    "For Lucas identity, preserve canonical tattoos when visible; do not erase them and do not invent excessive new tattoos.",
+    "Never use a user-provided reference video itself as generated output.",
+    "Never copy a source clip shot-for-shot, dialogue-for-dialogue or motion-for-motion.",
+    "References define who Lucas is and how plausible behavior looks; the current game state defines what actually happens.",
+    "Use multiple compatible references when possible: identity plus context-appropriate motion/performance plus media grammar.",
+    "Non-Lucas references may teach camera, situation, posture or motion only and must never contaminate Lucas identity.",
+    "For Lucas identity, preserve canonical tattoos when visible and never invent a facial scar.",
+    "Family/baby behavior becomes eligible only when the game timeline actually contains that family context.",
+    "Couple-touch references become eligible only when Lucas is physically present with Marion.",
     "If a candidate no longer reads as Lucas, reject it before user review."
   ]
 }
