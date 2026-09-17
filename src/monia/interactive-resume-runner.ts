@@ -1,5 +1,6 @@
 import { readInteractiveScene, markInteractiveSceneMaterializing, attachInteractiveMedia, failInteractiveScene, pauseForChoice } from './interactive-scene';
 import { continuityPrompt } from './scene-continuity';
+import { materializeInteractiveBranchFromFrame } from './interactive-branch-materializer';
 
 let busy=false;
 
@@ -8,7 +9,7 @@ function asChoices(raw:unknown){
   return raw.slice(0,3).map((label,index)=>({id:`branch-${index+1}`,label:String(label),intent:String(label)}));
 }
 
-async function resumeFromInput(detail:{sceneId?:string;choiceId?:string;freeText?:string}){
+async function resumeFromInput(detail:{sceneId?:string;choiceId?:string;freeText?:string;continuityFrame?:File}){
   if(busy)return;
   const current=readInteractiveScene();
   if(!current||current.state!=='awaiting-choice'||(detail.sceneId&&detail.sceneId!==current.id))return;
@@ -36,19 +37,22 @@ async function resumeFromInput(detail:{sceneId?:string;choiceId?:string;freeText
     const generationJob=buildMonIAGenerationJob(response,mediaPlan,{...request,playerText:`${request.playerText||''} ${authority}`.trim()});
     scene={...scene,experience:{...scene.experience,response,mediaPlan,generationJob,requestSnapshot:request}};
 
-    const media=await moniaExperience.materialize({response,mediaPlan,generationJob});
+    const materializationInput={response,mediaPlan,generationJob};
+    const media=detail.continuityFrame
+      ? await materializeInteractiveBranchFromFrame(materializationInput,detail.continuityFrame)
+      : await moniaExperience.materialize(materializationInput);
+
     if(media.state==='voice-failed'||media.state==='image-failed'||media.state==='video-failed'){
       failInteractiveScene(scene,`La suite n’a pas pu être matérialisée (${media.state})`);return;
     }
 
     let finalVideoUrl=media.videoUrl;
-    let speechEngine:string|undefined;
-    if(media.videoUrl&&media.voiceAudioUrl){
+    let speechEngine:string|undefined=detail.continuityFrame&&media.voiceAudioUrl?'musetalk-v1.5':undefined;
+    if(!detail.continuityFrame&&media.videoUrl&&media.voiceAudioUrl){
       const { buildSpeechPerformanceRequest, renderSpeechPerformance }=await import('./speech-performance-bridge');
       const speechRequest=buildSpeechPerformanceRequest(media.videoUrl,media.voiceAudioUrl,`${scene.id}:beat-${scene.beatIndex}`);
       const speech=await renderSpeechPerformance(speechRequest);
-      finalVideoUrl=speech.videoUrl;
-      speechEngine=speech.engine;
+      finalVideoUrl=speech.videoUrl;speechEngine=speech.engine;
     }
 
     scene=attachInteractiveMedia(scene,finalVideoUrl||media.imageUrl);
@@ -59,10 +63,9 @@ async function resumeFromInput(detail:{sceneId?:string;choiceId?:string;freeText
       window.setTimeout(()=>pauseForChoice(scene,nextChoices),Math.max(900,Number(response.scene?.duration||5)*1000));
     }
   }catch(error){
-    const scene=readInteractiveScene();
-    if(scene)failInteractiveScene(scene,error instanceof Error?error.message:String(error));
+    const scene=readInteractiveScene();if(scene)failInteractiveScene(scene,error instanceof Error?error.message:String(error));
   }finally{busy=false;}
 }
 
 window.addEventListener('monia-interactive-player-input',event=>{void resumeFromInput((event as CustomEvent).detail||{})});
-console.info('[MonIA] Interactive resume runner active · player choice → same scene → V16/speech-performance when spoken → media → next decision');
+console.info('[MonIA] Interactive resume runner active · captured frame → same scene → V16/speech-performance → next branch');
