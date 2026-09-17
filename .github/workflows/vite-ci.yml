@@ -63,108 +63,85 @@ jobs:
               print(f'OK · {label}')
 
           required_files = [
-              'dist/index.html',
-              'dist/monia-test.html',
-              'dist/config/monia-visio-approved.json',
-              'dist/config/drama-approved.json',
-              'dist/config/motion-reference-bank.json',
-              'dist/config/lucas-voice-strategy.json',
-              'dist/config/monia-generation-orchestrator.json',
-              'src/monia/generation-job.ts',
-              'src/monia/v16-runtime-bridge.ts',
-              'src/monia/speech-performance-bridge.ts',
-              'src/monia/visio-av-sync.ts',
-              'src/monia/gameplay-visio-director.ts',
-              'src/monia/live-visio.ts',
-              'src/monia/visio-conversation.ts',
-              'src/monia/long-drama.ts',
-              'src/monia/long-drama-bridge.ts',
-              'scripts/monia_lucas_v16_runtime_voice.py',
-              'scripts/monia_av_coherence.py',
-              'scripts/drama_director.py',
-              '.github/workflows/monia-kaggle-speech-performance.yml',
-              'notebooks/monia_kaggle_speech_performance.ipynb',
-              'config/lucas-reference-bank.json',
-              'config/lucas-voice-strategy.json',
-              'config/monia-generation-orchestrator.json',
+              'dist/index.html','dist/monia-test.html','dist/config/monia-visio-approved.json','dist/config/drama-approved.json',
+              'dist/config/motion-reference-bank.json','dist/config/lucas-voice-strategy.json','dist/config/monia-generation-orchestrator.json',
+              'src/monia/generation-job.ts','src/monia/v16-runtime-bridge.ts','src/monia/speech-performance-bridge.ts','src/monia/visio-av-sync.ts',
+              'src/monia/gameplay-visio-director.ts','src/monia/live-visio.ts','src/monia/visio-conversation.ts','src/monia/long-drama.ts','src/monia/long-drama-bridge.ts',
+              'scripts/monia_lucas_v16_runtime_voice.py','scripts/monia_av_coherence.py','scripts/drama_director.py',
+              '.github/workflows/monia-kaggle-speech-performance.yml','notebooks/monia_kaggle_speech_performance.ipynb',
+              'config/lucas-reference-bank.json','config/lucas-voice-strategy.json','config/monia-generation-orchestrator.json',
           ]
-          for item in required_files:
-              require(Path(item).is_file(), f'{item} exists')
-
+          for item in required_files: require(Path(item).is_file(), f'{item} exists')
           require(Path('dist/assets').is_dir(), 'dist/assets exists')
           require(Path('dist/resources').is_dir(), 'dist/resources exists')
           require(Path('dist/ort').is_dir(), 'dist/ort exists')
 
-          voice = json.loads(Path('config/lucas-voice-strategy.json').read_text(encoding='utf-8'))
-          require(voice.get('status') == 'approved-v16-voice-and-flow', 'Lucas V16 remains official')
-          ref = voice.get('approved_reference', {})
-          require(ref.get('status') == 'approved-by-user', 'V16 reference remains user approved')
-          require('v16' in str(ref.get('candidate','')).lower(), 'approved Lucas reference is V16')
-          rejected = json.dumps(voice.get('rejected_routes', []), ensure_ascii=False).lower()
-          require('v17' in rejected and 'v18' in rejected, 'rejected V17/V18 remain recorded')
+          voice=json.loads(Path('config/lucas-voice-strategy.json').read_text(encoding='utf-8'))
+          require(voice.get('status')=='approved-v16-voice-and-flow','Lucas V16 remains official')
+          ref=voice.get('approved_reference',{})
+          require(ref.get('status')=='approved-by-user','V16 reference remains user approved')
+          require('v16' in str(ref.get('candidate','')).lower(),'approved Lucas reference is V16')
+          rejected=json.dumps(voice.get('rejected_routes',[]),ensure_ascii=False).lower()
+          require('v17' in rejected and 'v18' in rejected,'rejected V17/V18 remain recorded')
 
-          orchestrator = json.loads(Path('config/monia-generation-orchestrator.json').read_text(encoding='utf-8'))
-          voice_cfg = orchestrator.get('lucas',{}).get('voice',{})
-          require(orchestrator.get('generation_authority',{}).get('not_just_catalog_selection') is True, 'MonIA is a generator, not a catalog selector')
-          require(voice_cfg.get('voice_led_generation') is True, 'spoken Lucas video remains voice-led')
-          require(voice_cfg.get('runtime_renderer') == 'scripts/monia_lucas_v16_runtime_voice.py', 'central orchestrator uses direct V16 renderer')
-          require(voice_cfg.get('generic_fallback_allowed') is False, 'generic Lucas voice fallback is forbidden')
+          orchestrator=json.loads(Path('config/monia-generation-orchestrator.json').read_text(encoding='utf-8'))
+          voice_cfg=orchestrator.get('lucas',{}).get('voice',{})
+          require(orchestrator.get('generation_authority',{}).get('not_just_catalog_selection') is True,'MonIA is a generator, not a catalog selector')
+          require(voice_cfg.get('voice_led_generation') is True,'spoken Lucas video remains voice-led')
+          require(voice_cfg.get('runtime_renderer')=='scripts/monia_lucas_v16_runtime_voice.py','central orchestrator uses direct V16 renderer')
+          require(voice_cfg.get('generic_fallback_allowed') is False,'generic Lucas voice fallback is forbidden')
 
-          generation_job = Path('src/monia/generation-job.ts').read_text(encoding='utf-8')
-          require("dialogueAuthority:'exact-text-before-video'" in generation_job, 'exact dialogue is resolved before video')
-          require("fallback:'forbidden'" in generation_job, 'generation jobs forbid generic Lucas voice fallback')
-          require('lockIdentityAcrossShots:true' in generation_job, 'multi-shot identity continuity is locked')
-          require('allowAutomaticCanonPromotion:false' in generation_job, 'generated jobs cannot auto-promote to canon')
-          require('reusePreviousFrameWhenHelpful:true' in generation_job, 'multi-shot continuity can carry previous frames')
+          generation_job=Path('src/monia/generation-job.ts').read_text(encoding='utf-8')
+          require("dialogueAuthority:'exact-text-before-video'" in generation_job,'exact dialogue is resolved before video')
+          require("fallback:'forbidden'" in generation_job,'generation jobs forbid generic Lucas voice fallback')
+          require('lockIdentityAcrossShots:true' in generation_job,'multi-shot identity continuity is locked')
+          require('allowAutomaticCanonPromotion:false' in generation_job,'generated jobs cannot auto-promote to canon')
+          require('reusePreviousFrameWhenHelpful:true' in generation_job,'multi-shot continuity can carry previous frames')
 
-          v16_bridge = Path('src/monia/v16-runtime-bridge.ts').read_text(encoding='utf-8')
-          require('monia_lucas_v16_runtime_voice.py' in v16_bridge, 'browser runtime requests the V16 renderer')
-          require("fallback:'forbidden'" in v16_bridge, 'V16 bridge has no generic fallback')
+          v16_bridge=Path('src/monia/v16-runtime-bridge.ts').read_text(encoding='utf-8')
+          require('monia_lucas_v16_runtime_voice.py' in v16_bridge,'browser runtime requests the V16 renderer')
+          require("fallback:'forbidden'" in v16_bridge,'V16 bridge has no generic fallback')
 
-          speech_bridge = Path('src/monia/speech-performance-bridge.ts').read_text(encoding='utf-8')
-          require('speech-performance' in speech_bridge.lower(), 'speech-performance bridge is wired')
-          require('video' in speech_bridge.lower() and 'audio' in speech_bridge.lower(), 'speech-performance consumes video and audio')
+          speech_bridge=Path('src/monia/speech-performance-bridge.ts').read_text(encoding='utf-8')
+          require('speech-performance' in speech_bridge.lower(),'speech-performance bridge is wired')
+          require('video' in speech_bridge.lower() and 'audio' in speech_bridge.lower(),'speech-performance consumes video and audio')
 
-          av_sync = Path('src/monia/visio-av-sync.ts').read_text(encoding='utf-8')
-          require('requestSpeechPerformance' in av_sync, 'spoken visio requests audio-driven speech performance')
-          require('playbackRate' not in av_sync or 'Never alter playbackRate' in av_sync, 'visio sync never warps playback rate')
+          av_sync=Path('src/monia/visio-av-sync.ts').read_text(encoding='utf-8')
+          require('buildSpeechPerformanceRequest' in av_sync and 'renderSpeechPerformance' in av_sync,'spoken visio requires audio-driven speech performance')
+          require('raw talking video is not allowed' in av_sync,'spoken visio fails closed if speech-performance is unavailable')
+          require('playbackRate' not in av_sync or 'never warp playback rate' in av_sync.lower(),'visio sync never warps playback rate')
 
-          visio = Path('src/monia/gameplay-visio-director.ts').read_text(encoding='utf-8')
-          require("requestedChannel:'visio'" in visio, 'Visio Director requests visio channel')
-          require('signature(current!,request)!==sig' in visio, 'stale gameplay context cancels prepared visio')
+          visio=Path('src/monia/gameplay-visio-director.ts').read_text(encoding='utf-8')
+          require("requestedChannel:'visio'" in visio,'Visio Director requests visio channel')
+          require('signature(current!,request)!==sig' in visio,'stale gameplay context cancels prepared visio')
+          live_visio=Path('src/monia/live-visio.ts').read_text(encoding='utf-8')
+          require('stateUrls' in live_visio,'live visio can switch generated clips by state')
+          require("state==='speaking'" in live_visio and "state==='reaction'" in live_visio,'live visio supports speaking/reaction states')
+          conversation=Path('src/monia/visio-conversation.ts').read_text(encoding='utf-8')
+          require('./local-piper-voice' not in conversation,'Lucas live visio no longer falls back to Piper')
+          require('approved V16' in conversation or 'V16' in conversation,'visio conversation explicitly requires V16')
 
-          live_visio = Path('src/monia/live-visio.ts').read_text(encoding='utf-8')
-          require('stateUrls' in live_visio, 'live visio can switch generated clips by state')
-          require("state==='speaking'" in live_visio and "state==='reaction'" in live_visio, 'live visio supports speaking/reaction states')
+          studio=Path('src/monia/studio-job-queue.ts').read_text(encoding='utf-8')
+          require('canonical tattoos when naturally visible' in studio,'Lucas canonical tattoos are preserved when visible')
+          require("fallback:'forbidden'" in studio,'studio jobs forbid generic voice fallback')
 
-          conversation = Path('src/monia/visio-conversation.ts').read_text(encoding='utf-8')
-          require('./local-piper-voice' not in conversation, 'Lucas live visio no longer falls back to Piper')
-          require('approved V16' in conversation or 'V16' in conversation, 'visio conversation explicitly requires V16')
+          motion=json.loads(Path('dist/config/motion-reference-bank.json').read_text(encoding='utf-8'))
+          policy=motion.get('policy',{})
+          require(policy.get('copy_identity') is False,'motion bank cannot copy identity')
+          require(policy.get('copy_face') is False,'motion bank cannot copy face identity')
+          require(policy.get('character_canon_has_priority') is True,'character canon keeps priority over motion references')
+          manifest=json.loads(Path('dist/config/monia-visio-approved.json').read_text(encoding='utf-8'))
+          require(manifest.get('status')=='locked','long-term visio canon manifest remains locked')
+          require(manifest.get('fallback') is None,'canonical visio manifest has no unapproved fallback')
+          speech_workflow=Path('.github/workflows/monia-kaggle-speech-performance.yml').read_text(encoding='utf-8').lower()
+          require('musetalk' in speech_workflow,'GPU speech-performance workflow uses MuseTalk')
+          require('candidate' in speech_workflow,'speech-performance outputs remain candidate-only')
 
-          studio = Path('src/monia/studio-job-queue.ts').read_text(encoding='utf-8')
-          require('canonical tattoos when naturally visible' in studio, 'Lucas canonical tattoos are preserved when visible')
-          require("fallback:'forbidden'" in studio, 'studio jobs forbid generic voice fallback')
-
-          motion = json.loads(Path('dist/config/motion-reference-bank.json').read_text(encoding='utf-8'))
-          policy = motion.get('policy',{})
-          require(policy.get('copy_identity') is False, 'motion bank cannot copy identity')
-          require(policy.get('copy_face') is False, 'motion bank cannot copy face identity')
-          require(policy.get('character_canon_has_priority') is True, 'character canon keeps priority over motion references')
-
-          manifest = json.loads(Path('dist/config/monia-visio-approved.json').read_text(encoding='utf-8'))
-          require(manifest.get('status') == 'locked', 'long-term visio canon manifest remains locked')
-          require(manifest.get('fallback') is None, 'canonical visio manifest has no unapproved fallback')
-
-          speech_workflow = Path('.github/workflows/monia-kaggle-speech-performance.yml').read_text(encoding='utf-8').lower()
-          require('musetalk' in speech_workflow, 'GPU speech-performance workflow uses MuseTalk')
-          require('candidate' in speech_workflow, 'speech-performance outputs remain candidate-only')
-
-          dist_text = ''
+          dist_text=''
           for p in Path('dist').rglob('*'):
               if p.is_file() and p.suffix in {'.js','.html','.css','.mjs','.json'}:
-                  try: dist_text += p.read_text(encoding='utf-8', errors='ignore')
+                  try: dist_text+=p.read_text(encoding='utf-8',errors='ignore')
                   except Exception: pass
-          require('cdnjs.cloudflare.com/ajax/libs/onnxruntime-web' not in dist_text, 'ONNX runtime has no Cloudflare runtime dependency')
-
+          require('cdnjs.cloudflare.com/ajax/libs/onnxruntime-web' not in dist_text,'ONNX runtime has no Cloudflare runtime dependency')
           print('Vite build is deployable: MonIA owns generation jobs, V16 leads spoken media, speech-performance is audio-driven, and generated candidates remain separate from canon.')
           PY
