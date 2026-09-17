@@ -38,6 +38,7 @@ import { askMonIAServerBrain } from './server-brain';
 import { planMonIAScene, assertMonIAScenePlan, type MonIAScenePlanningInput, type MonIAScenePlan, type MonIASceneType } from './scene-intelligence';
 import { planDramaExperience, type MonIADramaPlan, type MonIADramaPlanningInput } from './drama-director';
 import { startInteractiveScene, pauseForChoice, applyInteractiveChoice, buildInteractiveResumePrompt, type MonIAInteractiveScene } from './interactive-scene';
+import { getDirectorVariation, directorVariationRules } from './director-variation';
 import {
   directorPrompt,
   fallbackDirector,
@@ -126,6 +127,18 @@ function typeFromDirector(result: MonIADirectorResult): MonIASceneType {
   if (result.channel === 'scene' || result.channel === 'video') return 'cinematic';
   if (result.channel === 'call' || result.channel === 'voice') return 'audio_call';
   return 'phone_message';
+}
+
+function withDirectorVariation(request: MonIADirectorRequest): MonIADirectorRequest {
+  const variation = getDirectorVariation({
+    actor: request.actor,
+    channel: request.requestedChannel,
+    playerText: request.playerText,
+    recentAction: request.context.recentAction,
+  });
+  const baseRules = Array.isArray(request.context.rules) ? request.context.rules.map(String) : [];
+  const rules = [...baseRules, ...directorVariationRules(variation, request.requestedChannel)].slice(-20);
+  return { ...request, context: { ...request.context, rules } };
 }
 
 class MonIARuntime {
@@ -269,9 +282,10 @@ class MonIARuntime {
   }
 
   async direct(request: MonIADirectorRequest): Promise<MonIADirectorResult> {
-    const fb = fallbackDirector(request);
+    const variedRequest = withDirectorVariation(request);
+    const fb = fallbackDirector(variedRequest);
     try {
-      const server = await askMonIAServerBrain({ kind: 'director', prompt: directorPrompt(request), profile: MARION_LUCAS_PROFILE });
+      const server = await askMonIAServerBrain({ kind: 'director', prompt: directorPrompt(variedRequest), profile: MARION_LUCAS_PROFILE });
       if (server) {
         const parsed = parseDirectorJSON(server, fb);
         if (parsed) return parsed;
@@ -280,8 +294,8 @@ class MonIARuntime {
     if (this.mode === 'light' || !this.worker || this.status.status !== 'ready') return fb;
     const id = ++this.seq;
     return new Promise((resolve) => {
-      this.pending.set(id, { kind: 'director', resolve, fallback: fb, request });
-      this.worker!.postMessage({ type: 'direct', id, prompt: directorPrompt(request), fallback: fb });
+      this.pending.set(id, { kind: 'director', resolve, fallback: fb, request: variedRequest });
+      this.worker!.postMessage({ type: 'direct', id, prompt: directorPrompt(variedRequest), fallback: fb });
       window.setTimeout(() => {
         const p = this.pending.get(id);
         if (!p || p.kind !== 'director') return;
