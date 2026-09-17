@@ -67,7 +67,7 @@ jobs:
               'dist/config/motion-reference-bank.json','dist/config/lucas-voice-strategy.json','dist/config/monia-generation-orchestrator.json',
               'src/monia/generation-job.ts','src/monia/v16-runtime-bridge.ts','src/monia/speech-performance-bridge.ts','src/monia/visio-av-sync.ts',
               'src/monia/gameplay-visio-director.ts','src/monia/live-visio.ts','src/monia/visio-conversation.ts','src/monia/long-drama.ts','src/monia/long-drama-bridge.ts',
-              'src/monia/interactive-scene.ts','src/monia/interactive-choice-ui.ts','src/monia/interactive-resume-runner.ts','src/monia/interactive-branch-materializer.ts',
+              'src/monia/interactive-scene.ts','src/monia/interactive-choice-ui.ts','src/monia/interactive-resume-runner.ts','src/monia/interactive-branch-materializer.ts','src/monia/interactive-consequence-memory.ts',
               'scripts/monia_lucas_v16_runtime_voice.py','scripts/monia_av_coherence.py','scripts/drama_director.py',
               '.github/workflows/monia-kaggle-speech-performance.yml','notebooks/monia_kaggle_speech_performance.ipynb',
               'config/lucas-reference-bank.json','config/lucas-voice-strategy.json','config/monia-generation-orchestrator.json',
@@ -127,6 +127,12 @@ jobs:
           require('bindCapturedContinuityFrame' in interactive,'interactive branch binds the captured frame into its generation job')
           require('referenceFile' in interactive and 'generateFreeCanonVideo' in interactive,'captured frame is passed into branch video generation')
           require('renderSpeechPerformance' in interactive,'spoken interactive branch passes through speech-performance')
+          interactive_scene=Path('src/monia/interactive-scene.ts').read_text(encoding='utf-8')
+          consequence=Path('src/monia/interactive-consequence-memory.ts').read_text(encoding='utf-8')
+          require('persistInteractiveConsequence' in interactive_scene,'accepted interactive choices persist before scene resume')
+          require('interactiveDecisionHistory' in consequence and 'lastInteractiveDecision' in consequence,'interactive choices are written into durable game save history')
+          require('moniaStorage.put' in consequence,'interactive choices are also written into long-term MonIA memory')
+          require('input.effects' in consequence,'numeric relationship effects are explicit-only, never invented by the persistence layer')
 
           studio=Path('src/monia/studio-job-queue.ts').read_text(encoding='utf-8')
           require('Preserve Lucas canonical tattoos whenever the framing naturally exposes them' in studio,'Lucas canonical tattoos are preserved when visible')
@@ -150,5 +156,5 @@ jobs:
                   try: dist_text+=p.read_text(encoding='utf-8',errors='ignore')
                   except Exception: pass
           require('cdnjs.cloudflare.com/ajax/libs/onnxruntime-web' not in dist_text,'ONNX runtime has no Cloudflare runtime dependency')
-          print('Vite build is deployable: MonIA owns generation jobs, V16 leads spoken media, interactive branches preserve captured-frame continuity, speech-performance is audio-driven, and generated candidates remain separate from canon.')
+          print('Vite build is deployable: MonIA owns generation jobs, V16 leads spoken media, interactive branches preserve captured-frame continuity and durable choice memory, speech-performance is audio-driven, and generated candidates remain separate from canon.')
           PY
