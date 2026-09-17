@@ -1,0 +1,224 @@
+{
+  "version": 1,
+  "status": "canonical-guidance",
+  "purpose": "Machine-readable generation knowledge for MonIA. It defines how MonIA invents and generates new Marion & Lucas media while preserving identity, continuity, voice, camera grammar and game-state coherence.",
+  "core_rule": "References define identity and performance vocabulary; they do not define the scene. MonIA invents the scene from game state, canon and dramatic intent, then generates it shot by shot.",
+  "identity_consistency": {
+    "always_anchor_from_canon": true,
+    "character_identity_must_not_be_relearned_from_generated_output": true,
+    "lucas_sources": [
+      "config/lucas-reference-bank.json",
+      "config/lucas-video-bank.json",
+      "config/monia-visio-approved.json"
+    ],
+    "marion_sources": ["character canon", "approved Marion references"],
+    "lock_across_shots": [
+      "facial geometry",
+      "eye color",
+      "hair identity",
+      "age continuity",
+      "skin tone",
+      "body proportions",
+      "canonical tattoos when visible",
+      "voice identity",
+      "relationship continuity"
+    ],
+    "variable_by_scene": [
+      "wardrobe",
+      "hair styling within identity",
+      "lighting",
+      "location",
+      "camera distance",
+      "emotion",
+      "pose",
+      "gesture",
+      "background activity"
+    ]
+  },
+  "long_scene_strategy": {
+    "rule": "Do not generate a one-to-two-minute dramatic scene as one uncontrolled video. Plan it as a sequence of short coherent shots and assemble them.",
+    "target_total_seconds": [20, 120],
+    "preferred_shot_seconds": [3, 12],
+    "spoken_shot_seconds": [4, 15],
+    "workflow": [
+      "write dramatic beat and continuity constraints",
+      "build shot list",
+      "resolve exact dialogue",
+      "generate/resolve voice before spoken visuals",
+      "select canonical identity and contextual motion references",
+      "generate first shot",
+      "extract continuity anchors from accepted shot",
+      "condition next shot from canonical identity plus prior-shot continuity anchors",
+      "validate each shot before accepting it",
+      "assemble accepted shots",
+      "validate whole-scene continuity and audio"
+    ],
+    "continuity_anchors_between_shots": [
+      "canonical face reference",
+      "accepted prior-shot end frame when technically useful",
+      "same wardrobe state",
+      "same hair state",
+      "same location and light direction",
+      "same prop state",
+      "same emotional beat",
+      "same screen direction",
+      "same conversation state"
+    ],
+    "never": [
+      "use a generated frame as the sole identity authority",
+      "allow cumulative face drift across sequential generations",
+      "change wardrobe or tattoos accidentally between adjacent shots",
+      "invent spatial geography independently for every shot"
+    ]
+  },
+  "visio": {
+    "priority": "critical",
+    "camera_contract": [
+      "viewer is Lucas smartphone front-facing camera",
+      "phone is never visible",
+      "no external camera",
+      "arm-length perspective",
+      "natural screen-versus-lens gaze",
+      "small imperfect handheld drift",
+      "phone-like autofocus and exposure breathing",
+      "no cinematic dolly, pan, zoom or coverage"
+    ],
+    "state_model": ["listening", "speaking", "reaction", "thinking"],
+    "spoken_generation": [
+      "write exact line",
+      "render Lucas V16 voice",
+      "measure audio timing",
+      "generate performance around exact line and timing",
+      "apply dedicated lip-sync/speech-to-video refinement when available",
+      "validate mouth/jaw activity against speech",
+      "reject visible mismatch"
+    ],
+    "identity_rule": "The visio grammar may vary in place, light, wardrobe and mood but Lucas identity never changes.",
+    "naturalism": [
+      "irregular blinks",
+      "breathing",
+      "tiny posture adjustments",
+      "gaze mostly toward Marion on screen rather than staring at lens",
+      "brief lens checks",
+      "small framing corrections",
+      "silent listening behavior between utterances"
+    ]
+  },
+  "cinematic": {
+    "camera_contract": "External cinematic camera is allowed and chosen to serve the dramatic beat. Do not inherit visio/selfie grammar unless the story explicitly contains a phone camera.",
+    "construction": [
+      "hook or immediate readable action",
+      "establish spatial geography only as much as needed",
+      "performance beat",
+      "reaction shot or physical consequence when useful",
+      "player-choice interruption only when Marion agency matters",
+      "clean transition back to gameplay"
+    ],
+    "shot_types": [
+      "close reaction",
+      "two-shot",
+      "over-shoulder",
+      "detail/prop insert",
+      "medium movement shot",
+      "environmental transition"
+    ],
+    "rule": "Use the fewest shots needed for emotional clarity. Avoid generic montage grammar and unnecessary camera movement."
+  },
+  "gameplay_ambient": {
+    "rule": "Generate life around the player without stealing control.",
+    "examples": [
+      "tree and foliage movement",
+      "curtain movement",
+      "light changes",
+      "traffic and distant pedestrians",
+      "room micro-motion",
+      "weather",
+      "subtle idle behavior",
+      "location-specific background sound"
+    ],
+    "never": ["force a cinematic for ordinary actions", "turn every interaction into a cutscene"]
+  },
+  "voice_and_lip_sync": {
+    "lucas_voice": "V16 approved Lucas French voice",
+    "voice_is_master_clock_for_spoken_video": true,
+    "no_playback_rate_voice_warping": true,
+    "no_word_by_word_robotic_stitching": true,
+    "preferred_technical_paths": [
+      "native audio-to-video or speech-to-video generation conditioned on canonical image",
+      "image/video generation followed by dedicated lip-sync refinement",
+      "audio-driven portrait performance for close visio shots"
+    ],
+    "validation": [
+      "exact spoken text equals planned text",
+      "voice identity matches approved Lucas voice",
+      "speech cadence matches emotion",
+      "mouth starts and stops plausibly with speech",
+      "jaw and head movement are not mechanically repetitive",
+      "duration equality alone is never treated as lip-sync proof"
+    ]
+  },
+  "model_capability_knowledge": {
+    "ltx_family": {
+      "use_for": ["text-to-video", "image-to-video", "audio-to-video where supported", "short coherent shots", "extension/continuation when supported"],
+      "notes": "Prefer image-conditioned generation for identity-sensitive characters. Continuation/extend-style generation is useful for continuity, but canonical identity must remain independently anchored."
+    },
+    "wan22_family": {
+      "use_for": ["image-to-video", "text-image-to-video", "speech-to-video when available", "character animation", "cinematic motion"],
+      "notes": "Use image-conditioned or character-animation paths for identity-sensitive shots. Speech-to-video is especially relevant to spoken visio/cinematic tests."
+    },
+    "musetalk_family": {
+      "use_for": ["dedicated audio-driven lip synchronization", "close talking-face refinement"],
+      "notes": "Use as a refinement stage when compatible with the shot; validate output because lip-sync improvement must not alter Lucas identity or produce mouth artifacts."
+    },
+    "liveportrait_family": {
+      "use_for": ["portrait animation", "pose/expression retargeting", "controlled close-up performance tests"],
+      "notes": "Useful for controlled facial performance but not a substitute for full cinematic body/environment generation."
+    }
+  },
+  "automatic_quality_control": {
+    "per_shot": [
+      "identity",
+      "camera grammar",
+      "face geometry",
+      "eye color",
+      "tattoo continuity",
+      "wardrobe continuity",
+      "anatomy",
+      "motion naturalism",
+      "dialogue/audio consistency",
+      "lip-sync coherence when speaking",
+      "background continuity",
+      "absence of unwanted text/UI/watermark"
+    ],
+    "whole_sequence": [
+      "same character throughout",
+      "same time/place continuity unless scripted transition",
+      "same wardrobe/props",
+      "consistent screen direction",
+      "emotion progresses logically",
+      "no repeated identical gestures",
+      "audio ambience continuity",
+      "clean transition back to gameplay"
+    ],
+    "on_failure": "Regenerate only the failed shot or failed section when possible; do not discard accepted shots unnecessarily.",
+    "canon_promotion": "Generated output may be used in a game session after automated validation, but it never becomes identity-training canon without explicit user approval."
+  },
+  "research_sources": [
+    {
+      "name": "LTX Video documentation",
+      "knowledge_used": ["image-to-video", "audio-to-video", "extend", "retake", "short generation limits"]
+    },
+    {
+      "name": "Wan2.2 official repository/documentation",
+      "knowledge_used": ["image-to-video", "text-image-to-video", "speech-to-video", "character animation", "segment conditioning"]
+    },
+    {
+      "name": "MuseTalk official repository",
+      "knowledge_used": ["audio-driven lip synchronization", "talking-face refinement"]
+    },
+    {
+      "name": "LivePortrait official project",
+      "knowledge_used": ["portrait animation", "stitching", "retargeting"]
+    }
+  ]
+}
