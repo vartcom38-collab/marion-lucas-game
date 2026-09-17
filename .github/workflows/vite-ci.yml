@@ -100,11 +100,11 @@ jobs:
           require('v17' in rejected and 'v18' in rejected, 'rejected V17/V18 remain recorded')
 
           orchestrator = json.loads(Path('config/monia-generation-orchestrator.json').read_text(encoding='utf-8'))
+          voice_cfg = orchestrator.get('lucas',{}).get('voice',{})
           require(orchestrator.get('generation_authority',{}).get('not_just_catalog_selection') is True, 'MonIA is a generator, not a catalog selector')
-          require(orchestrator.get('lucas',{}).get('voice',{}).get('voice_led_generation') is True, 'spoken Lucas video remains voice-led')
-          renderer = orchestrator.get('lucas',{}).get('voice',{}).get('runtime_renderer',{})
-          require(renderer.get('path') == 'scripts/monia_lucas_v16_runtime_voice.py', 'central orchestrator uses direct V16 renderer')
-          require(renderer.get('fallback') == 'forbidden', 'generic Lucas voice fallback is forbidden')
+          require(voice_cfg.get('voice_led_generation') is True, 'spoken Lucas video remains voice-led')
+          require(voice_cfg.get('runtime_renderer') == 'scripts/monia_lucas_v16_runtime_voice.py', 'central orchestrator uses direct V16 renderer')
+          require(voice_cfg.get('generic_fallback_allowed') is False, 'generic Lucas voice fallback is forbidden')
 
           generation_job = Path('src/monia/generation-job.ts').read_text(encoding='utf-8')
           require("dialogueAuthority:'exact-text-before-video'" in generation_job, 'exact dialogue is resolved before video')
