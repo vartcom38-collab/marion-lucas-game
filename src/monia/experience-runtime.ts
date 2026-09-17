@@ -1,6 +1,8 @@
 import { monia, type MonIAMode, type MonIADirectorRequest, type MonIADirectorResult } from './runtime';
 import { buildAutonomousMediaPlan, type MonIAMediaPlan } from './media-orchestrator';
 import { buildMonIAGenerationJob, type MonIAGenerationJob } from './generation-job';
+import { executeMonIAGenerationJob } from './generation-executor';
+import type { LucasV16Ready } from './v16-runtime-bridge';
 import { generateAutonomousSourceImage, type MonIAImageResult } from './autonomous-image';
 import { generateFreeCanonVideo, type FreeVideoResult } from './free-video';
 import { mediaCacheKey } from './media-cache';
@@ -18,24 +20,27 @@ export type MonIAMaterializedMedia={
   video:FreeVideoResult|null;
   imageUrl?:string;
   videoUrl?:string;
+  voiceAudioUrl?:string;
+  voiceDuration?:number;
+  voiceText?:string;
   cacheHit?:boolean;
   sharedGeneration?:boolean;
   persisted?:boolean;
   candidateAssetIds?:string[];
   reusedAssetId?:string;
   generationJobId?:string;
-  state:'not-needed'|'image-failed'|'video-failed'|'candidate'|'ready';
+  state:'not-needed'|'voice-failed'|'image-failed'|'video-failed'|'candidate'|'ready';
 };
 
 type Hooks={onImageState?:(state:string,detail?:string)=>void;onVideoState?:(state:string,detail?:string)=>void};
 
 const inFlight=new Map<string,Promise<MonIAMaterializedMedia>>();
 
-function videoPrompt(result:MonIADirectorResult,plan:MonIAMediaPlan,job:MonIAGenerationJob){
+function videoPrompt(result:MonIADirectorResult,plan:MonIAMediaPlan,job:MonIAGenerationJob,voice:LucasV16Ready|null){
   const visual=plan.visual;
   const firstShot=job.shots[0];
   const dialogue=firstShot?.dialogue?.[0]?.text;
-  const dialogueRule=dialogue?` Exact spoken dialogue authority: "${dialogue}". Do not invent, omit or replace spoken words. Mouth performance must be built for this exact utterance; V16 audio timing is the master clock.`:'';
+  const dialogueRule=dialogue?` Exact spoken dialogue authority: "${dialogue}". Do not invent, omit or replace spoken words. Mouth performance must be built for this exact utterance.${voice?` V16 audio duration is ${voice.duration.toFixed(2)} seconds and is the master timing authority.`:' V16 audio timing is the master clock.'}`:'';
   const continuity=job.shots.length>1?' This is one shot inside a longer scene. Preserve identity, wardrobe, location, lighting, screen direction and emotional state so adjacent generated shots can cut together naturally.':'';
   return `Photorealistic live-action video of the exact same person and identity as the supplied clean source frame. ${plan.actor}. Location: ${visual.location}. Framing: ${visual.framing}. Wardrobe continuity: ${visual.wardrobe}. Emotion: ${visual.emotion}. Action: ${visual.action}. Natural breathing, realistic blinking, subtle eye movement, natural head and body motion, physically believable clothing movement and environment motion. Preserve face shape, eyes, nose, mouth, hairline and proportions. Canonical tattoos must remain consistent when naturally visible; never invent or erase visible canonical tattoos. No identity drift, no morphing, no text, no number, no title, no subtitles, no watermark, no UI.${dialogueRule}${continuity} Premium immersive short-drama realism.`;
 }
@@ -76,23 +81,24 @@ async function registerCandidates(input:MonIAExperienceResult,imageUrl:string,vi
   return [image.id,video.id];
 }
 
-async function generateFresh(input:MonIAExperienceResult,hooks?:Hooks):Promise<MonIAMaterializedMedia>{
+async function generateFresh(input:MonIAExperienceResult,voice:LucasV16Ready|null,hooks?:Hooks):Promise<MonIAMaterializedMedia>{
+  const voiceMeta=voice?{voiceAudioUrl:voice.audioUrl,voiceDuration:voice.duration,voiceText:voice.text}:{};
   const image=await generateAutonomousSourceImage({plan:input.mediaPlan,onState:(state,detail)=>hooks?.onImageState?.(state,detail)});
-  if(image.state!=='ready'||!image.imageUrl)return {image,video:null,generationJobId:input.generationJob.id,state:'image-failed'};
+  if(image.state!=='ready'||!image.imageUrl)return {image,video:null,generationJobId:input.generationJob.id,...voiceMeta,state:'image-failed'};
 
   let file:File;
   try{file=await remoteImageToFile(image.imageUrl)}catch(error){
-    return {image:{...image,state:'error',error:error instanceof Error?error.message:String(error)},video:null,imageUrl:image.imageUrl,generationJobId:input.generationJob.id,state:'image-failed'};
+    return {image:{...image,state:'error',error:error instanceof Error?error.message:String(error)},video:null,imageUrl:image.imageUrl,generationJobId:input.generationJob.id,...voiceMeta,state:'image-failed'};
   }
 
-  const video=await generateFreeCanonVideo({referenceFile:file,prompt:videoPrompt(input.response,input.mediaPlan,input.generationJob),onState:(state,detail)=>hooks?.onVideoState?.(state,detail)});
-  if(video.state!=='ready'||!video.videoUrl)return {image,video,imageUrl:image.imageUrl,generationJobId:input.generationJob.id,state:'video-failed'};
+  const video=await generateFreeCanonVideo({referenceFile:file,prompt:videoPrompt(input.response,input.mediaPlan,input.generationJob,voice),onState:(state,detail)=>hooks?.onVideoState?.(state,detail)});
+  if(video.state!=='ready'||!video.videoUrl)return {image,video,imageUrl:image.imageUrl,generationJobId:input.generationJob.id,...voiceMeta,state:'video-failed'};
 
   hooks?.onVideoState?.('persisting','sauvegarde du candidat transitoire dans MonIA');
   const stored=await persistGeneratedMedia(input.mediaPlan,image.imageUrl,video.videoUrl);
   const candidateAssetIds=await registerCandidates(input,stored.imageUrl,stored.videoUrl,stored.persisted).catch(()=>[]);
   hooks?.onVideoState?.('candidate','média généré lié au job MonIA; utilisable après contrôles, jamais promu automatiquement au canon');
-  return {image,video,imageUrl:stored.imageUrl,videoUrl:stored.videoUrl,persisted:stored.persisted,candidateAssetIds,generationJobId:input.generationJob.id,state:'candidate'};
+  return {image,video,imageUrl:stored.imageUrl,videoUrl:stored.videoUrl,persisted:stored.persisted,candidateAssetIds,generationJobId:input.generationJob.id,...voiceMeta,state:'candidate'};
 }
 
 export class MonIAExperienceRuntime {
@@ -104,16 +110,29 @@ export class MonIAExperienceRuntime {
   }
 
   async materialize(input:MonIAExperienceResult, hooks?:Hooks):Promise<MonIAMaterializedMedia>{
-    if(!input.mediaPlan.visual.required)return {image:null,video:null,generationJobId:input.generationJob.id,state:'not-needed'};
+    let preparedJob=input.generationJob;
+    let voice:LucasV16Ready|null=null;
+    try{
+      const execution=await executeMonIAGenerationJob(input.generationJob);
+      preparedJob=execution.job;
+      voice=execution.voice;
+    }catch(error){
+      const detail=error instanceof Error?error.message:String(error);
+      hooks?.onVideoState?.('voice-failed',`V16 obligatoire · ${detail}`);
+      return {image:null,video:null,generationJobId:input.generationJob.id,state:'voice-failed'};
+    }
+    const prepared={...input,generationJob:preparedJob};
+    const voiceMeta=voice?{voiceAudioUrl:voice.audioUrl,voiceDuration:voice.duration,voiceText:voice.text}:{};
+    if(!prepared.mediaPlan.visual.required)return {image:null,video:null,generationJobId:prepared.generationJob.id,...voiceMeta,state:'ready'};
 
-    const approved=await findApprovedVaultMedia(input.mediaPlan);
+    const approved=await findApprovedVaultMedia(prepared.mediaPlan);
     if(approved){
       hooks?.onImageState?.('vault','asset validé réutilisé depuis MonIA');
-      hooks?.onVideoState?.('vault','aucune génération GPU nécessaire');
-      return {image:null,video:null,videoUrl:approved.url,cacheHit:true,reusedAssetId:approved.id,generationJobId:input.generationJob.id,state:'ready'};
+      hooks?.onVideoState?.('vault','visuel validé réutilisé; V16 exact reste lié à cette réplique');
+      return {image:null,video:null,videoUrl:approved.url,cacheHit:true,reusedAssetId:approved.id,generationJobId:prepared.generationJob.id,...voiceMeta,state:'ready'};
     }
 
-    const key=`${mediaCacheKey(input.mediaPlan)}|${input.generationJob.id}`;
+    const key=`${mediaCacheKey(prepared.mediaPlan)}|${prepared.generationJob.id}`;
     const existing=inFlight.get(key);
     if(existing){
       hooks?.onImageState?.('shared','génération MonIA identique déjà en cours');
@@ -122,7 +141,7 @@ export class MonIAExperienceRuntime {
       return {...result,sharedGeneration:true};
     }
 
-    const job=generateFresh(input,hooks).finally(()=>inFlight.delete(key));
+    const job=generateFresh(prepared,voice,hooks).finally(()=>inFlight.delete(key));
     inFlight.set(key,job);
     return job;
   }
