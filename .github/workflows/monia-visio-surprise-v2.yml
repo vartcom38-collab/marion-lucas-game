@@ -1,10 +1,11 @@
-name: MonIA Lucas Surprise Visio V5
+name: MonIA Lucas Surprise Visio V6
 
 on:
   push:
     branches: [main]
     paths:
       - 'scripts/monia_visio_surprise_v2_pack.py'
+      - 'scripts/monia_av_coherence.py'
       - 'config/lucas-voice-strategy.json'
       - 'config/lucas-reference-bank.json'
       - 'config/monia-generation-orchestrator.json'
@@ -29,7 +30,7 @@ jobs:
       - name: Install MonIA generation dependencies
         run: |
           python -m pip install --disable-pip-version-check --upgrade pip
-          python -m pip install --disable-pip-version-check gradio_client requests pillow numpy
+          python -m pip install --disable-pip-version-check gradio_client requests pillow numpy opencv-python-headless
           sudo apt-get update -qq
           sudo apt-get install -y -qq ffmpeg
 
@@ -47,6 +48,13 @@ jobs:
 
       - name: Generate full MonIA surprise visio candidate
         run: python -m scripts.monia_visio_surprise_v2_pack --state all --publish-candidate
+
+      - name: Gate speaking performance before any live promotion
+        run: |
+          python -m scripts.monia_av_coherence \
+            --video .monia-video/visio-lucas-surprise-v5-monia-speaking-silent-candidate.mp4 \
+            --audio .monia-video/lucas-voice-v16-b-smoother-flow-fr-candidate.wav \
+            --report .monia-video/visio-lucas-surprise-v5-av-coherence.json
 
       - name: Verify public V5 candidate set
         run: |
@@ -73,6 +81,7 @@ jobs:
           echo "Lucas speaking uses the approved V16 audio only."
           echo "The speaking visual is generated around the exact V16 utterance and measured V16 duration."
           echo "The viewpoint is Lucas's smartphone front camera; the phone must remain invisible."
-          echo "Duration-level A/V validation is mandatory."
-          echo "Phoneme-level lip-sync is NOT claimed by this workflow and still requires explicit validation before live promotion."
+          echo "The raw visual performance is checked BEFORE muxing so -shortest cannot hide bad timing."
+          echo "Automatic face/mouth-motion versus audio coherence validation is mandatory."
+          echo "This gate rejects gross desynchronization but does not claim phoneme-perfect lip-sync."
           echo "No automatic promotion to canonical reference banks."
