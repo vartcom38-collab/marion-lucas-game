@@ -1,0 +1,104 @@
+{
+  "version": 1,
+  "status": "canonical",
+  "purpose": "MonIA is not an episode player. It is a continuous-life drama director that can temporarily turn gameplay into a high-impact cinematic, visio, call or micro-drama beat, then return naturally to free play.",
+  "principles": {
+    "continuous_life_first": true,
+    "drama_is_event_driven_not_constant": true,
+    "short_form_pacing": true,
+    "choices_when_meaningful": true,
+    "no_forced_cliffhanger_every_time": true,
+    "no_fixed_episode_tree": true,
+    "replay_variation_required": true
+  },
+  "experience_modes": {
+    "ambient": {
+      "target_seconds": [4, 12],
+      "goal": "make the world feel alive without interrupting play",
+      "can_interrupt_gameplay": false
+    },
+    "micro_reaction": {
+      "target_seconds": [3, 8],
+      "goal": "show a readable human reaction or relationship beat",
+      "can_interrupt_gameplay": false
+    },
+    "visio": {
+      "target_seconds": [6, 20],
+      "goal": "feel like a real spontaneous phone video call",
+      "camera": "true smartphone front camera",
+      "can_branch": true
+    },
+    "cinematic": {
+      "target_seconds": [6, 30],
+      "goal": "external cinematic coverage for an emotionally important beat",
+      "camera": "external dramatic camera",
+      "can_branch": true
+    },
+    "drama_sequence": {
+      "target_seconds": [15, 60],
+      "goal": "compose multiple short shots or media beats around one meaningful event",
+      "can_branch": true,
+      "must_return_to_gameplay": true
+    }
+  },
+  "beat_model": [
+    "entry_hook",
+    "context_anchor",
+    "human_action",
+    "emotional_turn",
+    "optional_choice_pressure",
+    "consequence_or_reveal",
+    "exit_to_gameplay_or_next_beat"
+  ],
+  "choice_policy": {
+    "choice_is_not_mandatory": true,
+    "offer_choice_when": [
+      "player agency changes relationship meaning",
+      "player can choose approach or response",
+      "the moment would feel artificial if MonIA decided Marion's action"
+    ],
+    "never_choose_for_marion": true,
+    "max_visible_choices": 3,
+    "timed_choice_allowed": true,
+    "choices_should_be_actions_not_meta_labels": true
+  },
+  "pacing": {
+    "first_readable_change_seconds": 2.5,
+    "avoid_dead_air": true,
+    "avoid_constant_high_intensity": true,
+    "use_silence_when_emotionally_motivated": true,
+    "cliffhanger_rule": "Use a hook or unresolved beat only when the event naturally supports one. Do not manufacture danger or misunderstanding to imitate short-drama apps."
+  },
+  "continuity": {
+    "carry_forward": [
+      "last physical position when relevant",
+      "who knows what",
+      "relationship state",
+      "recent dialogue",
+      "location and time",
+      "wardrobe if the scene is continuous",
+      "objects currently held or moved",
+      "injuries and visible physical state",
+      "unresolved promises or questions"
+    ],
+    "scene_to_scene_visual_rule": "When consecutive generated shots represent one continuous event, MonIA should preserve spatial, wardrobe, lighting and emotional continuity."
+  },
+  "drama_safety_for_story": {
+    "lucas_fidelity_absolute": true,
+    "rumor_or_jealousy_may_exist_without_actual_infidelity": true,
+    "no_future_canon_reveal": true,
+    "no_major_event_without_state_support": true,
+    "no_emotion_forcing_on_marion": true
+  },
+  "quality_gates": [
+    "medium matches intended experience",
+    "camera grammar correct",
+    "characters remain canonical",
+    "voice identity correct",
+    "dialogue and visible performance agree",
+    "scene has a readable dramatic beat",
+    "continuity is preserved",
+    "player agency is preserved",
+    "transition back to gameplay is defined"
+  ]
+}
