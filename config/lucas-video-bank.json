@@ -1,0 +1,135 @@
+{
+  "version": 1,
+  "character": "lucas",
+  "status": "active",
+  "purpose": "Structured MonIA reference bank built from user-provided Lucas videos. These files are references for identity, movement, posture, gaze, micro-expressions, gesture rhythm, wardrobe context and performance. They are never output clips and must never be replayed as generated media.",
+  "identityAuthority": {
+    "visual": "config/monia-canon.json#lucas",
+    "approvedVisioGrammar": "config/monia-visio-approved.json#approved_reference.visual_base",
+    "rule": "Every generated Lucas scene must bind identity from the canonical Lucas pack and select movement/performance references from this bank according to intent. Never generate Lucas from text alone."
+  },
+  "selectionRules": {
+    "visio": ["front_camera", "gaze", "micro_expression", "head_movement", "gesture_rhythm", "presence"],
+    "cinematic": ["posture", "body_movement", "gaze", "micro_expression", "wardrobe_context"],
+    "home_private": ["relaxed_posture", "body_movement", "tattoo_continuity", "off_duty_presence"],
+    "speaking": ["presence", "speech_rhythm", "gaze", "jaw_head_coordination"],
+    "identity_check": ["face_geometry", "hair", "eyes", "stubble", "skin_tone", "tattoo_continuity"]
+  },
+  "clips": [
+    {
+      "id": "lucas-2026-09-15-195616",
+      "sourceFile": "ScreenRecording_09-15-2026 19-56-16_1(1).mp4",
+      "durationSeconds": 29.133,
+      "priority": "medium",
+      "roles": ["identity", "face_geometry", "gaze", "micro_expression", "general_motion"],
+      "storage": "user_chat_source",
+      "notes": "General Lucas reference; use for identity and natural movement cues."
+    },
+    {
+      "id": "lucas-2026-09-15-201730",
+      "sourceFile": "ScreenRecording_09-15-2026 20-17-30_1.mp4",
+      "durationSeconds": 17.433,
+      "priority": "medium",
+      "roles": ["identity", "gaze", "head_movement", "gesture_rhythm", "general_motion"],
+      "storage": "user_chat_source"
+    },
+    {
+      "id": "lucas-2026-09-15-202903",
+      "sourceFile": "ScreenRecording_09-15-2026 20-29-03_1.mp4",
+      "durationSeconds": 11.633,
+      "priority": "medium",
+      "roles": ["identity", "micro_expression", "gaze", "general_motion"],
+      "storage": "user_chat_source"
+    },
+    {
+      "id": "lucas-2026-09-15-203216",
+      "sourceFile": "ScreenRecording_09-15-2026 20-32-16_1.mp4",
+      "durationSeconds": 18.467,
+      "priority": "medium",
+      "roles": ["identity", "posture", "head_movement", "gesture_rhythm", "general_motion"],
+      "storage": "user_chat_source"
+    },
+    {
+      "id": "lucas-home-private-44s",
+      "sourceFile": "ScreenRecording_09-15-2026 20-37-58_1.mp4",
+      "durationSeconds": 44.367,
+      "priority": "strong",
+      "roles": ["identity", "relaxed_posture", "body_movement", "off_duty_presence", "tattoo_continuity", "home_private", "gesture_rhythm"],
+      "storage": "user_chat_source",
+      "notes": "Strong private/home reference. Use for silhouette, relaxed posture, natural body movement, off-duty behavior and canonical tattoo continuity. Do not treat its wardrobe as universal."
+    },
+    {
+      "id": "lucas-2026-09-15-210254",
+      "sourceFile": "ScreenRecording_09-15-2026 21-02-54_1.mp4",
+      "durationSeconds": 8.700,
+      "priority": "medium",
+      "roles": ["identity", "micro_expression", "gaze", "reaction"],
+      "storage": "user_chat_source"
+    },
+    {
+      "id": "lucas-2026-09-15-210634",
+      "sourceFile": "ScreenRecording_09-15-2026 21-06-34_1.mp4",
+      "durationSeconds": 16.067,
+      "priority": "medium",
+      "roles": ["identity", "gaze", "head_movement", "presence"],
+      "storage": "user_chat_source"
+    },
+    {
+      "id": "lucas-2026-09-15-210953",
+      "sourceFile": "ScreenRecording_09-15-2026 21-09-53_1.mp4",
+      "durationSeconds": 28.000,
+      "priority": "medium",
+      "roles": ["identity", "posture", "gesture_rhythm", "presence", "general_motion"],
+      "storage": "user_chat_source"
+    },
+    {
+      "id": "lucas-2026-09-15-214511",
+      "sourceFile": "ScreenRecording_09-15-2026 21-45-11_1.mp4",
+      "durationSeconds": 11.767,
+      "priority": "medium",
+      "roles": ["identity", "micro_expression", "reaction", "gaze"],
+      "storage": "user_chat_source"
+    },
+    {
+      "id": "lucas-2026-09-15-214828",
+      "sourceFile": "ScreenRecording_09-15-2026 21-48-28_1.mp4",
+      "durationSeconds": 20.067,
+      "priority": "medium",
+      "roles": ["identity", "presence", "gaze", "gesture_rhythm", "general_motion"],
+      "storage": "user_chat_source"
+    },
+    {
+      "id": "lucas-2026-09-15-215205",
+      "sourceFile": "ScreenRecording_09-15-2026 21-52-05_1.mp4",
+      "durationSeconds": 29.500,
+      "priority": "medium",
+      "roles": ["identity", "posture", "body_movement", "gaze", "general_motion"],
+      "storage": "user_chat_source"
+    },
+    {
+      "id": "lucas-2026-09-16-120836",
+      "sourceFile": "ScreenRecording_09-16-2026 12-08-36_1(1).mp4",
+      "durationSeconds": 29.570,
+      "priority": "medium",
+      "roles": ["identity", "presence", "gaze", "general_motion", "wardrobe_context"],
+      "storage": "user_chat_source"
+    },
+    {
+      "id": "lucas-presence-rhythm-2026-09-16",
+      "sourceFile": "ScreenRecording_09-16-2026 17-19-05_1(1).mp4",
+      "durationSeconds": 24.233,
+      "priority": "strong",
+      "roles": ["identity", "presence", "speech_rhythm", "gaze", "jaw_head_coordination", "gesture_rhythm", "energy"],
+      "storage": "user_chat_source",
+      "notes": "Strong recent reference for Lucas presence and performance rhythm: grounded low register, firm attacks, connected forward-moving delivery, direct presence, not sleepy or over-soft."
+    }
+  ],
+  "hardRules": [
+    "Never use a user-provided Lucas video itself as generated output.",
+    "Never copy a source clip shot-for-shot or motion-for-motion.",
+    "Use multiple compatible references when possible: identity plus motion/performance plus media grammar.",
+    "For visio, the validated black-shirt V7 defines camera grammar and quality, not permanent wardrobe or location.",
+    "For Lucas identity, preserve canonical tattoos when visible; do not erase them and do not invent excessive new tattoos.",
+    "If a candidate no longer reads as Lucas, reject it before user review."
+  ]
+}
