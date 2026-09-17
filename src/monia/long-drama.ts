@@ -5,9 +5,10 @@ import { cancelMonIAVoice } from './voice-engine';
 import { buildRuntimeDramaShots, shotMediaPlan, type RuntimeDramaShot } from './drama-shot-planner';
 import { requestLucasV16, renderLucasV16, type LucasV16Intent } from './v16-runtime-bridge';
 import { buildSpeechPerformanceRequest, renderSpeechPerformance } from './speech-performance-bridge';
+import { createSceneContinuityPacket, updateSceneContinuity, continuityPrompt, type MonIASceneContinuityPacket } from './scene-continuity';
 
-export type MonIALongDramaClip={id:string;index:number;role:RuntimeDramaShot['role'];framing:RuntimeDramaShot['framing'];imageUrl?:string;videoUrl?:string;rawVideoUrl?:string;voiceText?:string;voiceActor?:'Lucas'|'Marion';voiceAudioUrl?:string;voiceDuration?:number;speechEngine?:'musetalk-v1.5';continuitySource?:'generated-image'|'previous-video-frame'|'previous-reference-fallback';state:'queued'|'image'|'voice'|'video'|'speech'|'ready'|'error';error?:string};
-export type MonIALongDrama={id:string;title:string;state:'queued'|'generating'|'ready'|'partial'|'error';targetDuration:number;clips:MonIALongDramaClip[];errors:string[]};
+export type MonIALongDramaClip={id:string;index:number;role:RuntimeDramaShot['role'];framing:RuntimeDramaShot['framing'];imageUrl?:string;videoUrl?:string;rawVideoUrl?:string;voiceText?:string;voiceActor?:'Lucas'|'Marion';voiceAudioUrl?:string;voiceDuration?:number;speechEngine?:'musetalk-v1.5';continuityRevision?:number;continuitySource?:'generated-image'|'previous-video-frame'|'previous-reference-fallback';state:'queued'|'image'|'voice'|'video'|'speech'|'ready'|'error';error?:string};
+export type MonIALongDrama={id:string;title:string;state:'queued'|'generating'|'ready'|'partial'|'error';targetDuration:number;clips:MonIALongDramaClip[];errors:string[];continuity?:MonIASceneContinuityPacket};
 
 const STORE_KEY='monia-long-drama-v1';
 let active=false;
@@ -46,17 +47,19 @@ function intentForShot(shot:RuntimeDramaShot):LucasV16Intent{
   return 'warm';
 }
 
-function videoPrompt(shot:RuntimeDramaShot,plan:ReturnType<typeof shotMediaPlan>,index:number,count:number,usingPreviousFrame:boolean,voiceDuration?:number){
+function videoPrompt(shot:RuntimeDramaShot,plan:ReturnType<typeof shotMediaPlan>,index:number,count:number,usingPreviousFrame:boolean,packet:MonIASceneContinuityPacket,voiceDuration?:number){
   const continuity=usingPreviousFrame?' The supplied source image is the actual final frame of the previous shot. Begin from that exact face, pose, wardrobe, lighting, room geometry and screen direction, then reframe naturally for this shot without a visual reset.':shot.continuityFrom?` Direct visual continuation of ${shot.continuityFrom}; keep screen direction and spatial relationships identical.`:' Lock the baseline continuity for the scene.';
   const dialogue=shot.voiceActor==='Lucas'&&shot.voiceText?` Exact Lucas dialogue authority: "${shot.voiceText}". V16 audio is the master performance clock${voiceDuration?` at ${voiceDuration.toFixed(2)} seconds`:''}. Generate natural pre-speech breathing and facial presence, but do not invent different spoken words.`:'';
-  return `Photorealistic live-action vertical mini-drama ${shot.role} shot ${index+1}/${count}. Exact same canonical identity as the supplied source image. ${plan.actor}. ${plan.visual.action}. Location: ${plan.visual.location}. Framing: ${plan.visual.framing}. Emotion: ${plan.visual.emotion}.${continuity}${dialogue} Natural breathing, blinking, eye movement, restrained head/body motion and realistic clothing/environment motion. Preserve face, wardrobe, hair, props, room geometry and lighting. No text, title, subtitles, watermark, UI, morphing, identity drift or invented story event.`;
+  return `Photorealistic live-action vertical mini-drama ${shot.role} shot ${index+1}/${count}. Exact same canonical identity as the supplied source image. ${plan.actor}. ${plan.visual.action}. Location: ${plan.visual.location}. Framing: ${plan.visual.framing}. Emotion: ${plan.visual.emotion}.${continuity}${dialogue} ${continuityPrompt(packet)} Natural breathing, blinking, eye movement, restrained head/body motion and realistic clothing/environment motion. Preserve face, wardrobe, hair, props, room geometry and lighting. No text, title, subtitles, watermark, UI, morphing, identity drift or invented story event.`;
 }
 
 export async function materializeLongDrama(experience:MonIAExperienceResult,onProgress?:(value:MonIALongDrama)=>void):Promise<MonIALongDrama>{
   const basePlan=experience.mediaPlan;
   const shots=buildRuntimeDramaShots(experience);
   const target=Math.round(shots.reduce((sum,s)=>sum+s.duration,0));
-  const drama:MonIALongDrama={id:`long-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,title:experience.response.text.slice(0,80)||'Scène MonIA',state:'queued',targetDuration:target,clips:shots.map(shot=>({id:shot.id,index:shot.index,role:shot.role,framing:shot.framing,voiceText:shot.voiceText,voiceActor:shot.actor||undefined,state:'queued'})),errors:[]};
+  const dramaId=`long-${Date.now()}-${Math.random().toString(36).slice(2,7)}`;
+  let sceneContinuity=createSceneContinuityPacket({sceneId:dramaId,location:basePlan.visual.location,characters:Array.from(new Set(shots.map(s=>s.actor).filter((v):v is string=>Boolean(v))))});
+  const drama:MonIALongDrama={id:dramaId,title:experience.response.text.slice(0,80)||'Scène MonIA',state:'queued',targetDuration:target,clips:shots.map(shot=>({id:shot.id,index:shot.index,role:shot.role,framing:shot.framing,voiceText:shot.voiceText,voiceActor:shot.actor||undefined,state:'queued'})),errors:[],continuity:sceneContinuity};
   if(active)return drama;
   active=true;write(drama);onProgress?.(drama);
   let continuityFrame:File|null=null;
@@ -66,6 +69,9 @@ export async function materializeLongDrama(experience:MonIAExperienceResult,onPr
     for(let i=0;i<shots.length;i++){
       const shotSpec=shots[i];const clip=drama.clips[i];const shot=shotMediaPlan(basePlan,shotSpec);
       try{
+        sceneContinuity=updateSceneContinuity(sceneContinuity,{characters:shotSpec.actor?{[shotSpec.actor]:{emotion:shot.visual.emotion,gazeTarget:shotSpec.role==='reaction'?'scene partner':'preserve established eyeline',screenPosition:`preserve from previous shot; framing ${shotSpec.framing}`}}:undefined});
+        drama.continuity=sceneContinuity;clip.continuityRevision=sceneContinuity.revision;
+
         let voice:null|Awaited<ReturnType<typeof renderLucasV16>>=null;
         if(shotSpec.actor==='Lucas'&&shotSpec.voiceText){
           clip.state='voice';write(drama);onProgress?.(drama);
@@ -80,7 +86,7 @@ export async function materializeLongDrama(experience:MonIAExperienceResult,onPr
         else{const image=await generateAutonomousSourceImage({plan:shot});if(image.state!=='ready'||!image.imageUrl)throw new Error(image.error||'image source indisponible');clip.imageUrl=image.imageUrl;sourceFile=await urlToFile(image.imageUrl,i);clip.continuitySource=i===0?'generated-image':'previous-reference-fallback'}
 
         clip.state='video';write(drama);onProgress?.(drama);
-        const video=await generateFreeCanonVideo({referenceFile:sourceFile,prompt:videoPrompt(shotSpec,shot,i,shots.length,usingPreviousFrame,voice?.duration)});
+        const video=await generateFreeCanonVideo({referenceFile:sourceFile,prompt:videoPrompt(shotSpec,shot,i,shots.length,usingPreviousFrame,sceneContinuity,voice?.duration)});
         if(video.state!=='ready'||!video.videoUrl)throw new Error(video.error||'vidéo indisponible');
         clip.rawVideoUrl=video.videoUrl;
         let finalVideoUrl=video.videoUrl;
@@ -92,7 +98,9 @@ export async function materializeLongDrama(experience:MonIAExperienceResult,onPr
           finalVideoUrl=speech.videoUrl;clip.speechEngine=speech.engine;
         }
 
-        clip.videoUrl=finalVideoUrl;clip.state='ready';write(drama);onProgress?.(drama);
+        clip.videoUrl=finalVideoUrl;clip.state='ready';
+        sceneContinuity=updateSceneContinuity(sceneContinuity,{lastShotId:clip.id,lastFrameUrl:finalVideoUrl,notes:[...sceneContinuity.notes,`shot ${i+1}/${shots.length} validated from final rendered media`]});
+        drama.continuity=sceneContinuity;clip.continuityRevision=sceneContinuity.revision;write(drama);onProgress?.(drama);
         try{continuityFrame=await extractLastVideoFrame(finalVideoUrl,i);continuityFrameKind='video-frame'}catch(error){continuityFrame=sourceFile;continuityFrameKind='fallback';drama.errors.push(`${clip.id}: continuité vidéo indisponible, référence précédente conservée (${error instanceof Error?error.message:String(error)})`);write(drama);onProgress?.(drama)}
       }catch(error){clip.state='error';clip.error=error instanceof Error?error.message:String(error);drama.errors.push(`${clip.id}: ${clip.error}`);write(drama);onProgress?.(drama)}
     }
@@ -109,4 +117,4 @@ export function playLongDrama(drama=readLongDrama()){
   video.onended=next;overlay.querySelector('#moniaLongDramaClose')?.addEventListener('click',()=>overlay.remove());next();
 }
 
-console.info('[Drama] Multi-shot runtime ready · Lucas spoken shots require V16 + MuseTalk speech-performance before ready state');
+console.info('[Drama] Multi-shot runtime ready · sequence continuity packet + V16 speech-performance enforced before ready state');
