@@ -1,0 +1,137 @@
+name: MonIA Speech Performance GPU
+
+on:
+  workflow_dispatch:
+    inputs:
+      request_b64:
+        description: "Base64 encoded speech-performance job"
+        required: true
+        type: string
+  repository_dispatch:
+    types: [monia_speech_performance_run]
+  push:
+    branches: [main]
+    paths:
+      - 'notebooks/monia_kaggle_speech_performance.ipynb'
+      - 'kaggle/monia-speech-performance/kernel-metadata.json'
+      - '.github/workflows/monia-kaggle-speech-performance.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate notebook and metadata
+        run: |
+          python - <<'PY'
+          import json
+          nb=json.load(open('notebooks/monia_kaggle_speech_performance.ipynb',encoding='utf-8'))
+          meta=json.load(open('kaggle/monia-speech-performance/kernel-metadata.json',encoding='utf-8'))
+          text=json.dumps(nb,ensure_ascii=False)
+          assert 'TMElyralab/MuseTalk' in text
+          assert 'musetalk-v1.5' in text
+          assert 'monia_av_coherence.py' in text
+          assert meta['enable_gpu'] is True
+          assert meta['code_file']=='monia_kaggle_speech_performance.ipynb'
+          print('MonIA speech performance worker definition valid')
+          PY
+
+  render:
+    if: github.event_name == 'repository_dispatch' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+    env:
+      JOB_B64: ${{ github.event.client_payload.job_b64 || inputs.request_b64 }}
+      JOB_ID: ${{ github.event.client_payload.job_id || '' }}
+      KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare Kaggle bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$JOB_B64"
+          mkdir -p .kaggle-speech
+          cp notebooks/monia_kaggle_speech_performance.ipynb .kaggle-speech/monia_kaggle_speech_performance.ipynb
+          cp kaggle/monia-speech-performance/kernel-metadata.json .kaggle-speech/kernel-metadata.json
+          printf '%s' "$JOB_B64" | base64 --decode > .kaggle-speech/job.json
+          python - <<'PY'
+          import base64,json,os
+          from pathlib import Path
+          job=json.load(open('.kaggle-speech/job.json',encoding='utf-8'))
+          assert job.get('candidateOnly') is True
+          assert job.get('canonicalPromotion') is False
+          assert job.get('engine') == 'musetalk-v1.5'
+          if os.environ.get('JOB_ID'): assert job['id']==os.environ['JOB_ID']
+          nbp=Path('.kaggle-speech/monia_kaggle_speech_performance.ipynb')
+          nb=json.loads(nbp.read_text(encoding='utf-8'))
+          payload=base64.b64encode(Path('.kaggle-speech/job.json').read_bytes()).decode('ascii')
+          nb['cells'].insert(1,{'cell_type':'code','execution_count':None,'metadata':{},'outputs':[],'source':['import base64\\n','from pathlib import Path\\n',f"Path('/kaggle/working/job.json').write_bytes(base64.b64decode('{payload}'))\\n"]})
+          nbp.write_text(json.dumps(nb,ensure_ascii=False,indent=1),encoding='utf-8')
+          print(job['id'])
+          PY
+      - name: Install Kaggle CLI
+        run: python -m pip install --upgrade kaggle
+      - name: Submit GPU notebook
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$KAGGLE_API_TOKEN"
+          kaggle kernels push -p .kaggle-speech
+      - name: Wait for GPU completion
+        shell: bash
+        run: |
+          set -euo pipefail
+          KERNEL='marionbolomey/monia-speech-performance'
+          for attempt in $(seq 1 60); do
+            STATUS="$(kaggle kernels status "$KERNEL" 2>&1 || true)"
+            echo "[$attempt/60] $STATUS"
+            if echo "$STATUS" | grep -Eqi 'complete|completed'; then exit 0; fi
+            if echo "$STATUS" | grep -Eqi 'error|failed|cancelled|canceled'; then exit 1; fi
+            sleep 60
+          done
+          exit 1
+      - name: Collect speech-performance candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          ID="$(python -c "import json; print(json.load(open('.kaggle-speech/job.json'))['id'])")"
+          OUT=/tmp/monia-speech-output
+          rm -rf "$OUT" && mkdir -p "$OUT"
+          kaggle kernels output marionbolomey/monia-speech-performance -p "$OUT" -o
+          SRC="$OUT/monia-speech/$ID"
+          test -f "$SRC/result.json"
+          test -f "$SRC/speech-synced.mp4"
+          DEST="public/resources/monia/speech-performance/$ID"
+          mkdir -p "$DEST"
+          cp "$SRC/result.json" "$DEST/result.json"
+          cp "$SRC/speech-synced.mp4" "$DEST/speech-synced.mp4"
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          job=json.load(open('.kaggle-speech/job.json',encoding='utf-8'))
+          p=Path('public/resources/monia/speech-performance')/job['id']/'result.json'
+          data=json.loads(p.read_text(encoding='utf-8'))
+          assert data['state']=='candidate'
+          assert data['candidateOnly'] is True
+          assert data['canonicalPromotion'] is False
+          assert data['engine']=='musetalk-v1.5'
+          assert data['audioAuthority']=='lucas-v16'
+          assert data['phonemePerfectClaim'] is False
+          print('Speech performance candidate validated')
+          PY
+      - name: Commit transient candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          ID="$(python -c "import json; print(json.load(open('.kaggle-speech/job.json'))['id'])")"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "public/resources/monia/speech-performance/$ID"
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "MonIA speech performance $ID"
+          git push origin HEAD:main
