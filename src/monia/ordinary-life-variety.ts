@@ -55,5 +55,17 @@ export function getOrdinaryLifeBeats():OrdinaryLifeBeat[]{
 
 export function markOrdinaryLifeBeat(beat:OrdinaryLifeBeat){const s=read();if(!s)return false;s.eventHistory=[...(s.eventHistory||[]),`ordinary:${beat.kind}:${beat.id}:day-${Math.max(1,n(s.day,1))}`].slice(-240);localStorage.setItem(SAVE_KEY,JSON.stringify(s));window.dispatchEvent(new CustomEvent('monia:save-changed',{detail:{key:SAVE_KEY}}));return true}
 
+let lastOpportunity='';
+function emitOrdinaryOpportunity(){
+  const best=getOrdinaryLifeBeats()[0];if(!best||best.score<36)return;
+  const s=read();const signature=`${Math.max(1,n(s?.day,1))}:${String(s?.time||'')}:${String(s?.place||'')}:${best.id}`;
+  if(signature===lastOpportunity)return;lastOpportunity=signature;
+  window.dispatchEvent(new CustomEvent('monia:ordinary-life-opportunity',{detail:best}));
+}
+function scheduleOrdinaryOpportunity(){window.setTimeout(emitOrdinaryOpportunity,80)}
+window.addEventListener('monia:save-changed',scheduleOrdinaryOpportunity);
+window.addEventListener('monia:world-time-changed',scheduleOrdinaryOpportunity as EventListener);
+window.setTimeout(emitOrdinaryOpportunity,700);
+
 declare global{interface Window{__moniaOrdinaryLifeBeats?:()=>OrdinaryLifeBeat[];__moniaMarkOrdinaryLifeBeat?:(beat:OrdinaryLifeBeat)=>boolean}}
 window.__moniaOrdinaryLifeBeats=getOrdinaryLifeBeats;window.__moniaMarkOrdinaryLifeBeat=markOrdinaryLifeBeat;
