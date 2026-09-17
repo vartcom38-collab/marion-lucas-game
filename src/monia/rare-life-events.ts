@@ -1,3 +1,4 @@
+import './ordinary-life-variety';
 import { getLifeTimeline } from './life-timeline-engine';
 import { getFamilyLifeOpportunity } from './family-life-layer';
 import { varietyAdjustedPriority, varietyReason } from './life-variety-policy';
