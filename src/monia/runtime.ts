@@ -108,18 +108,16 @@ function fallback(action: string): MonIAResult {
 
 function compactContext(context: any): MonIACompactContext {
   return {
-    action: String(context?.action || 'idle'),
+    speaker: String(context?.speaker || 'Marion'),
     place: String(context?.place || ''),
     time: String(context?.time || ''),
     day: Number(context?.day || 1),
-    relationship: Number(context?.relationship || 0),
-    trust: Number(context?.trust || 0),
-    chemistry: Number(context?.chemistry || 0),
-    stress: Number(context?.stress || 0),
-    energy: Number(context?.energy || 0),
-    official: Boolean(context?.official),
-    metLucas: Boolean(context?.metLucas),
+    recentAction: String(context?.recentAction || context?.action || 'idle'),
+    activeObjective: String(context?.activeObjective || ''),
+    relationship: String(context?.relationship || ''),
     memories: Array.isArray(context?.memories) ? context.memories.slice(0, 8).map(String) : [],
+    recentEvents: Array.isArray(context?.recentEvents) ? context.recentEvents.slice(0, 8).map(String) : [],
+    rules: Array.isArray(context?.rules) ? context.rules.slice(0, 12).map(String) : [],
   };
 }
 
@@ -198,7 +196,7 @@ class MonIARuntime {
 
   async directInteractiveExperience(request: MonIADirectorRequest, choices:unknown=[]):Promise<MonIAInteractiveExperienceResult>{
     const experience=await this.directExperience(request,{playerAgencyRequired:true,surpriseAllowed:false});
-    const interactiveScene=startInteractiveScene(experience as any,choices);
+    const interactiveScene=startInteractiveScene({...experience,requestSnapshot:request},choices.length?choices:experience.dramaPlan.choices);
     return {...experience,interactiveScene};
   }
 
@@ -209,7 +207,7 @@ class MonIARuntime {
     const resumePrompt=buildInteractiveResumePrompt(branched);
     const request:MonIADirectorRequest={...baseRequest,playerText:resumePrompt,context:{...baseRequest.context,memories:[...(Array.isArray(baseRequest.context.memories)?baseRequest.context.memories:[]),...branched.branchHistory.map(item=>item.freeText||item.choiceId||'player decision')]}};
     const experience=await this.directExperience(request,{playerAgencyRequired:true,surpriseAllowed:false});
-    const interactiveScene:MonIAInteractiveScene={...branched,experience:experience as any,state:'playing',choices:[]};
+    const interactiveScene:MonIAInteractiveScene={...branched,experience:{...experience,requestSnapshot:request},state:'playing',choices:[]};
     try{sessionStorage.setItem('monia-interactive-scene-v1',JSON.stringify(interactiveScene));window.dispatchEvent(new CustomEvent('monia-interactive-scene',{detail:interactiveScene}))}catch{}
     return {...experience,interactiveScene};
   }
