@@ -1,3 +1,4 @@
+import './ordinary-life-direction-bridge';
 import { getAnnualLifeProfile, annualWeight } from './annual-life-variation';
 import { getAdultLifeRhythm } from './adult-life-rhythm';
 
@@ -6,13 +7,17 @@ const SAVE_KEY='marion-lucas-save-v4';
 type Save={day?:number;time?:string;place?:string;official?:boolean;married?:boolean;children?:number;stress?:number;energy?:number;seed?:number;flags?:Record<string,unknown>;eventHistory?:string[]};
 export type OrdinaryLifeKind='quiet'|'practical'|'self'|'social'|'couple'|'outing';
 export type OrdinaryLifeBeat={id:string;kind:OrdinaryLifeKind;score:number;reason:string;place:string;time:string;};
+export type OrdinaryLifeResult={ok:boolean;beat?:OrdinaryLifeBeat;minutes:number};
 
 function read():Save|null{try{const raw=localStorage.getItem(SAVE_KEY);return raw?JSON.parse(raw) as Save:null}catch{return null}}
+function write(s:Save){try{localStorage.setItem(SAVE_KEY,JSON.stringify(s));window.dispatchEvent(new CustomEvent('monia:save-changed',{detail:{key:SAVE_KEY}}));return true}catch{return false}}
 function n(v:unknown,f=0){const x=Number(v);return Number.isFinite(x)?x:f}
 function hash(v:string){let h=2166136261;for(let i=0;i<v.length;i++){h^=v.charCodeAt(i);h=Math.imul(h,16777619)}return Math.abs(h>>>0)}
 function hour(time:string){const m=/^(\d{1,2})/.exec(time||'');return m?Number(m[1]):12}
 function recentPenalty(history:string[],kind:OrdinaryLifeKind){const recent=history.slice(-18);let hits=0;for(const e of recent){const s=e.toLowerCase();if(s.includes(`ordinary:${kind}:`)||s.includes(`daily:${kind}:`))hits++;}return hits*11}
 function deterministicNudge(seed:number,key:string){return (hash(`${seed}:${key}`)%13)-6}
+function addMinutes(s:Save,minutes:number){const [h,m]=String(s.time||'09:00').split(':').map(Number);let total=(h||0)*60+(m||0)+Math.max(0,minutes);while(total>=1440){total-=1440;s.day=Math.max(1,n(s.day,1))+1}s.time=`${String(Math.floor(total/60)).padStart(2,'0')}:${String(total%60).padStart(2,'0')}`}
+function clamp(v:number){return Math.max(0,Math.min(100,Math.round(v)))}
 
 export function getOrdinaryLifeBeats():OrdinaryLifeBeat[]{
   const s=read();if(!s)return[];
@@ -53,19 +58,27 @@ export function getOrdinaryLifeBeats():OrdinaryLifeBeat[]{
   return out.sort((a,b)=>b.score-a.score);
 }
 
-export function markOrdinaryLifeBeat(beat:OrdinaryLifeBeat){const s=read();if(!s)return false;s.eventHistory=[...(s.eventHistory||[]),`ordinary:${beat.kind}:${beat.id}:day-${Math.max(1,n(s.day,1))}`].slice(-240);localStorage.setItem(SAVE_KEY,JSON.stringify(s));window.dispatchEvent(new CustomEvent('monia:save-changed',{detail:{key:SAVE_KEY}}));return true}
+export function markOrdinaryLifeBeat(beat:OrdinaryLifeBeat){const s=read();if(!s)return false;s.eventHistory=[...(s.eventHistory||[]),`ordinary:${beat.kind}:${beat.id}:day-${Math.max(1,n(s.day,1))}`].slice(-240);return write(s)}
 
-let lastOpportunity='';
-function emitOrdinaryOpportunity(){
-  const best=getOrdinaryLifeBeats()[0];if(!best||best.score<36)return;
-  const s=read();const signature=`${Math.max(1,n(s?.day,1))}:${String(s?.time||'')}:${String(s?.place||'')}:${best.id}`;
-  if(signature===lastOpportunity)return;lastOpportunity=signature;
-  window.dispatchEvent(new CustomEvent('monia:ordinary-life-opportunity',{detail:best}));
+export function consumeOrdinaryLifeBeat(id:string):OrdinaryLifeResult{
+  const beat=getOrdinaryLifeBeats().find(item=>item.id===id);const s=read();if(!beat||!s)return{ok:false,minutes:0};
+  const minutes:Record<OrdinaryLifeKind,number>={quiet:25,practical:30,self:35,social:35,couple:25,outing:45};
+  const effects:Record<OrdinaryLifeKind,[number,number]>={quiet:[5,-7],practical:[-2,-3],self:[-2,-4],social:[-4,-5],couple:[1,-4],outing:[-5,-6]};
+  const duration=minutes[beat.kind];const [energy,stress]=effects[beat.kind];
+  addMinutes(s,duration);s.energy=clamp(n(s.energy,70)+energy);s.stress=clamp(n(s.stress,20)+stress);
+  const flags=s.flags||(s.flags={});flags.lastOrdinaryLifeBeat=beat.id;flags.lastOrdinaryLifeKind=beat.kind;flags.lastOrdinaryLifeDay=Math.max(1,n(s.day,1));flags.lastOrdinaryLifeTime=String(s.time||'');
+  s.eventHistory=[...(s.eventHistory||[]),`ordinary:${beat.kind}:${beat.id}:day-${Math.max(1,n(s.day,1))}`].slice(-240);
+  if(!write(s))return{ok:false,minutes:0};
+  window.dispatchEvent(new CustomEvent('monia:ordinary-life-consumed',{detail:{beat,minutes:duration}}));
+  window.dispatchEvent(new CustomEvent('monia:daily-intent',{detail:{intent:'state-changed',source:'ordinary-life',beat}}));
+  return{ok:true,beat,minutes:duration};
 }
-function scheduleOrdinaryOpportunity(){window.setTimeout(emitOrdinaryOpportunity,80)}
-window.addEventListener('monia:save-changed',scheduleOrdinaryOpportunity);
-window.addEventListener('monia:world-time-changed',scheduleOrdinaryOpportunity as EventListener);
-window.setTimeout(emitOrdinaryOpportunity,700);
 
-declare global{interface Window{__moniaOrdinaryLifeBeats?:()=>OrdinaryLifeBeat[];__moniaMarkOrdinaryLifeBeat?:(beat:OrdinaryLifeBeat)=>boolean}}
-window.__moniaOrdinaryLifeBeats=getOrdinaryLifeBeats;window.__moniaMarkOrdinaryLifeBeat=markOrdinaryLifeBeat;
+let lastSignature='';
+function emitOpportunity(){const s=read();if(!s)return;const beat=getOrdinaryLifeBeats()[0];if(!beat)return;const signature=`${s.day||1}:${s.time||''}:${s.place||''}:${beat.id}`;if(signature===lastSignature)return;lastSignature=signature;window.dispatchEvent(new CustomEvent('monia:ordinary-life-opportunity',{detail:{beat}}));}
+function schedule(){window.setTimeout(emitOpportunity,80)}
+window.addEventListener('monia:save-changed',schedule);window.addEventListener('storage',e=>{if(e.key===SAVE_KEY)schedule()});
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',schedule,{once:true});else schedule();
+
+declare global{interface Window{__moniaOrdinaryLifeBeats?:()=>OrdinaryLifeBeat[];__moniaMarkOrdinaryLifeBeat?:(beat:OrdinaryLifeBeat)=>boolean;__moniaConsumeOrdinaryLifeBeat?:(id:string)=>OrdinaryLifeResult}}
+window.__moniaOrdinaryLifeBeats=getOrdinaryLifeBeats;window.__moniaMarkOrdinaryLifeBeat=markOrdinaryLifeBeat;window.__moniaConsumeOrdinaryLifeBeat=consumeOrdinaryLifeBeat;
