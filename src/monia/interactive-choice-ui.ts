@@ -3,11 +3,27 @@ import { readInteractiveScene, type MonIAInteractiveScene } from './interactive-
 
 const ID='moniaInteractiveChoiceOverlay';
 const MEDIA_ID='moniaInteractiveSceneMedia';
+const MEDIA_VIDEO_ID='moniaInteractiveSceneMediaVideo';
 
 function remove(){document.getElementById(ID)?.remove()}
 function removeMedia(){document.getElementById(MEDIA_ID)?.remove()}
-
 function escapeHtml(value:string){return value.replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]||char))}
+
+async function captureCurrentFrame():Promise<File|undefined>{
+  const video=document.getElementById(MEDIA_VIDEO_ID) as HTMLVideoElement|null;
+  if(!video||!video.videoWidth||!video.videoHeight)return undefined;
+  const canvas=document.createElement('canvas');canvas.width=video.videoWidth;canvas.height=video.videoHeight;
+  const ctx=canvas.getContext('2d');if(!ctx)return undefined;
+  try{ctx.drawImage(video,0,0,canvas.width,canvas.height)}catch{return undefined}
+  const blob=await new Promise<Blob|undefined>(resolve=>canvas.toBlob(value=>resolve(value||undefined),'image/png',1));
+  return blob?new File([blob],`monia-interactive-continuity-${Date.now()}.png`,{type:'image/png'}):undefined;
+}
+
+async function dispatchInput(scene:MonIAInteractiveScene,input:{choiceId?:string;freeText?:string}){
+  const continuityFrame=await captureCurrentFrame();
+  window.dispatchEvent(new CustomEvent('monia-interactive-player-input',{detail:{sceneId:scene.id,...input,continuityFrame}}));
+  remove();
+}
 
 function render(scene:MonIAInteractiveScene){
   remove();
@@ -19,16 +35,11 @@ function render(scene:MonIAInteractiveScene){
   overlay.innerHTML=`<div style="width:min(820px,100%);display:grid;gap:10px"><div style="display:grid;gap:8px">${choices}</div><form id="moniaInteractiveFreeForm" style="pointer-events:auto;display:flex;gap:8px;background:rgba(18,15,13,.68);backdrop-filter:blur(16px);padding:8px;border-radius:18px;border:1px solid rgba(255,255,255,.16)"><input id="moniaInteractiveFreeInput" autocomplete="off" placeholder="Dire ou faire autre chose…" style="flex:1;min-width:0;border:0;outline:0;background:transparent;color:white;padding:9px 10px;font-size:14px"><button type="submit" style="border:0;border-radius:12px;padding:9px 14px;background:rgba(255,255,255,.92);color:#17120f;font-weight:650;cursor:pointer">Continuer</button></form></div>`;
   document.body.appendChild(overlay);
   overlay.querySelectorAll<HTMLButtonElement>('[data-choice]').forEach(button=>button.addEventListener('click',()=>{
-    const choiceId=button.dataset.choice;if(!choiceId)return;
-    window.dispatchEvent(new CustomEvent('monia-interactive-player-input',{detail:{sceneId:scene.id,choiceId}}));
-    remove();
+    const choiceId=button.dataset.choice;if(!choiceId)return;void dispatchInput(scene,{choiceId});
   }));
   overlay.querySelector<HTMLFormElement>('#moniaInteractiveFreeForm')?.addEventListener('submit',event=>{
-    event.preventDefault();
-    const input=overlay.querySelector<HTMLInputElement>('#moniaInteractiveFreeInput');
-    const freeText=input?.value.trim()||'';if(!freeText)return;
-    window.dispatchEvent(new CustomEvent('monia-interactive-player-input',{detail:{sceneId:scene.id,freeText}}));
-    remove();
+    event.preventDefault();const input=overlay.querySelector<HTMLInputElement>('#moniaInteractiveFreeInput');
+    const freeText=input?.value.trim()||'';if(!freeText)return;void dispatchInput(scene,{freeText});
   });
 }
 
@@ -38,16 +49,12 @@ function playMaterialized(detail:any){
   const imageUrl=String(media.imageUrl||'');
   if(!videoUrl&&!imageUrl)return;
   removeMedia();
-  const layer=document.createElement('div');
-  layer.id=MEDIA_ID;
+  const layer=document.createElement('div');layer.id=MEDIA_ID;
   layer.style.cssText='position:fixed;inset:0;z-index:99990;background:#050403;overflow:hidden;pointer-events:none';
   if(videoUrl){
-    const video=document.createElement('video');
-    video.src=videoUrl;video.autoplay=true;video.playsInline=true;video.controls=false;
+    const video=document.createElement('video');video.id=MEDIA_VIDEO_ID;video.src=videoUrl;video.autoplay=true;video.playsInline=true;video.controls=false;
     video.muted=media.voiceAudioUrl&&!media.speechEngine;
-    video.style.cssText='width:100%;height:100%;object-fit:cover;background:#000';
-    layer.appendChild(video);
-    void video.play().catch(()=>undefined);
+    video.style.cssText='width:100%;height:100%;object-fit:cover;background:#000';layer.appendChild(video);void video.play().catch(()=>undefined);
   }else{
     const image=document.createElement('img');image.src=imageUrl;image.alt='';image.style.cssText='width:100%;height:100%;object-fit:cover;background:#000';layer.appendChild(image);
   }
@@ -57,6 +64,5 @@ function playMaterialized(detail:any){
 window.addEventListener('monia-interactive-scene',event=>render((event as CustomEvent<MonIAInteractiveScene>).detail));
 window.addEventListener('monia-interactive-media-ready',event=>playMaterialized((event as CustomEvent).detail));
 window.addEventListener('beforeunload',()=>{remove();removeMedia()});
-
 const current=readInteractiveScene();if(current){render(current);if(current.lastMediaUrl)playMaterialized({media:{videoUrl:current.lastMediaUrl}})}
-console.info('[MonIA] Desktop/tablet interactive scene player active · same scene remains visible · choices/free response resume automatically');
+console.info('[MonIA] Desktop/tablet interactive scene player active · current frame becomes branch continuity source · choices/free response resume automatically');
