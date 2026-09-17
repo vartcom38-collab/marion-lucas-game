@@ -9,19 +9,45 @@ function remove(){document.getElementById(ID)?.remove()}
 function removeMedia(){document.getElementById(MEDIA_ID)?.remove()}
 function escapeHtml(value:string){return value.replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]||char))}
 
-async function captureCurrentFrame():Promise<File|undefined>{
-  const video=document.getElementById(MEDIA_VIDEO_ID) as HTMLVideoElement|null;
-  if(!video||!video.videoWidth||!video.videoHeight)return undefined;
+async function canvasFrame(video:HTMLVideoElement,fileName:string):Promise<File|undefined>{
+  if(!video.videoWidth||!video.videoHeight)return undefined;
   const canvas=document.createElement('canvas');canvas.width=video.videoWidth;canvas.height=video.videoHeight;
   const ctx=canvas.getContext('2d');if(!ctx)return undefined;
   try{ctx.drawImage(video,0,0,canvas.width,canvas.height)}catch{return undefined}
-  const blob=await new Promise<Blob|undefined>(resolve=>canvas.toBlob(value=>resolve(value||undefined),'image/png',1));
-  return blob?new File([blob],`monia-interactive-continuity-${Date.now()}.png`,{type:'image/png'}):undefined;
+  try{
+    const blob=await new Promise<Blob|undefined>(resolve=>canvas.toBlob(value=>resolve(value||undefined),'image/png',1));
+    return blob?new File([blob],fileName,{type:'image/png'}):undefined;
+  }catch{return undefined}
+}
+
+async function captureFetchedFrame(source:HTMLVideoElement):Promise<File|undefined>{
+  const url=source.currentSrc||source.src;if(!url)return undefined;
+  try{
+    const response=await fetch(url,{mode:'cors'});if(!response.ok)return undefined;
+    const blob=await response.blob();const objectUrl=URL.createObjectURL(blob);
+    const video=document.createElement('video');video.muted=true;video.playsInline=true;video.preload='auto';
+    try{
+      await new Promise<void>((resolve,reject)=>{video.onloadedmetadata=()=>resolve();video.onerror=()=>reject(new Error('continuity metadata unavailable'));video.src=objectUrl;video.load()});
+      const sourceDuration=Number.isFinite(source.duration)&&source.duration>0?source.duration:video.duration;
+      const ratio=sourceDuration>0?Math.max(0,Math.min(1,source.currentTime/sourceDuration)):1;
+      const target=Math.max(0,(Number.isFinite(video.duration)?video.duration:0)*ratio-.02);
+      await new Promise<void>((resolve,reject)=>{video.onseeked=()=>resolve();video.onerror=()=>reject(new Error('continuity seek unavailable'));try{video.currentTime=target}catch(error){reject(error)}});
+      return await canvasFrame(video,`monia-interactive-continuity-${Date.now()}.png`);
+    }finally{video.removeAttribute('src');video.load();URL.revokeObjectURL(objectUrl)}
+  }catch{return undefined}
+}
+
+async function captureCurrentFrame():Promise<File|undefined>{
+  const video=document.getElementById(MEDIA_VIDEO_ID) as HTMLVideoElement|null;
+  if(!video)return undefined;
+  const direct=await canvasFrame(video,`monia-interactive-continuity-${Date.now()}.png`);
+  if(direct)return direct;
+  return captureFetchedFrame(video);
 }
 
 async function dispatchInput(scene:MonIAInteractiveScene,input:{choiceId?:string;freeText?:string}){
   const continuityFrame=await captureCurrentFrame();
-  window.dispatchEvent(new CustomEvent('monia-interactive-player-input',{detail:{sceneId:scene.id,...input,continuityFrame}}));
+  window.dispatchEvent(new CustomEvent('monia-interactive-player-input',{detail:{sceneId:scene.id,...input,continuityFrame,continuityFrameStatus:continuityFrame?'captured':'unavailable'}}));
   remove();
 }
 
@@ -52,11 +78,11 @@ function playMaterialized(detail:any){
   const layer=document.createElement('div');layer.id=MEDIA_ID;
   layer.style.cssText='position:fixed;inset:0;z-index:99990;background:#050403;overflow:hidden;pointer-events:none';
   if(videoUrl){
-    const video=document.createElement('video');video.id=MEDIA_VIDEO_ID;video.src=videoUrl;video.autoplay=true;video.playsInline=true;video.controls=false;
+    const video=document.createElement('video');video.id=MEDIA_VIDEO_ID;video.crossOrigin='anonymous';video.autoplay=true;video.playsInline=true;video.controls=false;
     video.muted=media.voiceAudioUrl&&!media.speechEngine;
-    video.style.cssText='width:100%;height:100%;object-fit:cover;background:#000';layer.appendChild(video);void video.play().catch(()=>undefined);
+    video.style.cssText='width:100%;height:100%;object-fit:cover;background:#000';video.src=videoUrl;layer.appendChild(video);void video.play().catch(()=>undefined);
   }else{
-    const image=document.createElement('img');image.src=imageUrl;image.alt='';image.style.cssText='width:100%;height:100%;object-fit:cover;background:#000';layer.appendChild(image);
+    const image=document.createElement('img');image.crossOrigin='anonymous';image.src=imageUrl;image.alt='';image.style.cssText='width:100%;height:100%;object-fit:cover;background:#000';layer.appendChild(image);
   }
   document.body.appendChild(layer);
 }
@@ -65,4 +91,4 @@ window.addEventListener('monia-interactive-scene',event=>render((event as Custom
 window.addEventListener('monia-interactive-media-ready',event=>playMaterialized((event as CustomEvent).detail));
 window.addEventListener('beforeunload',()=>{remove();removeMedia()});
 const current=readInteractiveScene();if(current){render(current);if(current.lastMediaUrl)playMaterialized({media:{videoUrl:current.lastMediaUrl}})}
-console.info('[MonIA] Desktop/tablet interactive scene player active · current frame becomes branch continuity source · choices/free response resume automatically');
+console.info('[MonIA] Desktop/tablet interactive scene player active · CORS-safe current-frame capture → branch continuity authority → automatic resume');
