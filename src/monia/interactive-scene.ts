@@ -13,6 +13,7 @@ export type MonIAInteractiveExperience={
   dramaPlan?:any;
   mediaPlan?:any;
   generationJob?:any;
+  requestSnapshot?:any;
 };
 
 export type MonIAInteractiveScene={
@@ -54,13 +55,13 @@ function experienceSceneId(experience:MonIAInteractiveExperience){
 }
 
 function experienceLocation(experience:MonIAInteractiveExperience){
-  return String(experience.mediaPlan?.visual?.location||experience.scenePlan?.world?.place||experience.response?.scene?.location||'preserve current location');
+  return String(experience.mediaPlan?.visual?.location||experience.scenePlan?.world?.place||experience.response?.scene?.location||experience.requestSnapshot?.context?.place||'preserve current location');
 }
 
 function experienceActors(experience:MonIAInteractiveExperience){
   const actors=Array.isArray(experience.generationJob?.actors)?experience.generationJob.actors:[];
   if(actors.length)return actors.map(String);
-  const actor=String(experience.response?.actor||'Lucas');
+  const actor=String(experience.response?.actor||experience.requestSnapshot?.actor||'Lucas');
   return actor?[actor]:['Lucas'];
 }
 
@@ -74,6 +75,7 @@ export function startInteractiveScene(experience:MonIAInteractiveExperience,choi
     sceneId:`interactive-${experienceSceneId(experience)}`,
     characters:actors,
     location:experienceLocation(experience),
+    timeOfDay:experience.requestSnapshot?.context?.time?String(experience.requestSnapshot.context.time):undefined,
     lighting:'preserve established scene lighting',
   });
   continuity=updateSceneContinuityPacket(continuity,{emotionalBeat:experienceEmotion(experience)});
@@ -129,4 +131,4 @@ export function attachInteractiveMedia(scene:MonIAInteractiveScene,mediaUrl?:str
 export function failInteractiveScene(scene:MonIAInteractiveScene,error:string){const next={...scene,state:'error' as const,error};write(next);return next}
 export function completeInteractiveScene(scene:MonIAInteractiveScene){const next={...scene,state:'complete' as const,choices:[]};write(next);return next}
 
-console.info('[MonIA] Interactive scene branches ready · listed choices + free response · same-scene continuity preserved across narrative and media runtimes');
+console.info('[MonIA] Interactive scene branches ready · request snapshot + listed choices + free response · same-scene continuity preserved across narrative and media runtimes');
