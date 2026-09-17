@@ -36,6 +36,7 @@ import { moniaStorage } from './storage';
 import { askMonIAServerBrain } from './server-brain';
 import { planMonIAScene, assertMonIAScenePlan, type MonIAScenePlanningInput, type MonIAScenePlan, type MonIASceneType } from './scene-intelligence';
 import { planDramaExperience, type MonIADramaPlan, type MonIADramaPlanningInput } from './drama-director';
+import { startInteractiveScene, pauseForChoice, applyInteractiveChoice, buildInteractiveResumePrompt, type MonIAInteractiveScene } from './interactive-scene';
 import {
   directorPrompt,
   fallbackDirector,
@@ -48,6 +49,7 @@ export type MonIAMode = 'auto' | 'light' | 'advanced';
 export type { MonIADirectorRequest, MonIADirectorResult } from './director';
 export type { MonIAScenePlanningInput, MonIAScenePlan } from './scene-intelligence';
 export type { MonIADramaPlan, MonIADramaPlanningInput } from './drama-director';
+export type { MonIAInteractiveScene } from './interactive-scene';
 export type MonIAStatus = {
   status: 'idle' | 'loading' | 'ready' | 'error' | 'unsupported';
   progress: number;
@@ -64,6 +66,8 @@ export type MonIAExperienceResult = {
   scenePlan: MonIAScenePlan;
   dramaPlan: MonIADramaPlan;
 };
+
+export type MonIAInteractiveExperienceResult = MonIAExperienceResult & { interactiveScene: MonIAInteractiveScene };
 
 type NarrationPending = {
   kind: 'narration';
@@ -191,6 +195,24 @@ class MonIARuntime {
     return { response, scenePlan, dramaPlan };
   }
 
+  async directInteractiveExperience(request: MonIADirectorRequest, choices:unknown=[]):Promise<MonIAInteractiveExperienceResult>{
+    const experience=await this.directExperience(request,{playerAgencyRequired:true,surpriseAllowed:false});
+    const interactiveScene=startInteractiveScene(experience as any,choices);
+    return {...experience,interactiveScene};
+  }
+
+  pauseInteractiveScene(scene:MonIAInteractiveScene,choices:unknown){return pauseForChoice(scene,choices)}
+
+  async resumeInteractiveScene(scene:MonIAInteractiveScene,input:{choiceId?:string;freeText?:string},baseRequest:MonIADirectorRequest):Promise<MonIAInteractiveExperienceResult>{
+    const branched=applyInteractiveChoice(scene,input);
+    const resumePrompt=buildInteractiveResumePrompt(branched);
+    const request:MonIADirectorRequest={...baseRequest,playerText:resumePrompt,context:{...baseRequest.context,memories:[...(Array.isArray(baseRequest.context.memories)?baseRequest.context.memories:[]),...branched.branchHistory.map(item=>item.freeText||item.choiceId||'player decision')]}};
+    const experience=await this.directExperience(request,{playerAgencyRequired:true,surpriseAllowed:false});
+    const interactiveScene:MonIAInteractiveScene={...branched,experience:experience as any,state:'playing',choices:[]};
+    try{sessionStorage.setItem('monia-interactive-scene-v1',JSON.stringify(interactiveScene));window.dispatchEvent(new CustomEvent('monia-interactive-scene',{detail:interactiveScene}))}catch{}
+    return {...experience,interactiveScene};
+  }
+
   async init() {
     if (this.worker || this.status.status === 'loading') return;
     if (!this.supportsWorker()) {
@@ -279,5 +301,8 @@ if (typeof window !== 'undefined') {
   (window as any).__moniaPlanScene = (input: MonIAScenePlanningInput) => moniaRuntime.planScene(input);
   (window as any).__moniaPlanDrama = (input: MonIADramaPlanningInput) => moniaRuntime.planDrama(input);
   (window as any).__moniaDirectExperience = (request: MonIADirectorRequest, options?: {playerAgencyRequired?: boolean; surpriseAllowed?: boolean}) => moniaRuntime.directExperience(request, options);
+  (window as any).__moniaDirectInteractiveExperience=(request:MonIADirectorRequest,choices?:unknown[])=>moniaRuntime.directInteractiveExperience(request,choices);
+  (window as any).__moniaPauseInteractiveScene=(scene:MonIAInteractiveScene,choices:unknown)=>moniaRuntime.pauseInteractiveScene(scene,choices);
+  (window as any).__moniaResumeInteractiveScene=(scene:MonIAInteractiveScene,input:{choiceId?:string;freeText?:string},request:MonIADirectorRequest)=>moniaRuntime.resumeInteractiveScene(scene,input,request);
   window.setTimeout(() => moniaRuntime.init(), 250);
 }
