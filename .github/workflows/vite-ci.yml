@@ -67,6 +67,7 @@ jobs:
               'dist/config/motion-reference-bank.json','dist/config/lucas-voice-strategy.json','dist/config/monia-generation-orchestrator.json',
               'src/monia/generation-job.ts','src/monia/v16-runtime-bridge.ts','src/monia/speech-performance-bridge.ts','src/monia/visio-av-sync.ts',
               'src/monia/gameplay-visio-director.ts','src/monia/live-visio.ts','src/monia/visio-conversation.ts','src/monia/long-drama.ts','src/monia/long-drama-bridge.ts',
+              'src/monia/interactive-scene.ts','src/monia/interactive-choice-ui.ts','src/monia/interactive-resume-runner.ts','src/monia/interactive-branch-materializer.ts',
               'scripts/monia_lucas_v16_runtime_voice.py','scripts/monia_av_coherence.py','scripts/drama_director.py',
               '.github/workflows/monia-kaggle-speech-performance.yml','notebooks/monia_kaggle_speech_performance.ipynb',
               'config/lucas-reference-bank.json','config/lucas-voice-strategy.json','config/monia-generation-orchestrator.json',
@@ -97,6 +98,7 @@ jobs:
           require('lockIdentityAcrossShots:true' in generation_job,'multi-shot identity continuity is locked')
           require('allowAutomaticCanonPromotion:false' in generation_job,'generated jobs cannot auto-promote to canon')
           require('reusePreviousFrameWhenHelpful:true' in generation_job,'multi-shot continuity can carry previous frames')
+          require("kind:'captured-frame'" in generation_job and "authority:'previous-rendered-frame'" in generation_job,'interactive generation can bind the previous rendered frame as continuity authority')
 
           v16_bridge=Path('src/monia/v16-runtime-bridge.ts').read_text(encoding='utf-8')
           require('monia_lucas_v16_runtime_voice.py' in v16_bridge,'browser runtime requests the V16 renderer')
@@ -115,11 +117,16 @@ jobs:
           require("requestedChannel:'visio'" in visio,'Visio Director requests visio channel')
           require('signature(current!,request)!==sig' in visio,'stale gameplay context cancels prepared visio')
           live_visio=Path('src/monia/live-visio.ts').read_text(encoding='utf-8')
-          require('stateUrls' in live_visio,'live visio can switch generated clips by state')
+          require('stateMedia' in live_visio and 'media.speaking' in live_visio and 'media.reaction' in live_visio,'live visio can switch transient generated clips by state')
           require("state==='speaking'" in live_visio and "state==='reaction'" in live_visio,'live visio supports speaking/reaction states')
           conversation=Path('src/monia/visio-conversation.ts').read_text(encoding='utf-8')
           require('./local-piper-voice' not in conversation,'Lucas live visio no longer falls back to Piper')
           require('approved V16' in conversation or 'V16' in conversation,'visio conversation explicitly requires V16')
+
+          interactive=Path('src/monia/interactive-branch-materializer.ts').read_text(encoding='utf-8')
+          require('bindCapturedContinuityFrame' in interactive,'interactive branch binds the captured frame into its generation job')
+          require('referenceFile' in interactive and 'generateFreeCanonVideo' in interactive,'captured frame is passed into branch video generation')
+          require('renderSpeechPerformance' in interactive,'spoken interactive branch passes through speech-performance')
 
           studio=Path('src/monia/studio-job-queue.ts').read_text(encoding='utf-8')
           require('canonical tattoos when naturally visible' in studio,'Lucas canonical tattoos are preserved when visible')
@@ -143,5 +150,5 @@ jobs:
                   try: dist_text+=p.read_text(encoding='utf-8',errors='ignore')
                   except Exception: pass
           require('cdnjs.cloudflare.com/ajax/libs/onnxruntime-web' not in dist_text,'ONNX runtime has no Cloudflare runtime dependency')
-          print('Vite build is deployable: MonIA owns generation jobs, V16 leads spoken media, speech-performance is audio-driven, and generated candidates remain separate from canon.')
+          print('Vite build is deployable: MonIA owns generation jobs, V16 leads spoken media, interactive branches preserve captured-frame continuity, speech-performance is audio-driven, and generated candidates remain separate from canon.')
           PY
