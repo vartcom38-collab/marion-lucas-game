@@ -4,6 +4,16 @@ import type { MonIAMediaPlan } from './media-orchestrator';
 export type MonIAGenerationMedium='visio'|'cinematic'|'gameplay-life'|'ambient'|'audio-call'|'voice-message'|'text';
 export type MonIAGenerationStep='dialogue'|'voice'|'storyboard'|'identity-bind'|'visual'|'sync'|'quality-control'|'assemble'|'publish-transient';
 
+export type MonIAGenerationContinuityReference={
+  kind:'captured-frame';
+  authority:'previous-rendered-frame';
+  source:'interactive-player-choice'|'previous-validated-shot';
+  requiredForFirstShot:true;
+  fileName?:string;
+  mimeType?:string;
+  capturedAt:string;
+};
+
 export type MonIAGenerationShot={
   id:string;
   durationHint:number;
@@ -13,6 +23,7 @@ export type MonIAGenerationShot={
   actors:string[];
   dialogue?:Array<{actor:string;text:string;voice:'lucas-v16-direct-design'|'none'}>;
   continuityFromPrevious:boolean;
+  continuityReferencePriority?:'previous-rendered-frame';
 };
 
 export type MonIAGenerationJob={
@@ -43,6 +54,7 @@ export type MonIAGenerationJob={
     lockLightingWithinScene:true;
     carryEmotionAcrossCuts:true;
     reusePreviousFrameWhenHelpful:true;
+    reference?:MonIAGenerationContinuityReference;
   };
   validation:{
     requireIdentity:boolean;
@@ -94,4 +106,10 @@ export function buildMonIAGenerationJob(result:MonIADirectorResult,plan:MonIAMed
     continuity:{lockIdentityAcrossShots:true,lockWardrobeWithinScene:true,lockLocationWithinScene:true,lockLightingWithinScene:true,carryEmotionAcrossCuts:true,reusePreviousFrameWhenHelpful:true},
     validation:{requireIdentity:actors.some(a=>a.toLowerCase()==='lucas'),requireCameraGrammar:medium==='visio'||medium==='cinematic',requireExactDialogueMatch:lucasSpeaks,requireV16WhenLucasSpeaks:lucasSpeaks,requireAVCoherence:lucasSpeaks&&(medium==='visio'||medium==='cinematic'),allowAutomaticCanonPromotion:false},
   };
+}
+
+export function bindCapturedContinuityFrame(job:MonIAGenerationJob,file:Pick<File,'name'|'type'>,source:'interactive-player-choice'|'previous-validated-shot'='interactive-player-choice'):MonIAGenerationJob{
+  const reference:MonIAGenerationContinuityReference={kind:'captured-frame',authority:'previous-rendered-frame',source,requiredForFirstShot:true,fileName:file.name,mimeType:file.type,capturedAt:new Date().toISOString()};
+  const shots=job.shots.map((shot,index)=>index===0?{...shot,continuityReferencePriority:'previous-rendered-frame' as const}:shot);
+  return {...job,shots,continuity:{...job.continuity,reference}};
 }
