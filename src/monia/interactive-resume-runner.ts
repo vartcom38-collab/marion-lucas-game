@@ -1,4 +1,5 @@
-import { readInteractiveScene, markInteractiveSceneMaterializing, attachInteractiveMedia, failInteractiveScene, pauseForChoice, continuityPrompt, type MonIAInteractiveScene } from './interactive-scene';
+import { readInteractiveScene, markInteractiveSceneMaterializing, attachInteractiveMedia, failInteractiveScene, pauseForChoice } from './interactive-scene';
+import { continuityPrompt } from './scene-continuity';
 
 let busy=false;
 
