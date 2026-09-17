@@ -2,6 +2,8 @@ import type { MonIADirectorResult } from './director';
 import type { MonIAScenePlan, MonIASceneType } from './scene-intelligence';
 
 export type MonIAExperienceMode = 'ambient'|'micro_reaction'|'visio'|'cinematic'|'drama_sequence';
+export type MonIACameraPerspective = 'player_pov'|'front_camera_visio'|'external_cinematic';
+export type MonIAChoicePresentation = 'none'|'overlay_choices'|'overlay_choices_with_free_action';
 
 export type MonIADramaPlanningInput = {
   scenePlan: MonIAScenePlan;
@@ -23,14 +25,27 @@ export type MonIADramaBeat = {
   description: string;
 };
 
+export type MonIAPresentationPlan = {
+  targetDevice: 'desktop_tablet';
+  cameraPerspective: MonIACameraPerspective;
+  marionVisible: boolean;
+  worldKeepsMovingDuringChoice: boolean;
+  choicePresentation: MonIAChoicePresentation;
+  miniPhoneAvailable: boolean;
+  hudDensity: 'minimal';
+  fullScreenScenePriority: boolean;
+};
+
 export type MonIADramaPlan = {
   mode: MonIAExperienceMode;
   intensity: 'low'|'medium'|'high';
   targetDuration: number;
   beats: MonIADramaBeat[];
   choices: string[];
+  freeActionAllowed: boolean;
   shouldPauseGameplay: boolean;
   resumeGameplayAfter: boolean;
+  presentation: MonIAPresentationPlan;
   continuityKeys: string[];
   generationNotes: string[];
 };
@@ -42,7 +57,7 @@ function modeFor(type: MonIASceneType, request: string, director?: MonIADirector
   if (type === 'visio') return 'visio';
   if (type === 'gameplay_ambient') return 'ambient';
   if (type === 'cinematic') {
-    if (/drama|dispute|dispute|choc|surprise|révélation|revelation|important|tension|intime|émotion|emotion/.test(text)) return 'drama_sequence';
+    if (/drama|dispute|choc|surprise|révélation|revelation|important|tension|intime|émotion|emotion/.test(text)) return 'drama_sequence';
     return 'cinematic';
   }
   if (type === 'phone_message' || type === 'audio_call') return 'micro_reaction';
@@ -58,7 +73,7 @@ function intensityFor(input: MonIADramaPlanningInput): 'low'|'medium'|'high' {
 
 function baseDuration(mode: MonIAExperienceMode, director?: MonIADirectorResult | null): number {
   const requested = director?.scene?.duration || 0;
-  if (requested) return clamp(requested, 4, mode === 'drama_sequence' ? 60 : 30);
+  if (requested) return clamp(requested, 4, mode === 'drama_sequence' ? 120 : 30);
   if (mode === 'ambient') return 7;
   if (mode === 'micro_reaction') return 5;
   if (mode === 'visio') return 10;
@@ -76,6 +91,23 @@ function choicesFor(input: MonIADramaPlanningInput): string[] {
   ];
 }
 
+function presentationFor(mode: MonIAExperienceMode, hasChoices: boolean): MonIAPresentationPlan {
+  const cameraPerspective: MonIACameraPerspective =
+    mode === 'visio' ? 'front_camera_visio' :
+    mode === 'cinematic' || mode === 'drama_sequence' ? 'external_cinematic' :
+    'player_pov';
+  return {
+    targetDevice: 'desktop_tablet',
+    cameraPerspective,
+    marionVisible: cameraPerspective === 'external_cinematic',
+    worldKeepsMovingDuringChoice: hasChoices,
+    choicePresentation: hasChoices ? 'overlay_choices_with_free_action' : 'none',
+    miniPhoneAvailable: mode !== 'cinematic' && mode !== 'drama_sequence',
+    hudDensity: 'minimal',
+    fullScreenScenePriority: mode === 'visio' || mode === 'cinematic' || mode === 'drama_sequence',
+  };
+}
+
 export function planDramaExperience(input: MonIADramaPlanningInput): MonIADramaPlan {
   const mode = modeFor(input.scenePlan.type, input.request, input.director);
   const intensity = intensityFor(input);
@@ -85,9 +117,9 @@ export function planDramaExperience(input: MonIADramaPlanningInput): MonIADramaP
   const medium = input.scenePlan.type;
 
   if (mode === 'ambient') {
-    beats.push({id:'ambient-life',purpose:'human_action',medium,seconds:targetDuration,description:'Animer subtilement le décor et les signes de vie sans interrompre la joueuse.'});
+    beats.push({id:'ambient-life',purpose:'human_action',medium,seconds:targetDuration,description:'Animer subtilement le décor et les signes de vie sans interrompre la joueuse. La caméra reste le regard de Marion.'});
   } else if (mode === 'micro_reaction') {
-    beats.push({id:'reaction',purpose:'human_action',medium,seconds:targetDuration,description:`Montrer une réaction humaine courte et lisible liée à: ${sceneDescription}`});
+    beats.push({id:'reaction',purpose:'human_action',medium,seconds:targetDuration,description:`Montrer une réaction humaine courte et lisible liée à: ${sceneDescription}. Préserver la sensation que Marion regarde la scène depuis sa propre position.`});
   } else {
     const entry = Math.max(2, Math.round(targetDuration * .18));
     const anchor = Math.max(2, Math.round(targetDuration * .16));
@@ -110,7 +142,7 @@ export function planDramaExperience(input: MonIADramaPlanningInput): MonIADramaP
       purpose:'choice_pressure',
       medium,
       seconds:3,
-      description:'Suspendre juste assez le moment pour laisser Marion agir; MonIA ne décide pas sa réponse à sa place.',
+      description:'Faire apparaître les choix discrètement par-dessus une scène qui continue à vivre. Garder une option libre pour que Marion puisse agir ou dire autre chose; MonIA ne décide pas sa réponse à sa place.',
     });
   }
 
@@ -120,12 +152,18 @@ export function planDramaExperience(input: MonIADramaPlanningInput): MonIADramaP
     targetDuration,
     beats,
     choices,
+    freeActionAllowed: choices.length > 0,
     shouldPauseGameplay: mode === 'visio' || mode === 'cinematic' || mode === 'drama_sequence',
     resumeGameplayAfter: true,
-    continuityKeys:['location','time','wardrobe','relationship','recent_dialogue','physical_position','held_objects','visible_injuries'],
+    presentation: presentationFor(mode, choices.length > 0),
+    continuityKeys:['location','time','wardrobe','relationship','recent_dialogue','physical_position','held_objects','visible_injuries','camera_perspective','player_position'],
     generationNotes:[
       'Preserve canonical identity and voice.',
       'Use the camera grammar from scenePlan exactly.',
+      'Default ordinary life and direct interactions to Marion player POV: Marion is not visible because the player is looking through her position.',
+      'Show Marion only when an external cinematic is intentionally chosen for an emotional, intimate, relational or otherwise visually necessary beat.',
+      'Desktop/tablet presentation: scene dominates the screen; interface stays discreet; phone access is a compact overlay when logically available.',
+      'When choices appear, keep characters subtly alive instead of freezing the image whenever technically possible.',
       'Do not manufacture infidelity, danger or misunderstanding merely to create a cliffhanger.',
       'If consecutive generated shots belong to one event, preserve spatial, lighting, wardrobe and emotional continuity.',
       input.surpriseAllowed ? 'A surprise may emerge only from plausible current-state information.' : 'Do not introduce an unrequested surprise.',
