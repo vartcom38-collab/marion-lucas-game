@@ -32,10 +32,10 @@ export type MonIAScenePlan = {
 };
 
 const SIGNALS: Record<Exclude<MonIASceneType,'unknown'>, string[]> = {
-  visio: ['visio','video call','facetime','appel video','appel vidéo','camera frontale','caméra frontale','selfie call','front camera'],
-  cinematic: ['cinematique','cinématique','cinematic','scene','scène','mini drama','cutscene','plan serre','plan serré','camera exterieure','caméra extérieure'],
-  gameplay_ambient: ['gameplay','vie libre','ambiance','idle','monde','exploration'],
-  audio_call: ['appel audio','audio call','telephone sans video','téléphone sans vidéo','appel vocal'],
+  visio: ['visio','video call','facetime','appel video','camera frontale','selfie call','front camera'],
+  cinematic: ['cinematique','cinematic','mini drama','cutscene','plan serre','camera exterieure','moment important','scene intime'],
+  gameplay_ambient: ['gameplay','vie libre','ambiance','idle','monde vivant','exploration','decor vivant','décor vivant'],
+  audio_call: ['appel audio','audio call','telephone sans video','appel vocal','coup de fil'],
   phone_message: ['message','sms','texto','imessage','notification','chat'],
   still_image: ['photo','portrait','image fixe','still image'],
 };
@@ -68,26 +68,32 @@ const TYPE_RULES: Record<Exclude<MonIASceneType,'unknown'>,{camera:string;requir
   },
 };
 
-function normalize(s:string){return s.toLocaleLowerCase('fr').normalize('NFD').replace(/[\u0300-\u036f]/g,' ')}
+function normalize(s:string){return s.toLocaleLowerCase('fr').normalize('NFD').replace(/[\u0300-\u036f]/g,'')}
 
 function inferType(input:MonIAScenePlanningInput):{type:MonIASceneType;confidence:number;reason:string[]}{
   if(input.explicitType && input.explicitType !== 'unknown') return {type:input.explicitType,confidence:1,reason:['explicit_type']};
   const text=normalize([input.request,input.action,input.place,input.emotion].filter(Boolean).join(' '));
   const scores = Object.entries(SIGNALS).map(([type,signals])=>{
     let score=0;const hits:string[]=[];
-    for(const signal of signals){const n=normalize(signal);if(text.includes(n)){score+=n.includes(' ')?2:1;hits.push(signal)}}
+    for(const signal of signals){
+      const n=normalize(signal);
+      if(text.includes(n)){
+        score += n.includes(' ')?3:2;
+        hits.push(signal);
+      }
+    }
     return {type:type as Exclude<MonIASceneType,'unknown'>,score,hits};
   }).sort((a,b)=>b.score-a.score);
   const top=scores[0]; const second=scores[1];
   if(!top || top.score===0) return {type:'unknown',confidence:.25,reason:['no_scene_signal']};
   const margin=top.score-(second?.score||0);
-  const confidence=Math.min(.98,.58+top.score*.08+margin*.06);
+  const confidence=Math.min(.98,.56+top.score*.07+margin*.06);
   return {type:top.type,confidence,reason:top.hits.map(h=>`signal:${h}`)};
 }
 
 function inferCharacters(input:MonIAScenePlanningInput){
   if(input.characters?.length) return [...new Set(input.characters.map(x=>x.toLowerCase()))];
-  const text=normalize(input.request);
+  const text=normalize([input.request,input.action].filter(Boolean).join(' '));
   const chars:string[]=[];
   if(text.includes('lucas')) chars.push('lucas');
   if(text.includes('marion')) chars.push('marion');
