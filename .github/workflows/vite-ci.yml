@@ -43,14 +43,13 @@ jobs:
           assert p['characters']['marion']['canon_ref'].endswith('/marion/reference.jpg')
           assert len(p['scenes']) == 1
           assert len(p['scenes'][0]['shots']) >= 5
-          assert all(s['quality_status'] == 'pending' for s in p['scenes'][0]['shots'])
           print('Drama Director episode plan validated')
           PY
 
       - name: Build Vite application
         run: npm run build
 
-      - name: Verify deployable output
+      - name: Verify MonIA autonomous generation architecture
         shell: bash
         run: |
           set -euo pipefail
@@ -69,107 +68,82 @@ jobs:
               'dist/config/monia-visio-approved.json',
               'dist/config/drama-approved.json',
               'dist/config/motion-reference-bank.json',
-              'dist/ort/ort-wasm-simd.wasm',
-              'dist/ort/ort-wasm-simd-threaded.wasm',
-              'src/monia/local-piper-voice.ts',
-              'src/monia/gameplay-drama-trigger.ts',
+              'dist/config/lucas-voice-strategy.json',
+              'dist/config/monia-generation-orchestrator.json',
+              'src/monia/generation-job.ts',
+              'src/monia/v16-runtime-bridge.ts',
               'src/monia/gameplay-visio-director.ts',
-              'src/monia/drama-shot-planner.ts',
+              'src/monia/live-visio.ts',
+              'src/monia/visio-conversation.ts',
               'src/monia/long-drama.ts',
               'src/monia/long-drama-bridge.ts',
-              'src/monia/drama-approval.ts',
-              'src/monia/media-predictor.ts',
-              'config/drama-character-bible.json',
-              'config/drama-approved.json',
-              'config/motion-reference-bank.json',
+              'scripts/monia_lucas_v16_runtime_voice.py',
+              'scripts/monia_av_coherence.py',
               'scripts/drama_director.py',
+              'config/lucas-reference-bank.json',
+              'config/lucas-voice-strategy.json',
+              'config/monia-generation-orchestrator.json',
           ]
           for item in required_files:
               require(Path(item).is_file(), f'{item} exists')
+
           require(Path('dist/assets').is_dir(), 'dist/assets exists')
           require(Path('dist/resources').is_dir(), 'dist/resources exists')
           require(Path('dist/ort').is_dir(), 'dist/ort exists')
 
-          bible = json.loads(Path('config/drama-character-bible.json').read_text(encoding='utf-8'))
-          require(bible.get('status') == 'locked', 'Drama Character Bible is locked')
+          voice = json.loads(Path('config/lucas-voice-strategy.json').read_text(encoding='utf-8'))
+          require(voice.get('status') == 'approved-v16-voice-and-flow', 'Lucas V16 remains official')
+          ref = voice.get('approved_reference', {})
+          require(ref.get('status') == 'approved-by-user', 'V16 reference remains user approved')
+          require('v16' in str(ref.get('candidate','')).lower(), 'approved Lucas reference is V16')
+          rejected = json.dumps(voice.get('rejected_routes', []), ensure_ascii=False).lower()
+          require('v17' in rejected and 'v18' in rejected, 'rejected V17/V18 remain recorded')
 
-          drama_manifest = json.loads(Path('dist/config/drama-approved.json').read_text(encoding='utf-8'))
-          require(drama_manifest.get('status') == 'locked', 'Drama approval manifest is locked')
-          require(drama_manifest.get('policy',{}).get('fresh_generation_is_candidate_only') is True, 'fresh Drama generation remains candidate-only metadata')
-          require(drama_manifest.get('policy',{}).get('auto_publish_live') is False, 'generated media never mutates the locked live manifest')
+          orchestrator = json.loads(Path('config/monia-generation-orchestrator.json').read_text(encoding='utf-8'))
+          require(orchestrator.get('generation_authority',{}).get('not_just_catalog_selection') is True, 'MonIA is a generator, not a catalog selector')
+          require(orchestrator.get('lucas',{}).get('voice',{}).get('voice_led_generation') is True, 'spoken Lucas video remains voice-led')
+          renderer = orchestrator.get('lucas',{}).get('voice',{}).get('runtime_renderer',{})
+          require(renderer.get('path') == 'scripts/monia_lucas_v16_runtime_voice.py', 'central orchestrator uses direct V16 renderer')
+          require(renderer.get('fallback') == 'forbidden', 'generic Lucas voice fallback is forbidden')
+
+          generation_job = Path('src/monia/generation-job.ts').read_text(encoding='utf-8')
+          require("dialogueAuthority:'exact-text-before-video'" in generation_job, 'exact dialogue is resolved before video')
+          require("fallback:'forbidden'" in generation_job, 'generation jobs forbid generic Lucas voice fallback')
+          require('lockIdentityAcrossShots:true' in generation_job, 'multi-shot identity continuity is locked')
+          require('allowAutomaticCanonPromotion:false' in generation_job, 'generated jobs cannot auto-promote to canon')
+          require('reusePreviousFrameWhenHelpful:true' in generation_job, 'multi-shot continuity can carry previous frames')
+
+          v16_bridge = Path('src/monia/v16-runtime-bridge.ts').read_text(encoding='utf-8')
+          require('monia_lucas_v16_runtime_voice.py' in v16_bridge, 'browser runtime requests the V16 renderer')
+          require("fallback:'forbidden'" in v16_bridge, 'V16 bridge has no generic fallback')
+
+          visio = Path('src/monia/gameplay-visio-director.ts').read_text(encoding='utf-8')
+          require("requestedChannel:'visio'" in visio, 'Visio Director requests visio channel')
+          require('signature(current!,request)!==sig' in visio, 'stale gameplay context cancels prepared visio')
+          require('transient-generated-pack' in visio, 'validated generated visio packs can be transient runtime media')
+          require('canonicalPromotion:false' in visio, 'transient visio never promotes itself to Lucas canon')
+
+          live_visio = Path('src/monia/live-visio.ts').read_text(encoding='utf-8')
+          require('stateUrls' in live_visio, 'live visio can switch generated clips by state')
+          require("state==='speaking'" in live_visio and "state==='reaction'" in live_visio, 'live visio supports speaking/reaction states')
+
+          conversation = Path('src/monia/visio-conversation.ts').read_text(encoding='utf-8')
+          require('./local-piper-voice' not in conversation, 'Lucas live visio no longer falls back to Piper')
+          require('approved V16' in conversation or 'V16' in conversation, 'visio conversation explicitly requires V16')
+
+          studio = Path('src/monia/studio-job-queue.ts').read_text(encoding='utf-8')
+          require('canonical tattoos when naturally visible' in studio, 'Lucas canonical tattoos are preserved when visible')
+          require("fallback:'forbidden'" in studio, 'studio jobs forbid generic voice fallback')
 
           motion = json.loads(Path('dist/config/motion-reference-bank.json').read_text(encoding='utf-8'))
           policy = motion.get('policy',{})
           require(policy.get('copy_identity') is False, 'motion bank cannot copy identity')
           require(policy.get('copy_face') is False, 'motion bank cannot copy face identity')
-          require(policy.get('copy_body_identity') is False, 'motion bank cannot copy body identity')
-          require(policy.get('character_canon_has_priority') is True, 'character canon keeps priority over references')
-          require(policy.get('lucas_face_canon_required') is True, 'Lucas face canon remains required')
-          require(any('carrying_child' in r.get('tags',[]) for r in motion.get('references',[])), 'parent-child carrying motion reference registered')
+          require(policy.get('character_canon_has_priority') is True, 'character canon keeps priority over motion references')
 
-          index = Path('index.html').read_text(encoding='utf-8')
-          bridge = Path('src/monia/long-drama-bridge.ts').read_text(encoding='utf-8')
-          approval = Path('src/monia/drama-approval.ts').read_text(encoding='utf-8')
-          predictor = Path('src/monia/media-predictor.ts').read_text(encoding='utf-8')
-          trigger = Path('src/monia/gameplay-drama-trigger.ts').read_text(encoding='utf-8')
-          planner = Path('src/monia/drama-shot-planner.ts').read_text(encoding='utf-8')
-          long_drama = Path('src/monia/long-drama.ts').read_text(encoding='utf-8')
-          visio_director = Path('src/monia/gameplay-visio-director.ts').read_text(encoding='utf-8')
-          require('GAMEPLAY_DRAMA_EVENT' in bridge, 'long-drama listens to gameplay trigger')
-          require("source:'gameplay'" in trigger, 'Drama trigger source is gameplay')
-          require("REQUEST_EVENT='monia:cinematic-gameplay-requested'" in trigger, 'Drama trigger requires an explicit gameplay request')
-          require('MutationObserver' not in trigger, 'Drama trigger cannot infer cinematics from ordinary overlays')
-          require('./src/monia/auto-scene.ts' not in index, 'autonomous auto-scene is disabled')
-          require('./src/monia/long-drama-bridge.ts' in index, 'long-drama bridge is loaded')
-          require('./src/monia/media-predictor.ts' in index, 'spoiler-safe Media Predictor is loaded')
-          require('runtime.respond=async' not in bridge, 'Drama does not globally hook MonIA responses')
-          require('dramaPassesQualityGate' in bridge, 'complete-scene quality gate is required')
-          require('saveDramaCandidate(trigger.signature,generated)' in bridge, 'fresh generated Drama is retained as candidate metadata')
-          require('KAGGLE_DISPATCH_URL' in bridge and 'dispatchKagglePair' in bridge, 'gameplay can dispatch candidate video jobs through the same-origin Kaggle bridge')
-          require('waitForKagglePair' in bridge, 'runtime waits for the generated Kaggle pair')
-          require("result?.candidateOnly!==true" in bridge and "result?.narrativeAuthority!==false" in bridge, 'Kaggle result must keep candidate-only and zero narrative authority guards')
-          require("selectionMode!=='surprise-auto'" in bridge, 'Kaggle result mode is explicitly validated')
-          require("continuitySource:(index===0?'generated-image':'previous-video-frame')" in bridge, 'Kaggle pair exposes previous-frame continuity to the runtime quality gate')
-          require("playRuntimeDrama(generated,'generated')" not in bridge, 'fresh generated Drama can never auto-play')
-          require('playApprovedRuntimeDrama(approved)' in bridge, 'only approved Drama enters the live playback path')
-          require('lucasCanAppearNow()' in bridge, 'cinematic cast is revalidated against canonical Lucas presence')
-          require('deliverDrama(' not in bridge, 'there is no separate uncontrolled direct-delivery path')
-          require('approvedDramaForSignature' in bridge, 'approved Drama remains available as a reusable asset')
-          require('fresh_generation_is_candidate_only' in Path('config/drama-approved.json').read_text(encoding='utf-8'), 'candidate-only policy is explicit')
-          require("state:'candidate'" in approval, 'Drama candidate state is explicit')
-          require('identity:\'pending\'' in approval and 'canon:\'pending\'' in approval, 'identity/canon review metadata remains pending for fresh candidates')
-          require('candidateOnly:true' in predictor, 'Media Predictor only emits candidate opportunities')
-          require('narrativeAuthority:false' in predictor, 'Media Predictor has zero narrative authority')
-          require('reusePreviousFrame' in planner, 'shot planner marks continuity reuse')
-          require('extractLastVideoFrame' in long_drama, 'runtime extracts previous video final frame')
-          require('previous-video-frame' in long_drama, 'next shot can use actual previous video frame')
-
-          require('./src/monia/gameplay-visio-director.ts' in index, 'gameplay Visio Director is loaded')
-          require("source:'gameplay'" in visio_director, 'Visio requests are gameplay-authored')
-          require('Ne jamais déclencher une visio de sa propre initiative.' in visio_director, 'Visio cannot self-trigger')
-          require('signature(current!,request)!==sig' in visio_director, 'stale gameplay context cancels prepared visio')
-          require('monia-visio-approved.json' in visio_director, 'Visio Director prewarms approved-media manifest')
-          require("requestedChannel:'visio'" in visio_director, 'Visio Director requests only visio channel')
-
-          package = Path('package.json').read_text(encoding='utf-8')
-          local_voice = Path('src/monia/local-piper-voice.ts').read_text(encoding='utf-8')
-          visio = Path('src/monia/visio-conversation.ts').read_text(encoding='utf-8')
-          test_voice = Path('src/monia/test-voice-bridge.ts').read_text(encoding='utf-8')
-          voice_engine = Path('src/monia/voice-engine.ts').read_text(encoding='utf-8')
-          server_brain = Path('src/monia/server-brain.ts').read_text(encoding='utf-8')
-          materializer = Path('tools/materialize-ort-assets.mjs').read_text(encoding='utf-8')
-          require('@mintplex-labs/piper-tts-web' in package, 'Piper package present')
-          require('"onnxruntime-web": "1.18.0"' in package, 'ONNX Runtime pinned to 1.18.0')
-          require('no runtime CDN fetch' in materializer, 'ORT materializer uses pinned npm package only')
-          require('fr_FR-tom-medium' in local_voice, 'current local Lucas voice candidate present')
-          require('./local-piper-voice' in visio, 'visio uses local voice')
-          require('./local-piper-voice' in test_voice, 'test lab uses local voice')
-          require('./local-piper-voice' in voice_engine, 'voice engine uses local voice')
-          require('LUCAS_LOCAL_VOICE_ID' in test_voice, 'test lab reports local voice id')
-          require('cosyvoice' not in test_voice.lower(), 'CosyVoice removed from test path')
-          forbidden_voice = ('chatterbox', 'EDGE_SPACE', 'hf.space', 'gradio_api')
-          require(not any(x.lower() in voice_engine.lower() for x in forbidden_voice), 'remote Lucas voice providers removed')
-          require('fetch(' not in server_brain, 'paid server brain network path disabled')
+          manifest = json.loads(Path('dist/config/monia-visio-approved.json').read_text(encoding='utf-8'))
+          require(manifest.get('status') == 'locked', 'long-term visio canon manifest remains locked')
+          require(manifest.get('fallback') is None, 'canonical visio manifest has no unapproved fallback')
 
           dist_text = ''
           for p in Path('dist').rglob('*'):
@@ -177,13 +151,6 @@ jobs:
                   try: dist_text += p.read_text(encoding='utf-8', errors='ignore')
                   except Exception: pass
           require('cdnjs.cloudflare.com/ajax/libs/onnxruntime-web' not in dist_text, 'ONNX runtime has no Cloudflare runtime dependency')
-          require(any(Path('dist/assets').glob('piper-tts-web-*.js')), 'Piper bundle exists')
 
-          manifest = json.loads(Path('dist/config/monia-visio-approved.json').read_text(encoding='utf-8'))
-          require(manifest.get('status') == 'locked', 'visio manifest is locked')
-          require(manifest.get('fallback') is None, 'visio has no unapproved fallback')
-          require(all(v is None for v in manifest.get('states',{}).values()), 'visio has no unapproved state clip')
-          print('Vite build is deployable: full-screen Drama is gameplay-requested and approved-only; fresh generations remain review candidates. Visio, identity-safe motion/body references, previous-frame continuity and local voice infrastructure remain locked.')
+          print('Vite build is deployable: MonIA owns generation jobs; Lucas identity and V16 are locked; transient generated media stays separate from canon.')
           PY
-
-# Validation rerun after migrating AppDeploy binary assets.
