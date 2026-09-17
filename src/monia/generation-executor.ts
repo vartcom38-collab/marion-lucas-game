@@ -1,5 +1,5 @@
 import type { MonIAGenerationJob } from './generation-job';
-import { requestLucasV16, LUCAS_V16_READY_EVENT, type LucasV16Ready } from './v16-runtime-bridge';
+import { requestLucasV16, renderLucasV16 } from './v16-runtime-bridge';
 
 const JOB_EVENT='marion-lucas:monia-generation-job';
 const STATE_EVENT='marion-lucas:monia-generation-state';
@@ -50,42 +50,29 @@ export async function executeMonIAGenerationJob(job:MonIAGenerationJob){
   if(!text){
     saveState({jobId:job.id,phase:'storyboard-ready',detail:'No Lucas speech; visual generation may proceed.',updatedAt:Date.now()});
     window.dispatchEvent(new CustomEvent(JOB_EVENT,{detail:{job}}));
-    return job;
+    return {job,voice:null};
   }
 
   const request=requestLucasV16(text,intentFor(job),job.id);
   saveState({jobId:job.id,phase:'voice-requested',detail:request.id,updatedAt:Date.now()});
-
-  return await new Promise<MonIAGenerationJob>((resolve,reject)=>{
-    const timeout=window.setTimeout(()=>{
-      window.removeEventListener(LUCAS_V16_READY_EVENT,onReady as EventListener);
-      const error=new Error(`V16 runtime render timed out for ${job.id}`);
-      saveState({jobId:job.id,phase:'failed',detail:error.message,updatedAt:Date.now()});
-      reject(error);
-    },120000);
-
-    const onReady=(event:Event)=>{
-      const ready=(event as CustomEvent<LucasV16Ready>).detail;
-      if(!ready||ready.id!==request.id||ready.sceneJobId!==job.id)return;
-      window.clearTimeout(timeout);
-      window.removeEventListener(LUCAS_V16_READY_EVENT,onReady as EventListener);
-      if(ready.text.trim()!==text){
-        const error=new Error('V16 exact-dialogue validation failed');
-        saveState({jobId:job.id,phase:'failed',detail:error.message,updatedAt:Date.now()});
-        reject(error);return;
-      }
-      const retimed=retimeFromVoice(job,ready.duration);
-      saveState({jobId:job.id,phase:'voice-ready',voice:{audioUrl:ready.audioUrl,duration:ready.duration,text:ready.text},updatedAt:Date.now()});
-      saveState({jobId:job.id,phase:'storyboard-ready',detail:'Visual generation may now use V16 duration as timing authority.',voice:{audioUrl:ready.audioUrl,duration:ready.duration,text:ready.text},updatedAt:Date.now()});
-      window.dispatchEvent(new CustomEvent(JOB_EVENT,{detail:{job:retimed,voice:ready}}));
-      resolve(retimed);
-    };
-    window.addEventListener(LUCAS_V16_READY_EVENT,onReady as EventListener);
-  });
+  try{
+    const ready=await renderLucasV16(request);
+    if(ready.text.trim()!==text)throw new Error('V16 exact-dialogue validation failed');
+    const retimed=retimeFromVoice(job,ready.duration);
+    const voice={audioUrl:ready.audioUrl,duration:ready.duration,text:ready.text};
+    saveState({jobId:job.id,phase:'voice-ready',voice,updatedAt:Date.now()});
+    saveState({jobId:job.id,phase:'storyboard-ready',detail:'Visual generation may now use V16 duration as timing authority.',voice,updatedAt:Date.now()});
+    window.dispatchEvent(new CustomEvent(JOB_EVENT,{detail:{job:retimed,voice:ready}}));
+    return {job:retimed,voice:ready};
+  }catch(error){
+    const detail=error instanceof Error?error.message:String(error);
+    saveState({jobId:job.id,phase:'failed',detail,updatedAt:Date.now()});
+    throw error;
+  }
 }
 
 export function dispatchMonIAGenerationJob(job:MonIAGenerationJob){void executeMonIAGenerationJob(job).catch(error=>console.error('[MonIA generation executor]',error));}
 export const MONIA_GENERATION_JOB_EVENT=JOB_EVENT;
 export const MONIA_GENERATION_STATE_EVENT=STATE_EVENT;
 
-console.info('[MonIA] Unified generation executor active · voice first, V16 timing authority, fail closed');
+console.info('[MonIA] Unified generation executor active · server-rendered V16 first, timing authority, fail closed');
