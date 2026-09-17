@@ -129,8 +129,8 @@ jobs:
           require('renderSpeechPerformance' in interactive,'spoken interactive branch passes through speech-performance')
 
           studio=Path('src/monia/studio-job-queue.ts').read_text(encoding='utf-8')
-          require('canonical tattoos when naturally visible' in studio,'Lucas canonical tattoos are preserved when visible')
-          require("fallback:'forbidden'" in studio,'studio jobs forbid generic voice fallback')
+          require('Preserve Lucas canonical tattoos whenever the framing naturally exposes them' in studio,'Lucas canonical tattoos are preserved when visible')
+          require('genericFallbackAllowed:false' in studio,'studio jobs forbid generic voice fallback')
 
           motion=json.loads(Path('dist/config/motion-reference-bank.json').read_text(encoding='utf-8'))
           policy=motion.get('policy',{})
