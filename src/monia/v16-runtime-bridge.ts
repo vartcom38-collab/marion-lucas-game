@@ -52,7 +52,7 @@ export async function renderLucasV16(request:LucasV16Request):Promise<LucasV16Re
     if(status.status===202)continue;
     if(!status.ok){const detail=await status.json().catch(()=>null) as any;throw new Error(detail?.error||`V16 status failed · HTTP ${status.status}`)}
     const data=await status.json() as any;
-    const audioUrl=String(data.audio_url||data.audioUrl||'').trim();
+    const audioUrl=String(data.candidate_url||data.audio_url||data.audioUrl||'').trim();
     const text=String(data.text||'').trim();
     const duration=Number(data.duration||data.seconds||0);
     if(data.state!=='ready'||!audioUrl||!Number.isFinite(duration)||duration<=0)throw new Error('V16 renderer returned an incomplete result');
