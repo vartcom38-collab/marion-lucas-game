@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "status": "canonical",
   "purpose": "MonIA is the creative and technical scene-generation orchestrator for Marion & Lucas. It understands the requested experience, designs the scene, binds canonical character and voice references, generates assets, validates candidates and exposes only coherent outputs to the game.",
   "principle": "understand -> design -> bind canon -> generate -> synchronize -> validate -> use",
@@ -52,12 +52,18 @@
       "official_reference": "lucas-voice-v16-b-smoother-flow-fr-candidate.wav",
       "status": "approved-by-user",
       "language": "fr-FR",
+      "runtime_renderer": "scripts/monia_lucas_v16_runtime_voice.py",
+      "runtime_mode": "direct-synthetic-voice-design",
+      "runtime_rule": "Render the exact fresh dialogue written by MonIA from the locked V16 synthetic voice direction. Do not clone the V16 waveform and do not use V17/V18.",
+      "supported_performance_directions": ["neutral", "warm", "amused", "tender", "concerned", "tired", "whisper"],
       "rule": "Whenever Lucas speaks in a newly generated scene, call, visio, cinematic or voice message, preserve the approved V16 Lucas voice identity, register, warmth and connected French flow. Emotion may vary; core voice identity may not.",
       "voice_led_generation": true,
-      "timing_authority": "For spoken Lucas video, approved/generated V16 audio timing is the master clock. Visual speech performance must be planned around the exact utterance and its measured duration.",
+      "timing_authority": "For spoken Lucas video, freshly rendered V16 audio timing is the master clock. Visual speech performance must be planned around the exact utterance and its measured duration.",
+      "generic_fallback_allowed": false,
       "forbidden": [
         "substituting V10-A for new dialogue",
         "using rejected V17 or V18",
+        "using browser speech synthesis or Piper as Lucas fallback",
         "redesigning Lucas voice per scene",
         "pitch or playback-rate warping",
         "robotic word-by-word stitching",
@@ -70,14 +76,14 @@
     "visio": {
       "camera": "true smartphone front camera; viewer is the phone; phone invisible",
       "references": ["canonical Lucas identity", "V7 front-camera grammar", "contextual Lucas motion/performance", "V16 voice when speaking"],
-      "order": ["choose contextual beat", "resolve exact dialogue", "generate or resolve V16 audio", "measure audio", "generate visual performance around exact utterance", "synchronize", "validate identity/camera/audio-video coherence", "candidate review"],
+      "order": ["choose contextual beat", "resolve exact dialogue", "render exact dialogue through V16 direct voice renderer", "measure audio", "generate visual performance around exact utterance", "synchronize", "validate identity/camera/audio-video coherence", "use transiently if validation passes"],
       "generate": ["visual performance", "contextual environment", "Lucas voice if dialogue", "synchronization"],
       "reject_if": ["external camera", "visible phone", "portrait/cinematic framing", "wrong Lucas identity", "wrong voice identity", "robotic delivery", "dialogue/audio mismatch", "large audio-video duration mismatch", "mouth keeps speaking after audio ends"]
     },
     "cinematic": {
       "camera": "external cinematic camera chosen to serve the dramatic beat",
       "references": ["canonical identities", "contextual motion/performance", "location/wardrobe canon", "V16 voice for Lucas dialogue"],
-      "spoken_order": ["resolve exact dialogue", "resolve V16 performance", "block scene around speech timing", "generate", "synchronize", "validate"],
+      "spoken_order": ["resolve exact dialogue", "render exact V16 performance", "block scene around measured speech timing", "generate", "synchronize", "validate", "use transiently if validation passes"],
       "generate": ["blocking", "camera movement", "character performance", "environment", "dialogue/voice when needed", "scene sound plan when available"],
       "reject_if": ["identity drift", "wrong relationship continuity", "camera grammar inconsistent with intended beat", "generic or static slideshow look", "spoken words differ from generated mouth performance"]
     },
@@ -94,13 +100,13 @@
     },
     "audio_call": {
       "visual_generation": false,
-      "voice": "V16 for Lucas",
-      "generate": ["contextual Lucas dialogue", "natural performance", "call continuity"]
+      "voice": "V16 direct runtime renderer for Lucas",
+      "generate": ["contextual Lucas dialogue", "exact V16 rendering", "natural performance", "call continuity"]
     },
     "voice_message": {
       "visual_generation": false,
-      "voice": "V16 for Lucas",
-      "generate": ["contextual Lucas dialogue", "natural message-like performance"]
+      "voice": "V16 direct runtime renderer for Lucas",
+      "generate": ["contextual Lucas dialogue", "exact V16 rendering", "natural message-like performance"]
     }
   },
   "reference_selection": {
@@ -111,8 +117,8 @@
   },
   "synchronization": {
     "spoken_video_policy": "voice-led",
-    "duration_gate": "video and audio duration must remain within the configured tolerance before candidate publication",
-    "phoneme_gate": "phoneme-level or visually convincing speech synchronization must be explicitly validated before live promotion; duration equality alone is insufficient",
+    "duration_gate": "video and audio duration must remain within the configured tolerance before transient use",
+    "phoneme_gate": "phoneme-level or visually convincing speech synchronization must be explicitly validated before transient use; duration equality alone is insufficient",
     "never_fake_sync_with": ["playback-rate warping", "random seeking", "looping mouth motion", "different text in prompt and audio"]
   },
   "validation": {
@@ -127,6 +133,7 @@
       "audio-video timing coherence",
       "no accidental adoption of rejected generated candidates as canon"
     ],
+    "transient_use_rule": "Fresh generated media may be used for the current scene automatically after all required validation gates pass.",
     "learning_rule": "Only user-approved or explicitly canonicalized outputs may be promoted into long-term reference banks. Generated candidates never teach MonIA character identity automatically."
   }
 }
