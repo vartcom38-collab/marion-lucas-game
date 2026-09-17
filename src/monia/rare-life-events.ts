@@ -1,5 +1,6 @@
 import { getLifeTimeline } from './life-timeline-engine';
 import { getFamilyLifeOpportunity } from './family-life-layer';
+import { varietyAdjustedPriority, varietyReason } from './life-variety-policy';
 
 const SAVE_KEY='marion-lucas-save-v4';
 type Save={day?:number;stress?:number;energy?:number;visibility?:number;children?:number;flags?:Record<string,unknown>;eventHistory?:string[]};
@@ -8,6 +9,12 @@ export type RareLifeEvent={id:string;eligible:boolean;weight:number;sensitive:bo
 function readSave():Save|null{try{const raw=localStorage.getItem(SAVE_KEY);return raw?JSON.parse(raw) as Save:null}catch{return null}}
 function n(v:unknown,fallback=0){const x=Number(v);return Number.isFinite(x)?x:fallback}
 function daysSince(f:Record<string,unknown>,key:string,day:number){const last=n(f[key],-99999);return day-last}
+
+function diversify(event:RareLifeEvent,history:string[]):RareLifeEvent{
+  const primary=event.channels[0]||'ambient';
+  const adjusted=varietyAdjustedPriority({channel:primary,basePriority:event.weight,eventHistory:history});
+  return {...event,weight:adjusted,reason:`${event.reason} ${varietyReason(primary,history)}`};
+}
 
 export function getRareLifeEvents():RareLifeEvent[]{
   const s=readSave();const timeline=getLifeTimeline();const family=getFamilyLifeOpportunity();if(!s||!timeline)return[];
@@ -19,7 +26,8 @@ export function getRareLifeEvents():RareLifeEvent[]{
   add({id:'family-good-news',eligible:family?.state==='trying'&&!!family.surpriseEligible&&daysSince(f,'lastFamilyOutcomeDay',day)>=28,weight:18,sensitive:true,cooldownDays:28,reason:'Une grossesse éventuelle ne doit jamais être instantanée ni garantie.',channels:['message','call','cinematic']});
   add({id:'family-loss',eligible:family?.state==='pregnant'&&daysSince(f,'lastFamilySensitiveEventDay',day)>=365,weight:2,sensitive:true,cooldownDays:365,reason:'Événement exceptionnel et non obligatoire; ne jamais l’utiliser comme twist fréquent ou gratuit.',channels:['call','cinematic','ambient']});
   add({id:'burnout-reset',eligible:(stress>=75||energy<=20)&&daysSince(f,'lastRecoveryArcDay',day)>=45,weight:28,sensitive:false,cooldownDays:45,reason:'Une période trop chargée peut forcer le rythme de vie à ralentir sans transformer cela en catastrophe.',channels:['ambient','message','call']});
-  return out.filter(e=>e.eligible).sort((a,b)=>b.weight-a.weight);
+  const history=s.eventHistory||[];
+  return out.filter(e=>e.eligible).map(e=>diversify(e,history)).sort((a,b)=>b.weight-a.weight);
 }
 
 declare global{interface Window{__moniaRareLifeEvents?:()=>RareLifeEvent[]}}
