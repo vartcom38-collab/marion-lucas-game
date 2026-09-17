@@ -1,8 +1,11 @@
+import './interactive-resume-runner';
 import { readInteractiveScene, type MonIAInteractiveScene } from './interactive-scene';
 
 const ID='moniaInteractiveChoiceOverlay';
+const MEDIA_ID='moniaInteractiveSceneMedia';
 
 function remove(){document.getElementById(ID)?.remove()}
+function removeMedia(){document.getElementById(MEDIA_ID)?.remove()}
 
 function escapeHtml(value:string){return value.replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]||char))}
 
@@ -29,8 +32,31 @@ function render(scene:MonIAInteractiveScene){
   });
 }
 
-window.addEventListener('monia-interactive-scene',event=>render((event as CustomEvent<MonIAInteractiveScene>).detail));
-window.addEventListener('beforeunload',remove);
+function playMaterialized(detail:any){
+  const media=detail?.media||{};
+  const videoUrl=String(media.videoUrl||'');
+  const imageUrl=String(media.imageUrl||'');
+  if(!videoUrl&&!imageUrl)return;
+  removeMedia();
+  const layer=document.createElement('div');
+  layer.id=MEDIA_ID;
+  layer.style.cssText='position:fixed;inset:0;z-index:99990;background:#050403;overflow:hidden;pointer-events:none';
+  if(videoUrl){
+    const video=document.createElement('video');
+    video.src=videoUrl;video.autoplay=true;video.playsInline=true;video.controls=false;
+    video.muted=media.voiceAudioUrl&&!media.speechEngine;
+    video.style.cssText='width:100%;height:100%;object-fit:cover;background:#000';
+    layer.appendChild(video);
+    void video.play().catch(()=>undefined);
+  }else{
+    const image=document.createElement('img');image.src=imageUrl;image.alt='';image.style.cssText='width:100%;height:100%;object-fit:cover;background:#000';layer.appendChild(image);
+  }
+  document.body.appendChild(layer);
+}
 
-const current=readInteractiveScene();if(current)render(current);
-console.info('[MonIA] Desktop/tablet interactive choice overlay active · scene remains visible · free response enabled');
+window.addEventListener('monia-interactive-scene',event=>render((event as CustomEvent<MonIAInteractiveScene>).detail));
+window.addEventListener('monia-interactive-media-ready',event=>playMaterialized((event as CustomEvent).detail));
+window.addEventListener('beforeunload',()=>{remove();removeMedia()});
+
+const current=readInteractiveScene();if(current){render(current);if(current.lastMediaUrl)playMaterialized({media:{videoUrl:current.lastMediaUrl}})}
+console.info('[MonIA] Desktop/tablet interactive scene player active · same scene remains visible · choices/free response resume automatically');
