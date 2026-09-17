@@ -12,24 +12,22 @@ on:
         required: true
         default: "neutral"
         type: choice
-        options:
-          - neutral
-          - warm
-          - amused
-          - tender
-          - concerned
-          - tired
-          - whisper
+        options: [neutral, warm, amused, tender, concerned, tired, whisper]
       request_id:
         description: "Stable MonIA scene/dialogue request id"
         required: false
         type: string
+  repository_dispatch:
+    types: [monia_v16_voice_run]
   push:
     branches: [main]
     paths:
       - "scripts/monia_lucas_v16_runtime_voice.py"
       - ".github/workflows/monia-lucas-v16-runtime-voice.yml"
       - "config/lucas-voice-strategy.json"
+
+permissions:
+  contents: write
 
 jobs:
   validate-renderer:
@@ -55,7 +53,7 @@ jobs:
           PY
 
   render:
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'repository_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
@@ -63,6 +61,11 @@ jobs:
       INFOMANIAK_FTP_USER: ${{ secrets.INFOMANIAK_FTP_USER }}
       INFOMANIAK_FTP_PASSWORD: ${{ secrets.INFOMANIAK_FTP_PASSWORD }}
       HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      MONIA_REQUEST_B64: ${{ github.event.client_payload.request_b64 || '' }}
+      MONIA_DISPATCH_ID: ${{ github.event.client_payload.request_id || '' }}
+      MONIA_MANUAL_TEXT: ${{ inputs.text || '' }}
+      MONIA_MANUAL_EMOTION: ${{ inputs.emotion || 'neutral' }}
+      MONIA_MANUAL_ID: ${{ inputs.request_id || '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -74,20 +77,94 @@ jobs:
           python -m pip install --disable-pip-version-check gradio_client requests
           sudo apt-get update -qq
           sudo apt-get install -y -qq ffmpeg
-      - name: Render exact MonIA line with V16 voice direction
-        env:
-          MONIA_TEXT: ${{ inputs.text }}
-          MONIA_EMOTION: ${{ inputs.emotion }}
-          MONIA_REQUEST_ID: ${{ inputs.request_id }}
+      - name: Resolve and validate exact runtime request
         run: |
-          python -m scripts.monia_lucas_v16_runtime_voice \
-            --text "$MONIA_TEXT" \
-            --emotion "$MONIA_EMOTION" \
-            --request-id "$MONIA_REQUEST_ID" \
-            --publish-candidate
+          python - <<'PY'
+          import base64, json, os, re
+          from pathlib import Path
+          raw=os.environ.get('MONIA_REQUEST_B64','').strip()
+          if raw:
+              data=json.loads(base64.b64decode(raw).decode('utf-8'))
+          else:
+              data={
+                  'requestId': os.environ.get('MONIA_MANUAL_ID','').strip(),
+                  'text': os.environ.get('MONIA_MANUAL_TEXT','').strip(),
+                  'emotion': os.environ.get('MONIA_MANUAL_EMOTION','neutral').strip(),
+                  'candidateOnly': True,
+                  'canonicalVoicePromotion': False,
+                  'voicePolicy': 'lucas-v16-approved-direct-design-only',
+              }
+          if not data.get('requestId'):
+              import hashlib
+              digest=hashlib.sha256((data.get('text','')+'|'+data.get('emotion','neutral')).encode()).hexdigest()[:14]
+              data['requestId']='v16-'+digest
+          assert re.fullmatch(r'v16-[a-z0-9][a-z0-9-]{5,56}', data['requestId'])
+          assert isinstance(data.get('text'),str) and 0 < len(data['text'].strip()) <= 600
+          assert data.get('emotion') in {'neutral','warm','amused','tender','concerned','tired','whisper'}
+          assert data.get('candidateOnly') is True
+          assert data.get('canonicalVoicePromotion') is False
+          assert data.get('voicePolicy') == 'lucas-v16-approved-direct-design-only'
+          dispatch=os.environ.get('MONIA_DISPATCH_ID','').strip()
+          if dispatch: assert dispatch == data['requestId']
+          Path('.monia-v16-request.json').write_text(json.dumps(data,ensure_ascii=False),encoding='utf-8')
+          print('Validated runtime V16 request', data['requestId'])
+          PY
+      - name: Render exact MonIA line with V16 direct voice design
+        run: |
+          python - <<'PY'
+          import json, subprocess, sys
+          data=json.load(open('.monia-v16-request.json',encoding='utf-8'))
+          cmd=[sys.executable,'-m','scripts.monia_lucas_v16_runtime_voice','--text',data['text'],'--emotion',data['emotion'],'--request-id',data['requestId'],'--publish-candidate']
+          subprocess.run(cmd,check=True)
+          PY
+      - name: Materialize runtime result record
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          req=json.load(open('.monia-v16-request.json',encoding='utf-8'))
+          manifests=[]
+          for p in Path('.monia-video').glob('lucas-v16-runtime-*.json'):
+              try:
+                  data=json.loads(p.read_text(encoding='utf-8'))
+              except Exception:
+                  continue
+              if data.get('request_id') == req['requestId']:
+                  manifests.append((p.stat().st_mtime,p,data))
+          assert manifests, 'runtime V16 manifest missing'
+          _,source,data=max(manifests,key=lambda x:x[0])
+          assert data.get('voice_id') == 'lucas-v16-approved-direct-design'
+          assert data.get('text') == ' '.join(req['text'].strip().split())
+          assert data.get('emotion') == req['emotion']
+          assert data.get('candidate_url')
+          assert float(data.get('duration',0)) > 0.3
+          data.update({
+              'state':'ready',
+              'candidateOnly':True,
+              'canonicalVoicePromotion':False,
+              'voicePolicy':'lucas-v16-approved-direct-design-only',
+          })
+          dest=Path('public/resources/monia/runtime-voice')/req['requestId']/'result.json'
+          dest.parent.mkdir(parents=True,exist_ok=True)
+          dest.write_text(json.dumps(data,ensure_ascii=False,indent=2),encoding='utf-8')
+          print('Runtime V16 result:',dest)
+          PY
+      - name: Commit transient runtime result index
+        run: |
+          set -euo pipefail
+          REQUEST_ID="$(python -c "import json; print(json.load(open('.monia-v16-request.json'))['requestId'])")"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "public/resources/monia/runtime-voice/$REQUEST_ID/result.json"
+          if git diff --cached --quiet; then
+            echo "Runtime result already indexed."
+          else
+            git commit -m "MonIA V16 runtime voice $REQUEST_ID"
+            git push origin HEAD:main
+          fi
       - name: Runtime voice policy
         run: |
-          echo "Fresh dialogue text is generated by MonIA; this job only renders that exact text."
+          echo "Fresh dialogue text is authored by MonIA; this job renders that exact text only."
           echo "V16 direct synthetic voice-design direction is used; no V17/V18 route and no real-person biometric clone."
           echo "No speed/pitch warp and no word/syllable stitching."
-          echo "Generated audio is transient scene media and is never promoted to Lucas voice canon automatically."
+          echo "Generated audio is transient scene media and never changes Lucas voice canon automatically."
