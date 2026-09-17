@@ -33,7 +33,8 @@ import './rare-life-events';
 import { MARION_LUCAS_PROFILE, narrationPrompt, type MonIACompactContext } from './profile';
 import { moniaStorage } from './storage';
 import { askMonIAServerBrain } from './server-brain';
-import { planMonIAScene, assertMonIAScenePlan, type MonIAScenePlanningInput, type MonIAScenePlan } from './scene-intelligence';
+import { planMonIAScene, assertMonIAScenePlan, type MonIAScenePlanningInput, type MonIAScenePlan, type MonIASceneType } from './scene-intelligence';
+import { planDramaExperience, type MonIADramaPlan, type MonIADramaPlanningInput } from './drama-director';
 import {
   directorPrompt,
   fallbackDirector,
@@ -45,6 +46,7 @@ import {
 export type MonIAMode = 'auto' | 'light' | 'advanced';
 export type { MonIADirectorRequest, MonIADirectorResult } from './director';
 export type { MonIAScenePlanningInput, MonIAScenePlan } from './scene-intelligence';
+export type { MonIADramaPlan, MonIADramaPlanningInput } from './drama-director';
 export type MonIAStatus = {
   status: 'idle' | 'loading' | 'ready' | 'error' | 'unsupported';
   progress: number;
@@ -55,6 +57,11 @@ export type MonIAResult = {
   memory: string;
   objective: string | null;
   source: 'local' | 'fallback';
+};
+export type MonIAExperienceResult = {
+  response: MonIADirectorResult;
+  scenePlan: MonIAScenePlan;
+  dramaPlan: MonIADramaPlan;
 };
 
 type NarrationPending = {
@@ -110,6 +117,13 @@ function compactContext(context: any): MonIACompactContext {
   };
 }
 
+function typeFromDirector(result: MonIADirectorResult): MonIASceneType {
+  if (result.channel === 'visio') return 'visio';
+  if (result.channel === 'scene' || result.channel === 'video') return 'cinematic';
+  if (result.channel === 'call' || result.channel === 'voice') return 'audio_call';
+  return 'phone_message';
+}
+
 class MonIARuntime {
   mode: MonIAMode = 'auto';
   status: MonIAStatus = { status: 'idle', progress: 0, label: 'MonIA prête' };
@@ -144,6 +158,36 @@ class MonIARuntime {
 
   requireScenePlan(input: MonIAScenePlanningInput): MonIAScenePlan {
     return assertMonIAScenePlan(planMonIAScene(input));
+  }
+
+  planDrama(input: MonIADramaPlanningInput): MonIADramaPlan {
+    return planDramaExperience(input);
+  }
+
+  async directExperience(request: MonIADirectorRequest, options?: {playerAgencyRequired?: boolean; surpriseAllowed?: boolean}): Promise<MonIAExperienceResult> {
+    const response = await this.direct(request);
+    const scenePlan = this.requireScenePlan({
+      request: [request.playerText || '', response.text, response.scene?.action || ''].filter(Boolean).join(' '),
+      explicitType: typeFromDirector(response),
+      characters: [response.actor || request.actor].filter(Boolean),
+      place: response.scene?.location || String(request.context.place || ''),
+      time: String(request.context.time || ''),
+      emotion: response.emotion,
+      relationshipState: String(request.context.relationship || ''),
+      action: response.scene?.action || response.text,
+    });
+    const dramaPlan = this.planDrama({
+      scenePlan,
+      director: response,
+      request: request.playerText || response.text,
+      relationship: String(request.context.relationship || ''),
+      place: response.scene?.location || String(request.context.place || ''),
+      time: String(request.context.time || ''),
+      recentMemories: Array.isArray(request.context.memories) ? request.context.memories.map(String) : [],
+      playerAgencyRequired: options?.playerAgencyRequired ?? false,
+      surpriseAllowed: options?.surpriseAllowed ?? false,
+    });
+    return { response, scenePlan, dramaPlan };
   }
 
   async init() {
@@ -232,5 +276,7 @@ export const monia = moniaRuntime;
 if (typeof window !== 'undefined') {
   (window as any).__moniaRuntime = moniaRuntime;
   (window as any).__moniaPlanScene = (input: MonIAScenePlanningInput) => moniaRuntime.planScene(input);
+  (window as any).__moniaPlanDrama = (input: MonIADramaPlanningInput) => moniaRuntime.planDrama(input);
+  (window as any).__moniaDirectExperience = (request: MonIADirectorRequest, options?: {playerAgencyRequired?: boolean; surpriseAllowed?: boolean}) => moniaRuntime.directExperience(request, options);
   window.setTimeout(() => moniaRuntime.init(), 250);
 }
