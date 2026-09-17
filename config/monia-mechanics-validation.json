@@ -1,0 +1,138 @@
+{
+  "version": 1,
+  "status": "canonical-validation-protocol",
+  "purpose": "Every immersive gameplay/media mechanic must be validated independently before MonIA can treat it as production-ready.",
+  "global_rule": "No mechanic becomes live-canonical merely because one generated clip looks good. Each mechanic is tested against identity, camera grammar, performance, continuity, player agency and technical reliability.",
+  "character_reference_policy": {
+    "rule": "User-supplied Lucas references may teach identity, body, movement, voice, gaze, intimacy/performance vocabulary and everyday behavior. They do not dictate story events.",
+    "lucas_reference_dimensions": [
+      "face identity",
+      "body proportions",
+      "everyday posture",
+      "off-duty/private-home behavior",
+      "underwear / morning / bed context when non-explicit and appropriate",
+      "whisper / close-proximity performance",
+      "protective / tender behavior",
+      "speech rhythm and presence",
+      "gaze behavior",
+      "tattoo continuity"
+    ],
+    "generated_output_never_replaces_canon": true
+  },
+  "mechanics": {
+    "visio_incoming": {
+      "status": "must-validate",
+      "goal": "Lucas unexpectedly calls Marion and the result feels like a real live video call rather than a cinematic clip.",
+      "must_pass": [
+        "viewer is Lucas phone front camera",
+        "phone itself is invisible",
+        "Lucas mostly looks toward Marion's on-screen image with brief natural lens checks",
+        "gaze is not persistently off to one side",
+        "natural listening state before/after speech",
+        "V16 voice identity",
+        "speech/mouth coherence",
+        "natural breathing, blinks, micro-movement and handheld drift",
+        "context-appropriate wardrobe/location/light",
+        "incoming-call surprise presentation integrates with gameplay"
+      ]
+    },
+    "visio_outgoing": {
+      "status": "must-validate",
+      "goal": "Marion calls Lucas and Lucas answers according to his real current context/availability.",
+      "must_pass": [
+        "answer can vary by context",
+        "Lucas may be busy, moving, tired, at home, outdoors or between activities",
+        "same front-camera grammar as incoming visio",
+        "gaze reads as interaction with Marion rather than generic performance",
+        "V16 speaking coherence",
+        "transition from call UI to live feed is believable"
+      ]
+    },
+    "desktop_tablet_choice_scene": {
+      "status": "must-validate",
+      "goal": "A living full-screen scene continues while discreet choices or free action appear.",
+      "must_pass": [
+        "scene remains visually alive while player decides",
+        "choices do not dominate the screen",
+        "free-response or free-action path exists where appropriate",
+        "POV remains default unless cinematic grammar is intentionally invoked",
+        "choice result returns cleanly into the world"
+      ]
+    },
+    "pov_gameplay": {
+      "status": "must-validate",
+      "goal": "Player experiences ordinary life through Marion's viewpoint without constantly seeing Marion.",
+      "must_pass": [
+        "world feels inhabited rather than static",
+        "Lucas behaves spatially in the scene when present",
+        "ambient motion does not trigger unnecessary cutscenes",
+        "mini-phone remains accessible without becoming the main interface",
+        "camera feels appropriate for desktop/tablet"
+      ]
+    },
+    "external_cinematic": {
+      "status": "must-validate",
+      "goal": "Camera leaves Marion's POV only when seeing Marion materially improves the moment.",
+      "must_pass": [
+        "Marion and Lucas identities stay canonical across shots",
+        "camera grammar is cinematic, not visio/selfie",
+        "relationship and physical continuity are correct",
+        "player agency is preserved at consequential decisions",
+        "return to POV/gameplay is natural"
+      ]
+    },
+    "long_cinematic_60_120s": {
+      "status": "must-validate",
+      "goal": "MonIA can create one- to two-minute scenes by assembling validated short shots without identity drift.",
+      "must_pass": [
+        "same Lucas and Marion throughout",
+        "wardrobe/hair/light/location continuity",
+        "dialogue continuity",
+        "screen-direction continuity",
+        "voice identity continuity",
+        "failed shot can be regenerated without rebuilding entire sequence"
+      ]
+    },
+    "private_daily_life": {
+      "status": "must-validate",
+      "goal": "MonIA can create believable private everyday moments such as waking up, getting dressed, lying in bed, quiet home behavior or close affectionate interaction.",
+      "must_pass": [
+        "Lucas body and face remain canonical",
+        "body proportions stay stable",
+        "tattoos are correct when visible",
+        "wardrobe state fits context",
+        "non-explicit intimacy stays natural rather than posed",
+        "movement resembles approved private-home references rather than generic model motion"
+      ]
+    },
+    "whisper_close_proximity": {
+      "status": "must-validate",
+      "goal": "Close tender or whispered interaction feels physically believable and emotionally restrained.",
+      "must_pass": [
+        "mouth/head proximity is anatomically credible",
+        "whisper performance matches intended voice behavior",
+        "no exaggerated romance posing",
+        "camera distance fits either POV or cinematic grammar",
+        "identity stays stable at close range"
+      ]
+    }
+  },
+  "validation_states": ["not-tested", "candidate", "needs-fix", "approved-mechanic", "deprecated"],
+  "promotion_rule": "Only explicit user validation or a clearly recorded project decision may move a mechanic to approved-mechanic.",
+  "visio_gaze_rule": {
+    "priority": "critical",
+    "target": "Lucas should visually read as attending to Marion on the screen, not staring permanently into the lens and not looking persistently off-axis.",
+    "acceptable_behavior": [
+      "mostly screen-focused gaze near camera axis",
+      "short direct lens checks",
+      "brief natural glances away for thought/context",
+      "returns attention toward Marion promptly"
+    ],
+    "reject": [
+      "persistent side gaze",
+      "fixed lens stare",
+      "eyes that do not react to conversation",
+      "generic presenter gaze"
+    ]
+  }
+}
