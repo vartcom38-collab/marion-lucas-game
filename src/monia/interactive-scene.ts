@@ -1,10 +1,12 @@
 import { createSceneContinuityPacket, updateSceneContinuityPacket, continuityPrompt, type MonIASceneContinuityPacket } from './scene-continuity';
+import { persistInteractiveConsequence } from './interactive-consequence-memory';
 
 export type MonIAInteractiveChoice={
   id:string;
   label:string;
   intent:string;
   consequenceHint?:string;
+  effects?:{relationship?:number;trust?:number;chemistry?:number};
 };
 
 export type MonIAInteractiveExperience={
@@ -47,6 +49,11 @@ function cleanChoices(raw:unknown):MonIAInteractiveChoice[]{
     label:String(item?.label||item?.text||`Choix ${index+1}`).trim(),
     intent:String(item?.intent||item?.effect||'continue naturally').trim(),
     consequenceHint:item?.consequenceHint?String(item.consequenceHint):undefined,
+    effects:item?.effects&&typeof item.effects==='object'?{
+      relationship:item.effects.relationship===undefined?undefined:Number(item.effects.relationship),
+      trust:item.effects.trust===undefined?undefined:Number(item.effects.trust),
+      chemistry:item.effects.chemistry===undefined?undefined:Number(item.effects.chemistry),
+    }:undefined,
   })).filter(item=>item.label);
 }
 
@@ -60,7 +67,7 @@ function experienceLocation(experience:MonIAInteractiveExperience){
 
 function experienceActors(experience:MonIAInteractiveExperience){
   const actors=Array.isArray(experience.generationJob?.actors)?experience.generationJob.actors:[];
-  if(actors.length)return actors.map(String);
+  if(actors.length)return actors.map((item:any)=>typeof item==='string'?item:String(item?.id||'')).filter(Boolean);
   const actor=String(experience.response?.actor||experience.requestSnapshot?.actor||'Lucas');
   return actor?[actor]:['Lucas'];
 }
@@ -106,7 +113,13 @@ export function applyInteractiveChoice(scene:MonIAInteractiveScene,input:{choice
     branchHistory:[...scene.branchHistory,{beatIndex:scene.beatIndex,choiceId:choice?.id,freeText:freeText||undefined,at:Date.now()}],
     choices:[],beatIndex:scene.beatIndex+1,
   };
-  write(next);return next;
+  write(next);
+  void persistInteractiveConsequence({
+    sceneId:scene.id,beatIndex:scene.beatIndex,playerInput,choiceId:choice?.id,
+    consequenceHint:choice?.consequenceHint,effects:choice?.effects,
+    actor:String(scene.experience.response?.actor||scene.experience.requestSnapshot?.actor||'Lucas'),
+  });
+  return next;
 }
 
 export function buildInteractiveResumePrompt(scene:MonIAInteractiveScene){
@@ -131,4 +144,4 @@ export function attachInteractiveMedia(scene:MonIAInteractiveScene,mediaUrl?:str
 export function failInteractiveScene(scene:MonIAInteractiveScene,error:string){const next={...scene,state:'error' as const,error};write(next);return next}
 export function completeInteractiveScene(scene:MonIAInteractiveScene){const next={...scene,state:'complete' as const,choices:[]};write(next);return next}
 
-console.info('[MonIA] Interactive scene branches ready · request snapshot + listed choices + free response · same-scene continuity preserved across narrative and media runtimes');
+console.info('[MonIA] Interactive scene branches ready · durable decision memory + explicit-only numeric effects + same-scene continuity across narrative and media runtimes');
