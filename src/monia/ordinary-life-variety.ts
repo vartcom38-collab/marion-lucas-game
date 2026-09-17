@@ -1,4 +1,3 @@
-import './ordinary-life-direction-bridge';
 import { getAnnualLifeProfile, annualWeight } from './annual-life-variation';
 import { getAdultLifeRhythm } from './adult-life-rhythm';
 
@@ -25,60 +24,14 @@ export function getOrdinaryLifeBeats():OrdinaryLifeBeat[]{
   const energy=n(s.energy,70),stress=n(s.stress,20),children=Math.max(0,n(s.children));
   const homeLike=/home|family|finca|estate|madrid/i.test(place);
   const evening=h>=18||h<7;const daytime=h>=9&&h<18;
-  const base:Record<OrdinaryLifeKind,number>={
-    quiet: annualWeight('home',42)+(evening?10:0)+(stress>=65?16:0)+(energy<=35?14:0),
-    practical: annualWeight('home',44)+(daytime?8:0)+(adult.stability>55?8:0),
-    self: annualWeight('career',46)+(daytime?8:0)+(adult.flexibility>60?6:0),
-    social: annualWeight('social',42)+(daytime?8:0)+(stress>=75?-12:0),
-    couple: annualWeight('couple',s.official?48:24)+(evening?9:0)+(children?4:0),
-    outing: annualWeight('mixed',40)+(daytime?9:0)+(energy>=55?8:0)+(stress>=75?-10:0),
-  };
-  const labels:Record<OrdinaryLifeKind,string>={
-    quiet:'moment calme et non productif',practical:'petite tâche concrète du quotidien',self:'moment pour la vie propre de Marion',social:'petit lien social sans grand événement',couple:'micro-moment de couple sans en faire une scène majeure',outing:'courte sortie ou changement d’air',
-  };
-  const ids:Record<OrdinaryLifeKind,string[]>={
-    quiet:['tea-window','read-few-pages','music-floor','balcony-air','late-sofa'],
-    practical:['tidy-drawer','laundry-fold','kitchen-reset','quick-groceries','water-plants'],
-    self:['journal-note','personal-admin','outfit-choice','photo-sort','own-project'],
-    social:['friend-message','short-coffee','family-checkin','voice-note-friend','street-hello'],
-    couple:['shared-coffee','small-touch','quiet-kitchen','brief-checkin','same-room-silence'],
-    outing:['short-walk','bakery-run','market-loop','errand-route','sunset-step-out'],
-  };
-  const kinds=Object.keys(base) as OrdinaryLifeKind[];
+  const base:Record<OrdinaryLifeKind,number>={quiet:annualWeight('home',42)+(evening?10:0)+(stress>=65?16:0)+(energy<=35?14:0),practical:annualWeight('home',44)+(daytime?8:0)+(adult.stability>55?8:0),self:annualWeight('career',46)+(daytime?8:0)+(adult.flexibility>60?6:0),social:annualWeight('social',42)+(daytime?8:0)+(stress>=75?-12:0),couple:annualWeight('couple',s.official?48:24)+(evening?9:0)+(children?4:0),outing:annualWeight('mixed',40)+(daytime?9:0)+(energy>=55?8:0)+(stress>=75?-10:0)};
+  const labels:Record<OrdinaryLifeKind,string>={quiet:'moment calme et non productif',practical:'petite tâche concrète du quotidien',self:'moment pour la vie propre de Marion',social:'petit lien social sans grand événement',couple:'micro-moment de couple sans en faire une scène majeure',outing:'courte sortie ou changement d’air'};
+  const ids:Record<OrdinaryLifeKind,string[]>={quiet:['tea-window','read-few-pages','music-floor','balcony-air','late-sofa'],practical:['tidy-drawer','laundry-fold','kitchen-reset','quick-groceries','water-plants'],self:['journal-note','personal-admin','outfit-choice','photo-sort','own-project'],social:['friend-message','short-coffee','family-checkin','voice-note-friend','street-hello'],couple:['shared-coffee','small-touch','quiet-kitchen','brief-checkin','same-room-silence'],outing:['short-walk','bakery-run','market-loop','errand-route','sunset-step-out']};
   const out:OrdinaryLifeBeat[]=[];
-  for(const kind of kinds){
-    let score=base[kind]-recentPenalty(history,kind)+deterministicNudge(seed,kind);
-    if(!homeLike&&kind==='practical')score-=9;
-    if(!s.official&&kind==='couple')score-=14;
-    if(children&&kind==='self')score+=Math.min(8,Math.round(adult.familyAutonomy/12));
-    const pool=ids[kind];const id=pool[hash(`${seed}:${kind}:${history.slice(-6).join('|')}`)%pool.length];
-    const yearHint=annual?` Profil annuel: ${annual.tone}/${annual.secondaryTone}.`:'';
-    out.push({id:`ordinary-${kind}-${id}`,kind,score:Math.max(1,Math.round(score)),place,time:t,reason:`${labels[kind]}. Répétitions récentes pénalisées; contexte heure/énergie/stress et rythme de vie pris en compte.${yearHint}`});
-  }
+  for(const kind of Object.keys(base) as OrdinaryLifeKind[]){let score=base[kind]-recentPenalty(history,kind)+deterministicNudge(seed,kind);if(!homeLike&&kind==='practical')score-=9;if(!s.official&&kind==='couple')score-=14;if(children&&kind==='self')score+=Math.min(8,Math.round(adult.familyAutonomy/12));const pool=ids[kind];const id=pool[hash(`${seed}:${kind}:${history.slice(-6).join('|')}`)%pool.length];const yearHint=annual?` Profil annuel: ${annual.tone}/${annual.secondaryTone}.`:'';out.push({id:`ordinary-${kind}-${id}`,kind,score:Math.max(1,Math.round(score)),place,time:t,reason:`${labels[kind]}. Répétitions récentes pénalisées; contexte heure/énergie/stress et rythme de vie pris en compte.${yearHint}`})}
   return out.sort((a,b)=>b.score-a.score);
 }
-
 export function markOrdinaryLifeBeat(beat:OrdinaryLifeBeat){const s=read();if(!s)return false;s.eventHistory=[...(s.eventHistory||[]),`ordinary:${beat.kind}:${beat.id}:day-${Math.max(1,n(s.day,1))}`].slice(-240);return write(s)}
-
-export function consumeOrdinaryLifeBeat(id:string):OrdinaryLifeResult{
-  const beat=getOrdinaryLifeBeats().find(item=>item.id===id);const s=read();if(!beat||!s)return{ok:false,minutes:0};
-  const minutes:Record<OrdinaryLifeKind,number>={quiet:25,practical:30,self:35,social:35,couple:25,outing:45};
-  const effects:Record<OrdinaryLifeKind,[number,number]>={quiet:[5,-7],practical:[-2,-3],self:[-2,-4],social:[-4,-5],couple:[1,-4],outing:[-5,-6]};
-  const duration=minutes[beat.kind];const [energy,stress]=effects[beat.kind];
-  addMinutes(s,duration);s.energy=clamp(n(s.energy,70)+energy);s.stress=clamp(n(s.stress,20)+stress);
-  const flags=s.flags||(s.flags={});flags.lastOrdinaryLifeBeat=beat.id;flags.lastOrdinaryLifeKind=beat.kind;flags.lastOrdinaryLifeDay=Math.max(1,n(s.day,1));flags.lastOrdinaryLifeTime=String(s.time||'');
-  s.eventHistory=[...(s.eventHistory||[]),`ordinary:${beat.kind}:${beat.id}:day-${Math.max(1,n(s.day,1))}`].slice(-240);
-  if(!write(s))return{ok:false,minutes:0};
-  window.dispatchEvent(new CustomEvent('monia:ordinary-life-consumed',{detail:{beat,minutes:duration}}));
-  window.dispatchEvent(new CustomEvent('monia:daily-intent',{detail:{intent:'state-changed',source:'ordinary-life',beat}}));
-  return{ok:true,beat,minutes:duration};
-}
-
-let lastSignature='';
-function emitOpportunity(){const s=read();if(!s)return;const beat=getOrdinaryLifeBeats()[0];if(!beat)return;const signature=`${s.day||1}:${s.time||''}:${s.place||''}:${beat.id}`;if(signature===lastSignature)return;lastSignature=signature;window.dispatchEvent(new CustomEvent('monia:ordinary-life-opportunity',{detail:{beat}}));}
-function schedule(){window.setTimeout(emitOpportunity,80)}
-window.addEventListener('monia:save-changed',schedule);window.addEventListener('storage',e=>{if(e.key===SAVE_KEY)schedule()});
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',schedule,{once:true});else schedule();
-
-declare global{interface Window{__moniaOrdinaryLifeBeats?:()=>OrdinaryLifeBeat[];__moniaMarkOrdinaryLifeBeat?:(beat:OrdinaryLifeBeat)=>boolean;__moniaConsumeOrdinaryLifeBeat?:(id:string)=>OrdinaryLifeResult}}
-window.__moniaOrdinaryLifeBeats=getOrdinaryLifeBeats;window.__moniaMarkOrdinaryLifeBeat=markOrdinaryLifeBeat;window.__moniaConsumeOrdinaryLifeBeat=consumeOrdinaryLifeBeat;
+export function consumeOrdinaryLifeBeat(id:string):OrdinaryLifeResult{const beat=getOrdinaryLifeBeats().find(item=>item.id===id);const s=read();if(!beat||!s)return{ok:false,minutes:0};const minutes:Record<OrdinaryLifeKind,number>={quiet:25,practical:30,self:35,social:35,couple:25,outing:45};const effects:Record<OrdinaryLifeKind,[number,number]>={quiet:[5,-7],practical:[-2,-3],self:[-2,-4],social:[-4,-5],couple:[1,-4],outing:[-5,-6]};const duration=minutes[beat.kind];const [energy,stress]=effects[beat.kind];addMinutes(s,duration);s.energy=clamp(n(s.energy,70)+energy);s.stress=clamp(n(s.stress,20)+stress);const flags=s.flags||(s.flags={});flags.lastOrdinaryLifeBeat=beat.id;flags.lastOrdinaryLifeKind=beat.kind;flags.lastOrdinaryLifeDay=Math.max(1,n(s.day,1));flags.lastOrdinaryLifeTime=String(s.time||'');s.eventHistory=[...(s.eventHistory||[]),`ordinary:${beat.kind}:${beat.id}:day-${Math.max(1,n(s.day,1))}`].slice(-240);if(!write(s))return{ok:false,minutes:0};window.dispatchEvent(new CustomEvent('monia:ordinary-life-consumed',{detail:{beat,minutes:duration}}));window.dispatchEvent(new CustomEvent('monia:daily-intent',{detail:{intent:'state-changed',source:'ordinary-life',beat}}));return{ok:true,beat,minutes:duration}}
+let lastSignature='';function emitOpportunity(){const s=read();if(!s)return;const beat=getOrdinaryLifeBeats()[0];if(!beat)return;const signature=`${s.day||1}:${s.time||''}:${s.place||''}:${beat.id}`;if(signature===lastSignature)return;lastSignature=signature;window.dispatchEvent(new CustomEvent('monia:ordinary-life-opportunity',{detail:{beat}}))}function schedule(){window.setTimeout(emitOpportunity,80)}window.addEventListener('monia:save-changed',schedule);window.addEventListener('storage',e=>{if(e.key===SAVE_KEY)schedule()});if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',schedule,{once:true});else schedule();
+declare global{interface Window{__moniaOrdinaryLifeBeats?:()=>OrdinaryLifeBeat[];__moniaMarkOrdinaryLifeBeat?:(beat:OrdinaryLifeBeat)=>boolean;__moniaConsumeOrdinaryLifeBeat?:(id:string)=>OrdinaryLifeResult}}window.__moniaOrdinaryLifeBeats=getOrdinaryLifeBeats;window.__moniaMarkOrdinaryLifeBeat=markOrdinaryLifeBeat;window.__moniaConsumeOrdinaryLifeBeat=consumeOrdinaryLifeBeat;
