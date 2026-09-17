@@ -82,7 +82,7 @@ jobs:
               'scripts/monia_lucas_v16_runtime_voice.py',
               'scripts/monia_av_coherence.py',
               'scripts/drama_director.py',
-              '.github/workflows/monia-speech-performance.yml',
+              '.github/workflows/monia-kaggle-speech-performance.yml',
               'notebooks/monia_kaggle_speech_performance.ipynb',
               'config/lucas-reference-bank.json',
               'config/lucas-voice-strategy.json',
@@ -155,7 +155,7 @@ jobs:
           require(manifest.get('status') == 'locked', 'long-term visio canon manifest remains locked')
           require(manifest.get('fallback') is None, 'canonical visio manifest has no unapproved fallback')
 
-          speech_workflow = Path('.github/workflows/monia-speech-performance.yml').read_text(encoding='utf-8').lower()
+          speech_workflow = Path('.github/workflows/monia-kaggle-speech-performance.yml').read_text(encoding='utf-8').lower()
           require('musetalk' in speech_workflow, 'GPU speech-performance workflow uses MuseTalk')
           require('candidate' in speech_workflow, 'speech-performance outputs remain candidate-only')
 
