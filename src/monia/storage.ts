@@ -15,18 +15,25 @@ function scoreMemory(memory:MonIAMemory,query:MonIAMemoryQuery){
   let score=0;
   const wanted=tokens(query.text||'');
   const own=tokens(memory.text);
-  wanted.forEach(t=>{if(own.has(t))score+=8;else if(normalize(memory.text).includes(t))score+=3});
+  let lexicalMatches=0;
+  wanted.forEach(t=>{if(own.has(t)){score+=8;lexicalMatches++}else if(normalize(memory.text).includes(t)){score+=3;lexicalMatches++}});
   const actors=(query.actors||[]).map(normalize);
   actors.forEach(actor=>{if(memory.actors.some(a=>normalize(a)===actor))score+=6});
-  if(typeof query.day==='number'){
-    const age=Math.max(0,query.day-memory.day);
-    score+=Math.max(0,8-Math.min(age,8));
-  }
+  const dayAge=typeof query.day==='number'?Math.max(0,query.day-memory.day):0;
+  if(typeof query.day==='number')score+=Math.max(0,8-Math.min(dayAge,8));
   if(memory.kind==='promise')score+=10;
   else if(memory.kind==='event')score+=6;
   else if(memory.kind==='dialogue')score+=3;
   const ageMs=Math.max(0,Date.now()-memory.createdAt);
   score+=Math.max(0,4-Math.floor(ageMs/(1000*60*60*24*7)));
+
+  // Interactive decisions are durable facts, but they should not haunt every later Lucas scene.
+  // Very recent decisions may shape the immediate aftermath even without shared words.
+  // Older decisions require an actual lexical connection to the current request/context.
+  const interactiveDecision=normalize(memory.text).startsWith('decision de marion avec');
+  if(interactiveDecision&&dayAge>2&&lexicalMatches===0)return -1;
+  if(interactiveDecision&&dayAge<=2)score+=4;
+  if(interactiveDecision&&lexicalMatches>0)score+=Math.min(8,lexicalMatches*2);
   return score;
 }
 
