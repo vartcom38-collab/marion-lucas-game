@@ -65,7 +65,7 @@ async function prepare(request:GameplayVisioRequest){
     const generatedReady=Boolean(transient?.listening&&transient?.speaking&&transient?.reaction);
     const approved=hasApprovedLucasVisio()?(approvedLucasVisioFor('talk')||approvedLucasVisioFor('listen')):null;
     if(!generatedReady&&(!approved||!isApprovedLucasVisioSource(approved.src))){
-      console.warn('[Visio Director] no validated transient pack or approved Lucas visio media is available');
+      console.warn('[Visio Director] no validated transient pack or approved Dominic visio media is available');
       return;
     }
 
@@ -74,7 +74,7 @@ async function prepare(request:GameplayVisioRequest){
       context:{
         speaker:'Marion',place:save!.place||'unknown',time:save!.time||'00:00',day:Number(save!.day||0),
         recentAction:surprise?`MonIA prépare une visio surprise cohérente avec la situation ${request.id}.`:`Le gameplay autorise maintenant une visio liée à la situation ${request.id}.`,
-        activeObjective:surprise?'Créer un appel spontané crédible de Lucas, sans spoiler la suite et sans contredire son agenda.':'Jouer uniquement la visio décidée par le gameplay, sans inventer un événement futur.',
+        activeObjective:surprise?'Créer un appel spontané crédible de Dominic, sans spoiler la suite et sans contredire son agenda.':'Jouer uniquement la visio décidée par le gameplay, sans inventer un événement futur.',
         relationship:relationLabel(Number(save!.relationship||0)),
         memories:(save!.memories||[]).slice(0,8),recentEvents:(save!.eventHistory||[]).slice(-8),
         rules:[
