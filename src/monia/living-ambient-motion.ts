@@ -1,7 +1,5 @@
 import './living-ambient-motion.css';
 import { getSeasonalLifeSnapshot } from './seasonal-life-engine';
-import type { OrdinaryLifeBeat } from './ordinary-life-variety';
-
 const SAVE_KEY='marion-lucas-save-v4';
 type Save={time?:string;place?:string;screen?:string;overlay?:unknown};
 let ordinaryKind='';
@@ -31,7 +29,7 @@ function mount(){
 
 let raf=0;function schedule(){cancelAnimationFrame(raf);raf=requestAnimationFrame(mount)}
 window.addEventListener('storage',schedule);window.addEventListener('monia:save-changed',schedule);window.addEventListener('monia:daily-intent',()=>setTimeout(schedule,120));
-window.addEventListener('monia:ordinary-life-world-reaction',((ev:CustomEvent<{beat?:OrdinaryLifeBeat;motion?:string;duration?:number}>)=>{if(ordinaryTimer)clearTimeout(ordinaryTimer);ordinaryKind=String(ev.detail?.beat?.kind||'');ordinaryMotion=String(ev.detail?.motion||'');schedule();const token=`${ordinaryKind}|${ordinaryMotion}`;ordinaryTimer=setTimeout(()=>{if(`${ordinaryKind}|${ordinaryMotion}`!==token)return;ordinaryKind='';ordinaryMotion='';schedule()},Math.max(600,Number(ev.detail?.duration)||2600))}) as EventListener);
+window.addEventListener('monia:ordinary-life-world-reaction',((ev:CustomEvent<{beat?:{kind?:string};motion?:string;duration?:number}>)=>{if(ordinaryTimer)clearTimeout(ordinaryTimer);ordinaryKind=String(ev.detail?.beat?.kind||'');ordinaryMotion=String(ev.detail?.motion||'');schedule();const token=`${ordinaryKind}|${ordinaryMotion}`;ordinaryTimer=setTimeout(()=>{if(`${ordinaryKind}|${ordinaryMotion}`!==token)return;ordinaryKind='';ordinaryMotion='';schedule()},Math.max(600,Number(ev.detail?.duration)||2600))}) as EventListener);
 new MutationObserver(schedule).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class','data-open']});
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',schedule,{once:true});else schedule();
 
