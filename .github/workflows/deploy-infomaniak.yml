@@ -91,7 +91,7 @@ jobs:
           ftp.login(user, password)
           ftp.prot_p()
           ftp.set_pasv(True)
-          remote_root = '/sites/marion-lucas.marionbolomey.fr'
+          remote_root = '/'
 
           def ensure_remote_dir(path: str):
               parts = [p for p in path.split('/') if p]
@@ -105,9 +105,7 @@ jobs:
 
           def remote_dir_for(local_dir: Path) -> str:
               rel = local_dir.relative_to(local_root)
-              if str(rel) == '.':
-                  return remote_root
-              return remote_root.rstrip('/') + '/' + rel.as_posix()
+              return remote_root if str(rel) == '.' else '/' + rel.as_posix()
 
           def remote_size(remote_dir: str, filename: str):
               ftp.cwd(remote_dir)
@@ -151,6 +149,7 @@ jobs:
               local_root / 'index.html',
               local_root / 'monia-test.html',
               local_root / 'latest-visio.html',
+              local_root / 'playtest-day1.html',
           }
 
           for root, dirs, files in os.walk(local_root):
@@ -162,7 +161,7 @@ jobs:
                       continue
                   upload_verified(local_path, remote_dir)
 
-          for entrypoint in ('latest-visio.html', 'monia-test.html', 'index.html'):
+          for entrypoint in ('latest-visio.html', 'monia-test.html', 'playtest-day1.html', 'index.html'):
               local_path = local_root / entrypoint
               if local_path.exists():
                   upload_verified(local_path, remote_root, atomic=True)
