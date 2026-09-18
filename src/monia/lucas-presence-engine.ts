@@ -38,6 +38,9 @@ export function getLucasPresence():LucasPresenceSnapshot|null{
   return{state:'unknown',lucasPlace:'',marionPlace,together:false,reachableByPhone:true,privateTimePossible:false,reason:'Le lieu de Marion seul ne suffit plus à supposer que Lucas est physiquement présent.',source:'inference'};
 }
 
+// Player-facing alias; keep the legacy Lucas export for technical compatibility.
+export const getDominicPresence=getLucasPresence;
+
 export function getLucasCommunicationPolicy():LucasCommunicationPolicy{
   const p=getLucasPresence(),pro=getLucasProfessionalContext();if(!p)return{mode:'connect',canCall:true,canMessage:true,responseDelayMinutes:0,label:'Disponible',reason:'Aucun blocage de disponibilité connu.'};
   if(!p.reachableByPhone&&p.state==='unknown')return{mode:'unreachable',canCall:false,canMessage:false,responseDelayMinutes:0,label:'Inconnu',reason:p.reason};
