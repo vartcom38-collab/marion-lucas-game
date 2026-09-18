@@ -1,9 +1,10 @@
 import { isNimesPlace, isSpainPlace } from './spain-geography';
 import { getResidenceSnapshot } from './residence-base-life';
+import { hasMetDominic } from './relationship-chronology';
 
 const SAVE_KEY='marion-lucas-save-v4';
 
-type Save={day?:number;time?:string;place?:string;metLucas?:boolean;official?:boolean;relationship?:number;trust?:number;calendar?:Array<{day?:number;time?:string;owner?:string;title?:string;place?:string}>;flags?:Record<string,unknown>;eventHistory?:string[]};
+type Save={day?:number;time?:string;place?:string;metDominic?:boolean;official?:boolean;relationship?:number;trust?:number;calendar?:Array<{day?:number;time?:string;owner?:string;title?:string;place?:string}>;flags?:Record<string,unknown>;eventHistory?:string[]};
 export type FranceSpainPhase='nimes-rooted'|'spain-opening'|'transitioning'|'spain-rooted'|'between-bases';
 export type FranceSpainState={phase:FranceSpainPhase;nimesIsHome:boolean;spainIsHome:boolean;marineDistance:'same-city'|'distance';canPrepareSpain:boolean;canReturnNimes:boolean;travelFriction:'low'|'normal'|'high';suggestions:Array<{id:string;label:string;intent:string;weight:number}>;reason:string};
 export type SpainInstallationReadiness={eligible:boolean;daysSinceOpening:number;livedMoments:number;basePlace:string|null;baseKind:string|null;reason:string};
@@ -20,7 +21,7 @@ export function getSpainInstallationReadiness():SpainInstallationReadiness{
   const livedMoments=(s.eventHistory||[]).filter(e=>/spain-place:|spain-familiar-place:|spain-social-|spain-life-opened:|place-lived:(madrid|seville|salamanca)/i.test(String(e))).length;
   const basePlace=installationBase(s),base=basePlace?getResidenceSnapshot(basePlace):null;
   if(f.spainHomeEstablished===true)return{eligible:false,daysSinceOpening,livedMoments,basePlace,baseKind:base?.kind||null,reason:'Une base espagnole est déjà établie.'};
-  if(!s.official)return{eligible:false,daysSinceOpening,livedMoments,basePlace,baseKind:base?.kind||null,reason:'La relation n’est pas encore dans une phase où une installation commune peut être posée.'};
+  if(!hasMetDominic(s)||!s.official)return{eligible:false,daysSinceOpening,livedMoments,basePlace,baseKind:base?.kind||null,reason:'La relation n’est pas encore dans une phase où une installation commune peut être posée.'};
   if(!openedDay)return{eligible:false,daysSinceOpening,livedMoments,basePlace,baseKind:base?.kind||null,reason:'La vie en Espagne doit d’abord avoir réellement commencé.'};
   if(daysSinceOpening<4||livedMoments<3)return{eligible:false,daysSinceOpening,livedMoments,basePlace,baseKind:base?.kind||null,reason:'Il faut d’abord plusieurs jours et plusieurs moments ordinaires vécus sur place : l’installation ne doit pas être instantanée.'};
   if(n(s.relationship)<40||n(s.trust)<30)return{eligible:false,daysSinceOpening,livedMoments,basePlace,baseKind:base?.kind||null,reason:'Le quotidien commun n’est pas encore assez stable pour transformer un séjour en installation.'};
@@ -38,7 +39,7 @@ export function getFranceSpainState():FranceSpainState|null{
   const hasSpainRoot=!!f.spainHomeEstablished||recent(s,/spain-home-established|moved-to-spain/i);
   let phase:FranceSpainPhase='nimes-rooted';
   if(hasSpainRoot&&nimes)phase='between-bases';else if(hasSpainRoot)phase='spain-rooted';else if(spain)phase='transitioning';else if(hasSpainOpened)phase='spain-opening';
-  const canPrepareSpain=!!s.metLucas&&relationship>=35&&trust>=25&&(hasSpainOpened||day>7);
+  const canPrepareSpain=hasMetDominic(s)&&relationship>=35&&trust>=25&&(hasSpainOpened||day>7);
   const canReturnNimes=hasSpainOpened||hasSpainRoot||spain;
   const suggestions:FranceSpainState['suggestions']=[];
   if(canPrepareSpain&&!spain&&!hasSpainRoot)suggestions.push({id:'prepare-spain',label:'Préparer tranquillement la suite en Espagne',intent:'open-map',weight:48});
