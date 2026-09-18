@@ -178,4 +178,5 @@ jobs:
           curl -fsSL --retry 4 --retry-delay 2 --connect-timeout 15 --max-time 45 "$base/?deploy=${GITHUB_SHA}" -o "$public_index"
           test -s "$public_index"
           grep -q '<div id="app">' "$public_index"
+          grep -q 'immersive-day1-v2' "$public_index"
           curl -fsSI --retry 4 --retry-delay 2 --connect-timeout 15 --max-time 45 "$base/latest-visio.html" >/dev/null
