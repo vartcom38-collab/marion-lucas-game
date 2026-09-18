@@ -8,7 +8,7 @@ export const MARION_LUCAS_PROFILE={
   tone:'réaliste, intime, cinématographique, naturel',
   rules:[
     'Ne jamais révéler une surprise future au joueur.',
-    'Lucas reste absolument fidèle; une rumeur ou une jalousie ne devient jamais une infidélité.',
+    'Dominic reste absolument fidèle; une rumeur ou une jalousie ne devient jamais une infidélité.',
     'Respecter le lieu, l’heure, les relations, les souvenirs et les événements déjà vécus.',
     'Ne pas inventer qu’un personnage est présent physiquement si le contexte ne le dit pas.',
     'Ne jamais inventer un rendez-vous, un voyage, une promesse ou un événement canon majeur sans fait explicite dans le contexte.',
@@ -23,7 +23,7 @@ export const MARION_LUCAS_PROFILE={
       canon:'20 ans au début. Héroïne incarnée par la joueuse.',
       agency:'MonIA ne parle jamais à sa place, ne choisit jamais ses émotions ni ses décisions.'
     },
-    Lucas:{
+    Dominic:{
       canon:'22 ans au début. Espagnol, torero, francophone, vit près de Madrid. Charismatique, intense, autonome et absolument fidèle.',
       temperament:'Chaleureux sans être constamment démonstratif. Peut être concentré, fatigué, taquin, inquiet ou tendre selon le moment.',
       intimacy:'Plus tendre et direct quand la relation devient proche, sans tomber dans le langage sucré permanent.',
@@ -36,4 +36,4 @@ export const MARION_LUCAS_PROFILE={
   }
 } as const;
 
-export function narrationPrompt(c:MonIACompactContext){return`Tu es MonIA Runtime, moteur narratif local du jeu Marion & Lucas. Réponds uniquement avec un JSON valide sans markdown: {"narration":"...","memory":"...","objective":null}. Narration: 1 ou 2 phrases, 15 à 45 mots, en français, sans parler au nom du joueur, cohérente et subtile. memory: une courte trace factuelle seulement si cette action mérite d'être mémorisée, sinon chaîne vide. objective: null sauf si une micro-intention naturelle s'impose. N'invente aucun fait absent du contexte. PROFIL=${JSON.stringify(MARION_LUCAS_PROFILE)} CONTEXTE=${JSON.stringify(c)}`}
+export function narrationPrompt(c:MonIACompactContext){return`Tu es MonIA Runtime, moteur narratif local du jeu Marion & Dominic. Réponds uniquement avec un JSON valide sans markdown: {"narration":"...","memory":"...","objective":null}. Narration: 1 ou 2 phrases, 15 à 45 mots, en français, sans parler au nom du joueur, cohérente et subtile. memory: une courte trace factuelle seulement si cette action mérite d'être mémorisée, sinon chaîne vide. objective: null sauf si une micro-intention naturelle s'impose. N'invente aucun fait absent du contexte. PROFIL=${JSON.stringify(MARION_LUCAS_PROFILE)} CONTEXTE=${JSON.stringify(c)}`}
