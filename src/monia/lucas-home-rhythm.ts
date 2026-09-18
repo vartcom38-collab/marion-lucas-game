@@ -1,7 +1,8 @@
 import { getTaurineCareerPressure } from './taurine-career-pressure-engine';
+import { hasMetDominic } from './relationship-chronology';
 
 const SAVE_KEY='marion-lucas-save-v4';
-type Save={day?:number;time?:string;place?:string;official?:boolean;flags?:Record<string,unknown>};
+type Save={day?:number;time?:string;place?:string;metDominic?:boolean;official?:boolean;flags?:Record<string,unknown>};
 export type LucasHomeActivity='sleeping'|'resting'|'training'|'working'|'with-cuadrilla'|'out'|'quiet-home'|'available';
 export type LucasHomeRhythm={atHome:boolean;activity:LucasHomeActivity;interruptible:boolean;privateTimePossible:boolean;contactNatural:boolean;label:string;};
 
@@ -12,7 +13,7 @@ function hash(v:string){let h=2166136261;for(let i=0;i<v.length;i++){h^=v.charCo
 function isHomeLike(place:string){return /home|maison|appartement|finca|chez eux|domicile/i.test(place)}
 
 export function resolveLucasHomeRhythm(place:string,together:boolean):LucasHomeRhythm|null{
-  const s=read();if(!s||!s.official||!together||!isHomeLike(place))return null;
+  const s=read();if(!s||!hasMetDominic(s)||!s.official||!together||!isHomeLike(place))return null;
   const now=mins(s.time),pressure=getTaurineCareerPressure(),seed=hash(`${n(s.day,1)}:${Math.floor(now/90)}:${pressure?.level||'none'}`);
   let activity:LucasHomeActivity='available';
   if(now<390||now>=1410)activity='sleeping';
@@ -25,7 +26,7 @@ export function resolveLucasHomeRhythm(place:string,together:boolean):LucasHomeR
   const interruptible=activity==='available'||activity==='quiet-home'||activity==='resting';
   const privateTimePossible=activity==='available'||activity==='quiet-home';
   const contactNatural=activity!=='sleeping'&&activity!=='working'&&activity!=='training'&&activity!=='with-cuadrilla';
-  const label=activity==='sleeping'?'Lucas dort.':activity==='resting'?'Lucas récupère tranquillement.':activity==='training'?'Lucas est pris par son entraînement.':activity==='working'?'Lucas travaille encore sur des choses liées à sa carrière.':activity==='with-cuadrilla'?'Lucas est occupé avec la cuadrilla.':activity==='out'?'Lucas est sorti un moment.':activity==='quiet-home'?'Lucas est à la maison, dans un moment calme.':'Lucas est à la maison et disponible.';
+  const label=activity==='sleeping'?'Dominic dort.':activity==='resting'?'Dominic récupère tranquillement.':activity==='training'?'Dominic est pris par son entraînement.':activity==='working'?'Dominic travaille encore sur des choses liées à sa carrière.':activity==='with-cuadrilla'?'Dominic est occupé avec la cuadrilla.':activity==='out'?'Dominic est sorti un moment.':activity==='quiet-home'?'Dominic est à la maison, dans un moment calme.':'Dominic est à la maison et disponible.';
   return{atHome:true,activity,interruptible,privateTimePossible,contactNatural,label};
 }
 
