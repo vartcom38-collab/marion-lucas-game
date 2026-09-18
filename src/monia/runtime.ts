@@ -150,8 +150,14 @@ class MonIARuntime {
   private listeners = new Set<(s: MonIAStatus) => void>();
 
   constructor() {
-    const saved = moniaStorage.getSettings();
-    this.mode = (saved.mode as MonIAMode) || 'auto';
+    let savedMode:MonIAMode='auto';
+    try{
+      const raw=localStorage.getItem('marion-lucas-settings-v2');
+      const prefs=raw?JSON.parse(raw):{};
+      const value=String(prefs?.aiMode||prefs?.mode||'auto');
+      if(value==='auto'||value==='light'||value==='advanced')savedMode=value;
+    }catch{}
+    this.mode=savedMode;
   }
 
   subscribe(fn: (s: MonIAStatus) => void) {
