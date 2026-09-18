@@ -5,11 +5,13 @@ import type { OrdinaryLifeBeat } from './ordinary-life-variety';
 const SAVE_KEY='marion-lucas-save-v4';
 type Save={time?:string;place?:string;screen?:string;overlay?:unknown};
 let ordinaryKind='';
+let ordinaryMotion='';
+let ordinaryTimer=0;
 
 function read():Save|null{try{const raw=localStorage.getItem(SAVE_KEY);return raw?JSON.parse(raw) as Save:null}catch{return null}}
 function mins(t?:string){const [h,m]=String(t||'09:00').split(':').map(Number);return(h||0)*60+(m||0)}
 function phase(t?:string){const m=mins(t);return m<420?'night':m<600?'dawn':m<1020?'day':m<1200?'golden':m<1320?'evening':'night'}
-function remove(){document.getElementById('moniaAmbientMotion')?.remove();document.documentElement.removeAttribute('data-monia-ambient');document.documentElement.removeAttribute('data-monia-ordinary');}
+function remove(){document.getElementById('moniaAmbientMotion')?.remove();document.documentElement.removeAttribute('data-monia-ambient');document.documentElement.removeAttribute('data-monia-ordinary');document.documentElement.removeAttribute('data-monia-motion');}
 
 function eligible(){const s=read();if(!s)return false;if(s.screen&&s.screen!=='game')return false;if(document.querySelector('.modal,.overlay.show,[data-open="true"].phoneDevice,.surprise-player'))return false;return true}
 
@@ -24,11 +26,12 @@ function mount(){
   root.innerHTML=`<span class="ambientLight"></span><span class="ambientShade"></span><span class="ambientWind one"></span><span class="ambientWind two"></span><span class="ambientRain one"></span><span class="ambientRain two"></span><span class="ambientDust one"></span><span class="ambientDust two"></span>`;
   document.documentElement.dataset.moniaAmbient=`${p}-${weather}-${season}`;
   if(ordinaryKind)document.documentElement.dataset.moniaOrdinary=ordinaryKind;else document.documentElement.removeAttribute('data-monia-ordinary');
+  if(ordinaryMotion)document.documentElement.dataset.moniaMotion=ordinaryMotion;else document.documentElement.removeAttribute('data-monia-motion');
 }
 
 let raf=0;function schedule(){cancelAnimationFrame(raf);raf=requestAnimationFrame(mount)}
 window.addEventListener('storage',schedule);window.addEventListener('monia:save-changed',schedule);window.addEventListener('monia:daily-intent',()=>setTimeout(schedule,120));
-window.addEventListener('monia:ordinary-life-opportunity',((ev:CustomEvent<OrdinaryLifeBeat>)=>{ordinaryKind=String(ev.detail?.kind||'');schedule()}) as EventListener);
+window.addEventListener('monia:ordinary-life-world-reaction',((ev:CustomEvent<{beat?:OrdinaryLifeBeat;motion?:string;duration?:number}>)=>{window.clearTimeout(ordinaryTimer);ordinaryKind=String(ev.detail?.beat?.kind||'');ordinaryMotion=String(ev.detail?.motion||'');schedule();const token=`${ordinaryKind}|${ordinaryMotion}`;ordinaryTimer=window.setTimeout(()=>{if(`${ordinaryKind}|${ordinaryMotion}`!==token)return;ordinaryKind='';ordinaryMotion='';schedule()},Math.max(600,Number(ev.detail?.duration)||2600))}) as EventListener);
 new MutationObserver(schedule).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class','data-open']});
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',schedule,{once:true});else schedule();
 
