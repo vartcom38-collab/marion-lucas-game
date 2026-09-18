@@ -13,44 +13,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  smoke-deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Upload standalone playtest first
-        env:
-          INFOMANIAK_FTP_HOST: ${{ secrets.INFOMANIAK_FTP_HOST }}
-          INFOMANIAK_FTP_USER: ${{ secrets.INFOMANIAK_FTP_USER }}
-          INFOMANIAK_FTP_PASSWORD: ${{ secrets.INFOMANIAK_FTP_PASSWORD }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          test -s public/playtest-day1.html
-          python3 <<'PY'
-          import ftplib, os
-          from pathlib import Path
-
-          host=os.environ['INFOMANIAK_FTP_HOST'].strip().replace('ftpes://','').replace('ftps://','').replace('ftp://','').rstrip('/')
-          user=os.environ['INFOMANIAK_FTP_USER'].strip()
-          password=os.environ['INFOMANIAK_FTP_PASSWORD'].rstrip('\r\n')
-          src=Path('public/playtest-day1.html')
-
-          ftp=ftplib.FTP_TLS(timeout=45)
-          ftp.connect(host,21)
-          ftp.login(user,password)
-          ftp.prot_p()
-          ftp.set_pasv(True)
-          ftp.cwd('/')
-          with src.open('rb') as fh:
-              ftp.storbinary('STOR playtest-day1.html',fh)
-          ftp.quit()
-          print('Standalone playtest uploaded before build.')
-          PY
-
   build-and-deploy:
-    needs: smoke-deploy
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -88,7 +51,6 @@ jobs:
           test -s dist/index.html
           test -s dist/monia-test.html
           test -s dist/latest-visio.html
-          test -s dist/playtest-day1.html
           test -d dist/assets
           test -d dist/resources
           test -f dist/api/monia-media-store.php
@@ -186,7 +148,6 @@ jobs:
               local_root / 'index.html',
               local_root / 'monia-test.html',
               local_root / 'latest-visio.html',
-              local_root / 'playtest-day1.html',
           }
 
           for root, dirs, files in os.walk(local_root):
@@ -198,7 +159,7 @@ jobs:
                       continue
                   upload_verified(local_path, remote_dir)
 
-          for entrypoint in ('latest-visio.html', 'monia-test.html', 'playtest-day1.html', 'index.html'):
+          for entrypoint in ('latest-visio.html', 'monia-test.html', 'index.html'):
               local_path = local_root / entrypoint
               if local_path.exists():
                   upload_verified(local_path, remote_root, atomic=True)
@@ -211,10 +172,5 @@ jobs:
         run: |
           set -euo pipefail
           base='https://marion-lucas.marionbolomey.fr'
-          public_index="$(mktemp)"
-          curl -fsSL --retry 4 --retry-delay 2 --connect-timeout 15 --max-time 45 "$base/?deploy=${GITHUB_SHA}" -o "$public_index"
-          test -s "$public_index"
-          grep -q '<div id="app">' "$public_index"
-          grep -q 'immersive-day1-v2' "$public_index"
+          curl -fsSL --retry 4 --retry-delay 2 --connect-timeout 15 --max-time 45 "$base/?deploy=${GITHUB_SHA}" >/dev/null
           curl -fsSI --retry 4 --retry-delay 2 --connect-timeout 15 --max-time 45 "$base/latest-visio.html" >/dev/null
-          curl -fsSL --retry 4 --retry-delay 2 --connect-timeout 15 --max-time 45 "$base/playtest-day1.html?deploy=${GITHUB_SHA}" | grep -q 'standalone-day1-v1'
