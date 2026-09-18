@@ -3,8 +3,8 @@ import type { MonIADirectorResult } from './director';
 import { cancelMonIAVoice } from './voice-engine';
 import { renderLucasV16, type LucasV16Emotion } from './v16-voice-runtime';
 
-const SAVE_KEY='marion-dominic-save-v4';
-const SETTINGS_KEY='marion-dominic-settings-v2';
+const SAVE_KEY='marion-lucas-save-v4';
+const SETTINGS_KEY='marion-lucas-settings-v2';
 const VISIO_KEY='monia-last-visio-v1';
 const V16_SAMPLE_LINE="Ah ouais... ça me fait plaisir que tu m'appelles juste pour ça.";
 const V16_SAMPLE_URL='/resources/monia/generated/lucas-voice-v16-b-smoother-flow-fr-candidate.wav';
@@ -46,7 +46,7 @@ async function speak(text:string,emotion:string|undefined){
   const intent=voiceEmotion(emotion);voiceAbort=new AbortController();
   status('MonIA prépare la voix V16…');speechEvent('thinking',{provider:'monia-v16-runtime',intent});
   try{
-    const rendered=await renderDominicV16(text,intent,voiceAbort.signal);
+    const rendered=await renderLucasV16(text,intent,voiceAbort.signal);
     voiceAbort=null;
     await playV16(rendered.candidate_url,text,'monia-v16-runtime',rendered.duration);
   }catch(error){
