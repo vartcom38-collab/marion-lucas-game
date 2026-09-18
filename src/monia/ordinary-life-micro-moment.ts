@@ -1,5 +1,6 @@
 import './ordinary-life-micro-moment.css';
 import type { OrdinaryLifeBeat } from './ordinary-life-variety';
+import { getLucasPresence } from './lucas-presence-engine';
 
 let timer=0;
 function clean(){document.querySelector('.moniaOrdinaryMicroMoment')?.remove();if(timer)window.clearTimeout(timer)}
@@ -13,10 +14,10 @@ function phrase(beat:OrdinaryLifeBeat){
  return map[id]||({quiet:'Un petit moment calme passe.',practical:'Je m’occupe d’un détail du quotidien.',self:'Je prends quelques minutes pour moi.',social:'Un petit lien avec l’extérieur.',couple:'Un moment simple avec Lucas.',outing:'Je bouge un peu, sans programme.'}[beat.kind]);
 }
 function show(beat:OrdinaryLifeBeat){
- clean();const stage=document.getElementById('homePhotoStage');if(!(stage instanceof HTMLElement))return;
+ clean();if(beat.kind==='couple'&&getLucasPresence()?.together!==true)return;const stage=document.getElementById('homePhotoStage');if(!(stage instanceof HTMLElement))return;
  const root=document.createElement('div');root.className=`moniaOrdinaryMicroMoment kind-${beat.kind}`;root.setAttribute('aria-live','polite');
  const text=document.createElement('span');text.textContent=phrase(beat);root.appendChild(text);stage.appendChild(root);
- stage.classList.add('ordinary-moment-active');window.requestAnimationFrame(()=>root.classList.add('is-visible'));
- timer=window.setTimeout(()=>{root.classList.remove('is-visible');stage.classList.remove('ordinary-moment-active');window.setTimeout(()=>root.remove(),420)},2600);
+ stage.classList.add('ordinary-moment-active',`ordinary-moment-${beat.kind}`);window.requestAnimationFrame(()=>root.classList.add('is-visible'));
+ timer=window.setTimeout(()=>{root.classList.remove('is-visible');stage.classList.remove('ordinary-moment-active',`ordinary-moment-${beat.kind}`);window.setTimeout(()=>root.remove(),420)},2600);
 }
 window.addEventListener('monia:ordinary-life-consumed',((event:CustomEvent<{beat?:OrdinaryLifeBeat}>)=>{if(event.detail?.beat)show(event.detail.beat)}) as EventListener);
