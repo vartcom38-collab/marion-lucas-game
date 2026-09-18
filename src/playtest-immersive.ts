@@ -6,9 +6,9 @@ const scenes:Record<SceneKey,{title:string;sub:string;image:string}> = {
   madeleine:{title:'Rue de la Madeleine',sub:'Vers le centre',image:'https://commons.wikimedia.org/wiki/Special:FilePath/Rue_de_la_Madeleine_in_Nimes_01.jpg?width=2200'},
   esplanade:{title:'Esplanade Charles-de-Gaulle',sub:'Quelques minutes des arènes',image:'https://commons.wikimedia.org/wiki/Special:FilePath/Esplanade_Charles_de_Gaulle_in_Nimes_02.jpg?width=2200'},
   marine:{title:'Avec Marine',sub:'En marchant vers les arènes',image:'https://commons.wikimedia.org/wiki/Special:FilePath/Esplanade_Charles_de_Gaulle_in_Nimes_02.jpg?width=2200'},
-  arenes:{title:'Arènes de Nîmes',sub:'Feria · la ville se densifie',image:'https://commons.wikimedia.org/wiki/Special:FilePath/Ar%C3%A8nes_de_N%C3%AEmes_(Arena_of_N%C3%AEmes)_(47976724968).jpg?width=2200'},
-  feria:{title:'Autour des arènes',sub:'Feria · foule en mouvement',image:'https://commons.wikimedia.org/wiki/Special:FilePath/Ar%C3%A8nes_de_N%C3%AEmes_(Arena_of_N%C3%AEmes)_(47976724968).jpg?width=2200'},
-  encounter:{title:'Un instant dans la foule',sub:'Rencontre imprévue',image:'https://commons.wikimedia.org/wiki/Special:FilePath/Ar%C3%A8nes_de_N%C3%AEmes_(Arena_of_N%C3%AEmes)_(47976724968).jpg?width=2200'},
+  arenes:{title:'Arènes de Nîmes',sub:'Feria · la ville se densifie',image:'https://commons.wikimedia.org/wiki/Special:FilePath/Ar%C3%A8nes_N%C3%AEmes.jpg?width=2200'},
+  feria:{title:'Autour des arènes',sub:'Feria · foule en mouvement',image:'https://commons.wikimedia.org/wiki/Special:FilePath/Ar%C3%A8nes_N%C3%AEmes.jpg?width=2200'},
+  encounter:{title:'Un instant dans la foule',sub:'Rencontre imprévue',image:'https://commons.wikimedia.org/wiki/Special:FilePath/Ar%C3%A8nes_N%C3%AEmes.jpg?width=2200'},
 };
 
 let scene:SceneKey='home';
