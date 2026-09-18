@@ -1,5 +1,3 @@
-import { moniaExperience } from './monia/experience-runtime';
-
 type SceneKey='home'|'madeleine'|'esplanade'|'marine'|'arenes'|'feria'|'encounter';
 
 const app=document.querySelector<HTMLDivElement>('#app')!;
@@ -125,6 +123,7 @@ async function generateEncounter(){
   encounterGenerated=true;scene='encounter';
   render([],{eyebrow:'UN INSTANT PLUS TARD','title':'Quelqu’un te coupe presque la trajectoire.','body':'MonIA prépare la scène dans le contexte exact : Jour 1, Feria, première rencontre, pas de relation préalable.'},{marine:'Marine est juste à côté, prise dans le mouvement de foule.',status:'Préparation de la scène…'});
   try{
+    const { moniaExperience }=await import('./monia/experience-runtime');
     const experience=await moniaExperience.respond({
       actor:'Dominic',
       requestedChannel:'scene',
@@ -177,4 +176,7 @@ function renderEncounterAfterVideo(){
   ],{eyebrow:'APRÈS LA SCÈNE','title':'Tu n’es pas sortie du jeu.','body':'La vidéo était une scène au milieu du gameplay. Ensuite tu reprends exactement là où tu étais.'},{marine:'“Ça va ?”'});
 }
 
-home();
+try{home()}catch(err){
+  const message=err instanceof Error?err.message:String(err);
+  app.innerHTML=`<main style="display:grid;place-items:center;width:100%;height:100%;background:#171310;color:white;padding:24px;font-family:system-ui"><section style="max-width:680px"><small style="opacity:.6;letter-spacing:.16em">PLAYTEST IMMERSIF</small><h1>Le jeu n’a pas pu démarrer.</h1><p style="opacity:.75;line-height:1.5">${message}</p></section></main>`;
+}
