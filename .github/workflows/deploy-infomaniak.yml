@@ -51,6 +51,7 @@ jobs:
           test -s dist/index.html
           test -s dist/monia-test.html
           test -s dist/latest-visio.html
+          test -s dist/playtest-day1.html
           test -d dist/assets
           test -d dist/resources
           test -f dist/api/monia-media-store.php
@@ -180,3 +181,4 @@ jobs:
           grep -q '<div id="app">' "$public_index"
           grep -q 'immersive-day1-v2' "$public_index"
           curl -fsSI --retry 4 --retry-delay 2 --connect-timeout 15 --max-time 45 "$base/latest-visio.html" >/dev/null
+          curl -fsSL --retry 4 --retry-delay 2 --connect-timeout 15 --max-time 45 "$base/playtest-day1.html?deploy=${GITHUB_SHA}" | grep -q 'standalone-day1-v1'
