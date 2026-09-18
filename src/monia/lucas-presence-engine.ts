@@ -18,10 +18,12 @@ function area(place:string){const p=norm(place);if(/nîmes|nimes|home|cafe|arene
 function todayLucasItems(s:Save){const d=n(s.day,1);return(s.calendar||[]).filter(i=>n(i.day)===d&&norm(i.owner)==='lucas')}
 function itemPlace(i:CalendarItem|null){if(!i)return'';return String(i.place||i.note||i.title||'').trim()}
 function passiveCalendarItem(s:Save){const items=todayLucasItems(s);return items.find(i=>!i.time)||null}
+function hasMetDominic(s:Save){const f=s.flags||{};return s.official===true||f.metDominic===true||f.metLucas===true||f.dominicIntroduced===true||f.lucasIntroduced===true}
 function homeAdjusted(snapshot:LucasPresenceSnapshot){if(!snapshot.together)return snapshot;const home=resolveLucasHomeRhythm(snapshot.marionPlace,true);if(!home)return snapshot;return{...snapshot,privateTimePossible:home.privateTimePossible,reason:home.activity==='available'?snapshot.reason:home.label};}
 
 export function getLucasPresence():LucasPresenceSnapshot|null{
-  const s=read();if(!s)return null;const f=s.flags||{};const marionPlace=String(s.place||'');const marionArea=area(marionPlace);const explicit=String(f.lucasCurrentPlace||'').trim();
+  const s=read();if(!s)return null;const f=s.flags||{};
+  if(!hasMetDominic(s))return{state:'unknown',lucasPlace:'',marionPlace:String(s.place||''),together:false,reachableByPhone:false,privateTimePossible:false,reason:'Dominic n’est pas encore entré dans la vie de Marion.',source:'unknown'};const marionPlace=String(s.place||'');const marionArea=area(marionPlace);const explicit=String(f.lucasCurrentPlace||'').trim();
   if(explicit){
     const explicitTransit=/^trajet vers\b/i.test(explicit)||f.lucasTravelingWithoutMarion===true;
     if(explicitTransit&&f.lucasWithMarion!==true)return{state:'traveling',lucasPlace:explicit,marionPlace,together:false,reachableByPhone:false,privateTimePossible:false,reason:'Lucas est réellement en transit et sa présence reste séparée de celle de Marion.',source:'explicit-flag'};
@@ -32,12 +34,13 @@ export function getLucasPresence():LucasPresenceSnapshot|null{
   const item=passiveCalendarItem(s);if(item){const lp=itemPlace(item),la=area(lp),together=la!=='unknown'&&la===marionArea;return homeAdjusted({state:together?'with-marion':la===marionArea?'same-area':'away',lucasPlace:lp||'agenda Lucas',marionPlace,together,reachableByPhone:!together,privateTimePossible:together,reason:together?'L’agenda place Lucas au même endroit que Marion.':'L’agenda place Lucas ailleurs pour ce moment.',source:'calendar'});}
   if(f.travelWithLucas===true)return homeAdjusted({state:'with-marion',lucasPlace:marionPlace,marionPlace,together:true,reachableByPhone:false,privateTimePossible:true,reason:'Marion a choisi de voyager avec Lucas et aucun engagement séparé ne le place ailleurs.',source:'travel-choice'});
   if(f.travelWithLucas===false&&f.toreroTravelChoiceDay&&n(f.toreroTravelChoiceDay)<=n(s.day,1))return{state:'away',lucasPlace:'déplacement de Lucas',marionPlace,together:false,reachableByPhone:true,privateTimePossible:false,reason:'Marion ne suit pas actuellement le déplacement professionnel de Lucas.',source:'travel-choice'};
-  if(!s.official)return{state:'unknown',lucasPlace:'',marionPlace,together:false,reachableByPhone:true,privateTimePossible:false,reason:'Aucune présence physique de Lucas n’est supposée avant que la relation et le contexte ne l’établissent.',source:'unknown'};
+  if(!s.official)return{state:'unknown',lucasPlace:'',marionPlace,together:false,reachableByPhone:true,privateTimePossible:false,reason:'Aucune présence physique de Dominic n’est supposée avant que la relation et le contexte ne l’établissent.',source:'unknown'};
   return{state:'unknown',lucasPlace:'',marionPlace,together:false,reachableByPhone:true,privateTimePossible:false,reason:'Le lieu de Marion seul ne suffit plus à supposer que Lucas est physiquement présent.',source:'inference'};
 }
 
 export function getLucasCommunicationPolicy():LucasCommunicationPolicy{
   const p=getLucasPresence(),pro=getLucasProfessionalContext();if(!p)return{mode:'connect',canCall:true,canMessage:true,responseDelayMinutes:0,label:'Disponible',reason:'Aucun blocage de disponibilité connu.'};
+  if(!p.reachableByPhone&&p.state==='unknown')return{mode:'unreachable',canCall:false,canMessage:false,responseDelayMinutes:0,label:'Inconnu',reason:p.reason};
   if(p.together)return{mode:'local',canCall:false,canMessage:true,responseDelayMinutes:0,label:'Avec toi',reason:'Lucas est physiquement avec Marion : une interaction locale doit primer sur le téléphone.'};
   if(pro.active&&pro.phone==='unreachable')return{mode:'unreachable',canCall:false,canMessage:true,responseDelayMinutes:pro.responseDelayMinutes,label:pro.kind==='travel'?'En déplacement':'Indisponible',reason:pro.reason};
   if(pro.active&&pro.phone==='limited')return{mode:'missed',canCall:true,canMessage:true,responseDelayMinutes:pro.responseDelayMinutes,label:pro.recovery?'En récupération':'Occupé',reason:pro.reason};
