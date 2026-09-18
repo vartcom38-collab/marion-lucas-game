@@ -1,7 +1,7 @@
 {
   "version": 1,
   "status": "locked",
-  "project": "Marion & Lucas",
+  "project": "Marion & Dominic",
   "characters": {
     "marion": {
       "display_name": "Marion",
@@ -30,7 +30,7 @@
       ]
     },
     "lucas": {
-      "display_name": "Lucas Castellano",
+      "display_name": "Dominic Castellano",
       "age_at_start": 22,
       "identity_reference": "/resources/monia/canon/lucas/reference.jpg",
       "voice_profile": {
