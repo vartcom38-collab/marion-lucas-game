@@ -30,7 +30,7 @@ function intentFor(job:MonIAGenerationJob){
 
 function firstLucasLine(job:MonIAGenerationJob){
   for(const shot of job.shots){
-    const line=shot.dialogue?.find(item=>item.actor==='Lucas'&&item.voice==='lucas-v16-direct-design');
+    const line=shot.dialogue?.find(item=>['lucas','dominic'].includes(String(item.actor||'').toLowerCase())&&item.voice==='lucas-v16-direct-design');
     if(line?.text.trim())return line.text.trim();
   }
   return'';
@@ -39,7 +39,7 @@ function firstLucasLine(job:MonIAGenerationJob){
 function retimeFromVoice(job:MonIAGenerationJob,duration:number){
   if(!Number.isFinite(duration)||duration<=0)return job;
   const shots=job.shots.map(shot=>({...shot}));
-  const speaking=shots.find(shot=>shot.dialogue?.some(item=>item.actor==='Lucas'));
+  const speaking=shots.find(shot=>shot.dialogue?.some(item=>['lucas','dominic'].includes(String(item.actor||'').toLowerCase())));
   if(speaking)speaking.durationHint=Math.max(1,Math.round(duration*100)/100);
   return {...job,shots};
 }
