@@ -6,3 +6,17 @@
 #world3d,#world360{display:none!important;visibility:hidden!important;pointer-events:none!important}
 .game:has(#world3d)>.worldBackdrop,.game:has(#world360)>.worldBackdrop{display:none!important}
 .game:has(#world3d) .hud,.game:has(#world360) .hud,.game:has(#world3d) .storyPulse,.game:has(#world360) .storyPulse,.game:has(#world3d) .actionDock,.game:has(#world360) .actionDock,.game:has(#world3d) .overlay,.game:has(#world360) .overlay{z-index:10}
+
+.feriaStreetLife{position:absolute;inset:0;z-index:6;pointer-events:none;overflow:hidden}
+.feriaStreetLife>span{position:absolute;left:18px;top:18px;padding:7px 10px;border-radius:999px;background:rgba(120,28,20,.72);border:1px solid rgba(255,231,193,.3);backdrop-filter:blur(10px);font-size:8px;letter-spacing:.18em;color:#fff5e7;text-shadow:0 1px 5px rgba(0,0,0,.4)}
+.feriaStreetLife>small{position:absolute;left:20px;top:54px;max-width:245px;padding:7px 10px;border-radius:12px;background:rgba(20,14,11,.42);backdrop-filter:blur(8px);font-size:9px;line-height:1.35;color:rgba(255,245,232,.86)}
+.feriaStreetLife>i{position:absolute;bottom:-8%;width:34px;height:110px;border-radius:48% 48% 12px 12px;background:linear-gradient(180deg,rgba(25,18,15,.12),rgba(18,12,10,.48));filter:blur(.4px);opacity:.46;transform-origin:50% 100%;animation:feriaCrowdSway 5.5s ease-in-out infinite alternate}
+.feriaStreetLife>i:nth-child(1){left:6%;height:118px;animation-delay:-1.2s}
+.feriaStreetLife>i:nth-child(2){left:33%;height:96px;opacity:.34;animation-delay:-3.7s}
+.feriaStreetLife>i:nth-child(3){right:24%;height:124px;opacity:.38;animation-delay:-2.1s}
+.feriaStreetLife>i:nth-child(4){right:5%;height:104px;animation-delay:-4.4s}
+.feria-active .worldAtmosphere{background:radial-gradient(circle at 68% 22%,rgba(255,207,128,.18),transparent 30%),linear-gradient(180deg,rgba(120,28,20,.035),transparent 45%,rgba(25,12,8,.28))}
+.feria-active .worldPhotoFar{filter:saturate(1.04) contrast(1.045) brightness(1.01)!important}
+@keyframes feriaCrowdSway{0%{transform:translate3d(-6px,0,0) rotate(-1deg)}100%{transform:translate3d(8px,-2px,0) rotate(1.5deg)}}
+@media(max-width:760px){.feriaStreetLife>span{left:10px;top:10px;font-size:7px}.feriaStreetLife>small{left:12px;top:43px;max-width:190px;font-size:8px}}
+@media(prefers-reduced-motion:reduce){.feriaStreetLife>i{animation:none!important}}
