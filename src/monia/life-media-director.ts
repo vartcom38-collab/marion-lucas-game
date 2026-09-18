@@ -12,6 +12,7 @@ import './weekly-life-planner';
 import './taurine-world-network';
 import './narrative-ui';
 import './ordinary-life-direction-bridge';
+import './ordinary-life-micro-moment';
 import './gameplay-intent-router';
 import './iphone-conversations';
 import './visio-live-guard';
