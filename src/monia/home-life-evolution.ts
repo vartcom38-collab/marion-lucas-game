@@ -1,8 +1,9 @@
 import { getAnnualLifeProfile, annualWeight } from './annual-life-variation';
 import { getSeasonalLifeSnapshot } from './seasonal-life-engine';
+import { hasMetDominic } from './relationship-chronology';
 
 const SAVE_KEY='marion-lucas-save-v4';
-type Save={day?:number;time?:string;place?:string;official?:boolean;married?:boolean;children?:number;relationship?:number;trust?:number;flags?:Record<string,unknown>;eventHistory?:string[]};
+type Save={day?:number;time?:string;place?:string;metDominic?:boolean;official?:boolean;married?:boolean;children?:number;relationship?:number;trust?:number;flags?:Record<string,unknown>;eventHistory?:string[]};
 export type HomeLifeMode='nesting'|'open-house'|'outdoor'|'family'|'quiet'|'between-bases';
 export type HomeZone='kitchen'|'table'|'bedroom'|'terrace'|'garden'|'reading-corner'|'entry'|'outdoor';
 export type HomeLifeEvolution={mode:HomeLifeMode;preferredZone:HomeZone;homeWeight:number;outdoorWeight:number;guestWeight:number;familyWeight:number;baseFluidity:number;narrative:string;};
@@ -14,7 +15,7 @@ function lifeYear(day:number){return Math.floor((Math.max(1,day)-1)/365)+1}
 function count(history:string[],re:RegExp){return history.filter(e=>re.test(e)).length}
 
 export function getHomeLifeEvolution():HomeLifeEvolution|null{
-  const s=read();if(!s||!s.official)return null;const day=n(s.day,1),year=getAnnualLifeProfile()?.lifeYear||lifeYear(day),annual=getAnnualLifeProfile(),seasonal=getSeasonalLifeSnapshot(),h=s.eventHistory||[];const kids=n(s.children);const place=String(s.place||'').toLowerCase();
+  const s=read();if(!s||!hasMetDominic(s)||!s.official)return null;const day=n(s.day,1),year=getAnnualLifeProfile()?.lifeYear||lifeYear(day),annual=getAnnualLifeProfile(),seasonal=getSeasonalLifeSnapshot(),h=s.eventHistory||[];const kids=n(s.children);const place=String(s.place||'').toLowerCase();
   const betweenBases=/nîmes|nimes|madrid|finca|espagne|spain/i.test(place)&&Boolean(s.flags?.spainHomeEstablished||s.flags?.betweenBases||s.flags?.spainRooted);
   const guestHistory=count(h,/guest|invite|family-visit|friend-visit|dinner-with/i);const homeHistory=count(h,/shared-home|couple-routine|homecoming/i);const seed=hash(`home-life:${year}:${Math.floor(day/28)}`)%100;
   let mode:HomeLifeMode='quiet';
