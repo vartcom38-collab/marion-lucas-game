@@ -80,31 +80,31 @@ function splitDuration(total:number,maxShot:number){const parts:number[]=[];let 
 export function buildMonIAGenerationJob(result:MonIADirectorResult,plan:MonIAMediaPlan,request:MonIADirectorRequest):MonIAGenerationJob{
   const medium=mediumFor(result,plan);
   const context=request.context;
-  const lucasSpeaks=Boolean((result.spokenText||result.text)?.trim())&&result.actor?.toLowerCase?.()==='lucas';
+  const actorName=String(result.actor||'').toLowerCase();const lucasSpeaks=Boolean((result.spokenText||result.text)?.trim())&&['lucas','dominic'].includes(actorName);
   const requestedDuration=Math.max(4,Math.min(120,Number(result.scene?.duration||8)));
   const shotDurations=medium==='cinematic'&&requestedDuration>18?splitDuration(requestedDuration,8):[requestedDuration];
   const exactText=(result.spokenText||result.text||'').trim();
-  const actors=[result.actor||'Lucas'].filter(Boolean);
+  const actors=[result.actor||'Dominic'].filter(Boolean);
   const shots=shotDurations.map((durationHint,index):MonIAGenerationShot=>({
     id:`shot-${index+1}`,
     durationHint,
-    camera:medium==='visio'?'Lucas smartphone front camera; viewer is Marion; phone invisible':String(result.scene?.framing||plan.visual.framing||'natural cinematic camera'),
+    camera:medium==='visio'?'Dominic smartphone front camera; viewer is Marion; phone invisible; no external camera':String(result.scene?.framing||plan.visual.framing||'natural cinematic camera'),
     action:index===0?String(result.scene?.action||plan.visual.action||'natural immediate action'):'continue the same scene with coherent screen direction and emotional continuity',
     emotion:String(result.emotion||plan.visual.emotion||'natural'),
     actors,
-    dialogue:index===0&&lucasSpeaks?[{actor:'Lucas',text:exactText,voice:'lucas-v16-direct-design'}]:undefined,
+    dialogue:index===0&&lucasSpeaks?[{actor:'Dominic',text:exactText,voice:'lucas-v16-direct-design'}]:undefined,
     continuityFromPrevious:index>0,
   }));
   const seed=[medium,context.place,context.time,context.day,context.recentAction,exactText].join('|');
   return{
     version:1,id:`monia-${hash(seed)}`,createdAt:new Date().toISOString(),medium,transient:true,narrativeAuthority:'game-save',
     context:{place:context.place,time:context.time,day:context.day,relationship:context.relationship,recentAction:context.recentAction},
-    actors:actors.map(id=>id.toLowerCase()==='lucas'?{id:'Lucas',identityRef:'config/lucas-reference-bank.json',motionBank:'config/motion-reference-bank.json',voice:{renderer:'scripts/monia_lucas_v16_runtime_voice.py',strategy:'config/lucas-voice-strategy.json',fallback:'forbidden'}}:{id}),
+    actors:actors.map(id=>['lucas','dominic'].includes(id.toLowerCase())?{id:'Dominic',identityRef:'config/lucas-reference-bank.json',motionBank:'config/motion-reference-bank.json',voice:{renderer:'scripts/monia_lucas_v16_runtime_voice.py',strategy:'config/lucas-voice-strategy.json',fallback:'forbidden'}}:{id}),
     dialogueAuthority:'exact-text-before-video',
     steps:lucasSpeaks?['dialogue','voice','storyboard','identity-bind','visual','sync','quality-control','assemble','publish-transient']:['storyboard','identity-bind','visual','quality-control','assemble','publish-transient'],
     shots,
     continuity:{lockIdentityAcrossShots:true,lockWardrobeWithinScene:true,lockLocationWithinScene:true,lockLightingWithinScene:true,carryEmotionAcrossCuts:true,reusePreviousFrameWhenHelpful:true},
-    validation:{requireIdentity:actors.some(a=>a.toLowerCase()==='lucas'),requireCameraGrammar:medium==='visio'||medium==='cinematic',requireExactDialogueMatch:lucasSpeaks,requireV16WhenLucasSpeaks:lucasSpeaks,requireAVCoherence:lucasSpeaks&&(medium==='visio'||medium==='cinematic'),allowAutomaticCanonPromotion:false},
+    validation:{requireIdentity:actors.some(a=>['lucas','dominic'].includes(a.toLowerCase())),requireCameraGrammar:medium==='visio'||medium==='cinematic',requireExactDialogueMatch:lucasSpeaks,requireV16WhenLucasSpeaks:lucasSpeaks,requireAVCoherence:lucasSpeaks&&(medium==='visio'||medium==='cinematic'),allowAutomaticCanonPromotion:false},
   };
 }
 
