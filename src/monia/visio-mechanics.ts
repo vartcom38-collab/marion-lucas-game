@@ -6,9 +6,9 @@ export type MonIAVisioMechanicsPlan={
   direction:MonIAVisioDirection;
   device:MonIAVisioDevice;
   phase:MonIAVisioPhase;
-  lucasVisible:boolean;
+  dominicVisible:boolean;
   marionVisible:boolean;
-  cameraGrammar:'lucas_front_camera';
+  cameraGrammar:'dominic_front_camera';
   gazeTarget:'marion_screen_near_lens'|'brief_lens_check'|'natural_offscreen';
   allowFreeReply:boolean;
   suggestedChoices:string[];
@@ -18,15 +18,15 @@ export type MonIAVisioMechanicsPlan={
 };
 
 const BASE_VALIDATION=[
-  'same Lucas canonical identity',
-  'viewer is Lucas front-facing smartphone camera',
+  'same Dominic canonical identity',
+  'viewer is Dominic front-facing smartphone camera',
   'phone is never visible',
-  'Lucas gaze stays mainly near Marion image / near lens axis',
+  'Dominic gaze stays mainly near Marion image / near lens axis',
   'brief off-axis glances are natural and temporary',
   'no persistent side-looking gaze',
   'natural breathing and irregular blinking',
   'no frozen visual while Marion chooses',
-  'V16 voice whenever Lucas speaks',
+  'V16 voice whenever Dominic speaks',
   'spoken text, voice and mouth performance must match',
   'desktop/tablet presentation must not imitate a phone-sized viewport',
 ];
@@ -41,15 +41,15 @@ function defaultChoices(phase:MonIAVisioPhase,direction:MonIAVisioDirection){
 export function planVisioMechanics(input:{direction:MonIAVisioDirection;device?:MonIAVisioDevice;phase?:MonIAVisioPhase}):MonIAVisioMechanicsPlan{
   const phase=input.phase||'ringing';
   const device=input.device||'desktop';
-  const lucasVisible=!['ringing','connecting'].includes(phase)||input.direction==='incoming';
+  const dominicVisible=!['ringing','connecting'].includes(phase)||input.direction==='incoming';
   const marionVisible=false;
   return{
     direction:input.direction,
     device,
     phase,
-    lucasVisible,
+    dominicVisible,
     marionVisible,
-    cameraGrammar:'lucas_front_camera',
+    cameraGrammar:'dominic_front_camera',
     gazeTarget:phase==='thinking'?'natural_offscreen':phase==='reaction'?'brief_lens_check':'marion_screen_near_lens',
     allowFreeReply:phase==='listening'||phase==='reaction'||phase==='thinking',
     suggestedChoices:defaultChoices(phase,input.direction),
@@ -57,16 +57,16 @@ export function planVisioMechanics(input:{direction:MonIAVisioDirection;device?:
     generationRequired:['listening','speaking','reaction','thinking'].includes(phase),
     validation:[...BASE_VALIDATION,
       input.direction==='incoming'?'incoming call must feel unexpected but contextually plausible':'outgoing call must begin from Marion initiating contact',
-      phase==='speaking'?'Lucas speaking performance must be voice-led from V16 audio':'silent Lucas state must not contain unrelated mouth speech',
+      phase==='speaking'?'Dominic speaking performance must be voice-led from V16 audio':'silent Dominic state must not contain unrelated mouth speech',
     ],
   };
 }
 
 export function visioGazePrompt(phase:MonIAVisioPhase){
-  if(phase==='thinking')return 'Lucas may glance briefly away while thinking, then naturally returns his gaze toward Marion on the screen near the lens axis. Never hold a sideways stare.';
-  if(phase==='reaction')return 'Lucas reacts while looking mostly at Marion image on screen, very near the lens axis, with only tiny brief lens checks.';
-  if(phase==='speaking')return 'While speaking, Lucas looks primarily at Marion image on the screen just below/near the front-camera lens, with natural micro-shifts; avoid a persistent off-axis or sideward gaze.';
-  return 'Lucas listens to Marion by looking mainly at her image on screen near the camera axis, with occasional brief lens checks and tiny natural glances away.';
+  if(phase==='thinking')return 'Dominic may glance briefly away while thinking, then naturally returns his gaze toward Marion on the screen near the lens axis. Never hold a sideways stare.';
+  if(phase==='reaction')return 'Dominic reacts while looking mostly at Marion image on screen, very near the lens axis, with only tiny brief lens checks.';
+  if(phase==='speaking')return 'While speaking, Dominic looks primarily at Marion image on the screen just below/near the front-camera lens, with natural micro-shifts; avoid a persistent off-axis or sideward gaze.';
+  return 'Dominic listens to Marion by looking mainly at her image on screen near the camera axis, with occasional brief lens checks and tiny natural glances away.';
 }
 
 export function visioPresentation(device:MonIAVisioDevice){
