@@ -1,10 +1,11 @@
 import { annualBeatAllowed, annualWeight, markAnnualBeat } from './annual-life-variation';
+import { canDominicUsePhoneAutonomously, hasMetDominic } from './relationship-chronology';
 
 const SAVE_KEY='marion-lucas-save-v4';
 
 type CalendarItem={day?:number;time?:string;owner?:string;title?:string;note?:string;place?:string};
 type Message={from?:string;text?:string;read?:boolean;day?:number};
-type Save={day?:number;time?:string;place?:string;metLucas?:boolean;official?:boolean;relationship?:number;stress?:number;energy?:number;messages?:Message[];calendar?:CalendarItem[];flags?:Record<string,unknown>;eventHistory?:string[]};
+type Save={day?:number;time?:string;place?:string;metDominic?:boolean;official?:boolean;relationship?:number;stress?:number;energy?:number;messages?:Message[];calendar?:CalendarItem[];flags?:Record<string,unknown>;eventHistory?:string[]};
 
 export type SpontaneousBeat={id:string;label:string;intent:string;kind:'social'|'relationship'|'self'|'travel'|'quiet';weight:number;minutes:number;narrative:string;reason:string};
 
@@ -30,8 +31,8 @@ export function getSpontaneousLifeBeat():SpontaneousBeat|null{
   if(cooldownReady(s,'quiet',12)&&canUse('quiet',true)&&/home|madrid|estate|family/.test(place))candidates.push({id:'quiet',label:m<720?'Prendre dix minutes sans rien prévoir':'Laisser le moment respirer',intent:'rest',kind:'quiet',weight:annualWeight('home',38),minutes:20,narrative:m<720?'La maison est calme et rien ne presse vraiment pour les prochaines minutes.':'Il y a un petit creux dans la journée, juste assez pour ne rien décider tout de suite.',reason:'Moment de respiration simple et non événementiel.'});
   if(cooldownReady(s,'wander',18)&&canUse('wander')&&m>=660&&m<1200)candidates.push({id:'wander',label:'Faire un détour sans but précis',intent:'open-map',kind:'travel',weight:annualWeight('travel',44),minutes:45,narrative:'Tu pourrais rentrer directement… ou prendre un détour juste parce que la journée le permet.',reason:'Sortie spontanée légère entre deux temps forts.'});
   if(cooldownReady(s,'self',20)&&canUse('self',true)&&energy>45)candidates.push({id:'self',label:'Faire quelque chose juste pour moi',intent:'custom-intent',kind:'self',weight:annualWeight('mixed',41),minutes:60,narrative:'Tu as un peu de temps devant toi, assez pour faire quelque chose qui n’appartient qu’à toi.',reason:'Maintenir une vie personnelle autonome.'});
-  if(s.metLucas&&cooldownReady(s,'lucas-checkin',16)&&canUse('lucas-checkin',true)&&!/madrid|estate|family|finca/.test(place))candidates.push({id:'lucas-checkin',label:m>=1140?'Envoyer un petit message à Lucas':'Prendre spontanément de ses nouvelles',intent:'open-phone-lucas',kind:'relationship',weight:annualWeight('couple',52),minutes:8,narrative:'Lucas te traverse l’esprit sans qu’il y ait besoin d’une raison particulière.',reason:'Contact naturel du couple hors scènes prévues.'});
-  if(s.official&&cooldownReady(s,'couple-plan',30)&&canUse('couple-plan')&&m>=1020&&m<1320)candidates.push({id:'couple-plan',label:'Voir si on improvise quelque chose ce soir',intent:'open-phone-lucas',kind:'relationship',weight:annualWeight('couple',47),minutes:10,narrative:'La soirée n’est pas encore décidée. Elle pourrait très bien changer au dernier moment.',reason:'Plan de couple improvisé le jour même.'});
+  if(canDominicUsePhoneAutonomously(s)&&cooldownReady(s,'lucas-checkin',16)&&canUse('lucas-checkin',true)&&!/madrid|estate|family|finca/.test(place))candidates.push({id:'lucas-checkin',label:m>=1140?'Envoyer un petit message à Dominic':'Prendre spontanément de ses nouvelles',intent:'open-phone-lucas',kind:'relationship',weight:annualWeight('couple',52),minutes:8,narrative:'Dominic te traverse l’esprit sans qu’il y ait besoin d’une raison particulière.',reason:'Contact naturel de la relation hors scènes prévues.'});
+  if(hasMetDominic(s)&&s.official&&canDominicUsePhoneAutonomously(s)&&cooldownReady(s,'couple-plan',30)&&canUse('couple-plan')&&m>=1020&&m<1320)candidates.push({id:'couple-plan',label:'Voir si on improvise quelque chose ce soir',intent:'open-phone-lucas',kind:'relationship',weight:annualWeight('couple',47),minutes:10,narrative:'La soirée n’est pas encore décidée. Elle pourrait très bien changer au dernier moment.',reason:'Plan de couple improvisé le jour même.'});
   if(cooldownReady(s,'social',28)&&canUse('social',true)&&day>1)candidates.push({id:'social',label:'Voir si quelqu’un est disponible aujourd’hui',intent:'open-phone',kind:'social',weight:annualWeight('social',43),minutes:10,narrative:'Il reste assez de place dans la journée pour écrire à quelqu’un et voir ce qui se passe.',reason:'Vie sociale secondaire autonome.'});
 
   return pick(candidates,`${day}-${Math.floor(m/60)}-${place}-${n(s.relationship)}`);
