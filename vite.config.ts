@@ -27,6 +27,7 @@ export default defineConfig({
         moniaKaggleTest: resolve(__dirname, 'monia-kaggle-test.html'),
         dramaReview: resolve(__dirname, 'drama-review.html'),
         latestVisio: resolve(__dirname, 'latest-visio.html'),
+        immersivePlaytest: resolve(__dirname, 'playtest-immersive.html'),
         visioTest: resolve(__dirname, 'visio-test.html'),
       },
       maxParallelFileOps: 128,
