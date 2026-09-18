@@ -1,6 +1,7 @@
 import { resolveLucasHomeRhythm } from './lucas-home-rhythm';
 import {getLucasProfessionalContext} from './lucas-professional-context';
 import '../social-presence-state';
+import { hasMetDominic } from './relationship-chronology';
 
 const SAVE_KEY='marion-lucas-save-v4';
 
@@ -18,7 +19,6 @@ function area(place:string){const p=norm(place);if(/nîmes|nimes|home|cafe|arene
 function todayLucasItems(s:Save){const d=n(s.day,1);return(s.calendar||[]).filter(i=>n(i.day)===d&&['lucas','dominic'].includes(norm(i.owner)))}
 function itemPlace(i:CalendarItem|null){if(!i)return'';return String(i.place||i.note||i.title||'').trim()}
 function passiveCalendarItem(s:Save){const items=todayLucasItems(s);return items.find(i=>!i.time)||null}
-function hasMetDominic(s:Save){const f=s.flags||{};return s.metDominic===true||s.official===true||f.metDominic===true||f.metLucas===true||f.dominicIntroduced===true||f.lucasIntroduced===true}
 function homeAdjusted(snapshot:LucasPresenceSnapshot){if(!snapshot.together)return snapshot;const home=resolveLucasHomeRhythm(snapshot.marionPlace,true);if(!home)return snapshot;return{...snapshot,privateTimePossible:home.privateTimePossible,reason:home.activity==='available'?snapshot.reason:home.label};}
 
 export function getLucasPresence():LucasPresenceSnapshot|null{
