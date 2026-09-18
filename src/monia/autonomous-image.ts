@@ -40,7 +40,7 @@ function cleanError(value:unknown){
 
 function referenceCell(plan:MonIAMediaPlan):DramaAtlasCell{
   const actor=plan.actor.toLowerCase();
-  const preferred=actor.includes('marion')?'marion-1':actor.includes('lucas')?'lucas-1':'duo-i-1';
+  const preferred=actor.includes('marion')?'marion-1':(actor.includes('lucas')||actor.includes('dominic'))?'lucas-1':'duo-i-1';
   return CANON_DRAMA_ATLAS_CELLS.find(c=>c.id===preferred)||CANON_DRAMA_ATLAS_CELLS[0];
 }
 
@@ -91,7 +91,8 @@ function dimensions(plan:MonIAMediaPlan){
 
 function generationPrompt(plan:MonIAMediaPlan){
   const framing=plan.visual.framing==='full-body'?'full body, head to toe':plan.visual.framing==='waist'?'waist-up medium shot':plan.visual.framing==='chest'?'natural chest-up smartphone framing':plan.visual.framing==='close'?'cinematic close portrait':plan.visual.framing==='two-shot'?'natural two-person cinematic shot':'natural cinematic medium shot';
-  return `Photorealistic cinematic still used as a clean source frame for a live-action video. Exact same identity and facial proportions as the supplied canonical reference. ${plan.actor}. ${framing}. Location: ${plan.visual.location}. Wardrobe: ${plan.visual.wardrobe}. Emotion: ${plan.visual.emotion}. Action setup: ${plan.visual.action}. Lighting: ${plan.visual.lighting}. Natural anatomy, realistic skin texture, realistic hands, complete clothing when visible, believable environment, premium live-action drama quality, no beauty-filter face drift. No text, no title, no number, no subtitles, no watermark, no UI, no frame border.`;
+  const visio=plan.mode==='live-visio'?' This source frame is from Dominic’s real smartphone front-facing camera at natural arm length. Viewer is Marion through the screen. Phone invisible. No external camera, no tripod, no cinematic portrait, no dolly/pan/zoom, no third-person coverage. Slight imperfect framing, screen-near-lens gaze and realistic front-camera perspective.':'';
+  return `Photorealistic live-action source frame for a video. Exact same identity and facial proportions as the supplied canonical reference. ${plan.actor}. ${framing}.${visio} Location: ${plan.visual.location}. Wardrobe: ${plan.visual.wardrobe}. Emotion: ${plan.visual.emotion}. Action setup: ${plan.visual.action}. Lighting: ${plan.visual.lighting}. Natural anatomy, realistic skin texture, realistic hands, complete clothing when visible, believable environment, premium live-action drama quality, no beauty-filter face drift. No text, no title, no number, no subtitles, no watermark, no UI, no frame border.`;
 }
 
 function outputUrl(provider:Provider,value:any):string{
