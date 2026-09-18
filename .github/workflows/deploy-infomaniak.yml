@@ -90,7 +90,7 @@ jobs:
           ftp.login(user, password)
           ftp.prot_p()
           ftp.set_pasv(True)
-          remote_root = '/'
+          remote_root = '/sites/marion-lucas.marionbolomey.fr'
 
           def ensure_remote_dir(path: str):
               parts = [p for p in path.split('/') if p]
@@ -172,5 +172,8 @@ jobs:
         run: |
           set -euo pipefail
           base='https://marion-lucas.marionbolomey.fr'
-          curl -fsSL --retry 4 --retry-delay 2 --connect-timeout 15 --max-time 45 "$base/?deploy=${GITHUB_SHA}" >/dev/null
+          public_index="$(mktemp)"
+          curl -fsSL --retry 4 --retry-delay 2 --connect-timeout 15 --max-time 45 "$base/?deploy=${GITHUB_SHA}" -o "$public_index"
+          test -s "$public_index"
+          grep -q '<div id="app">' "$public_index"
           curl -fsSI --retry 4 --retry-delay 2 --connect-timeout 15 --max-time 45 "$base/latest-visio.html" >/dev/null
