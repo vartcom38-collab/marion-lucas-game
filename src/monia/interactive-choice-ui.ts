@@ -52,7 +52,7 @@ async function captureCurrentFrame():Promise<File|undefined>{
 function holdCurrentVisual(){
   const video=document.getElementById(MEDIA_VIDEO_ID) as HTMLVideoElement|null;
   if(video){try{video.pause()}catch{};video.removeAttribute('autoplay')}
-  showTransition('Lucas réagit…');
+  showTransition('Dominic réagit…');
 }
 
 async function dispatchInput(scene:MonIAInteractiveScene,input:{choiceId?:string;freeText?:string}){
