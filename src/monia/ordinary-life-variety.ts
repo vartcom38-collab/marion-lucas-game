@@ -1,5 +1,6 @@
 import { getAnnualLifeProfile, annualWeight } from './annual-life-variation';
 import { getAdultLifeRhythm } from './adult-life-rhythm';
+import { hasMetDominic } from './relationship-chronology';
 
 const SAVE_KEY='marion-lucas-save-v4';
 
@@ -17,7 +18,6 @@ function recentPenalty(history:string[],kind:OrdinaryLifeKind){const recent=hist
 function deterministicNudge(seed:number,key:string){return (hash(`${seed}:${key}`)%13)-6}
 function addMinutes(s:Save,minutes:number){const [h,m]=String(s.time||'09:00').split(':').map(Number);let total=(h||0)*60+(m||0)+Math.max(0,minutes);while(total>=1440){total-=1440;s.day=Math.max(1,n(s.day,1))+1}s.time=`${String(Math.floor(total/60)).padStart(2,'0')}:${String(total%60).padStart(2,'0')}`}
 function clamp(v:number){return Math.max(0,Math.min(100,Math.round(v)))}
-function hasMetDominic(s:Save){const f=s.flags||{};return s.metDominic===true||s.official===true||f.metDominic===true||f.metLucas===true||f.dominicIntroduced===true||f.lucasIntroduced===true}
 
 export function getOrdinaryLifeBeats():OrdinaryLifeBeat[]{
   const s=read();if(!s)return[];
