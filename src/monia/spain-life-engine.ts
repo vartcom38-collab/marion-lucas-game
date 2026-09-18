@@ -4,10 +4,11 @@ import { getFranceSpainState } from './france-spain-life-transition';
 import { getSpainSocialOpportunities } from './spain-social-circle';
 import { getSpainRoutineOpportunities } from './spain-familiar-life';
 import { isSpainPlace } from './spain-geography';
+import { hasMetDominic } from './relationship-chronology';
 
 const SAVE_KEY='marion-lucas-save-v4';
 
-type Save={day?:number;time?:string;place?:string;metLucas?:boolean;official?:boolean;relationship?:number;trust?:number;stress?:number;energy?:number;calendar?:Array<{day?:number;time?:string;owner?:string;title?:string;place?:string}>;flags?:Record<string,unknown>;eventHistory?:string[]};
+type Save={day?:number;time?:string;place?:string;metDominic?:boolean;official?:boolean;relationship?:number;trust?:number;stress?:number;energy?:number;calendar?:Array<{day?:number;time?:string;owner?:string;title?:string;place?:string}>;flags?:Record<string,unknown>;eventHistory?:string[]};
 export type SpainLifeDirection={id:string;label:string;intent:string;kind:'self'|'social'|'relationship'|'taurine'|'home'|'travel';weight:number;minutes:number;reason:string};
 export type SpainLifeSnapshot={active:boolean;stage:'not-yet'|'arriving'|'settling'|'rooted';place:string;directions:SpainLifeDirection[];socialOpen:boolean;homeRoutineOpen:boolean;independentLifeOpen:boolean;reason:string};
 
@@ -38,14 +39,14 @@ export function getSpainLifeSnapshot():SpainLifeSnapshot|null{
   if(homeRoutineOpen&&energy>30){
     const routines=getSpainRoutineOpportunities();
     if(routines.length){for(const item of routines.slice(0,2))directions.push({id:`spain-routine-${item.id}`,label:item.label,intent:item.intent,kind:'home',weight:item.weight,minutes:item.minutes,reason:item.reason});}
-    else directions.push({id:'spain-routine',label:'Créer un peu ma routine ici',intent:'custom-intent',kind:'home',weight:58,minutes:75,reason:'L’Espagne devient un quotidien, pas seulement un décor autour de Lucas.'});
+    else directions.push({id:'spain-routine',label:'Créer un peu ma routine ici',intent:'custom-intent',kind:'home',weight:58,minutes:75,reason:'L’Espagne devient un quotidien, pas seulement un décor autour de Dominic.'});
   }
   if(socialOpen&&m>=660&&m<1260&&stress<75){
     const social=getSpainSocialOpportunities();
     if(social.length){for(const item of social.slice(0,2))directions.push({id:`spain-social-${item.id}`,label:item.label,intent:item.intent,kind:'social',weight:item.weight,minutes:item.minutes,reason:item.reason});}
     else directions.push({id:'spain-social',label:'Voir ce qui se passe autour de moi',intent:'open-map',kind:'social',weight:48,minutes:60,reason:'Le nouveau cercle social s’ouvre progressivement, sans forcer une amitié instantanée.'});
   }
-  if(physicallyInSpain&&s.metLucas&&s.official)directions.push({id:'spain-lucas-life',label:'Voir comment s’organise la journée de Lucas ici',intent:'open-lucas-day',kind:'taurine',weight:61,minutes:45,reason:'La carrière de Lucas structure une partie de la vie espagnole sans absorber toute celle de Marion.'});
+  if(physicallyInSpain&&hasMetDominic(s)&&s.official)directions.push({id:'spain-lucas-life',label:'Voir comment s’organise la journée de Dominic ici',intent:'open-lucas-day',kind:'taurine',weight:61,minutes:45,reason:'La carrière de Dominic structure une partie de la vie espagnole sans absorber toute celle de Marion.'});
   if(independentLifeOpen&&energy>40)directions.push({id:'spain-own-life',label:'Faire quelque chose qui n’appartient qu’à moi',intent:'custom-intent',kind:'self',weight:64,minutes:90,reason:'Marion doit pouvoir construire une vie indépendante en Espagne.'});
   if(physicallyInSpain&&stage==='rooted')directions.push({id:'spain-home',label:'M’occuper un peu de ma vie ici',intent:'open-map',kind:'home',weight:45,minutes:60,reason:'Une vie installée produit des habitudes, des courses, des rendez-vous et des lieux familiers.'});
   if(physicallyInSpain&&transition?.canReturnNimes&&stage!=='arriving')directions.push({id:'spain-nimes-link',label:'Garder un lien concret avec Nîmes',intent:'open-phone',kind:'travel',weight:34,minutes:10,reason:'Le départ en Espagne ne coupe pas les racines françaises de Marion.'});
