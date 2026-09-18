@@ -2,7 +2,7 @@ name: Vite CI
 
 on:
   push:
-    branches: ["migration-vite-appdeploy", "main"]
+    branches: ["main"]
   pull_request:
     branches: ["main"]
 
@@ -155,6 +155,6 @@ jobs:
               if p.is_file() and p.suffix in {'.js','.html','.css','.mjs','.json'}:
                   try: dist_text+=p.read_text(encoding='utf-8',errors='ignore')
                   except Exception: pass
-          require('cdnjs.cloudflare.com/ajax/libs/onnxruntime-web' not in dist_text,'ONNX runtime has no Cloudflare runtime dependency')
+          require('cdnjs.cloudflare.com/ajax/libs/onnxruntime-web' not in dist_text,'ONNX runtime has no external CDN runtime dependency')
           print('Vite build is deployable: MonIA owns generation jobs, V16 leads spoken media, interactive branches preserve captured-frame continuity and durable choice memory, speech-performance is audio-driven, and generated candidates remain separate from canon.')
           PY
