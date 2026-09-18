@@ -68,8 +68,8 @@ function experienceLocation(experience:MonIAInteractiveExperience){
 function experienceActors(experience:MonIAInteractiveExperience){
   const actors=Array.isArray(experience.generationJob?.actors)?experience.generationJob.actors:[];
   if(actors.length)return actors.map((item:any)=>typeof item==='string'?item:String(item?.id||'')).filter(Boolean);
-  const actor=String(experience.response?.actor||experience.requestSnapshot?.actor||'Lucas');
-  return actor?[actor]:['Lucas'];
+  const actor=String(experience.response?.actor||experience.requestSnapshot?.actor||'Dominic');
+  return actor?[actor]:['Dominic'];
 }
 
 function experienceEmotion(experience:MonIAInteractiveExperience){
@@ -117,7 +117,7 @@ export function applyInteractiveChoice(scene:MonIAInteractiveScene,input:{choice
   void persistInteractiveConsequence({
     sceneId:scene.id,beatIndex:scene.beatIndex,playerInput,choiceId:choice?.id,
     consequenceHint:choice?.consequenceHint,effects:choice?.effects,
-    actor:String(scene.experience.response?.actor||scene.experience.requestSnapshot?.actor||'Lucas'),
+    actor:String(scene.experience.response?.actor||scene.experience.requestSnapshot?.actor||'Dominic'),
   });
   return next;
 }
