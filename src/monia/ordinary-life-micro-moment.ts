@@ -3,7 +3,7 @@ import type { OrdinaryLifeBeat } from './ordinary-life-variety';
 import { getLucasPresence } from './lucas-presence-engine';
 
 let timer=0;
-function clean(){document.querySelector('.moniaOrdinaryMicroMoment')?.remove();if(timer)window.clearTimeout(timer)}
+function clean(){document.querySelector('.moniaOrdinaryMicroMoment')?.remove();if(timer)window.clearTimeout(timer);document.getElementById('homePhotoStage')?.classList.remove('ordinary-moment-active','ordinary-moment-quiet','ordinary-moment-practical','ordinary-moment-self','ordinary-moment-social','ordinary-moment-couple','ordinary-moment-outing')}
 function phrase(beat:OrdinaryLifeBeat){
  const id=beat.id.replace(/^ordinary-(quiet|practical|self|social|couple|outing)-/,'');
  const map:Record<string,string>={
@@ -15,9 +15,10 @@ function phrase(beat:OrdinaryLifeBeat){
 }
 function show(beat:OrdinaryLifeBeat){
  clean();if(beat.kind==='couple'&&getLucasPresence()?.together!==true)return;const stage=document.getElementById('homePhotoStage');if(!(stage instanceof HTMLElement))return;
- const root=document.createElement('div');root.className=`moniaOrdinaryMicroMoment kind-${beat.kind}`;root.setAttribute('aria-live','polite');
+ const root=document.createElement('div');root.className=`moniaOrdinaryMicroMoment kind-${beat.kind}`;root.setAttribute('aria-live','polite');root.dataset.beat=beat.id;
  const text=document.createElement('span');text.textContent=phrase(beat);root.appendChild(text);stage.appendChild(root);
- stage.classList.add('ordinary-moment-active',`ordinary-moment-${beat.kind}`);window.requestAnimationFrame(()=>root.classList.add('is-visible'));
+ stage.classList.add('ordinary-moment-active',`ordinary-moment-${beat.kind}`);window.dispatchEvent(new CustomEvent('monia:ordinary-life-world-reaction',{detail:{beat,stage:'home',duration:2600}}));window.requestAnimationFrame(()=>root.classList.add('is-visible'));
  timer=window.setTimeout(()=>{root.classList.remove('is-visible');stage.classList.remove('ordinary-moment-active',`ordinary-moment-${beat.kind}`);window.setTimeout(()=>root.remove(),420)},2600);
 }
+window.addEventListener('monia:save-changed',()=>{if(document.querySelector('.modal,.overlay.show,[data-open="true"].phoneDevice,.surprisePlayer,.cinematicOverlay'))clean()});
 window.addEventListener('monia:ordinary-life-consumed',((event:CustomEvent<{beat?:OrdinaryLifeBeat}>)=>{if(event.detail?.beat)show(event.detail.beat)}) as EventListener);
