@@ -3,7 +3,7 @@ import { getAdultLifeRhythm } from './adult-life-rhythm';
 
 const SAVE_KEY='marion-lucas-save-v4';
 
-type Save={day?:number;time?:string;place?:string;official?:boolean;married?:boolean;children?:number;stress?:number;energy?:number;seed?:number;flags?:Record<string,unknown>;eventHistory?:string[]};
+type Save={day?:number;time?:string;place?:string;metDominic?:boolean;official?:boolean;married?:boolean;children?:number;stress?:number;energy?:number;seed?:number;flags?:Record<string,unknown>;eventHistory?:string[]};
 export type OrdinaryLifeKind='quiet'|'practical'|'self'|'social'|'couple'|'outing';
 export type OrdinaryLifeBeat={id:string;kind:OrdinaryLifeKind;score:number;reason:string;place:string;time:string;};
 export type OrdinaryLifeResult={ok:boolean;beat?:OrdinaryLifeBeat;minutes:number};
@@ -17,7 +17,7 @@ function recentPenalty(history:string[],kind:OrdinaryLifeKind){const recent=hist
 function deterministicNudge(seed:number,key:string){return (hash(`${seed}:${key}`)%13)-6}
 function addMinutes(s:Save,minutes:number){const [h,m]=String(s.time||'09:00').split(':').map(Number);let total=(h||0)*60+(m||0)+Math.max(0,minutes);while(total>=1440){total-=1440;s.day=Math.max(1,n(s.day,1))+1}s.time=`${String(Math.floor(total/60)).padStart(2,'0')}:${String(total%60).padStart(2,'0')}`}
 function clamp(v:number){return Math.max(0,Math.min(100,Math.round(v)))}
-function hasMetDominic(s:Save){const f=s.flags||{};return s.official===true||f.metDominic===true||f.metLucas===true||f.dominicIntroduced===true||f.lucasIntroduced===true}
+function hasMetDominic(s:Save){const f=s.flags||{};return s.metDominic===true||s.official===true||f.metDominic===true||f.metLucas===true||f.dominicIntroduced===true||f.lucasIntroduced===true}
 
 export function getOrdinaryLifeBeats():OrdinaryLifeBeat[]{
   const s=read();if(!s)return[];
