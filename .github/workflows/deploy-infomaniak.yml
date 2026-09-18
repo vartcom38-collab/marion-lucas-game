@@ -104,7 +104,9 @@ jobs:
 
           def remote_dir_for(local_dir: Path) -> str:
               rel = local_dir.relative_to(local_root)
-              return remote_root if str(rel) == '.' else '/' + rel.as_posix()
+              if str(rel) == '.':
+                  return remote_root
+              return remote_root.rstrip('/') + '/' + rel.as_posix()
 
           def remote_size(remote_dir: str, filename: str):
               ftp.cwd(remote_dir)
