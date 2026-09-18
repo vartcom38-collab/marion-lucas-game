@@ -13,7 +13,44 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  smoke-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Upload standalone playtest first
+        env:
+          INFOMANIAK_FTP_HOST: ${{ secrets.INFOMANIAK_FTP_HOST }}
+          INFOMANIAK_FTP_USER: ${{ secrets.INFOMANIAK_FTP_USER }}
+          INFOMANIAK_FTP_PASSWORD: ${{ secrets.INFOMANIAK_FTP_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s public/playtest-day1.html
+          python3 <<'PY'
+          import ftplib, os
+          from pathlib import Path
+
+          host=os.environ['INFOMANIAK_FTP_HOST'].strip().replace('ftpes://','').replace('ftps://','').replace('ftp://','').rstrip('/')
+          user=os.environ['INFOMANIAK_FTP_USER'].strip()
+          password=os.environ['INFOMANIAK_FTP_PASSWORD'].rstrip('\r\n')
+          src=Path('public/playtest-day1.html')
+
+          ftp=ftplib.FTP_TLS(timeout=45)
+          ftp.connect(host,21)
+          ftp.login(user,password)
+          ftp.prot_p()
+          ftp.set_pasv(True)
+          ftp.cwd('/')
+          with src.open('rb') as fh:
+              ftp.storbinary('STOR playtest-day1.html',fh)
+          ftp.quit()
+          print('Standalone playtest uploaded before build.')
+          PY
+
   build-and-deploy:
+    needs: smoke-deploy
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
