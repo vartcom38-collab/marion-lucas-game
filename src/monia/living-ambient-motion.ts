@@ -6,7 +6,7 @@ const SAVE_KEY='marion-lucas-save-v4';
 type Save={time?:string;place?:string;screen?:string;overlay?:unknown};
 let ordinaryKind='';
 let ordinaryMotion='';
-let ordinaryTimer=0;
+let ordinaryTimer:ReturnType<typeof setTimeout>|undefined;
 
 function read():Save|null{try{const raw=localStorage.getItem(SAVE_KEY);return raw?JSON.parse(raw) as Save:null}catch{return null}}
 function mins(t?:string){const [h,m]=String(t||'09:00').split(':').map(Number);return(h||0)*60+(m||0)}
@@ -31,7 +31,7 @@ function mount(){
 
 let raf=0;function schedule(){cancelAnimationFrame(raf);raf=requestAnimationFrame(mount)}
 window.addEventListener('storage',schedule);window.addEventListener('monia:save-changed',schedule);window.addEventListener('monia:daily-intent',()=>setTimeout(schedule,120));
-window.addEventListener('monia:ordinary-life-world-reaction',((ev:CustomEvent<{beat?:OrdinaryLifeBeat;motion?:string;duration?:number}>)=>{window.clearTimeout(ordinaryTimer);ordinaryKind=String(ev.detail?.beat?.kind||'');ordinaryMotion=String(ev.detail?.motion||'');schedule();const token=`${ordinaryKind}|${ordinaryMotion}`;ordinaryTimer=window.setTimeout(()=>{if(`${ordinaryKind}|${ordinaryMotion}`!==token)return;ordinaryKind='';ordinaryMotion='';schedule()},Math.max(600,Number(ev.detail?.duration)||2600))}) as EventListener);
+window.addEventListener('monia:ordinary-life-world-reaction',((ev:CustomEvent<{beat?:OrdinaryLifeBeat;motion?:string;duration?:number}>)=>{if(ordinaryTimer)clearTimeout(ordinaryTimer);ordinaryKind=String(ev.detail?.beat?.kind||'');ordinaryMotion=String(ev.detail?.motion||'');schedule();const token=`${ordinaryKind}|${ordinaryMotion}`;ordinaryTimer=setTimeout(()=>{if(`${ordinaryKind}|${ordinaryMotion}`!==token)return;ordinaryKind='';ordinaryMotion='';schedule()},Math.max(600,Number(ev.detail?.duration)||2600))}) as EventListener);
 new MutationObserver(schedule).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class','data-open']});
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',schedule,{once:true});else schedule();
 
