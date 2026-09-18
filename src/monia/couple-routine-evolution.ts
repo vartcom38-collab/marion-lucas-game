@@ -1,9 +1,10 @@
 import { getAnnualLifeProfile, annualWeight } from './annual-life-variation';
 import { getLucasHomeRhythm } from './lucas-home-rhythm';
 import { getMarionHomeRhythm } from './marion-home-rhythm';
+import { hasMetDominic } from './relationship-chronology';
 
 const SAVE_KEY='marion-lucas-save-v4';
-type Save={day?:number;time?:string;place?:string;official?:boolean;relationship?:number;trust?:number;flags?:Record<string,unknown>;eventHistory?:string[]};
+type Save={day?:number;time?:string;place?:string;metDominic?:boolean;official?:boolean;relationship?:number;trust?:number;flags?:Record<string,unknown>;eventHistory?:string[]};
 export type CoupleRoutineKind='morning-coffee'|'shared-meal'|'parallel-evening'|'quiet-return'|'late-check-in'|'weekend-slow';
 export type CoupleRoutineState='forming'|'familiar'|'strong'|'faded';
 export type CoupleRoutine={id:string;kind:CoupleRoutineKind;state:CoupleRoutineState;label:string;narrative:string;intent:string;weight:number;minutes:number;year:number;recurring:true;};
@@ -22,7 +23,7 @@ function stateFor(score:number,year:number,kind:CoupleRoutineKind):CoupleRoutine
 }
 
 export function getCoupleRoutine():CoupleRoutine|null{
-  const s=read();if(!s||!s.official||n(s.relationship)<35||n(s.trust)<28)return null;
+  const s=read();if(!s||!hasMetDominic(s)||!s.official||n(s.relationship)<35||n(s.trust)<28)return null;
   const lucas=getLucasHomeRhythm(),marion=getMarionHomeRhythm();if(!lucas?.atHome||!marion?.atHome)return null;
   const now=mins(s.time),day=n(s.day,1),year=getAnnualLifeProfile()?.lifeYear||lifeYear(day),h=s.eventHistory||[];
   const baseShared=count(h,/shared-home-|shared-home-choice|couple-routine/i)+Math.floor(Math.min(20,n(s.relationship))/8)+Math.floor(Math.min(20,n(s.trust))/10);
