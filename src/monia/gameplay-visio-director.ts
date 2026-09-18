@@ -2,6 +2,7 @@ import { moniaExperience } from './experience-runtime';
 import type { MonIADirectorResult } from './director';
 import { getLucasCommunicationPolicy } from './lucas-presence-engine';
 import { approvedLucasVisioFor, hasApprovedLucasVisio, isApprovedLucasVisioSource } from './approved-visio-runtime';
+import { canDominicUsePhoneAutonomously, hasMetDominic } from './relationship-chronology';
 
 const SAVE_KEY='marion-lucas-save-v4';
 const VISIO_KEY='monia-last-visio-v1';
@@ -37,8 +38,7 @@ let lastPrepared='';
 function readSave():LooseSave|null{try{const raw=localStorage.getItem(SAVE_KEY);return raw?JSON.parse(raw) as LooseSave:null}catch{return null}}
 function relationLabel(value=0){if(value>=70)return'relation très forte et intime';if(value>=45)return'relation proche et solide';if(value>=25)return'relation affectueuse en construction';if(value>=10)return'relation naissante';return'ils se connaissent encore peu'}
 function signature(save:LooseSave,request:GameplayVisioRequest){return `${request.id}|${save.day||0}|${save.time||''}|${save.place||''}|${save.relationship||0}|${save.trust||0}|${save.chemistry||0}`}
-function hasMetDominic(save:LooseSave){const f=save.flags||{};return save.metDominic===true||save.official===true||f.metDominic===true||f.metLucas===true||f.dominicIntroduced===true||f.lucasIntroduced===true}
-function valid(save:LooseSave|null,request:GameplayVisioRequest){if(!save||!hasMetDominic(save))return false;if(request.requiredPlace&&save.place!==request.requiredPlace)return false;if(Number(save.relationship||0)<Number(request.relationshipMin||0))return false;const policy=getLucasCommunicationPolicy();return policy.mode==='connect'}
+function valid(save:LooseSave|null,request:GameplayVisioRequest){if(!save||!hasMetDominic(save)||!canDominicUsePhoneAutonomously(save))return false;if(request.requiredPlace&&save.place!==request.requiredPlace)return false;if(Number(save.relationship||0)<Number(request.relationshipMin||0))return false;const policy=getLucasCommunicationPolicy();return policy.mode==='connect'}
 function clearTicket(){try{sessionStorage.removeItem(VISIO_MEDIA_KEY)}catch{}}
 function isSurprise(request:GameplayVisioRequest){return request.mode==='surprise'||/surprise|surprends|spontan/i.test(`${request.id} ${request.reason} ${request.contextHint||''}`)}
 function safeGeneratedUrl(url:string){return url.startsWith(BASE)&&url.includes('visio-lucas-surprise-v5-monia-')&&url.endsWith('-candidate.mp4')}
