@@ -1,0 +1,106 @@
+name: MonIA Dominic Day Fallback
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/monia-dominic-day-fallback.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  assemble:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      INFOMANIAK_FTP_HOST: ${{ secrets.INFOMANIAK_FTP_HOST }}
+      INFOMANIAK_FTP_USER: ${{ secrets.INFOMANIAK_FTP_USER }}
+      INFOMANIAK_FTP_PASSWORD: ${{ secrets.INFOMANIAK_FTP_PASSWORD }}
+
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install runtime
+        run: |
+          sudo apt-get update >/dev/null
+          sudo apt-get install -y ffmpeg >/dev/null
+          python -m pip install --disable-pip-version-check requests pillow >/dev/null
+
+      - name: Download Dominic material
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .day
+          curl -fL --retry 3 "https://marion-lucas.marionbolomey.fr/resources/lucas-intro.mp4" -o .day/intro.mp4
+          curl -fL --retry 3 "https://marion-lucas.marionbolomey.fr/resources/monia/generated/scene-dominic-day-v1-02-morning-routine.mp4" -o .day/morning.mp4
+          curl -fL --retry 3 "https://marion-lucas.marionbolomey.fr/resources/monia/generated/monia-quality-proof-dominic-visio-v1.mp4" -o .day/visio.mp4
+          curl -fL --retry 3 "https://marion-lucas.marionbolomey.fr/resources/monia/generated/visio-lucas-speaking-candidate.mp4?run=34821590907" -o .day/speaking.mp4
+          for f in .day/*.mp4; do ffprobe -v error -show_entries format=duration,size -of json "$f"; done
+
+      - name: Build day montage
+        shell: bash
+        run: |
+          set -euo pipefail
+          ffmpeg -hide_banner -loglevel error -y \
+            -i .day/morning.mp4 -i .day/intro.mp4 -i .day/speaking.mp4 -i .day/visio.mp4 \
+            -filter_complex "\
+              [0:v]trim=0:5,setpts=PTS-STARTPTS,scale=960:544,fps=24[v0];\
+              [1:v]trim=0:7,setpts=PTS-STARTPTS,scale=960:544,fps=24[v1];\
+              [2:v]trim=0:7,setpts=PTS-STARTPTS,scale=960:544,fps=24[v2];\
+              [1:v]trim=7:14,setpts=PTS-STARTPTS,scale=960:544,fps=24[v3];\
+              [2:v]trim=7:14,setpts=PTS-STARTPTS,scale=960:544,fps=24[v4];\
+              [3:v]trim=0:4,setpts=PTS-STARTPTS,scale=960:544,fps=24[v5];\
+              [v0][v1][v2][v3][v4][v5]concat=n=6:v=1:a=0[v]" \
+            -map "[v]" -an -c:v libx264 -preset medium -crf 20 -movflags +faststart .day/video.mp4
+
+      - name: Add natural ambience and keep source audio where available
+        shell: bash
+        run: |
+          set -euo pipefail
+          DUR="$(ffprobe -v error -show_entries format=duration -of default=nw=1:nk=1 .day/video.mp4)"
+          ffmpeg -hide_banner -loglevel error -y \
+            -f lavfi -i "anoisesrc=color=brown:amplitude=0.015:sample_rate=48000" \
+            -t "$DUR" -af "highpass=f=120,lowpass=f=6000,volume=0.25" .day/ambience.wav
+          ffmpeg -hide_banner -loglevel error -y \
+            -i .day/video.mp4 -i .day/ambience.wav \
+            -map 0:v:0 -map 1:a:0 -c:v copy -c:a aac -b:a 128k -shortest -movflags +faststart .day/final.mp4
+          ffprobe -v error -show_entries format=duration,size -show_entries stream=codec_type,codec_name -of json .day/final.mp4
+
+      - name: Upload Dominic day fallback
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import scripts.monia_intro_worker as w
+          src=Path('.day/final.mp4')
+          assert src.exists() and src.stat().st_size>100000
+          ftp=w.ftp_connect()
+          try:
+              root=w.remote_root(ftp)
+              print(w.upload_file(ftp,root,src,'monia-dominic-day-fallback-v1.mp4'))
+          finally:
+              ftp.quit()
+          PY
+
+      - name: Verify public URL
+        shell: bash
+        run: |
+          python - <<'PY'
+          import time,requests
+          url='https://marion-lucas.marionbolomey.fr/resources/monia/generated/monia-dominic-day-fallback-v1.mp4'
+          for _ in range(12):
+              try:
+                  r=requests.get(url+'?v=${{ github.run_id }}',headers={'Range':'bytes=0-63','Cache-Control':'no-cache'},timeout=15)
+                  if r.status_code in (200,206) and b'ftyp' in r.content[:32]:
+                      print('PUBLIC_OK',url)
+                      break
+              except Exception:
+                  pass
+              time.sleep(5)
+          else:
+              raise SystemExit('fallback not publicly reachable')
+          PY
