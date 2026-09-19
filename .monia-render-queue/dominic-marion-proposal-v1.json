@@ -8,6 +8,6 @@
   "preserveCheckpoint": true,
   "reuseValidatedAnchors": true,
   "approvalRequired": true,
-  "attempt": 4,
-  "reason": "retry-after-full-image-engine-rebuild"
+  "attempt": 5,
+  "reason": "retry-after-pipeline-spec-cli-fix"
 }
