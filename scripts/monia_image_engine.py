@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from gradio_client import Client, handle_file
+from scripts.monia_image_providers import image_provider_chain, provider_policy
 
 
 def _materialize(value: Any, target: Path) -> None:
@@ -65,16 +66,20 @@ def _predict_with_timeout(space: str, token: str | None, api_name: str, args: li
 
 
 def generate_anchor_candidate(request: dict[str, Any], output: Path) -> dict[str, Any]:
-    space = os.environ.get("MONIA_IMAGE_SPACE", "").strip()
-    api_name = os.environ.get("MONIA_IMAGE_API_NAME", "").strip()
-    mode = os.environ.get("MONIA_IMAGE_MODE", "single-board").strip().lower()
-    if not space or not api_name:
+    providers = image_provider_chain()
+    if not providers:
         return {
-            "status": "backend-not-configured",
+            "status": "compute-deferred",
             "output": None,
-            "reason": "Set MONIA_IMAGE_SPACE and MONIA_IMAGE_API_NAME to an approved image-to-image compositor.",
+            "reason": "No image compositor currently available; scene checkpoint preserved for later/local compute.",
+            "retryable": True,
+            "policy": provider_policy(),
             "approvalRequired": True,
         }
+    selected = providers[0]
+    space = str(selected["space"])
+    api_name = str(selected.get("apiName") or "")
+    mode = str(selected.get("mode") or "qwen-compose").lower()
 
     board = str(request.get("identityBoard") or "")
     if not board or not Path(board).exists():
@@ -155,6 +160,7 @@ def generate_anchor_candidate(request: dict[str, Any], output: Path) -> dict[str
         "apiName": api_name,
         "mode": mode,
         "profile": "qwen-image-edit-2511-lightning-compose" if mode in {"multi-reference", "qwen-compose"} else "generic-single-board",
+        "providerPolicy": provider_policy(),
         "approvalRequired": True,
         "autoApprove": False,
         "semanticIdentityReviewRequired": True,
