@@ -26,6 +26,7 @@ from scripts.monia_scene_environment import plan_environment
 from scripts.monia_scene_edit_rhythm import plan_edit_rhythm
 from scripts.monia_scene_ambience import plan_ambience
 from scripts.monia_scene_anchor_planner import prepare_scene_anchors
+from scripts.monia_anchor_review import apply_anchor_reviews
 
 
 def _write(path: Path, payload: dict[str, Any]) -> None:
@@ -33,7 +34,7 @@ def _write(path: Path, payload: dict[str, Any]) -> None:
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
-def run_pipeline(spec_path: Path, work_dir: Path, publish_candidates: bool = False, semantic_verdict: Path | None = None) -> dict[str, Any]:
+def run_pipeline(spec_path: Path, work_dir: Path, publish_candidates: bool = False, semantic_verdict: Path | None = None, anchor_review: Path | None = None) -> dict[str, Any]:
     spec = json.loads(spec_path.read_text(encoding="utf-8"))
     work_dir.mkdir(parents=True, exist_ok=True)
     journal_path = work_dir / "pipeline.json"
@@ -119,6 +120,13 @@ def run_pipeline(spec_path: Path, work_dir: Path, publish_candidates: bool = Fal
 
         anchors = prepare_scene_anchors(scene, work_dir / "anchors")
         stage("identity-anchors", anchors.get("status") or "unknown", output=str(work_dir / "anchors" / "anchor-plan.json"), blockedShots=anchors.get("blockedShots") or [])
+        if anchors.get("status") == "anchors-required" and anchor_review and anchor_review.exists():
+            review_result = apply_anchor_reviews(anchors, anchor_review, work_dir / "anchor-library")
+            _write(work_dir / "anchor-review-result.json", review_result)
+            stage("identity-anchor-review", review_result.get("status") or "unknown", output=str(work_dir / "anchor-review-result.json"))
+            if review_result.get("status") == "approved":
+                anchors = prepare_scene_anchors(scene, work_dir / "anchors")
+                stage("identity-anchors", anchors.get("status") or "unknown", output=str(work_dir / "anchors" / "anchor-plan.json"), blockedShots=anchors.get("blockedShots") or [], resumed=True)
         if anchors.get("status") == "anchors-required":
             journal["status"] = "awaiting-identity-anchors"
             journal["identityAnchors"] = anchors
@@ -219,6 +227,7 @@ def main() -> None:
     parser.add_argument("--work-dir", type=Path, required=True)
     parser.add_argument("--publish-candidates", action="store_true")
     parser.add_argument("--semantic-verdict", type=Path)
+    parser.add_argument("--anchor-review", type=Path)
     args = parser.parse_args()
     print(json.dumps(run_pipeline(args.spec, args.work_dir, args.publish_candidates, args.semantic_verdict), ensure_ascii=False))
 
