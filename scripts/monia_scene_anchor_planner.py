@@ -7,6 +7,8 @@ import json
 from scripts.monia_identity_conditioning import identity_conditioning_plan
 from scripts.monia_anchor_compositor import compose_identity_board
 from scripts.monia_anchor_library import find_validated_anchor
+from scripts.monia_anchor_generator import build_composite_request
+from scripts.monia_image_engine import generate_anchor_candidate
 
 
 def prepare_scene_anchors(scene: dict[str, Any], output_dir: Path) -> dict[str, Any]:
@@ -73,11 +75,17 @@ def prepare_scene_anchors(scene: dict[str, Any], output_dir: Path) -> dict[str, 
             continue
 
         board = compose_identity_board(contract, output_dir / f"{shot_id}-identity-board.png")
+        composite_request = build_composite_request(contract, board)
+        request_path = output_dir / f"{shot_id}-composite-request.json"
+        request_path.write_text(json.dumps(composite_request, ensure_ascii=False, indent=2), encoding="utf-8")
+        candidate = generate_anchor_candidate(composite_request, output_dir / f"{shot_id}-anchor-candidate.png")
         item = {
             "shotId": shot_id,
-            "status": "awaiting-generative-composite",
+            "status": "awaiting-semantic-anchor-review" if candidate.get("status") == "candidate" else candidate.get("status"),
             "contract": str(contract_path),
             "identityBoard": board,
+            "compositeRequest": str(request_path),
+            "candidate": candidate,
             "conditioning": conditioning,
         }
         items.append(item)
