@@ -34,7 +34,7 @@ jobs:
         run: |
           sudo apt-get update >/dev/null
           sudo apt-get install -y ffmpeg fonts-dejavu-core >/dev/null
-          python -m pip install --disable-pip-version-check requests gradio_client >/dev/null
+          python -m pip install --disable-pip-version-check requests gradio_client pillow >/dev/null
 
       - name: Fetch living world clips
         shell: bash
