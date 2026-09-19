@@ -1,0 +1,45 @@
+name: MonIA First Visible Scene
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: monia-video-gpu
+  cancel-in-progress: false
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      MONIA_IMAGE_SPACE: ${{ vars.MONIA_IMAGE_SPACE }}
+      MONIA_IMAGE_API_NAME: ${{ vars.MONIA_IMAGE_API_NAME }}
+      MONIA_IMAGE_MODE: qwen-compose
+      MONIA_IMAGE_TIMEOUT_SECONDS: "240"
+      MONIA_ANCHOR_LIBRARY_DIR: .monia-video/anchor-library
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Restore MonIA visual memory
+        uses: actions/cache@v4
+        with:
+          path: .monia-video/anchor-library
+          key: monia-anchor-library-v1-${{ runner.os }}
+      - name: Run first visible scene
+        run: |
+          python -m scripts.monia_scene_pipeline \
+            specs/monia-first-visible-marion-dominic-v1.json \
+            --work-dir .monia-video/first-visible
+      - name: Preserve scene checkpoint
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: monia-first-visible-scene
+          path: .monia-video/first-visible
+          if-no-files-found: warn
