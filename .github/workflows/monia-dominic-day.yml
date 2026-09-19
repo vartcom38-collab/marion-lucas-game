@@ -136,8 +136,10 @@ jobs:
             .day/result.json
             .monia-video/quality/*.json
             .monia-video/scenes/*.mp4
+            .monia-video/scenes/*.quality.json
 
       - name: Render Dominic V16 narration
+        if: always()
         shell: bash
         run: |
           set -euo pipefail
