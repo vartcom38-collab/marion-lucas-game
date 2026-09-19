@@ -67,11 +67,18 @@ def _crop_anchor(anchor: dict[str, Any], target: Path, width: int, height: int, 
     if missing:
         raise RuntimeError("Scene anchor rejected: missing validated identities: " + ", ".join(sorted(missing)))
     url = str(anchor.get("sourceUrl") or "").strip()
+    local_path = str(anchor.get("sourcePath") or "").strip()
     crop = anchor.get("crop") or {}
-    if not url:
-        raise RuntimeError("Scene anchor rejected: sourceUrl missing")
-    raw = _download_reference(url)
-    image = Image.open(io.BytesIO(raw)).convert("RGB")
+    if local_path:
+        path = Path(local_path)
+        if not path.exists() or path.stat().st_size < 2048:
+            raise RuntimeError("Scene anchor rejected: sourcePath missing or invalid")
+        image = Image.open(path).convert("RGB")
+    elif url:
+        raw = _download_reference(url)
+        image = Image.open(io.BytesIO(raw)).convert("RGB")
+    else:
+        raise RuntimeError("Scene anchor rejected: sourceUrl/sourcePath missing")
     x = max(0.0, min(1.0, float(crop.get("x", 0))))
     y = max(0.0, min(1.0, float(crop.get("y", 0))))
     w = max(0.01, min(1.0 - x, float(crop.get("width", 1))))
