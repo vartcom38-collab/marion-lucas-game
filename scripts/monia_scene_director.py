@@ -14,6 +14,11 @@ def _slug(value: str) -> str:
 def direct_scene(spec: dict[str, Any]) -> dict[str, Any]:
     scene_id = _slug(str(spec.get("id") or spec.get("title") or "monia-directed-scene"))
     actors = [str(a) for a in spec.get("actors") or ["Marion", "Lucas"]]
+    actor_references = spec.get("actorReferences") or {}
+    canonical_builtin = {"marion", "lucas"}
+    missing = [a for a in actors if a.lower() not in canonical_builtin and not actor_references.get(a)]
+    if missing:
+        raise ValueError("Recurring character reference required before generation: " + ", ".join(missing))
     intent = str(spec.get("intent") or "").strip()
     if not intent:
         raise ValueError("Scene intent is required")
@@ -71,6 +76,7 @@ def direct_scene(spec: dict[str, Any]) -> dict[str, Any]:
         "approvalRequired": True,
         "autoPublish": False,
         "sceneAnchor": spec.get("sceneAnchor"),
+        "actorReferences": actor_references,
         "continuityState": {
             "location": location,
             "timeOfDay": time_of_day,
