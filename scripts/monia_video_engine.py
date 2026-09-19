@@ -239,7 +239,9 @@ def race_compute(profile: CharacterProfile, source: Path, target: Path) -> tuple
     """Run MonIA compute providers concurrently. First valid video wins."""
     ctx = mp.get_context("fork")
     queue = ctx.Queue()
-    specs = [("ltx", FREE_LTX_SPACE, worker.LTX_LABEL)] + [("wan", space, label) for space, label in FREE_WAN_PROVIDERS]\n    provider_limit = max(1, int(os.environ.get("MONIA_PROVIDER_LIMIT", str(len(specs)))))\n    specs = specs[:provider_limit]
+    specs = [("ltx", FREE_LTX_SPACE, worker.LTX_LABEL)] + [("wan", space, label) for space, label in FREE_WAN_PROVIDERS]
+    provider_limit = max(1, int(os.environ.get("MONIA_PROVIDER_LIMIT", str(len(specs)))))
+    specs = specs[:provider_limit]
     processes: list[tuple[str, mp.Process, Path]] = []
     errors: list[str] = []
 
