@@ -139,7 +139,37 @@ def _profile_for_shot(job: dict[str, Any], shot: dict[str, Any], index: int) -> 
     ), scene_anchor
 
 
-def _generate(profile: CharacterProfile, scene_anchor: dict[str, Any] | None = None) -> tuple[Path, str]:
+def _quality_fingerprint(profile: CharacterProfile) -> str:
+    payload = json.dumps({
+        "canon": profile.canon_url,
+        "prompt": profile.prompt,
+        "negative": profile.negative,
+        "width": profile.width,
+        "height": profile.height,
+        "duration": profile.duration,
+    }, sort_keys=True, ensure_ascii=False).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()[:20]
+
+
+def _technical_quality_gate(path: Path, profile: CharacterProfile) -> dict[str, Any]:
+    if not worker.looks_like_video(path):
+        return {"passed": False, "reason": "invalid-video"}
+    size = path.stat().st_size
+    # Tiny outputs are usually failed/placeholder generations and must never become premium candidates.
+    minimum = max(100000, int(profile.duration) * 45000)
+    if size < minimum:
+        return {"passed": False, "reason": "undersized-video", "bytes": size, "minimumBytes": minimum}
+    return {
+        "passed": True,
+        "bytes": size,
+        "minimumBytes": minimum,
+        "fingerprint": _quality_fingerprint(profile),
+        "contract": "config/monia-premium-quality.json",
+        "requiresVisualReview": True,
+    }
+
+
+def _generate(profile: CharacterProfile, scene_anchor: dict[str, Any] | None = None) -> tuple[Path, str, dict[str, Any]]:
     source = SCENE_DIR / f"{profile.key}-reference.png"
     target = SCENE_DIR / profile.output_name
     if scene_anchor:
@@ -154,7 +184,7 @@ def _generate(profile: CharacterProfile, scene_anchor: dict[str, Any] | None = N
             if cached.status_code == 200 and len(cached.content) > 100000:
                 target.write_bytes(cached.content)
                 if worker.looks_like_video(target):
-                    return target, "MonIA published cache"
+                    gate = _technical_quality_gate(target, profile)\n                    if gate["passed"]:\n                        return target, "MonIA published cache", gate\n                    target.unlink(missing_ok=True)
                 target.unlink(missing_ok=True)
         except Exception:
             target.unlink(missing_ok=True)
@@ -249,7 +279,7 @@ def run_job(job_path: Path, publish: bool) -> dict[str, Any]:
             compute = None
             for attempt in range(1, attempts + 1):
                 try:
-                    path, compute = _generate(profile, scene_anchor)
+                    path, compute, quality = _generate(profile, scene_anchor)
                     break
                 except Exception as exc:
                     errors.append(f"attempt {attempt}: {exc}")
@@ -265,7 +295,7 @@ def run_job(job_path: Path, publish: bool) -> dict[str, Any]:
                 "bytes": path.stat().st_size,
                 "profile": asdict(profile),
                 "sceneAnchorId": scene_anchor.get("id") if scene_anchor else None,
-                "attempts": len(errors) + 1 if errors else 1,
+                "attempts": len(errors) + 1 if errors else 1,\n                "quality": quality,
             })
             if errors:
                 item["recoveredFrom"] = errors
