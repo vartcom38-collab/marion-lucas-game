@@ -8,6 +8,6 @@
   "preserveCheckpoint": true,
   "reuseValidatedAnchors": true,
   "approvalRequired": true,
-  "attempt": 3,
-  "reason": "retry-after-image-engine-syntax-fix"
+  "attempt": 4,
+  "reason": "retry-after-full-image-engine-rebuild"
 }
