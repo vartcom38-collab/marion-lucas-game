@@ -75,12 +75,40 @@ def build_av_plan(scene: dict[str, Any], voice_dir: Path | None = None) -> dict[
         })
         shot_cursor = end
 
+    # Editing beats are driven by speech boundaries rather than a rigid metronome.
+    edit_points = []
+    for utterance in utterances:
+        edit_points.append({
+            "atMs": utterance["startMs"],
+            "kind": "speech-start",
+            "speaker": utterance.get("speaker"),
+            "priority": "medium",
+        })
+        edit_points.append({
+            "atMs": utterance["endMs"],
+            "kind": "reaction-window",
+            "speaker": utterance.get("speaker"),
+            "holdMs": 280,
+            "priority": "high",
+            "direction": "prefer the listener reaction or a held look; do not cut instantly just because speech ended",
+        })
+    edit_points.sort(key=lambda item: int(item["atMs"]))
+
     return {
-        "version": 1,
+        "version": 2,
         "sceneId": scene.get("id"),
         "durationMs": max(shot_cursor, cursor_ms),
         "utterances": utterances,
         "shots": timeline_shots,
+        "editPoints": edit_points,
+        "editing": {
+            "policy": "performance-driven",
+            "avoidFixedCadence": True,
+            "cutOnReaction": True,
+            "allowPostLineHold": True,
+            "minimumReactionHoldMs": 280,
+            "rule": "Never cut solely because a nominal shot duration elapsed; prefer speech boundaries, gaze shifts, entrances, gestures and listener reactions.",
+        },
         "mix": {
             "continuousRoomTone": True,
             "preserveBreaths": True,
