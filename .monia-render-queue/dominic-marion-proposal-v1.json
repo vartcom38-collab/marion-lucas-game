@@ -8,6 +8,6 @@
   "preserveCheckpoint": true,
   "reuseValidatedAnchors": true,
   "approvalRequired": true,
-  "attempt": 7,
-  "reason": "retry-after-runtime-wide-gradio-auth-fix"
+  "attempt": 8,
+  "reason": "cumulative-render-checkpoint-v1"
 }
