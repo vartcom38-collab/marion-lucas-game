@@ -42,7 +42,7 @@ def assemble_final(
         for idx, u in enumerate(utterances, start=1):
             args += ["-i", str(u["audioPath"])]
             delay = max(0, int(u.get("startMs") or 0))
-            filters.append(f"[{idx}:a]adelay={delay}|{delay}[a{idx}]")
+            filters.append(f"[{idx}:a]adelay={delay}:all=1[a{idx}]")
             mix_inputs.append(f"[a{idx}]")
         filters.append("".join(mix_inputs) + f"amix=inputs={len(mix_inputs)}:duration=longest:dropout_transition=0[aout]")
         args += [
@@ -59,7 +59,7 @@ def assemble_final(
         "output": str(final),
         "bytes": final.stat().st_size,
         "dialogueTracks": len(utterances),
-        "roomTone": "not-generated-yet",
+        "roomTone": "continuity-planned; synthetic/generated ambience not yet rendered",
         "approvalRequired": True,
         "autoPublish": False,
     }
