@@ -2,20 +2,14 @@ name: MonIA Quality Proof
 # pipeline-revision: 3
 
 on:
-  push:
-    paths:
-      - '.github/workflows/monia-quality-proof.yml'
-      - 'scripts/monia_lipsync.py'
-      - 'scripts/monia_scene_worker.py'
-      - 'scripts/monia_video_engine.py'
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: monia-quality-proof
-  cancel-in-progress: true
+  group: monia-video-gpu
+  cancel-in-progress: false
 
 jobs:
   proof:
