@@ -11,6 +11,8 @@ from scripts.monia_scene_av_planner import build_av_plan
 from scripts.monia_scene_voice_renderer import render_scene_dialogue
 from scripts.monia_scene_lipsync import apply_targeted_lipsync
 from scripts.monia_scene_final_mix import assemble_final
+from scripts.monia_scene_visual_qa import write_contract
+from scripts.monia_scene_qa_sampler import extract_review_frames
 
 
 def _write(path: Path, payload: dict[str, Any]) -> None:
@@ -87,7 +89,21 @@ def run_pipeline(spec_path: Path, work_dir: Path, publish_candidates: bool = Fal
         final_ready = bool(final_result and final_result.get("status") in {"av-candidate", "picture-only"})
         journal["status"] = "final-candidate-ready" if final_ready and voices_complete else ("candidate-video-ready" if video_ready else "partial")
         journal["finalCandidate"] = final_result
-        journal["nextRequiredStage"] = "visual-semantic-qa" if final_ready else "resolve-blocked-stage"
+        if final_ready:
+            qa_dir = work_dir / "qa"
+            qa_contract = write_contract(scene, video_result, qa_dir / "visual-qa-contract.json")
+            qa_samples = extract_review_frames(video_result, qa_dir / "samples")
+            stage(
+                "visual-qa-preparation",
+                "ready" if qa_samples.get("status") == "ready" else "partial",
+                contract=str(qa_dir / "visual-qa-contract.json"),
+                samples=str(qa_dir / "samples" / "samples.json"),
+                evaluatorRequired=qa_contract.get("policy", {}).get("approvalRequiresSemanticVisionEvaluator", True),
+            )
+            journal["status"] = "awaiting-visual-semantic-qa"
+            journal["nextRequiredStage"] = "semantic-vision-evaluator"
+        else:
+            journal["nextRequiredStage"] = "resolve-blocked-stage"
     except Exception as exc:
         journal["status"] = "failed"
         journal["error"] = str(exc)
