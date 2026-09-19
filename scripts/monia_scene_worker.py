@@ -38,7 +38,7 @@ def _actor_canon(actor: str) -> str:
     if key == "lucas":
         return f"{SITE}/resources/monia/canon/lucas/reference.jpg"
     if key == "marion":
-        return f"{SITE}/resources/monia/canon/marion/reference.jpg"
+        return "https://raw.githubusercontent.com/vartcom38-collab/marion-lucas-game/main/public/resources/photo.png"
     raise ValueError(f"No locked canon reference registered for actor: {actor}")
 
 
@@ -104,13 +104,13 @@ def _profile_for_shot(job: dict[str, Any], shot: dict[str, Any], index: int) -> 
         f"MONIA SCENE CONTINUITY={continuity}.",
         "Preserve the exact locked canon identity for every visible canonical character.",
         "Do not copy any reference performer identity; references may guide movement/body language only.",
-        "No tattoos or facial scar on Lucas. No identity drift, no face morphing, no generic lookalike.",
+        "Preserve canonical visible tattoos when supported by the reference; never invent or erase canonical tattoo continuity. No facial scar unless canon explicitly requires one. No identity drift, no face morphing, no generic lookalike.",
         "Candidate output only. Never publish directly to live gameplay.",
     ])
 
     negative = (
         "identity drift, different face, generic model, lookalike, face morphing, altered jaw, altered eyes, "
-        "altered nose, altered mouth, tattoos, body ink, facial scar, deformed hands, extra fingers, duplicated person, "
+        "altered nose, altered mouth, invented tattoos, erased canonical tattoos, facial scar, deformed hands, extra fingers, duplicated person, "
         "cartoon, illustration, text, subtitles, watermark, UI, still image zoom, jitter"
     )
 
