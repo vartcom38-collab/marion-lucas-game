@@ -2,16 +2,13 @@ name: MonIA Dominic Day
 
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - '.github/workflows/monia-dominic-day.yml'
 
 permissions:
   contents: read
 
 concurrency:
   group: monia-dominic-day
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   render:
