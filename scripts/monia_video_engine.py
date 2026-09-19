@@ -200,7 +200,7 @@ def _run_ltx(profile: CharacterProfile, source: Path, target: Path) -> str:
 
 def _run_wan_provider(space: str, label: str, profile: CharacterProfile, source: Path, target: Path) -> str:
     token = os.environ.get("HF_TOKEN", "").strip() or None
-    client = Client(space, token=token, verbose=False)
+    client = Client(space, hf_token=token, verbose=False)
     result = client.predict(
         profile.prompt,
         handle_file(str(source)),
@@ -238,7 +238,7 @@ def _materialize_gradio_result(result: object, target: Path, label: str) -> str:
 
 def _run_upsampler_wan(profile: CharacterProfile, source: Path, target: Path) -> str:
     token = os.environ.get("HF_TOKEN", "").strip() or None
-    client = Client(UPSAMPLER_WAN_SPACE, token=token, verbose=False)
+    client = Client(UPSAMPLER_WAN_SPACE, hf_token=token, verbose=False)
     duration = max(0.5, min(5.0, float(profile.duration)))
     result = client.predict(
         handle_file(str(source)),
@@ -258,7 +258,7 @@ def _run_upsampler_wan(profile: CharacterProfile, source: Path, target: Path) ->
 
 def _run_upsampler_ltx(profile: CharacterProfile, source: Path, target: Path) -> str:
     token = os.environ.get("HF_TOKEN", "").strip() or None
-    client = Client(UPSAMPLER_LTX_SPACE, token=token, verbose=False)
+    client = Client(UPSAMPLER_LTX_SPACE, hf_token=token, verbose=False)
     # Keep resolution modest for shared ZeroGPU; preserve the requested aspect ratio.
     height = 544 if profile.width >= profile.height else 768
     width = round(height * profile.width / profile.height)
