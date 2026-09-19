@@ -30,6 +30,7 @@ export default defineConfig({
         immersivePlaytest: resolve(__dirname, 'playtest-immersive.html'),
         diagnosticPlaytest: resolve(__dirname, 'playtest-diagnostic.html'),
         moniaJuryDemo: resolve(__dirname, 'monia-jury-demo.html'),
+        moniaTeaser: resolve(__dirname, 'monia-teaser.html'),
         visioTest: resolve(__dirname, 'visio-test.html'),
       },
       maxParallelFileOps: 128,
