@@ -41,6 +41,10 @@ jobs:
           sudo apt-get install -y ffmpeg >/dev/null
           python -m pip install --disable-pip-version-check gradio_client pillow requests >/dev/null
 
+      - name: Validate MonIA Python
+        run: |
+          python -m py_compile scripts/monia_video_engine.py scripts/monia_scene_worker.py scripts/monia_intro_worker.py scripts/monia_lucas_v16_runtime_voice.py
+
       - name: Build Dominic day
         shell: bash
         run: |
