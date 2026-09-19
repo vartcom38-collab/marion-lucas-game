@@ -1,0 +1,188 @@
+name: MonIA Dominic Day
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/monia-dominic-day.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: monia-dominic-day
+  cancel-in-progress: true
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      INFOMANIAK_FTP_HOST: ${{ secrets.INFOMANIAK_FTP_HOST }}
+      INFOMANIAK_FTP_USER: ${{ secrets.INFOMANIAK_FTP_USER }}
+      INFOMANIAK_FTP_PASSWORD: ${{ secrets.INFOMANIAK_FTP_PASSWORD }}
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      MONIA_RACE_TIMEOUT_SECONDS: "240"
+      MONIA_SCENE_WORKERS: "3"
+      MONIA_SCENE_ATTEMPTS: "2"
+      MONIA_PROVIDER_LIMIT: "2"
+      MONIA_REUSE_PUBLISHED: "1"
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install MonIA runtime
+        run: |
+          sudo apt-get update >/dev/null
+          sudo apt-get install -y ffmpeg >/dev/null
+          python -m pip install --disable-pip-version-check gradio_client pillow requests >/dev/null
+
+      - name: Build Dominic day
+        shell: bash
+        run: |
+          mkdir -p .day
+          cat > .day/job.json <<'JSON'
+          {
+            "id": "dominic-day-v1",
+            "format": "16:9",
+            "continuityKey": "dominic-day-v1",
+            "approvalRequired": true,
+            "autoPublish": false,
+            "shots": [
+              {
+                "id": "wake",
+                "focusActor": "Lucas",
+                "actors": ["Lucas"],
+                "duration": 5,
+                "prompt": "Photorealistic premium live-action morning scene of Dominic canon waking naturally in a tasteful private bedroom in Spain. Warm early daylight through shutters, relaxed sleepy expression, sits on edge of bed, rubs face once, stands slowly. Exact canonical face, hair, stubble, body proportions. Natural breathing and imperfect human timing. No glamour ad, no text, no UI."
+              },
+              {
+                "id": "morning-routine",
+                "focusActor": "Lucas",
+                "actors": ["Lucas"],
+                "duration": 5,
+                "prompt": "Dominic canon during a believable morning routine in a modern Spanish home: bathroom mirror, washing face, choosing a dark shirt, pouring coffee and drinking water. Masculine but ordinary, quiet confidence, natural gestures, real skin texture, consistent identity and wardrobe continuity. No posing, no commercial style."
+              },
+              {
+                "id": "city",
+                "focusActor": "Lucas",
+                "actors": ["Lucas"],
+                "duration": 5,
+                "prompt": "Dominic canon walking through a believable southern Spanish city in late morning, sun, cafes, scooters, pedestrians, alive street ambience. He checks his phone briefly while walking, then looks up and greets someone off camera. Human handheld cinematic movement, exact identity, natural pace, no generic travel ad."
+              },
+              {
+                "id": "professional",
+                "focusActor": "Lucas",
+                "actors": ["Lucas"],
+                "duration": 6,
+                "prompt": "Dominic canon in his professional tauromachy routine before an engagement: quiet preparation with apoderado and cuadrilla nearby, checking equipment, focused expression, controlled breathing, disciplined body language. Show the profession as serious preparation, not spectacle. No gore, no arena violence, no melodrama, no heroic pose."
+              },
+              {
+                "id": "training",
+                "focusActor": "Lucas",
+                "actors": ["Lucas"],
+                "duration": 5,
+                "prompt": "Dominic canon during a restrained training session in an outdoor practice space in Spain, footwork and cape-handling practice without an animal present. Concentrated, athletic, realistic sweat and clothing movement, small corrections, natural pause to breathe. Exact body and face continuity, grounded documentary realism."
+              },
+              {
+                "id": "late-afternoon",
+                "focusActor": "Lucas",
+                "actors": ["Lucas"],
+                "duration": 5,
+                "prompt": "Late afternoon quiet moment with Dominic canon after work, seated outside at a calm terrace or courtyard in Spain, warm light, tired but peaceful, phone in hand, looking away for a moment before a small private smile. Subtle micro-expression, natural blink, no romance pose, no ad aesthetic."
+              },
+              {
+                "id": "night-visio",
+                "focusActor": "Lucas",
+                "actors": ["Lucas"],
+                "duration": 5,
+                "prompt": "Premium photorealistic smartphone front-camera video-call shot of Dominic canon at night in a believable private Madrid interior. Viewer is Marion through Dominic's invisible phone front camera. Arm-length upper-body framing, tiny handheld drift, breathing, irregular blink, gaze between screen and lens, soft tired smile. Exact canonical identity. No external camera, no phone visible, no text, no UI."
+              }
+            ]
+          }
+          JSON
+
+      - name: Generate Dominic day clips
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONPATH="$PWD" python -m scripts.monia_scene_worker --job .day/job.json --publish-candidates > .day/result.json
+          cat .day/result.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          raw=Path('.day/result.json').read_text(encoding='utf-8')
+          data=json.loads(raw[raw.find('{'):])
+          assembled=(data.get('assembledCandidate') or {}).get('path')
+          assert assembled, data
+          Path('.day/video_path.txt').write_text(assembled,encoding='utf-8')
+          PY
+
+      - name: Render Dominic V16 narration
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONPATH="$PWD" python -m scripts.monia_lucas_v16_runtime_voice             --text "Le matin, j'aime bien prendre mon temps quelques minutes avant que tout démarre. Après, tout va vite. J'aime quand les journées bougent, quand il y a du monde et de l'énergie. Quand je suis dans le travail, je pense à rien d'autre, je suis juste concentré. Et puis le soir, tout retombe un peu. Là, j'avais juste envie de t'entendre."             --emotion warm             --request-id dominic-day-v1
+          cp .monia-video/lucas-v16-runtime-dominic-day-v1.wav .day/voice.wav
+          ffprobe -v error -show_entries format=duration,size -of json .day/voice.wav
+
+      - name: Assemble final film
+        shell: bash
+        run: |
+          set -euo pipefail
+          VIDEO="$(cat .day/video_path.txt)"
+          VDUR="$(ffprobe -v error -show_entries format=duration -of default=nw=1:nk=1 "$VIDEO")"
+          ADUR="$(ffprobe -v error -show_entries format=duration -of default=nw=1:nk=1 .day/voice.wav)"
+          python - <<'PY'
+          import subprocess
+          from pathlib import Path
+          video=Path('.day/video_path.txt').read_text().strip()
+          subprocess.run([
+            'ffmpeg','-hide_banner','-loglevel','error','-y',
+            '-i',video,'-i','.day/voice.wav',
+            '-filter_complex','[1:a]apad=pad_dur=60[a]',
+            '-map','0:v:0','-map','[a]',
+            '-c:v','copy','-c:a','aac','-b:a','160k',
+            '-shortest','-movflags','+faststart','.day/final.mp4'
+          ],check=True)
+          PY
+          ffprobe -v error -show_entries stream=codec_type,codec_name -show_entries format=duration,size -of json .day/final.mp4
+
+      - name: Upload Dominic day
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import scripts.monia_intro_worker as w
+          src=Path('.day/final.mp4')
+          assert src.exists() and src.stat().st_size>100000
+          ftp=w.ftp_connect()
+          try:
+              root=w.remote_root(ftp)
+              print(w.upload_file(ftp,root,src,'monia-dominic-day-v1.mp4'))
+          finally:
+              ftp.quit()
+          PY
+
+      - name: Verify public film
+        shell: bash
+        run: |
+          python - <<'PY'
+          import time,requests
+          url='https://marion-lucas.marionbolomey.fr/resources/monia/generated/monia-dominic-day-v1.mp4'
+          for _ in range(12):
+              try:
+                  r=requests.get(url+'?v=${{ github.run_id }}',headers={'Range':'bytes=0-63','Cache-Control':'no-cache'},timeout=15)
+                  if r.status_code in (200,206) and b'ftyp' in r.content[:32]:
+                      print('PUBLIC_OK',url)
+                      break
+              except Exception:
+                  pass
+              time.sleep(5)
+          else:
+              raise SystemExit('Dominic day video not publicly reachable')
+          PY
