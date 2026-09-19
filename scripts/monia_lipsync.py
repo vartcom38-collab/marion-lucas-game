@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+# MonIA quality-proof trigger: cached video + resilient V16 clock.
+
 import argparse
 import json
 import os
