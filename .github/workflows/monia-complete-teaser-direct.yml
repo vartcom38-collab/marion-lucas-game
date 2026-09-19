@@ -1,0 +1,200 @@
+name: MonIA Complete Teaser Direct
+
+on:
+  push:
+    paths:
+      - '.github/workflows/monia-complete-teaser-direct.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: monia-complete-teaser-direct
+  cancel-in-progress: false
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      INFOMANIAK_FTP_HOST: ${{ secrets.INFOMANIAK_FTP_HOST }}
+      INFOMANIAK_FTP_USER: ${{ secrets.INFOMANIAK_FTP_USER }}
+      INFOMANIAK_FTP_PASSWORD: ${{ secrets.INFOMANIAK_FTP_PASSWORD }}
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      MONIA_RACE_TIMEOUT_SECONDS: "300"
+      LTX_UPLOAD_TIMEOUT_SECONDS: "90"
+      LTX_SUBMIT_TIMEOUT_SECONDS: "90"
+      WAN_PROVIDER_TIMEOUT_SECONDS: "180"
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install MonIA runtime
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg fonts-dejavu-core
+          python -m pip install --disable-pip-version-check gradio_client pillow requests
+
+      - name: Build MonIA scene job
+        shell: bash
+        run: |
+          mkdir -p .teaser
+          cat > .teaser/job.json <<'JSON'
+          {
+            "id": "monia-complete-teaser-direct-v1",
+            "format": "16:9",
+            "continuityKey": "complete-teaser-v1",
+            "approvalRequired": true,
+            "autoPublish": false,
+            "shots": [
+              {
+                "id": "marion-home",
+                "focusActor": "Marion",
+                "actors": ["Marion"],
+                "duration": 3,
+                "prompt": "Premium photorealistic gameplay shot. Marion canon in her Nîmes apartment in soft morning light, moving naturally through the room, checking her phone, coffee nearby, curtains and daylight subtly moving. Horizontal 16:9, real life-sim gameplay feeling, natural body language, no baked UI or text."
+              },
+              {
+                "id": "marion-marine",
+                "focusActor": "Marion",
+                "actors": ["Marion"],
+                "duration": 3,
+                "prompt": "Premium photorealistic Nîmes street gameplay. Preserve Marion canon exactly. A natural young French best friend Marine prototype joins her in medium-wide framing, they walk, pause, smile and talk while pedestrians and terrace life continue around them. Marine identity is deliberately non-canon prototype. No baked UI or text."
+              },
+              {
+                "id": "dominic-encounter",
+                "focusActor": "Lucas",
+                "actors": ["Lucas"],
+                "duration": 3,
+                "prompt": "Dominic canon near the Arènes during Feria. Preserve exact canonical face, hair, stubble, body proportions and presence. Show a believable full-body or three-quarter approach through a crowd, then a medium reaction after a small crowd jostle. He checks that Marion is okay, restrained and natural, no couple posing, no instant romance, no text."
+              },
+              {
+                "id": "dominic-visio",
+                "focusActor": "Lucas",
+                "actors": ["Lucas"],
+                "duration": 3,
+                "prompt": "Realistic smartphone front-camera visio of Dominic canon in a private Madrid interior. Viewer is the invisible phone front camera, arm-length head shoulders upper torso framing, breathing, irregular blink, gaze screen-to-lens, tiny handheld drift, realistic exposure. Warm restrained presence, no external camera, no phone visible, no text."
+              }
+            ]
+          }
+          JSON
+
+      - name: Generate MonIA character clips
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/monia_scene_worker.py --job .teaser/job.json > .teaser/result-output.json
+          cat .teaser/result-output.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          raw=Path('.teaser/result-output.json').read_text(encoding='utf-8')
+          data=json.loads(raw[raw.find('{'):])
+          assert data.get('status') in ('candidate-ready','candidate-clips-ready-assembly-failed'), data
+          shots=data.get('shots') or []
+          assert len(shots)==4
+          assert all(s.get('status')=='candidate-ready' for s in shots), shots
+          Path('.teaser/paths.txt').write_text('\n'.join(s['path'] for s in shots),encoding='utf-8')
+          PY
+
+      - name: Render Dominic V16 French lines
+        continue-on-error: true
+        shell: bash
+        run: |
+          mkdir -p .teaser/voice
+          python scripts/monia_lucas_v16_runtime_voice.py --text "Ça va ? Vous vous êtes pas fait mal ?" --emotion concerned --request-id teaser-direct-encounter
+          cp .monia-video/lucas-v16-runtime-teaser-direct-encounter.wav .teaser/voice/encounter.wav
+          python scripts/monia_lucas_v16_runtime_voice.py --text "Je voulais juste t'entendre deux minutes." --emotion warm --request-id teaser-direct-visio
+          cp .monia-video/lucas-v16-runtime-teaser-direct-visio.wav .teaser/voice/visio.wav
+
+      - name: Assemble final teaser with game UI
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t G < .teaser/paths.txt
+          mkdir -p .teaser/norm
+
+          cp public/resources/living/street.mp4 .teaser/street.mp4
+          cp public/resources/living/arenes.mp4 .teaser/arenes.mp4
+
+          INPUTS=("${G[0]}" ".teaser/street.mp4" "${G[1]}" "${G[2]}" "${G[3]}" ".teaser/arenes.mp4")
+          for i in 1 2 3 4 5 6; do
+            src="${INPUTS[$((i-1))]}"
+            ffmpeg -hide_banner -loglevel error -y -i "$src"               -vf "scale=1280:720:force_original_aspect_ratio=increase,crop=1280:720,fps=24,format=yuv420p"               -an -t 3 -c:v libx264 -preset medium -crf 19 -movflags +faststart ".teaser/norm/$i.mp4"
+          done
+          : > .teaser/concat.txt
+          for i in 1 2 3 4 5 6; do echo "file '$PWD/.teaser/norm/$i.mp4'" >> .teaser/concat.txt; done
+          ffmpeg -hide_banner -loglevel error -y -f concat -safe 0 -i .teaser/concat.txt -c copy .teaser/base.mp4
+
+          cat > .teaser/ui.ass <<'ASS'
+          [Script Info]
+          ScriptType: v4.00+
+          PlayResX: 1280
+          PlayResY: 720
+          WrapStyle: 2
+          [V4+ Styles]
+          Format: Name,Fontname,Fontsize,PrimaryColour,SecondaryColour,OutlineColour,BackColour,Bold,Italic,Underline,StrikeOut,ScaleX,ScaleY,Spacing,Angle,BorderStyle,Outline,Shadow,Alignment,MarginL,MarginR,MarginV,Encoding
+          Style: HUD,DejaVu Sans,23,&H00FFFFFF,&H000000FF,&H33000000,&HAA111111,0,0,0,0,100,100,0,0,3,1,0,7,36,36,28,1
+          Style: Choice,DejaVu Sans,24,&H00FFFFFF,&H000000FF,&H33000000,&HAA111111,0,0,0,0,100,100,0,0,3,1,0,2,35,35,35,1
+          Style: Label,DejaVu Sans,20,&H00FFFFFF,&H000000FF,&H33000000,&H99000000,1,0,0,0,100,100,2,0,3,1,0,8,36,36,40,1
+          Style: Title,DejaVu Sans,44,&H00FFFFFF,&H000000FF,&H33000000,&H66000000,1,0,0,0,100,100,3,0,3,1,0,5,60,60,85,1
+          Style: Sub,DejaVu Sans,24,&H00FFFFFF,&H000000FF,&H33000000,&H77000000,0,0,0,0,100,100,0,0,3,1,0,2,60,60,55,1
+          [Events]
+          Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+          Dialogue: 0,0:00:00.15,0:00:02.85,HUD,,0,0,0,,Jour 1  •  08:54  •  Appartement — Nîmes
+          Dialogue: 0,0:00:00.55,0:00:02.85,Choice,,0,0,0,,Regarder le téléphone     Se préparer     Sortir
+          Dialogue: 0,0:00:03.10,0:00:05.85,HUD,,0,0,0,,Nîmes  •  Feria  •  Monde vivant
+          Dialogue: 0,0:00:06.10,0:00:08.85,Choice,,0,0,0,,Parler avec Marine     Continuer     Terrasse
+          Dialogue: 0,0:00:09.10,0:00:11.80,Label,,0,0,0,,CINÉMATIQUE CONTEXTUELLE
+          Dialogue: 0,0:00:12.10,0:00:14.80,HUD,,0,0,0,,Dominic  •  Visio
+          Dialogue: 0,0:00:15.05,0:00:16.75,HUD,,0,0,0,,Corrida  •  Espagne  •  Voyages  •  Projets  •  Famille
+          Dialogue: 0,0:00:16.60,0:00:17.95,Title,,0,0,0,,MARION & DOMINIC
+          Dialogue: 0,0:00:17.00,0:00:17.95,Sub,,0,0,0,,Une vie à vivre. Jamais exactement deux fois la même.
+          ASS
+
+          ffmpeg -hide_banner -loglevel error -y -i .teaser/base.mp4 -vf "ass=.teaser/ui.ass" -an             -c:v libx264 -preset medium -crf 18 -movflags +faststart .teaser/video.mp4
+
+          if [ -s .teaser/voice/encounter.wav ] && [ -s .teaser/voice/visio.wav ]; then
+            ffmpeg -hide_banner -loglevel error -y               -f lavfi -t 18 -i "anullsrc=r=48000:cl=stereo"               -i .teaser/voice/encounter.wav -i .teaser/voice/visio.wav               -filter_complex "[1:a]adelay=9000|9000[v1];[2:a]adelay=12000|12000[v2];[0:a][v1][v2]amix=inputs=3:duration=first:dropout_transition=0[a]"               -map "[a]" -t 18 .teaser/audio.wav
+            ffmpeg -hide_banner -loglevel error -y -i .teaser/video.mp4 -i .teaser/audio.wav               -map 0:v -map 1:a -c:v copy -c:a aac -b:a 160k -shortest -movflags +faststart .teaser/final.mp4
+          else
+            cp .teaser/video.mp4 .teaser/final.mp4
+          fi
+          ffprobe -v error -show_entries format=duration,size -of json .teaser/final.mp4
+
+      - name: Upload final teaser to Infomaniak
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import scripts.monia_intro_worker as w
+          src=Path('.teaser/final.mp4')
+          assert src.exists() and src.stat().st_size > 100000
+          ftp=w.ftp_connect()
+          try:
+              root=w.remote_root(ftp)
+              url=w.upload_file(ftp,root,src,'monia-complete-teaser-v1.mp4')
+              print('MONIA_FINAL_URL='+url)
+          finally:
+              ftp.quit()
+          PY
+
+      - name: Verify public video
+        shell: bash
+        run: |
+          python - <<'PY'
+          import time,requests
+          url='https://marion-lucas.marionbolomey.fr/resources/monia/generated/monia-complete-teaser-v1.mp4'
+          for i in range(10):
+              r=requests.get(url+'?v=${{ github.run_id }}',headers={'Range':'bytes=0-63','Cache-Control':'no-cache'},timeout=20)
+              if r.status_code in (200,206) and b'ftyp' in r.content[:32]:
+                  print('PUBLIC_OK',url); break
+              time.sleep(5)
+          else:
+              raise SystemExit('final video not publicly reachable')
+          PY
