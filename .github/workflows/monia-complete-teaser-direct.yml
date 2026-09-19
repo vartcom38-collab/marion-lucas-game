@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - '.github/workflows/monia-complete-teaser-direct.yml'
+      - 'scripts/monia_scene_worker.py'
   workflow_dispatch:
 
 permissions:
