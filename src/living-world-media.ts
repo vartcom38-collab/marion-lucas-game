@@ -13,7 +13,11 @@ function readSave():LooseSave|null{
   try{const raw=localStorage.getItem(SAVE_KEY);return raw?JSON.parse(raw) as LooseSave:null}catch{return null}
 }
 
-function sourceFor(place:string){return `${VIDEO_ROOT}/${place}.mp4`}
+function sourceFor(place:string){
+  const key=place.toLowerCase();
+  const map:Record<string,string>={nimes:'street',cafe:'cafe',arenes:'arenes',station:'station'};
+  return `${VIDEO_ROOT}/${map[key]||key}.mp4`;
+}
 
 async function mediaExists(url:string){
   try{
