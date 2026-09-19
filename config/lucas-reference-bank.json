@@ -19,7 +19,13 @@
       "id": "lucas-2026-09-15-195616",
       "source_name": "ScreenRecording_09-15-2026 19-56-16_1(1).mp4",
       "duration_seconds": 29.133,
-      "roles": ["identity", "face", "gaze", "micro_expression", "movement"],
+      "roles": [
+        "identity",
+        "face",
+        "gaze",
+        "micro_expression",
+        "movement"
+      ],
       "priority": "high",
       "classification": "pending_detailed_scene_tags"
     },
@@ -27,7 +33,13 @@
       "id": "lucas-2026-09-15-201730",
       "source_name": "ScreenRecording_09-15-2026 20-17-30_1.mp4",
       "duration_seconds": 17.433,
-      "roles": ["identity", "face", "gaze", "micro_expression", "movement"],
+      "roles": [
+        "identity",
+        "face",
+        "gaze",
+        "micro_expression",
+        "movement"
+      ],
       "priority": "high",
       "classification": "pending_detailed_scene_tags"
     },
@@ -35,7 +47,12 @@
       "id": "lucas-2026-09-15-202903",
       "source_name": "ScreenRecording_09-15-2026 20-29-03_1.mp4",
       "duration_seconds": 11.633,
-      "roles": ["identity", "face", "gesture", "movement"],
+      "roles": [
+        "identity",
+        "face",
+        "gesture",
+        "movement"
+      ],
       "priority": "high",
       "classification": "pending_detailed_scene_tags"
     },
@@ -43,7 +60,12 @@
       "id": "lucas-2026-09-15-203216",
       "source_name": "ScreenRecording_09-15-2026 20-32-16_1.mp4",
       "duration_seconds": 18.467,
-      "roles": ["identity", "posture", "gaze", "movement"],
+      "roles": [
+        "identity",
+        "posture",
+        "gaze",
+        "movement"
+      ],
       "priority": "high",
       "classification": "pending_detailed_scene_tags"
     },
@@ -51,7 +73,16 @@
       "id": "lucas-private-home-2026-09-15-203758",
       "source_name": "ScreenRecording_09-15-2026 20-37-58_1.mp4",
       "duration_seconds": 44.367,
-      "roles": ["identity", "full_body", "private_home", "relaxed_posture", "body_movement", "gesture_rhythm", "tattoos", "off_duty_wardrobe"],
+      "roles": [
+        "identity",
+        "full_body",
+        "private_home",
+        "relaxed_posture",
+        "body_movement",
+        "gesture_rhythm",
+        "tattoos",
+        "off_duty_wardrobe"
+      ],
       "priority": "canonical_motion",
       "classification": "private_home_reference",
       "notes": "Strong reference for Lucas relaxed at home: silhouette, posture, body movement, natural gesture rhythm and canonical tattoos. Do not treat underwear/home clothing as universal wardrobe."
@@ -60,7 +91,12 @@
       "id": "lucas-2026-09-15-210254",
       "source_name": "ScreenRecording_09-15-2026 21-02-54_1.mp4",
       "duration_seconds": 8.7,
-      "roles": ["identity", "face", "micro_expression", "movement"],
+      "roles": [
+        "identity",
+        "face",
+        "micro_expression",
+        "movement"
+      ],
       "priority": "high",
       "classification": "pending_detailed_scene_tags"
     },
@@ -68,15 +104,27 @@
       "id": "lucas-2026-09-15-210634",
       "source_name": "ScreenRecording_09-15-2026 21-06-34_1.mp4",
       "duration_seconds": 16.067,
-      "roles": ["identity", "face", "gaze", "gesture", "movement"],
+      "roles": [
+        "identity",
+        "face",
+        "gaze",
+        "gesture",
+        "movement"
+      ],
       "priority": "high",
       "classification": "pending_detailed_scene_tags"
     },
     {
       "id": "lucas-2026-09-15-210953",
       "source_name": "ScreenRecording_09-15-2026 21-09-53_1.mp4",
-      "duration_seconds": 28.0,
-      "roles": ["identity", "face", "posture", "gesture", "movement"],
+      "duration_seconds": 28,
+      "roles": [
+        "identity",
+        "face",
+        "posture",
+        "gesture",
+        "movement"
+      ],
       "priority": "high",
       "classification": "pending_detailed_scene_tags"
     },
@@ -84,7 +132,12 @@
       "id": "lucas-2026-09-15-214511",
       "source_name": "ScreenRecording_09-15-2026 21-45-11_1.mp4",
       "duration_seconds": 11.767,
-      "roles": ["identity", "face", "gaze", "micro_expression"],
+      "roles": [
+        "identity",
+        "face",
+        "gaze",
+        "micro_expression"
+      ],
       "priority": "high",
       "classification": "pending_detailed_scene_tags"
     },
@@ -92,16 +145,34 @@
       "id": "lucas-2026-09-15-214828",
       "source_name": "ScreenRecording_09-15-2026 21-48-28_1.mp4",
       "duration_seconds": 20.067,
-      "roles": ["identity", "face", "gaze", "micro_expression", "movement"],
+      "roles": [
+        "identity",
+        "face",
+        "gaze",
+        "micro_expression",
+        "movement"
+      ],
       "priority": "canonical_identity",
       "classification": "frame_pack_available",
-      "derived_frames": ["lucas_214828/f0.jpg", "lucas_214828/f1.jpg", "lucas_214828/f2.jpg", "lucas_214828/f3.jpg", "lucas_214828/f4.jpg"]
+      "derived_frames": [
+        "lucas_214828/f0.jpg",
+        "lucas_214828/f1.jpg",
+        "lucas_214828/f2.jpg",
+        "lucas_214828/f3.jpg",
+        "lucas_214828/f4.jpg"
+      ]
     },
     {
       "id": "lucas-2026-09-15-215205",
       "source_name": "ScreenRecording_09-15-2026 21-52-05_1.mp4",
       "duration_seconds": 29.5,
-      "roles": ["identity", "face", "posture", "gesture", "movement"],
+      "roles": [
+        "identity",
+        "face",
+        "posture",
+        "gesture",
+        "movement"
+      ],
       "priority": "high",
       "classification": "pending_detailed_scene_tags"
     },
@@ -109,7 +180,12 @@
       "id": "lucas-2026-09-16-120836",
       "source_name": "ScreenRecording_09-16-2026 12-08-36_1(1).mp4",
       "duration_seconds": 29.57,
-      "roles": ["identity", "face", "movement", "performance"],
+      "roles": [
+        "identity",
+        "face",
+        "movement",
+        "performance"
+      ],
       "priority": "high",
       "classification": "pending_detailed_scene_tags"
     },
@@ -117,27 +193,115 @@
       "id": "lucas-voice-performance-2026-09-16-171905",
       "source_name": "ScreenRecording_09-16-2026 17-19-05_1(1).mp4",
       "duration_seconds": 24.233,
-      "roles": ["identity", "face", "speech_presence", "speech_rhythm", "performance", "gaze"],
+      "roles": [
+        "identity",
+        "face",
+        "speech_presence",
+        "speech_rhythm",
+        "performance",
+        "gaze"
+      ],
       "priority": "canonical_performance",
       "classification": "voice_and_presence_reference",
       "notes": "Broad performance target: grave but alert/nerveuse, firm attacks, connected forward-moving speech, direct presence; avoid sleepy, overly soft or robotic delivery."
+    },
+    {
+      "id": "dominic-voice-full-presence-2026-09-19-111402",
+      "source_name": "ScreenRecording_09-19-2026 11-14-02_1.mp4",
+      "duration_seconds": 54.367,
+      "roles": [
+        "identity",
+        "face",
+        "full_body",
+        "speech_presence",
+        "speech_rhythm",
+        "performance",
+        "gaze",
+        "gesture",
+        "movement",
+        "voice_color_reference"
+      ],
+      "priority": "canonical_performance_support",
+      "classification": "full_presence_and_voice-performance_reference",
+      "language_in_source": "en",
+      "notes": "User-confirmed Dominic. Use visual identity/performance strongly. For voice, transfer only broad non-biometric qualities into the already approved French V16 synthetic voice; never copy source speech or speaker identity."
+    },
+    {
+      "id": "dominic-full-body-motion-2026-09-19-111712",
+      "source_name": "ScreenRecording_09-19-2026 11-17-12_1.mp4",
+      "duration_seconds": 35.733,
+      "roles": [
+        "identity",
+        "full_body",
+        "silhouette",
+        "body_proportions",
+        "posture",
+        "walking",
+        "gait",
+        "weight_shift",
+        "movement",
+        "wide_shot"
+      ],
+      "priority": "canonical_full_body_motion",
+      "classification": "full_body_motion_reference",
+      "notes": "User-confirmed Dominic full-body authority for walking, arrivals, standing posture, proportions and spatial presence. Canonical face reference remains the close-face authority."
     }
   ],
   "routing": {
     "visio": {
-      "required": ["approved_visio_visual", "canonical_identity", "canonical_motion", "canonical_performance"],
+      "required": [
+        "approved_visio_visual",
+        "canonical_identity",
+        "canonical_motion",
+        "canonical_performance"
+      ],
       "camera_contract": "viewer_is_phone_front_camera",
-      "preferred_roles": ["face", "gaze", "micro_expression", "gesture_rhythm", "speech_presence"],
-      "forbidden": ["external_camera", "visible_phone", "cinematic_portrait", "tripod_look", "generic_male_motion"]
+      "preferred_roles": [
+        "face",
+        "gaze",
+        "micro_expression",
+        "gesture_rhythm",
+        "speech_presence"
+      ],
+      "forbidden": [
+        "external_camera",
+        "visible_phone",
+        "cinematic_portrait",
+        "tripod_look",
+        "generic_male_motion"
+      ]
     },
     "private_home": {
-      "preferred_roles": ["private_home", "relaxed_posture", "body_movement", "tattoos", "off_duty_wardrobe"]
+      "preferred_roles": [
+        "private_home",
+        "relaxed_posture",
+        "body_movement",
+        "tattoos",
+        "off_duty_wardrobe"
+      ]
     },
     "dialogue": {
-      "preferred_roles": ["speech_presence", "speech_rhythm", "gaze", "micro_expression"]
+      "preferred_roles": [
+        "speech_presence",
+        "speech_rhythm",
+        "gaze",
+        "micro_expression",
+        "voice_color_reference"
+      ]
     },
     "cinematic": {
-      "preferred_roles": ["identity", "posture", "body_movement", "gesture", "gaze"]
+      "preferred_roles": [
+        "identity",
+        "posture",
+        "body_movement",
+        "gesture",
+        "gaze",
+        "full_body",
+        "silhouette",
+        "walking",
+        "gait",
+        "wide_shot"
+      ]
     }
   },
   "selection_policy": [
