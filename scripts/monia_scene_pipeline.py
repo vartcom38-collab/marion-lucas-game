@@ -18,6 +18,7 @@ from scripts.monia_scene_identity_review import write_identity_review
 from scripts.monia_scene_repair_runner import execute_repair_pass
 from scripts.monia_story_logic import validate_story_logic
 from scripts.monia_story_repair import repair_story_logic
+from scripts.monia_scene_blocking import plan_blocking
 
 
 def _write(path: Path, payload: dict[str, Any]) -> None:
@@ -66,6 +67,12 @@ def run_pipeline(spec_path: Path, work_dir: Path, publish_candidates: bool = Fal
                 journal["nextRequiredStage"] = "director-revision"
                 _write(journal_path, journal)
                 return journal
+
+        blocking = plan_blocking(scene)
+        scene = blocking["scene"]
+        _write(scene_path, scene)
+        _write(work_dir / "blocking-plan.json", blocking)
+        stage("blocking", blocking.get("status") or "unknown", output=str(work_dir / "blocking-plan.json"))
 
         av_initial = build_av_plan(scene)
         av_initial_path = work_dir / "av-plan-estimated.json"
