@@ -52,6 +52,25 @@ stillLoop(resolve(root,'public/resources/appartement-nimes.png'),resolve(outDir,
   duration:14,zoom:1.038,x:'iw/2-(iw/zoom/2)+18*sin(on/85)',y:'ih/2-(ih/zoom/2)-8*sin(on/120)',warm:true
 });
 
+
+const nimesStreet=resolve(root,'public/resources/nimes/nimes-street.webp');
+const nimesArenes=resolve(root,'public/resources/nimes/nimes-arenes.webp');
+const nimesCafe=resolve(root,'public/resources/nimes/nimes-cafe.webp');
+const nimesStation=resolve(root,'public/resources/nimes/nimes-station.webp');
+
+stillLoop(nimesStreet,resolve(outDir,'street.mp4'),{
+  duration:12,zoom:1.055,x:'iw/2-(iw/zoom/2)-28*sin(on/95)',y:'ih/2-(ih/zoom/2)+8*sin(on/125)',warm:true
+});
+stillLoop(nimesArenes,resolve(outDir,'arenes.mp4'),{
+  duration:13,zoom:1.05,x:'iw/2-(iw/zoom/2)+20*sin(on/110)',y:'ih/2-(ih/zoom/2)-10*sin(on/140)',warm:true
+});
+stillLoop(nimesCafe,resolve(outDir,'cafe.mp4'),{
+  duration:11,zoom:1.045,x:'iw/2-(iw/zoom/2)-16*sin(on/88)',y:'ih/2-(ih/zoom/2)+6*sin(on/118)',warm:true
+});
+stillLoop(nimesStation,resolve(outDir,'station.mp4'),{
+  duration:12,zoom:1.04,x:'iw/2-(iw/zoom/2)+14*sin(on/105)',y:'ih/2-(ih/zoom/2)',warm:false
+});
+
 const nimes=deriveNimesSource();
 if(nimes){
   stillLoop(nimes,resolve(outDir,'nimes.mp4'),{
