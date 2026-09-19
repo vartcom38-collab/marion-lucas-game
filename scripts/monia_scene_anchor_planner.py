@@ -1,0 +1,73 @@
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Any
+import json
+
+from scripts.monia_identity_conditioning import identity_conditioning_plan
+
+
+def prepare_scene_anchors(scene: dict[str, Any], output_dir: Path) -> dict[str, Any]:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    job_refs = scene.get("actorReferences") or {}
+    items = []
+    blocked = []
+
+    for index, shot in enumerate(scene.get("shots") or []):
+        actors = [str(a) for a in shot.get("actors") or []]
+        refs = {}
+        for actor in actors:
+            key = actor.strip().lower()
+            if key in {"lucas", "dominic"}:
+                refs[actor] = "https://marion-lucas.marionbolomey.fr/resources/monia/canon/lucas/reference.jpg"
+            elif key == "marion":
+                refs[actor] = "https://raw.githubusercontent.com/vartcom38-collab/marion-lucas-game/main/public/resources/photo.png"
+            else:
+                explicit = (shot.get("actorReferences") or {}).get(actor) or job_refs.get(actor)
+                if explicit:
+                    refs[actor] = str(explicit)
+
+        conditioning = identity_conditioning_plan({"actors": actors}, refs)
+        if not conditioning.get("anchorRequired"):
+            items.append({"shotId": shot.get("id"), "status": "not-required", "conditioning": conditioning})
+            continue
+
+        shot_id = str(shot.get("id") or f"shot-{index+1:02d}")
+        contract = {
+            "shotId": shot_id,
+            "status": "awaiting-composite",
+            "actors": actors,
+            "references": refs,
+            "blockingState": shot.get("blockingState") or {},
+            "cameraGrammar": shot.get("cameraGrammar") or {},
+            "environmentContinuity": shot.get("environmentContinuity") or {},
+            "appearance": (scene.get("continuityState") or {}).get("appearance") or {},
+            "wardrobe": (scene.get("continuityState") or {}).get("wardrobe") or {},
+            "requiredOutput": str(output_dir / f"{shot_id}-anchor.png"),
+            "validation": conditioning.get("anchorRequirements") or {},
+            "rules": [
+                "Compose the exact visible actors only.",
+                "Preserve each canonical identity separately; never blend or average faces.",
+                "Match planned blocking, screen side, eyelines, wardrobe, lighting and camera perspective.",
+                "This is a still identity/layout anchor, not final artwork.",
+                "Do not animate until semantic identity review validates every visible canonical actor.",
+            ],
+        }
+        contract_path = output_dir / f"{shot_id}-anchor-contract.json"
+        contract_path.write_text(json.dumps(contract, ensure_ascii=False, indent=2), encoding="utf-8")
+        item = {"shotId": shot_id, "status": "awaiting-composite", "contract": str(contract_path), "conditioning": conditioning}
+        items.append(item)
+        blocked.append(shot_id)
+
+    result = {
+        "status": "anchors-required" if blocked else "ready",
+        "blockedShots": blocked,
+        "shots": items,
+        "policy": {
+            "multiCharacterVideoCannotStartWithoutValidatedAnchor": True,
+            "semanticIdentityReviewRequired": True,
+            "approvedAnchorCanBeReused": True,
+        },
+    }
+    (output_dir / "anchor-plan.json").write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+    return result
