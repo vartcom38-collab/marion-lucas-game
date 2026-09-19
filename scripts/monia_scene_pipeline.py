@@ -21,6 +21,7 @@ from scripts.monia_story_repair import repair_story_logic
 from scripts.monia_scene_blocking import plan_blocking
 from scripts.monia_scene_camera import plan_camera
 from scripts.monia_scene_emotion import plan_emotional_continuity
+from scripts.monia_scene_human_behavior import plan_human_behavior
 
 
 def _write(path: Path, payload: dict[str, Any]) -> None:
@@ -87,6 +88,12 @@ def run_pipeline(spec_path: Path, work_dir: Path, publish_candidates: bool = Fal
         _write(scene_path, scene)
         _write(work_dir / "emotion-plan.json", emotion)
         stage("emotion", emotion.get("status") or "unknown", output=str(work_dir / "emotion-plan.json"))
+
+        behavior = plan_human_behavior(scene)
+        scene = behavior["scene"]
+        _write(scene_path, scene)
+        _write(work_dir / "human-behavior-plan.json", behavior)
+        stage("human-behavior", behavior.get("status") or "unknown", output=str(work_dir / "human-behavior-plan.json"))
 
         av_initial = build_av_plan(scene)
         av_initial_path = work_dir / "av-plan-estimated.json"
