@@ -232,7 +232,21 @@ def run_job(job_path: Path, publish: bool) -> dict[str, Any]:
         }
         try:
             profile, scene_anchor = _profile_for_shot(job, shot, index)
-            path, compute = _generate(profile, scene_anchor)
+            attempts = max(1, int(os.environ.get("MONIA_SCENE_ATTEMPTS", "2")))
+            errors: list[str] = []
+            path = None
+            compute = None
+            for attempt in range(1, attempts + 1):
+                try:
+                    path, compute = _generate(profile, scene_anchor)
+                    break
+                except Exception as exc:
+                    errors.append(f"attempt {attempt}: {exc}")
+                    if attempt < attempts:
+                        import time
+                        time.sleep(8)
+            if path is None or compute is None:
+                raise RuntimeError(" | ".join(errors))
             item.update({
                 "status": "candidate-ready",
                 "compute": compute,
@@ -240,7 +254,10 @@ def run_job(job_path: Path, publish: bool) -> dict[str, Any]:
                 "bytes": path.stat().st_size,
                 "profile": asdict(profile),
                 "sceneAnchorId": scene_anchor.get("id") if scene_anchor else None,
+                "attempts": len(errors) + 1 if errors else 1,
             })
+            if errors:
+                item["recoveredFrom"] = errors
             if publish:
                 item["candidateUrl"] = publish_candidate(path)
         except Exception as exc:
