@@ -1,8 +1,8 @@
 {
-  "version": 12,
-  "status": "approved-v16-voice-and-flow",
+  "version": 13,
+  "status": "test-video-direction-target-v16-fallback",
   "character": "lucas",
-  "goal": "Use V16 as the official approved synthetic Lucas French voice reference. Preserve its timbre, tone, register and conversational fluidity. Do not reopen voice identity or flow tuning unless the user explicitly requests a change.",
+  "goal": "Move Dominic toward the user's preferred male voice direction from the 2026-09-19 uploaded test video, using broad non-biometric vocal qualities only. Keep V16 as the validated technical fallback until a new French candidate is explicitly approved.",
   "approved_reference": {
     "candidate": "lucas-voice-v16-b-smoother-flow-fr-candidate.wav",
     "url": "https://marion-lucas.marionbolomey.fr/resources/monia/generated/lucas-voice-v16-b-smoother-flow-fr-candidate.wav",
@@ -26,7 +26,8 @@
     "lucas_v15_b_fluid_fr": "near-final combined checkpoint",
     "lucas_v16_b_smoother_flow_fr": "OFFICIAL approved Lucas French voice reference for timbre, tone and fluidity",
     "validated_v10a": "legacy visio anchor only; do not use for new Lucas French dialogue",
-    "dominic_2026_09_19_111402_english_performance": "User-confirmed Dominic full-presence speaking reference. Use broad non-biometric qualities only: low register impression, warmth, grain, breath timing, attack softness, cadence, conversational energy and jaw/head coordination. Source language is English; runtime dialogue remains French and V16-only. Never copy source wording or speaker biometric identity."
+    "dominic_2026_09_19_111402_english_performance": "User-confirmed Dominic full-presence speaking reference. Use broad non-biometric qualities only: low register impression, warmth, grain, breath timing, attack softness, cadence, conversational energy and jaw/head coordination. Source language is English; runtime dialogue remains French and V16-only. Never copy source wording or speaker biometric identity.",
+    "dominic_test_video_2026_09_19": "CURRENT ARTISTIC TARGET selected by user. Extract broad non-biometric qualities only: young masculine presence, natural conversational delivery, warmth, relaxed timing, human micro-pauses, breath and spontaneous phrasing. Do not clone or reproduce the source speaker identity."
   },
   "locked_elements": {
     "timbre": "low, warm, close, compact and intimate with soft slightly husky texture, smooth low-mid body, relaxed consonants and natural imperfect edges",
@@ -40,11 +41,11 @@
   "runtime_direction": {
     "language": "fr-FR",
     "voice_reference": "lucas-voice-v16-b-smoother-flow-fr-candidate.wav",
-    "generation_style": "direct synthetic Lucas voice generation using the approved V16 broad voice direction",
+    "generation_style": "Generate a new original Dominic French voice identity guided by the broad qualities of the user-selected test-video male voice; V16 remains fallback until explicit approval.",
     "dialogue_behavior": "natural connected French, context-sensitive emotion without changing core voice identity",
     "allowed_variation": "emotion, energy and conversational intent may vary naturally while preserving V16 identity, register, warmth and continuity",
     "forbidden_variation": "do not make Lucas brighter, drier, more theatrical, more announcer-like, artificially deeper, robotic or syllabic",
-    "performance_support": "When helpful, match the broad presence and conversational energy learned from the 2026-09-19 speaking reference while preserving the approved V16 French voice identity and prosody."
+    "performance_support": "Prioritize the natural conversational feel of the 2026-09-19 user-selected test-video male voice: human timing, warmth, spontaneous phrasing and masculine presence, without biometric cloning."
   },
   "rejected_routes": [
     {
@@ -91,7 +92,8 @@
     "audible edit joins",
     "music or other speakers in final voice references",
     "using the 2026-09-19 English Dominic clip as a biometric cloning source",
-    "reusing English source wording in French gameplay dialogue"
+    "reusing English source wording in French gameplay dialogue",
+    "biometric cloning or speaker-identity imitation from the user-selected test video"
   ],
-  "approval_rule": "V16 is the only approved Lucas French voice reference. V17 and V18 are rejected and must never supersede or inform the approved voice identity."
+  "approval_rule": "The 2026-09-19 test-video male voice is the current artistic direction target. V16 remains the only validated technical fallback. No new voice becomes canonical until the user explicitly approves a rendered French candidate."
 }
