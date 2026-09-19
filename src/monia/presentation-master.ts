@@ -1,4 +1,4 @@
-export type MonIAPresentationType='jury'|'gameplay'|'romantic'|'emotion'|'replayability'|'auto';
+export type MonIAPresentationType='complete'|'jury'|'gameplay'|'romantic'|'emotion'|'replayability'|'auto';
 
 export type MonIAPresentationRequest={
   type?:MonIAPresentationType;
@@ -23,12 +23,13 @@ export type MonIAPresentationPlan={
 function chooseType(input:MonIAPresentationRequest):Exclude<MonIAPresentationType,'auto'>{
   if(input.type&&input.type!=='auto')return input.type;
   const focus=(input.focus||[]).join(' ').toLowerCase();
+  if(/tout|complet|complete|global|a à z|a-z/.test(focus))return 'complete';
   if(input.audience==='jury')return 'jury';
   if(/rejou|variation|seed|différent|different/.test(focus))return 'replayability';
   if(/gameplay|interface|hud|téléphone|telephone|agenda|carte/.test(focus))return 'gameplay';
   if(/romance|couple|dominic|relation|amour/.test(focus))return 'romantic';
   if(/émotion|emotion|souvenir|temps|intime|sensible/.test(focus))return 'emotion';
-  return 'jury';
+  return 'complete';
 }
 
 const baseMandatory=[
@@ -54,6 +55,12 @@ const baseForbidden=[
 ];
 
 const configs:Record<Exclude<MonIAPresentationType,'auto'>,{title:string;objective:string;priorities:string[];prompt:string}>={
+  complete:{
+    title:'Teaser Complet',
+    objective:'Montrer tout le jeu de façon claire et spectaculaire: gameplay, interface, personnages, émotion, relation, vie quotidienne, carrière, systèmes, futur et rejouabilité.',
+    priorities:['appartement','Nîmes vivant','interface','choix','Marine','conversations','Feria','première rencontre','Dominic plein pied','téléphone','messages','appels','visio','agenda','garde-robe','carte','carrière','corrida','Espagne','voyages','amis','famille','maisons','projets de Marion','disputes','réconciliations','souvenirs','temps qui passe','rejouabilité'],
+    prompt:'Construire une présentation complète du jeu du début de partie jusqu’aux années suivantes. Alterner gameplay lisible, moments émotionnels, cinématiques contextuelles et systèmes de vie. Montrer que le jeu est riche sans donner l’impression d’une liste de fonctionnalités. Faire sentir une seule vie continue et rejouable.'
+  },
   jury:{
     title:'Teaser Jury',
     objective:'Convaincre qu’il s’agit d’un life-sim premium riche, cohérent, jouable et rejouable.',
@@ -110,6 +117,7 @@ export function buildMonIAPresentationPlan(input:MonIAPresentationRequest={}):Mo
 
 export function presentationExamples(){
   return {
+    complete:buildMonIAPresentationPlan({type:'complete',duration:90,audience:'player'}),
     jury:buildMonIAPresentationPlan({type:'jury',duration:60,audience:'jury'}),
     gameplay:buildMonIAPresentationPlan({type:'gameplay',duration:45}),
     romantic:buildMonIAPresentationPlan({type:'romantic',duration:45}),
