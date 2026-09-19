@@ -10,6 +10,7 @@ from scripts.monia_scene_worker import run_job
 from scripts.monia_scene_av_planner import build_av_plan
 from scripts.monia_scene_voice_renderer import render_scene_dialogue
 from scripts.monia_scene_lipsync import apply_targeted_lipsync
+from scripts.monia_scene_final_mix import assemble_final
 
 
 def _write(path: Path, payload: dict[str, Any]) -> None:
@@ -75,8 +76,18 @@ def run_pipeline(spec_path: Path, work_dir: Path, publish_candidates: bool = Fal
 
         voices_complete = voice_result.get("status") == "complete"
         lipsync_ready = bool(lipsync_result and lipsync_result.get("status") in {"ready", "partial"})
-        journal["status"] = "ready-for-final-mix" if video_ready and voices_complete and lipsync_ready else ("candidate-video-ready" if video_ready else "partial")
-        journal["nextRequiredStage"] = "final-mix" if video_ready and rendered_voices else "resolve-blocked-stage"
+        final_result = None
+        if video_ready and rendered_voices and lipsync_ready:
+            stage("final-mix", "running")
+            final_result = assemble_final(lipsync_result, av_measured, work_dir / "final")
+            stage("final-mix", final_result.get("status") or "unknown", output=final_result.get("output"), bytes=final_result.get("bytes"))
+        else:
+            stage("final-mix", "blocked", reason="candidate video, rendered voice and usable lip-sync plan are required")
+
+        final_ready = bool(final_result and final_result.get("status") in {"av-candidate", "picture-only"})
+        journal["status"] = "final-candidate-ready" if final_ready and voices_complete else ("candidate-video-ready" if video_ready else "partial")
+        journal["finalCandidate"] = final_result
+        journal["nextRequiredStage"] = "visual-semantic-qa" if final_ready else "resolve-blocked-stage"
     except Exception as exc:
         journal["status"] = "failed"
         journal["error"] = str(exc)
