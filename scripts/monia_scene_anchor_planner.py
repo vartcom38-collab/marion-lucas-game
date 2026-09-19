@@ -5,10 +5,14 @@ from typing import Any
 import json
 
 from scripts.monia_identity_conditioning import identity_conditioning_plan
+from scripts.monia_anchor_compositor import compose_identity_board
+from scripts.monia_anchor_library import find_validated_anchor
 
 
 def prepare_scene_anchors(scene: dict[str, Any], output_dir: Path) -> dict[str, Any]:
     output_dir.mkdir(parents=True, exist_ok=True)
+    library_dir = output_dir.parent / "anchor-library"
+    library_dir.mkdir(parents=True, exist_ok=True)
     job_refs = scene.get("actorReferences") or {}
     items = []
     blocked = []
@@ -55,7 +59,27 @@ def prepare_scene_anchors(scene: dict[str, Any], output_dir: Path) -> dict[str, 
         }
         contract_path = output_dir / f"{shot_id}-anchor-contract.json"
         contract_path.write_text(json.dumps(contract, ensure_ascii=False, indent=2), encoding="utf-8")
-        item = {"shotId": shot_id, "status": "awaiting-composite", "contract": str(contract_path), "conditioning": conditioning}
+
+        reused = find_validated_anchor(contract, library_dir)
+        if reused:
+            shot["sceneAnchor"] = {
+                "status": "validated",
+                "actors": actors,
+                "requiredActors": actors,
+                "sourcePath": reused["sourcePath"],
+                "fingerprint": reused["fingerprint"],
+            }
+            items.append({"shotId": shot_id, "status": "validated-reuse", "contract": str(contract_path), "anchor": reused, "conditioning": conditioning})
+            continue
+
+        board = compose_identity_board(contract, output_dir / f"{shot_id}-identity-board.png")
+        item = {
+            "shotId": shot_id,
+            "status": "awaiting-generative-composite",
+            "contract": str(contract_path),
+            "identityBoard": board,
+            "conditioning": conditioning,
+        }
         items.append(item)
         blocked.append(shot_id)
 
