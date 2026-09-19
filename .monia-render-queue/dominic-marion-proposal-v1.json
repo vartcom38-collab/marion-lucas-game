@@ -8,6 +8,6 @@
   "preserveCheckpoint": true,
   "reuseValidatedAnchors": true,
   "approvalRequired": true,
-  "attempt": 5,
-  "reason": "retry-after-pipeline-spec-cli-fix"
+  "attempt": 6,
+  "reason": "retry-after-video-provider-and-quality-checkpoint-fixes"
 }
