@@ -96,7 +96,7 @@ def render_line(text: str, emotion: str = "neutral", request_id: str = "", publi
     manifest_path = engine.WORK_DIR / f"{stem}.json"
     description = f"{BASE_DESCRIPTION} Scene performance direction: {EMOTION_DIRECTIONS[emotion]}"
     token = os.environ.get("HF_TOKEN", "").strip() or None
-    client = Client(SPACE, token=token, verbose=False, download_files=True)
+    client = Client(SPACE, hf_token=token, verbose=False, download_files=True)
     result = client.predict(text, LANGUAGE, description, api_name="/generate_voice_design")
     generated = _resolve_audio(result)
     shutil.copyfile(generated, raw)
