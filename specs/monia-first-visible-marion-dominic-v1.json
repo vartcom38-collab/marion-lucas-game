@@ -1,0 +1,53 @@
+{
+  "id": "monia-first-visible-marion-dominic-v1",
+  "mode": "cinematic",
+  "intent": "A short natural proof scene focused on identity stability, believable presence and human interaction.",
+  "location": "quiet warm apartment interior",
+  "timeOfDay": "late afternoon",
+  "characters": ["Marion", "Lucas"],
+  "continuityState": {
+    "location": "same apartment interior for entire scene",
+    "timeOfDay": "late afternoon",
+    "lighting": "soft natural window light, realistic exposure",
+    "cameraAxis": "stable conversational axis",
+    "lockedElements": ["faces", "hair", "body proportions", "wardrobe", "tattoos", "room geometry"]
+  },
+  "beats": [
+    {
+      "id": "beat-01",
+      "intent": "Marion is already in the room. Dominic enters naturally and notices her.",
+      "presentActors": ["Marion", "Lucas"],
+      "action": "Dominic enters without posing, slows slightly when he sees Marion; Marion looks up and gives a small spontaneous reaction.",
+      "emotion": "quiet familiarity, restrained warmth"
+    },
+    {
+      "id": "beat-02",
+      "intent": "They share a short believable moment without theatrical acting.",
+      "presentActors": ["Marion", "Lucas"],
+      "action": "Dominic comes closer; both keep natural micro-movements, eye contact breaks and returns, no model posing.",
+      "emotion": "warm, intimate but understated"
+    }
+  ],
+  "dialogue": [
+    {
+      "speaker": "Lucas",
+      "text": "Ça va ?",
+      "intent": "genuine check-in",
+      "emotion": "warm",
+      "delivery": "low, close, casual, as if the words come out naturally",
+      "listeners": ["Marion"],
+      "listenerBehavior": "small immediate eye reaction before answering",
+      "pauseBeforeMs": 180,
+      "pauseAfterMs": 350
+    }
+  ],
+  "quality": {
+    "photorealistic": true,
+    "identityFirst": true,
+    "naturalMotion": true,
+    "noBeautyCommercialLook": true,
+    "noGenericAIActing": true
+  },
+  "approvalRequired": true,
+  "autoPublish": false
+}
