@@ -92,6 +92,36 @@ def _crop_anchor(anchor: dict[str, Any], target: Path, width: int, height: int) 
     image.resize((width, height), Image.Resampling.LANCZOS).save(target, "PNG", optimize=True)
 
 
+def _continuity_directive(job: dict[str, Any], shot: dict[str, Any]) -> str:
+    state = job.get("continuityState") or {}
+    if not isinstance(state, dict):
+        state = {}
+    wardrobe = state.get("wardrobe") or {}
+    appearance = state.get("appearance") or {}
+    spatial = state.get("spatial") or {}
+    locked = state.get("lockedElements") or []
+    parts = [
+        f"LOCATION={state.get('location')}" if state.get("location") else "",
+        f"TIME={state.get('timeOfDay')}" if state.get("timeOfDay") else "",
+        f"LIGHTING={state.get('lighting')}" if state.get("lighting") else "",
+        f"CAMERA_AXIS={state.get('cameraAxis')}" if state.get("cameraAxis") else "",
+        "WARDROBE=" + json.dumps(wardrobe, ensure_ascii=False, sort_keys=True) if wardrobe else "",
+        "APPEARANCE=" + json.dumps(appearance, ensure_ascii=False, sort_keys=True) if appearance else "",
+        "SPATIAL=" + json.dumps(spatial, ensure_ascii=False, sort_keys=True) if spatial else "",
+        "LOCKED=" + json.dumps(locked, ensure_ascii=False) if locked else "",
+    ]
+    shot_state = shot.get("continuityOverride") or {}
+    if shot_state:
+        parts.append("SHOT_CHANGE=" + json.dumps(shot_state, ensure_ascii=False, sort_keys=True))
+    compact = " | ".join(part for part in parts if part)
+    return (
+        "CONTINUITY BIBLE: " + compact + ". "
+        "Treat all listed continuity facts as persistent physical facts across cuts. "
+        "Do not change wardrobe, hairstyle, tattoos, props, location geometry, screen direction or character positions unless SHOT_CHANGE explicitly requests it."
+        if compact else ""
+    )
+
+
 def _profile_for_shot(job: dict[str, Any], shot: dict[str, Any], index: int) -> tuple[CharacterProfile, dict[str, Any] | None]:
     width, height, aspect = _dimensions(str(job.get("format") or "16:9"))
     focus_actor = str(shot.get("focusActor") or "Lucas")
@@ -103,6 +133,7 @@ def _profile_for_shot(job: dict[str, Any], shot: dict[str, Any], index: int) -> 
     prompt = " ".join([
         prompt,
         f"MONIA SCENE CONTINUITY={continuity}.",
+        _continuity_directive(job, shot),
         "Preserve the exact locked canon identity for every visible canonical character.",
         "Do not copy any reference performer identity; references may guide movement/body language only.",
         "Preserve canonical visible tattoos when supported by the reference; never invent or erase canonical tattoo continuity. No facial scar unless canon explicitly requires one. No identity drift, no face morphing, no generic lookalike.",
