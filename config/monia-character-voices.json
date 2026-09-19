@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "policy": "stable-character-voice-routing",
+  "characters": {
+    "Lucas": {
+      "displayName": "Dominic",
+      "strategy": "config/lucas-voice-strategy.json",
+      "status": "configured",
+      "rule": "Use the current Dominic artistic target and validated fallback policy. Emotion may vary; core voice identity must remain stable."
+    },
+    "Marion": {
+      "status": "reference-required",
+      "rule": "Do not invent a different recurring Marion voice from scene to scene. A stable original French voice identity must be explicitly defined before canonical dialogue rendering."
+    },
+    "Marine": {
+      "status": "reference-required",
+      "rule": "Do not invent a different recurring Marine voice from scene to scene. Keep her voice clearly distinct from Marion and Dominic once defined."
+    }
+  },
+  "performance": {
+    "preserveBreaths": true,
+    "allowMicroPauses": true,
+    "allowContextualHesitation": true,
+    "allowOverlapWhenDirected": true,
+    "forbidAnnouncerCadence": true,
+    "forbidWordByWordDelivery": true,
+    "forbidPlaybackRateWarping": true
+  },
+  "renderContract": {
+    "oneFilePerLine": true,
+    "filePattern": "line-{index:03d}.wav",
+    "measureRenderedDurationBeforeFinalEdit": true,
+    "neverChangeCharacterVoiceIdentityToMatchEmotion": true
+  }
+}
