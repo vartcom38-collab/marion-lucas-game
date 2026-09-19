@@ -296,6 +296,40 @@ def _provider_child(kind: str, space: str, label: str, profile: CharacterProfile
 
 
 def race_compute(profile: CharacterProfile, source: Path, target: Path) -> tuple[str, list[str]]:
+    """Use providers economically by default; parallel racing is opt-in."""
+    if os.environ.get("MONIA_PROVIDER_STRATEGY", "sequential").strip().lower() != "race":
+        specs = [
+            ("upsampler_wan", UPSAMPLER_WAN_SPACE, "Wan 2.2 14B Lightning ZeroGPU"),
+            ("upsampler_ltx", UPSAMPLER_LTX_SPACE, "LTX Video ZeroGPU"),
+            ("ltx", FREE_LTX_SPACE, worker.LTX_LABEL),
+        ] + [("wan", space, label) for space, label in FREE_WAN_PROVIDERS]
+        provider_limit = max(1, int(os.environ.get("MONIA_PROVIDER_LIMIT", str(len(specs)))))
+        errors: list[str] = []
+        for kind, space, label in specs[:provider_limit]:
+            temp = WORK_DIR / f"{target.stem}.sequential-{len(errors)}{target.suffix}"
+            temp.unlink(missing_ok=True)
+            try:
+                if kind == "upsampler_wan":
+                    provider = _run_upsampler_wan(profile, source, temp)
+                elif kind == "upsampler_ltx":
+                    provider = _run_upsampler_ltx(profile, source, temp)
+                elif kind == "ltx":
+                    provider = _run_ltx(profile, source, temp)
+                else:
+                    provider = _run_wan_provider(space, label, profile, source, temp)
+                if not worker.looks_like_video(temp):
+                    raise RuntimeError("provider returned invalid video")
+                target.unlink(missing_ok=True)
+                shutil.move(str(temp), str(target))
+                print(f"MONIA_SEQUENCE winner={provider} bytes={target.stat().st_size}", flush=True)
+                return provider, errors
+            except Exception as exc:
+                temp.unlink(missing_ok=True)
+                detail = f"{label}: {type(exc).__name__}: {exc}"
+                errors.append(detail)
+                print(f"MONIA_SEQUENCE failed provider={label} error={exc}", flush=True)
+        raise RuntimeError("No MonIA video compute available: " + " | ".join(errors))
+
     """Run MonIA compute providers concurrently. First valid video wins."""
     ctx = mp.get_context("fork")
     queue = ctx.Queue()
