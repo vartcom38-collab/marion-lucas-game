@@ -2,18 +2,14 @@ name: MonIA Complete Teaser Direct
 # MonIA teaser pipeline revision
 
 on:
-  push:
-    paths:
-      - '.github/workflows/monia-complete-teaser-direct.yml'
-      - 'scripts/monia_scene_worker.py'
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: monia-complete-teaser-direct
-  cancel-in-progress: true
+  group: monia-video-gpu
+  cancel-in-progress: false
 
 jobs:
   render:
