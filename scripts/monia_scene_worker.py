@@ -20,8 +20,7 @@ from scripts.monia_video_engine import (
     SITE,
     WORK_DIR,
     _download_canon,
-    _run_ltx,
-    _run_wan,
+    race_compute,
     publish_candidate,
 )
 import scripts.monia_intro_worker as worker
@@ -148,19 +147,10 @@ def _generate(profile: CharacterProfile, scene_anchor: dict[str, Any] | None = N
     else:
         _download_canon(profile, source)
     target.unlink(missing_ok=True)
-    errors: list[str] = []
-    try:
-        provider = _run_ltx(profile, source, target)
-    except Exception as exc:
-        errors.append(f"primary: {exc}")
-        target.unlink(missing_ok=True)
-        try:
-            provider = _run_wan(profile, source, target)
-        except Exception as fallback_exc:
-            errors.append(f"fallback: {fallback_exc}")
-            raise RuntimeError("MonIA scene compute unavailable: " + " | ".join(errors)) from fallback_exc
+    provider, provider_errors = race_compute(profile, source, target)
     if not worker.looks_like_video(target):
-        raise RuntimeError("Generated scene shot is not a valid video")
+        detail = " | ".join(provider_errors[-3:]) if provider_errors else "invalid video"
+        raise RuntimeError("Generated scene shot is not a valid video: " + detail)
     return target, provider
 
 
