@@ -1,5 +1,6 @@
 import {shouldTriggerDay1FirstContact} from './day1-chronology';
 import './playtest-ambient-audio';
+import {pickMarineConversation} from './marine-conversation';
 type SceneKey='home'|'madeleine'|'esplanade'|'marine'|'arenes'|'feria'|'encounter';
 
 type SceneDef={title:string;sub:string;image:string;video?:string;audio:'home'|'street'|'feria'|'quiet'};
@@ -19,6 +20,8 @@ let minutes=540;
 let withMarine=false;
 let encounterGenerated=false;
 let metDominic=false;
+const marineTopicsUsed:string[]=[];
+const playSeed=731;
 let firstContactEarliestAbs=0;
 const firstContactTarget=703; // deterministic hidden playtest window, equivalent to the real Day 1 morning window
 
@@ -125,6 +128,7 @@ function esplanade(fromMarine:boolean){
   scene='esplanade';
   render([
     {label:withMarine?'Continuer avec Marine':'Rejoindre Marine',primary:true,run:()=>withMarine?arenes():meetMarine()},
+    ...(withMarine?[{label:'Parler avec Marine',run:()=>talkWithMarine(()=>esplanade(true))}]:[]),
     {label:'Avancer vers les arènes',run:()=>{advance(7);arenes()}},
   ],{eyebrow:'ESPLANADE','title':withMarine?'Vous continuez ensemble.':'Les arènes se rapprochent.','body':fromMarine?'Marine te parle en marchant. La caméra et les choix restent dans le monde.':'Tu peux encore rejoindre Marine ou avancer directement vers la Feria.'},withMarine?{marine:'“Viens, on passe par là, c’est plus calme.”'}:undefined);
 }
@@ -134,14 +138,47 @@ function meetMarine(){
   if(!firstContactEarliestAbs)firstContactEarliestAbs=1440+minutes+85;
   render([
     {label:'Marcher avec elle vers les arènes',primary:true,run:()=>{advance(9);arenes()}},
+    {label:'Discuter un peu',run:()=>talkWithMarine(()=>meetMarine())},
     {label:'Faire un détour par l’esplanade',run:()=>{advance(5);esplanade(true)}},
   ],{eyebrow:'AVEC MARINE','title':'Tu l’as vraiment rejointe.','body':'À partir d’ici tu n’es plus seule : elle reste dans la scène, vous marchez ensemble et les choix concernent ce que vous faites ensemble.'},{marine:'“Enfin 😭 viens, on va vers les arènes.”'});
+}
+
+function talkWithMarine(returnTo:()=>void){
+  const topic=pickMarineConversation({
+    day:1,
+    time:fmt(),
+    place:scene,
+    phase:metDominic?'after-contact':'before-contact',
+    seed:playSeed,
+    used:marineTopicsUsed,
+  });
+  if(!marineTopicsUsed.includes(topic.id))marineTopicsUsed.push(topic.id);
+  render(topic.choices.map(choice=>({
+    label:choice.label,
+    primary:choice.mood==='warm'||choice.mood==='personal',
+    run:()=>{
+      advance(choice.minutes);
+      render([
+        {label:'Continuer à discuter',primary:true,run:()=>talkWithMarine(returnTo)},
+        {label:'Reprendre ce que vous faisiez',run:returnTo},
+      ],{
+        eyebrow:'AVEC MARINE · '+topic.category.toUpperCase(),
+        title:choice.reply,
+        body:choice.marineReaction
+      },{marine:topic.marineReaction});
+    }
+  })),{
+    eyebrow:'DISCUSSION · '+topic.category.toUpperCase(),
+    title:topic.opener,
+    body:topic.line+' '+topic.followup
+  },{marine:topic.line});
 }
 
 function arenes(){
   scene='arenes';
   render([
     {label:'Suivre Marine dans le flux',primary:true,run:()=>{advance(6);feria()}},
+    ...(withMarine?[{label:'Parler avec Marine',run:()=>talkWithMarine(()=>arenes())}]:[]),
     {label:'Faire le tour des arènes',run:()=>{advance(7);feria()}},
     {label:'Ralentir un instant',run:()=>{advance(3);arenes()}},
   ],{eyebrow:'ARÈNES','title':'La Feria prend vraiment de la place.','body':'La foule devient plus dense. Tu sais toujours comment avancer, mais tu ne sais pas ce qui va se passer ensuite.'},withMarine?{marine:'“C’est déjà blindé… reste avec moi.”'}:undefined);
@@ -162,6 +199,7 @@ function continueFeria(mins:number,label:string){
   scene='feria';
   render([
     {label:'Continuer avec Marine',primary:true,run:()=>continueFeria(14,'continuer')},
+    {label:'Discuter avec Marine',run:()=>talkWithMarine(()=>feria())},
     {label:'Passer par une terrasse',run:()=>continueFeria(18,'terrasse')},
     {label:'Faire un tour autour des arènes',run:()=>continueFeria(16,'tour')},
   ],{
@@ -176,6 +214,7 @@ function feria(){
   if(encounterEligible()){generateEncounter();return}
   render([
     {label:'Continuer avec Marine',primary:true,run:()=>continueFeria(14,'continuer')},
+    {label:'Discuter avec Marine',run:()=>talkWithMarine(()=>feria())},
     {label:'Passer par une terrasse',run:()=>continueFeria(18,'terrasse')},
     {label:'Faire un tour autour des arènes',run:()=>continueFeria(16,'tour')},
   ],{eyebrow:'FERIA · EN MOUVEMENT','title':'Le passage se resserre devant vous.','body':'Tu continues dans la foule. La rencontre ne partira que lorsque le vrai moteur Jour 1 l’autorise.'},withMarine?{marine:'“Attends, passe par là.”'}:undefined);
@@ -249,6 +288,7 @@ function continueAfterEncounter(extra:number){
   scene='arenes';
   render([
     {label:'Continuer la Feria avec Marine',primary:true,run:()=>continueFeria(16,'continuer')},
+    {label:'Parler de ce qui vient de se passer',run:()=>talkWithMarine(()=>continueAfterEncounter(0))},
     {label:'Faire une pause en terrasse',run:()=>continueFeria(18,'terrasse')},
     {label:'Rentrer doucement vers le centre',run:()=>{advance(14);esplanade(true)}},
   ],{eyebrow:'APRÈS LA RENCONTRE · '+fmt(),title:'La Feria continue.',body:'Dominic est reparti de son côté. Le monde ne se fige pas après la cinématique : Marine est toujours là et ta journée continue.'},{marine:'“Bon… tu me racontes ?”'});
