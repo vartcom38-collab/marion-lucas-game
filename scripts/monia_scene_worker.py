@@ -349,6 +349,8 @@ def run_job(job_path: Path, publish: bool) -> dict[str, Any]:
     def process_shot(index: int, shot: dict[str, Any]) -> tuple[int, dict[str, Any]]:
         item: dict[str, Any] = {
             "id": shot.get("id") or f"s{index + 1}",
+            "repairOf": shot.get("repairOf"),
+            "repairPassNumber": job.get("repairPassNumber"),
             "focusActor": shot.get("focusActor"),
             "status": "processing",
         }
