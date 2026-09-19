@@ -104,51 +104,13 @@ def generate_anchor_candidate(request: dict[str, Any], output: Path) -> dict[str
                 temp.write_bytes(response.content)
                 local_refs.append(temp)
             else:
-                local_refs.append(Path(str(ref)))
-        while len(local_refs) < 3:
-            local_refs.append(None)
-        images = [handle_file(str(p)) if p else None for p in local_refs]
-        # techfreakworm/qwen-image-editor Compose signature:
-        # target, ref1, ref2, prompt, speed, steps, true_cfg, negative, seed,
-        # lora_repo, lora_file, lora_weight.
-        call_api = api_name or "/on_compose_generate"
-        args = [
-            images[0], images[1], images[2],
-            str(request.get("prompt") or ""),
-            "Fast", 4, 1.0,
-            str(request.get("negative") or " "),
-            42, "", "", 1.0,
-        ]
-        try:
-            result = _predict_with_timeout(space, token, call_api, args)
-        except Exception as exc:
-            lowered = str(exc).lower()
-            unavailable = any(x in lowered for x in ("quota", "zerogpu", "gpu", "timeout", "timed out", "exceeded"))
-            return {
-                "status": "backend-unavailable" if unavailable else "backend-error",
-                "output": None,
-                "provider": space,
-                "apiName": call_api,
-                "mode": mode,
-                "reason": str(exc),
-                "retryable": unavailable,
-                "approvalRequired": True,
-            }
-    else:
-                local_refs.append(Path(str(ref)))
-        while len(local_refs) < 3:
-            local_refs.append(None)
-        args = [handle_file(str(p)) if p else None for p in local_refs]
-        args += [str(request.get("prompt") or ""), 1, "16:9"]
-        result = client.predict(*args, api_name=api_name)
-    else:
         # Generic fallback contract: identity board, positive prompt, negative prompt.
-        result = client.predict(
+        args = [
             handle_file(board),
             str(request.get("prompt") or ""),
             str(request.get("negative") or ""),
-            api_name=api_name,
-        )
+        ]
+        result = _predict_with_timeout(space, token, api_name, args)
     _materialize(result, output)
     if output.stat().st_size < 2048:
         raise RuntimeError("Generated anchor candidate is too small")
