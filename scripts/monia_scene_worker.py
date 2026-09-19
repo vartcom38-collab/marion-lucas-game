@@ -151,12 +151,26 @@ def _profile_for_shot(job: dict[str, Any], shot: dict[str, Any], index: int) -> 
 
     actors = [str(a) for a in shot.get("actors") or []]
     scene_anchor = shot.get("sceneAnchor") or job.get("sceneAnchor")
-    if len(actors) > 1 and not scene_anchor:
-        raise RuntimeError(
-            "multi-character shot requires a validated MonIA sceneAnchor so Marion and Lucas identities are both anchored"
+    actor_refs: dict[str, str] = {}
+    for actor in actors:
+        try:
+            actor_refs[actor] = _actor_canon(actor)
+        except ValueError:
+            explicit = ((job.get("actorReferences") or {}).get(actor) or (shot.get("actorReferences") or {}).get(actor))
+            if explicit:
+                actor_refs[actor] = str(explicit)
+            else:
+                raise RuntimeError(f"multi-character identity reference missing for actor: {actor}")
+    if len(actors) > 1:
+        refs = "; ".join(f"{name}={url}" for name, url in actor_refs.items())
+        prompt += (
+            " MULTI-CHARACTER IDENTITY LOCK: " + refs + ". "
+            "Each named character must remain a distinct person with their own canonical face and body. "
+            "Never blend, swap, average or transfer facial traits between characters. "
+            "Preserve relative height, eyelines, left/right screen position and physical interaction continuity."
         )
 
-    canon_url = _actor_canon(focus_actor)
+    canon_url = _actor_canon(focus_actor) if focus_actor.lower() in {"lucas", "marion"} else actor_refs.get(focus_actor)
     return CharacterProfile(
         key=f"scene-{_slug(str(job.get('id') or 'job'))}-{index + 1}",
         canon_url=canon_url,
