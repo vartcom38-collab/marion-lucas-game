@@ -180,13 +180,22 @@ def _generate(profile: CharacterProfile, scene_anchor: dict[str, Any] | None = N
 
     if os.environ.get("MONIA_REUSE_PUBLISHED", "1") == "1":
         cache_url = f"{SITE}/resources/monia/generated/{profile.output_name}"
+        manifest_url = cache_url + ".quality.json"
         try:
-            cached = requests.get(cache_url, timeout=30, headers={"Cache-Control": "no-cache"})
-            if cached.status_code == 200 and len(cached.content) > 100000:
+            manifest = requests.get(manifest_url, timeout=15, headers={"Cache-Control": "no-cache"})
+            manifest_data = manifest.json() if manifest.ok else {}
+            fingerprint_matches = (
+                isinstance(manifest_data, dict)
+                and manifest_data.get("fingerprint") == _quality_fingerprint(profile)
+                and manifest_data.get("passed") is True
+            )
+            cached = requests.get(cache_url, timeout=30, headers={"Cache-Control": "no-cache"}) if fingerprint_matches else None
+            if cached is not None and cached.status_code == 200 and len(cached.content) > 100000:
                 target.write_bytes(cached.content)
                 gate = _technical_quality_gate(target, profile)
                 if gate["passed"]:
-                    return target, "MonIA published cache", gate
+                    gate["cacheManifest"] = manifest_url
+                    return target, "MonIA verified published cache", gate
                 target.unlink(missing_ok=True)
         except Exception:
             target.unlink(missing_ok=True)
@@ -309,6 +318,14 @@ def run_job(job_path: Path, publish: bool) -> dict[str, Any]:
                 item["recoveredFrom"] = errors
             if publish:
                 item["candidateUrl"] = publish_candidate(path)
+                manifest_path = path.with_name(path.name + ".quality.json")
+                manifest_path.write_text(json.dumps({
+                    **quality,
+                    "profileKey": profile.key,
+                    "outputName": profile.output_name,
+                    "compute": compute,
+                }, ensure_ascii=False, indent=2), encoding="utf-8")
+                item["qualityManifestUrl"] = publish_candidate(manifest_path)
         except Exception as exc:
             message = str(exc)
             item["status"] = "blocked-reference" if "sceneAnchor" in message else "failed"
