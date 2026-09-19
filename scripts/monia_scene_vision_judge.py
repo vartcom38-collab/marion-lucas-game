@@ -5,7 +5,7 @@ import math
 from pathlib import Path
 from typing import Any
 
-from PIL import Image, ImageChops, ImageStat
+from PIL import Image, ImageChops, ImageStat, ImageFilter
 
 
 def _frame_signature(path: Path) -> tuple[float, float, float, float]:
@@ -13,7 +13,7 @@ def _frame_signature(path: Path) -> tuple[float, float, float, float]:
     stat = ImageStat.Stat(image)
     mean = tuple(float(x) for x in stat.mean)
     gray = image.convert("L")
-    edges = ImageChops.difference(gray, gray.filter(__import__("PIL").ImageFilter.GaussianBlur(2)))
+    edges = ImageChops.difference(gray, gray.filter(ImageFilter.GaussianBlur(2)))
     edge_energy = float(ImageStat.Stat(edges).mean[0])
     return mean[0], mean[1], mean[2], edge_energy
 
