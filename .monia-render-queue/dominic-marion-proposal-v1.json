@@ -8,6 +8,6 @@
   "preserveCheckpoint": true,
   "reuseValidatedAnchors": true,
   "approvalRequired": true,
-  "attempt": 6,
-  "reason": "retry-after-video-provider-and-quality-checkpoint-fixes"
+  "attempt": 7,
+  "reason": "retry-after-runtime-wide-gradio-auth-fix"
 }
