@@ -123,6 +123,18 @@ jobs:
           Path('.day/video_path.txt').write_text(assembled,encoding='utf-8')
           PY
 
+      - name: Preserve MonIA generation state
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: monia-dominic-day-state-${{ github.run_id }}
+          if-no-files-found: ignore
+          retention-days: 14
+          path: |
+            .day/result.json
+            .monia-video/quality/*.json
+            .monia-video/scenes/*.mp4
+
       - name: Render Dominic V16 narration
         shell: bash
         run: |
