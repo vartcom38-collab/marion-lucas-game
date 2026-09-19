@@ -26,7 +26,7 @@ const firstContactTarget=703; // deterministic hidden playtest window, equivalen
 const fmt=()=>String(Math.floor(minutes/60)).padStart(2,'0')+':'+String(minutes%60).padStart(2,'0');
 const advance=(m:number)=>{minutes+=m};
 
-function render(actions:Array<{label:string;primary?:boolean;run:()=>void}>,copy:{eyebrow?:string;title:string;body:string},opts?:{marine?:string;video?:string;status?:string}){
+function render(actions:Array<{label:string;primary?:boolean;run:()=>void}>,copy:{eyebrow?:string;title:string;body:string},opts?:{marine?:string;video?:string;voice?:string;status?:string}){
   const s=scenes[scene];
   window.dispatchEvent(new CustomEvent('playtest-ambience',{detail:{profile:s.audio,time:fmt(),scene,withMarine}}));
   app.innerHTML=`
@@ -54,7 +54,7 @@ function render(actions:Array<{label:string;primary?:boolean;run:()=>void}>,copy
 
     ${opts?.status?`<aside class="generation"><span>MONIA</span><strong>${opts.status}</strong><small>La scène importante est générée dans le contexte réel du jeu.</small></aside>`:''}
 
-    ${opts?.video?`<div class="videoScene"><video autoplay playsinline controls src="${opts.video}"></video><button id="closeVideo">Revenir au jeu</button></div>`:''}
+    ${opts?.video?`<div class="videoScene"><video id="sceneVideo" playsinline controls src="${opts.video}"></video>${opts.voice?`<audio id="sceneVoice" src="${opts.voice}" preload="auto"></audio>`:''}<button id="playScene" class="playScene">Lire la scène</button><button id="closeVideo">Revenir au jeu</button></div>`:''}
 
     <div class="edgeCue edgeLeft"></div><div class="edgeCue edgeRight"></div>
   </main>
@@ -69,7 +69,7 @@ function render(actions:Array<{label:string;primary?:boolean;run:()=>void}>,copy
   .guide{position:absolute;left:50%;bottom:28px;transform:translateX(-50%);width:min(760px,calc(100% - 36px));padding:17px 18px 18px;border:1px solid rgba(255,255,255,.18);border-radius:20px;background:rgba(15,12,10,.72);backdrop-filter:blur(18px);box-shadow:0 18px 80px rgba(0,0,0,.36);z-index:3}.guide strong{display:block;font-size:17px;margin-top:6px}.guide p{margin:7px 0 0;opacity:.76;line-height:1.45}.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}.actions button{border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.07);color:#fff;border-radius:999px;padding:11px 15px;cursor:pointer;transition:.18s}.actions button:hover{transform:translateY(-2px);background:rgba(255,255,255,.14)}.actions .primary{background:#f3eee7;color:#181411;font-weight:750}
   .companion{position:absolute;left:28px;bottom:205px;width:min(330px,calc(100% - 56px));padding:14px 15px;border-radius:18px;border:1px solid rgba(255,255,255,.16);background:rgba(12,10,9,.64);backdrop-filter:blur(14px);z-index:3}.companion strong,.generation strong{display:block;margin-top:6px}.companion small,.generation small{display:block;margin-top:5px;opacity:.68;line-height:1.4}
   .generation{position:absolute;right:28px;bottom:205px;width:min(360px,calc(100% - 56px));padding:14px 15px;border-radius:18px;border:1px solid rgba(255,255,255,.16);background:rgba(12,10,9,.72);backdrop-filter:blur(14px);z-index:4}
-  .videoScene{position:absolute;inset:0;background:#050505;z-index:10;display:grid;place-items:center}.videoScene video{width:100%;height:100%;object-fit:cover}.videoScene button{position:absolute;right:22px;bottom:22px;border:0;border-radius:999px;padding:11px 15px;background:rgba(255,255,255,.88);color:#171411;font-weight:700}
+  .videoScene{position:absolute;inset:0;background:#050505;z-index:10;display:grid;place-items:center}.videoScene video{width:100%;height:100%;object-fit:cover}.videoScene button{position:absolute;right:22px;bottom:22px;border:0;border-radius:999px;padding:11px 15px;background:rgba(255,255,255,.88);color:#171411;font-weight:700}.videoScene .playScene{right:auto;left:50%;bottom:28px;transform:translateX(-50%);padding:13px 20px}.videoScene.playing .playScene{opacity:0;pointer-events:none}
   .edgeCue{position:absolute;top:50%;width:18px;height:72px;border-radius:999px;background:rgba(255,255,255,.08);opacity:.45}.edgeLeft{left:12px}.edgeRight{right:12px}
   @keyframes living{0%{transform:scale(1.02) translate3d(-.4%,0,0)}100%{transform:scale(1.055) translate3d(.7%,-.35%,0)}}@keyframes passer{from{translate:-5vw 0}to{translate:118vw 0}}@keyframes passerBack{from{translate:5vw 0}to{translate:-118vw 0}}@keyframes arrive{from{opacity:.45;transform:scale(1.015)}to{opacity:1;transform:scale(1)}}
   @media(max-width:900px){.hud{top:18px;left:18px}.hud h1{font-size:25px}.guide{bottom:18px}.companion{left:18px;bottom:220px;width:300px}.generation{right:18px;bottom:220px;width:300px}}
@@ -77,7 +77,31 @@ function render(actions:Array<{label:string;primary?:boolean;run:()=>void}>,copy
   </style>`;
 
   actions.forEach((a,i)=>document.querySelector<HTMLButtonElement>(`[data-action="${i}"]`)?.addEventListener('click',a.run));
-  document.querySelector<HTMLButtonElement>('#closeVideo')?.addEventListener('click',()=>renderEncounterAfterVideo());
+  const sceneVideo=document.querySelector<HTMLVideoElement>('#sceneVideo');
+  const sceneVoice=document.querySelector<HTMLAudioElement>('#sceneVoice');
+  const playScene=document.querySelector<HTMLButtonElement>('#playScene');
+  const videoShell=document.querySelector<HTMLElement>('.videoScene');
+  playScene?.addEventListener('click',async()=>{
+    if(!sceneVideo)return;
+    try{
+      sceneVideo.currentTime=0;
+      if(sceneVoice)sceneVoice.currentTime=0;
+      await sceneVideo.play();
+      if(sceneVoice)await sceneVoice.play();
+      videoShell?.classList.add('playing');
+    }catch{
+      videoShell?.classList.remove('playing');
+    }
+  });
+  sceneVideo?.addEventListener('play',()=>{
+    if(sceneVoice&&sceneVoice.paused){sceneVoice.currentTime=Math.min(sceneVoice.duration||0,sceneVideo.currentTime);void sceneVoice.play().catch(()=>undefined)}
+  });
+  sceneVideo?.addEventListener('pause',()=>{if(sceneVoice&&!sceneVoice.paused)sceneVoice.pause()});
+  sceneVideo?.addEventListener('seeking',()=>{if(sceneVoice&&Number.isFinite(sceneVideo.currentTime))sceneVoice.currentTime=Math.min(sceneVoice.duration||sceneVideo.currentTime,sceneVideo.currentTime)});
+  sceneVideo?.addEventListener('ended',()=>{if(sceneVoice&&!sceneVoice.paused)sceneVoice.pause();videoShell?.classList.remove('playing')});
+  document.querySelector<HTMLButtonElement>('#closeVideo')?.addEventListener('click',()=>{
+    sceneVideo?.pause();sceneVoice?.pause();renderEncounterAfterVideo();
+  });
 }
 
 function home(){
@@ -191,7 +215,7 @@ async function generateEncounter(){
       onVideoState:(s,d)=>render([],{eyebrow:'MONIA · VIDÉO',title:'La rencontre se génère.',body:d||s},{marine:'Marine est juste à côté.',status:`Vidéo · ${s}`}),
     });
     if(media.videoUrl){
-      render([],{eyebrow:'PREMIÈRE RENCONTRE',title:'Vidéo candidate générée par MonIA.','body':'C’est ce rendu qu’on doit juger avant de l’intégrer comme scène validée.'},{video:media.videoUrl});
+      render([],{eyebrow:'PREMIÈRE RENCONTRE',title:'Vidéo candidate générée par MonIA.','body':'La vidéo et la voix V16 sont lues ensemble pour tester la scène telle qu’elle doit être vécue.'},{video:media.videoUrl,voice:media.voiceAudioUrl});
     }else{
       renderEncounterFallback(media.state);
     }
