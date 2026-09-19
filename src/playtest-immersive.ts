@@ -1,4 +1,5 @@
 import {shouldTriggerDay1FirstContact} from './day1-chronology';
+import './playtest-ambient-audio';
 type SceneKey='home'|'madeleine'|'esplanade'|'marine'|'arenes'|'feria'|'encounter';
 
 type SceneDef={title:string;sub:string;image:string;video?:string;audio:'home'|'street'|'feria'|'quiet'};
@@ -31,6 +32,7 @@ function render(actions:Array<{label:string;primary?:boolean;run:()=>void}>,copy
   <main class="world" style="--bg:url('${s.image}')">
     ${s.video?`<video class="ambientSceneVideo" src="${s.video}" autoplay muted loop playsinline preload="metadata"></video>`:''}
     <div class="motionLayer"></div>
+    ${scene!=='home'?`<div class="ambientPeople" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>`:''}
     <div class="grain"></div>
     <header class="hud">
       <span>JOUR 1 · ${fmt()}</span>
@@ -59,6 +61,7 @@ function render(actions:Array<{label:string;primary?:boolean;run:()=>void}>,copy
   *{box-sizing:border-box}.world{position:relative;width:100%;height:100%;background:linear-gradient(180deg,rgba(0,0,0,.08),rgba(0,0,0,.34)),var(--bg) center/cover no-repeat;isolation:isolate;animation:arrive .7s ease both}
   .world:before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.3),transparent 34%,transparent 68%,rgba(0,0,0,.2));z-index:0;pointer-events:none}
   .ambientSceneVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-3;filter:saturate(.98) contrast(1.02)}
+  .ambientPeople{position:absolute;inset:0;z-index:1;pointer-events:none;overflow:hidden;opacity:.48}.ambientPeople i{position:absolute;bottom:7%;width:26px;height:84px;border-radius:46% 46% 38% 38%;background:linear-gradient(180deg,rgba(24,20,18,.5),rgba(9,8,8,.76));filter:blur(.8px);animation:passer 13s linear infinite}.ambientPeople i:before{content:"";position:absolute;left:4px;top:-15px;width:18px;height:18px;border-radius:50%;background:rgba(18,16,15,.72)}.ambientPeople i:nth-child(1){left:-8%;transform:scale(.78);animation-duration:15s}.ambientPeople i:nth-child(2){left:-15%;bottom:10%;transform:scale(.56);animation-delay:-6s;animation-duration:18s}.ambientPeople i:nth-child(3){left:-11%;bottom:4%;transform:scale(.95);animation-delay:-11s;animation-duration:20s}.ambientPeople i:nth-child(4){right:-8%;left:auto;bottom:12%;transform:scale(.64);animation:passerBack 17s linear infinite;animation-delay:-4s}.ambientPeople i:nth-child(5){right:-12%;left:auto;bottom:6%;transform:scale(.82);animation:passerBack 21s linear infinite;animation-delay:-12s}.ambientPeople i:nth-child(6){right:-15%;left:auto;bottom:8%;transform:scale(.48);animation:passerBack 24s linear infinite;animation-delay:-16s}
   .motionLayer{position:absolute;inset:-2%;background:var(--bg) center/cover no-repeat;z-index:-4;animation:living 11s ease-in-out infinite alternate;filter:saturate(.96)}
   .grain{position:absolute;inset:0;pointer-events:none;z-index:1;opacity:.11;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.45'/%3E%3C/svg%3E")}
   .hud{position:absolute;top:26px;left:30px;text-shadow:0 3px 22px #000;z-index:2}.hud span,.guide span,.companion span,.generation span{font-size:10px;letter-spacing:.18em;opacity:.7}.hud h1{font-family:Georgia,serif;font-size:30px;margin:6px 0 3px;font-weight:500}.hud small{opacity:.76}
@@ -67,7 +70,7 @@ function render(actions:Array<{label:string;primary?:boolean;run:()=>void}>,copy
   .generation{position:absolute;right:28px;bottom:205px;width:min(360px,calc(100% - 56px));padding:14px 15px;border-radius:18px;border:1px solid rgba(255,255,255,.16);background:rgba(12,10,9,.72);backdrop-filter:blur(14px);z-index:4}
   .videoScene{position:absolute;inset:0;background:#050505;z-index:10;display:grid;place-items:center}.videoScene video{width:100%;height:100%;object-fit:cover}.videoScene button{position:absolute;right:22px;bottom:22px;border:0;border-radius:999px;padding:11px 15px;background:rgba(255,255,255,.88);color:#171411;font-weight:700}
   .edgeCue{position:absolute;top:50%;width:18px;height:72px;border-radius:999px;background:rgba(255,255,255,.08);opacity:.45}.edgeLeft{left:12px}.edgeRight{right:12px}
-  @keyframes living{0%{transform:scale(1.02) translate3d(-.4%,0,0)}100%{transform:scale(1.055) translate3d(.7%,-.35%,0)}}@keyframes arrive{from{opacity:.45;transform:scale(1.015)}to{opacity:1;transform:scale(1)}}
+  @keyframes living{0%{transform:scale(1.02) translate3d(-.4%,0,0)}100%{transform:scale(1.055) translate3d(.7%,-.35%,0)}}@keyframes passer{from{translate:-5vw 0}to{translate:118vw 0}}@keyframes passerBack{from{translate:5vw 0}to{translate:-118vw 0}}@keyframes arrive{from{opacity:.45;transform:scale(1.015)}to{opacity:1;transform:scale(1)}}
   @media(max-width:900px){.hud{top:18px;left:18px}.hud h1{font-size:25px}.guide{bottom:18px}.companion{left:18px;bottom:220px;width:300px}.generation{right:18px;bottom:220px;width:300px}}
   @media(max-width:680px){.guide{width:calc(100% - 20px);padding:14px}.actions{display:grid;grid-template-columns:1fr}.actions button{width:100%}.companion,.generation{display:none}}
   </style>`;
