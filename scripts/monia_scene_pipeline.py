@@ -13,6 +13,8 @@ from scripts.monia_scene_lipsync import apply_targeted_lipsync
 from scripts.monia_scene_final_mix import assemble_final
 from scripts.monia_scene_visual_qa import write_contract
 from scripts.monia_scene_qa_sampler import extract_review_frames
+from scripts.monia_scene_vision_judge import judge_samples
+from scripts.monia_scene_identity_review import write_identity_review
 
 
 def _write(path: Path, payload: dict[str, Any]) -> None:
@@ -93,11 +95,18 @@ def run_pipeline(spec_path: Path, work_dir: Path, publish_candidates: bool = Fal
             qa_dir = work_dir / "qa"
             qa_contract = write_contract(scene, video_result, qa_dir / "visual-qa-contract.json")
             qa_samples = extract_review_frames(video_result, qa_dir / "samples")
+            temporal_judgement = judge_samples(qa_samples)
+            _write(qa_dir / "temporal-judge.json", temporal_judgement)
+            identity_review = write_identity_review(scene, qa_samples, qa_dir / "identity-review.json")
             stage(
                 "visual-qa-preparation",
                 "ready" if qa_samples.get("status") == "ready" else "partial",
                 contract=str(qa_dir / "visual-qa-contract.json"),
                 samples=str(qa_dir / "samples" / "samples.json"),
+                temporalJudge=str(qa_dir / "temporal-judge.json"),
+                identityReview=str(qa_dir / "identity-review.json"),
+                temporalStatus=temporal_judgement.get("status"),
+                identityStatus=identity_review.get("status"),
                 evaluatorRequired=qa_contract.get("policy", {}).get("approvalRequiresSemanticVisionEvaluator", True),
             )
             journal["status"] = "awaiting-visual-semantic-qa"
