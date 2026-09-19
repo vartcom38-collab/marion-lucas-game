@@ -121,7 +121,9 @@ def run_pipeline(spec_path: Path, work_dir: Path, publish_candidates: bool = Fal
         anchors = prepare_scene_anchors(scene, work_dir / "anchors")
         stage("identity-anchors", anchors.get("status") or "unknown", output=str(work_dir / "anchors" / "anchor-plan.json"), blockedShots=anchors.get("blockedShots") or [])
         if anchors.get("status") == "anchors-required" and anchor_review and anchor_review.exists():
-            review_result = apply_anchor_reviews(anchors, anchor_review, work_dir / "anchor-library")
+            import os
+            anchor_library = Path(os.environ.get("MONIA_ANCHOR_LIBRARY_DIR", ".monia-video/anchor-library"))
+            review_result = apply_anchor_reviews(anchors, anchor_review, anchor_library)
             _write(work_dir / "anchor-review-result.json", review_result)
             stage("identity-anchor-review", review_result.get("status") or "unknown", output=str(work_dir / "anchor-review-result.json"))
             if review_result.get("status") == "approved":
