@@ -350,9 +350,19 @@ def run_job(job_path: Path, publish: bool) -> dict[str, Any]:
         max_workers = max(1, min(len(shots), int(os.environ.get("MONIA_SCENE_WORKERS", "4"))))
         with ThreadPoolExecutor(max_workers=max_workers, thread_name_prefix="monia-shot") as pool:
             futures = [pool.submit(process_shot, index, shot) for index, shot in enumerate(shots)]
+            progress_path = QUALITY_DIR / f"{_slug(str(job.get('id') or 'job'))}-progress.json"
             for future in as_completed(futures):
                 index, item = future.result()
                 results[index] = item
+                progress = {
+                    "jobId": job.get("id"),
+                    "continuityKey": job.get("continuityKey"),
+                    "status": "candidate-processing",
+                    "completedShots": sum(item is not None for item in results),
+                    "totalShots": len(shots),
+                    "shots": [item for item in results if item is not None],
+                }
+                progress_path.write_text(json.dumps(progress, ensure_ascii=False, indent=2), encoding="utf-8")
 
     result["shots"] = [item for item in results if item is not None]
 
