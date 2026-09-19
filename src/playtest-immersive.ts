@@ -18,6 +18,7 @@ let scene:SceneKey='home';
 let minutes=540;
 let withMarine=false;
 let encounterGenerated=false;
+let metDominic=false;
 let firstContactEarliestAbs=0;
 const firstContactTarget=703; // deterministic hidden playtest window, equivalent to the real Day 1 morning window
 
@@ -126,7 +127,7 @@ function encounterEligible(){
   return shouldTriggerDay1FirstContact({
     day:1,
     place:'arenes',
-    metDominic:false,
+    metDominic,
     flags:{firstContactTarget,firstContactEarliest:firstContactEarliestAbs}
   },minutes);
 }
@@ -207,11 +208,26 @@ function renderEncounterFallback(reason:string){
 }
 
 function renderEncounterAfterVideo(){
+  if(!metDominic){
+    metDominic=true;
+    advance(34);
+  }
   scene='encounter';
   render([
-    {label:'Rester encore quelques secondes',primary:true,run:()=>{}},
-    {label:'Reprendre avec Marine',run:()=>{withMarine=true;arenes()}},
-  ],{eyebrow:'APRÈS LA SCÈNE','title':'Tu n’es pas sortie du jeu.','body':'La vidéo était une scène au milieu du gameplay. Ensuite tu reprends exactement là où tu étais.'},{marine:'“Ça va ?”'});
+    {label:'Rester encore quelques secondes',primary:true,run:()=>continueAfterEncounter(3)},
+    {label:'Reprendre avec Marine',run:()=>continueAfterEncounter(2)},
+  ],{eyebrow:'APRÈS LA SCÈNE','title':'Tu n’es pas sortie du jeu.','body':`La rencontre a réellement pris du temps. Il est maintenant ${fmt()} et tu reprends la journée exactement là où tu étais.`},{marine:'“Ça va ?”'});
+}
+
+function continueAfterEncounter(extra:number){
+  advance(extra);
+  withMarine=true;
+  scene='arenes';
+  render([
+    {label:'Continuer la Feria avec Marine',primary:true,run:()=>continueFeria(16,'continuer')},
+    {label:'Faire une pause en terrasse',run:()=>continueFeria(18,'terrasse')},
+    {label:'Rentrer doucement vers le centre',run:()=>{advance(14);esplanade(true)}},
+  ],{eyebrow:'APRÈS LA RENCONTRE · '+fmt(),title:'La Feria continue.',body:'Dominic est reparti de son côté. Le monde ne se fige pas après la cinématique : Marine est toujours là et ta journée continue.'},{marine:'“Bon… tu me racontes ?”'});
 }
 
 try{home()}catch(err){
