@@ -25,6 +25,7 @@ from scripts.monia_scene_human_behavior import plan_human_behavior
 from scripts.monia_scene_environment import plan_environment
 from scripts.monia_scene_edit_rhythm import plan_edit_rhythm
 from scripts.monia_scene_ambience import plan_ambience
+from scripts.monia_scene_anchor_planner import prepare_scene_anchors
 
 
 def _write(path: Path, payload: dict[str, Any]) -> None:
@@ -115,6 +116,15 @@ def run_pipeline(spec_path: Path, work_dir: Path, publish_candidates: bool = Fal
         _write(scene_path, scene)
         _write(work_dir / "ambience-plan.json", ambience)
         stage("ambience", ambience.get("status") or "unknown", output=str(work_dir / "ambience-plan.json"))
+
+        anchors = prepare_scene_anchors(scene, work_dir / "anchors")
+        stage("identity-anchors", anchors.get("status") or "unknown", output=str(work_dir / "anchors" / "anchor-plan.json"), blockedShots=anchors.get("blockedShots") or [])
+        if anchors.get("status") == "anchors-required":
+            journal["status"] = "awaiting-identity-anchors"
+            journal["identityAnchors"] = anchors
+            journal["nextRequiredStage"] = "compose-and-validate-multi-character-anchors"
+            _write(journal_path, journal)
+            return journal
 
         av_initial = build_av_plan(scene)
         av_initial_path = work_dir / "av-plan-estimated.json"
