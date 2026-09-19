@@ -1,0 +1,177 @@
+{
+  "id": "monia-dominic-marion-proposal-v1",
+  "mode": "cinematic",
+  "intent": "A deeply believable private marriage proposal between Dominic and Marion. Emotional realism over spectacle; it must feel witnessed, not staged.",
+  "location": "quiet Mediterranean terrace at golden hour, intimate and private, warm stone, subtle vegetation, distant soft horizon",
+  "timeOfDay": "sunset into early blue hour",
+  "characters": ["Marion", "Lucas"],
+  "continuityState": {
+    "location": "same private terrace throughout",
+    "timeOfDay": "continuous sunset progressing naturally",
+    "lighting": "warm low natural sunlight becoming softer; no artificial glamour lighting",
+    "cameraAxis": "stable intimate conversational geography",
+    "wardrobe": {
+      "Lucas": "elegant but natural dark shirt, sleeves relaxed, canonical tattoos preserved where visible",
+      "Marion": "simple elegant light summer outfit, natural styling"
+    },
+    "appearance": {
+      "Lucas": "canonical Dominic identity, exact face/hair/stubble/body proportions/tattoos",
+      "Marion": "canonical Marion identity, natural face, dark blond/light brown mid-length wavy hair, light eyes, cheek mole preserved"
+    },
+    "lockedElements": ["canonical faces", "body proportions", "hair", "tattoos", "wardrobe", "engagement ring", "terrace geography", "screen direction"]
+  },
+  "beats": [
+    {
+      "id": "arrival",
+      "intent": "They arrive together with Marion unaware of what is about to happen.",
+      "presentActors": ["Marion", "Lucas"],
+      "action": "They walk slowly onto the terrace. Dominic is slightly quieter than usual without acting suspicious. Marion looks outward, then back at him. Natural walking, breathing and tiny clothing movement.",
+      "emotion": "calm, familiar, slight hidden tension from Dominic",
+      "duration": 5.5
+    },
+    {
+      "id": "pause-before",
+      "intent": "Dominic tries to begin, stops for a fraction, then commits.",
+      "presentActors": ["Marion", "Lucas"],
+      "action": "Dominic turns toward Marion, briefly looks down, exhales through a small nervous smile and takes her hand. Marion notices the change in him and studies his face.",
+      "emotion": "contained nerves, tenderness, curiosity",
+      "duration": 5.0
+    },
+    {
+      "id": "first-words",
+      "intent": "He speaks simply rather than delivering a rehearsed speech.",
+      "presentActors": ["Marion", "Lucas"],
+      "action": "Dominic keeps her hand, holds eye contact, breaks it once naturally, then looks back at her.",
+      "emotion": "vulnerable, sincere, warm",
+      "duration": 6.5
+    },
+    {
+      "id": "kneel",
+      "intent": "The realization reaches Marion before the ring is fully presented.",
+      "presentActors": ["Marion", "Lucas"],
+      "action": "Dominic releases one hand and goes down on one knee naturally. He takes a small ring box from his pocket and opens it. Marion freezes for a beat, breath catches, one hand rises toward her mouth; no exaggerated crying.",
+      "emotion": "Dominic focused and emotional; Marion stunned, overwhelmed",
+      "duration": 6.5
+    },
+    {
+      "id": "question",
+      "intent": "Let the question land without music-video theatrics.",
+      "presentActors": ["Marion", "Lucas"],
+      "action": "Close but not intrusive camera. Dominic looks directly at Marion and asks. Hold on Marion afterward instead of cutting immediately.",
+      "emotion": "intimate, exposed, genuine",
+      "duration": 6.0
+    },
+    {
+      "id": "reaction",
+      "intent": "Marion reacts before she can form the answer.",
+      "presentActors": ["Marion", "Lucas"],
+      "action": "Marion gives a tiny disbelieving laugh through emotion, looks away for half a second, back to Dominic, nods before words come. Eyes wet but restrained. Dominic waits; he does not interrupt.",
+      "emotion": "shock becoming joy and tenderness",
+      "duration": 6.0
+    },
+    {
+      "id": "yes-ring",
+      "intent": "The yes releases the tension.",
+      "presentActors": ["Marion", "Lucas"],
+      "action": "Marion answers yes. Dominic's expression changes immediately, relieved and emotional. He stands, gently puts the ring on her finger; their hands are clearly anatomically correct and the ring remains consistent.",
+      "emotion": "relief, happiness, disbelief",
+      "duration": 7.0
+    },
+    {
+      "id": "after",
+      "intent": "End on them, not on the ring.",
+      "presentActors": ["Marion", "Lucas"],
+      "action": "Marion moves into Dominic before he can say much more. They embrace tightly, then separate just enough to look at each other and share a spontaneous small laugh. Dominic touches his forehead briefly to hers. Camera stays human and close, then eases back slightly.",
+      "emotion": "private happiness, release, love",
+      "duration": 7.0
+    }
+  ],
+  "dialogue": [
+    {
+      "speaker": "Lucas",
+      "beatId": "first-words",
+      "text": "J'avais préparé plein de trucs à te dire… et là, j'ai tout oublié.",
+      "intent": "admit his nerves instead of performing",
+      "emotion": "tender",
+      "delivery": "low, warm, slightly breathy, tiny nervous smile, one natural hesitation",
+      "listeners": ["Marion"],
+      "listenerBehavior": "watches him closely, smile fades into attentive emotion",
+      "pauseBeforeMs": 420,
+      "pauseAfterMs": 700
+    },
+    {
+      "speaker": "Lucas",
+      "beatId": "first-words",
+      "text": "Je sais juste que je veux continuer tout ça avec toi.",
+      "intent": "simple certainty",
+      "emotion": "tender",
+      "delivery": "quiet and direct, no speech cadence",
+      "listeners": ["Marion"],
+      "listenerBehavior": "realizes something important is happening",
+      "pauseBeforeMs": 250,
+      "pauseAfterMs": 900
+    },
+    {
+      "speaker": "Lucas",
+      "beatId": "question",
+      "text": "Marion… tu veux m'épouser ?",
+      "intent": "the proposal",
+      "emotion": "tender",
+      "delivery": "very simple, intimate, slightly vulnerable; breathe before Marion's name",
+      "listeners": ["Marion"],
+      "listenerBehavior": "silent stunned reaction first; answer must not be immediate",
+      "pauseBeforeMs": 650,
+      "pauseAfterMs": 1700
+    },
+    {
+      "speaker": "Marion",
+      "beatId": "yes-ring",
+      "text": "Oui… oui.",
+      "intent": "answer after emotion catches up",
+      "emotion": "overwhelmed-happy",
+      "delivery": "first yes almost breathed, second clearer with a small emotional laugh",
+      "listeners": ["Lucas"],
+      "listenerBehavior": "instant visible relief, soft laugh, eyes remain on her",
+      "pauseBeforeMs": 500,
+      "pauseAfterMs": 450
+    }
+  ],
+  "props": {
+    "engagementRing": {
+      "continuityCritical": true,
+      "description": "elegant understated engagement ring, realistic scale, same ring and box in every shot",
+      "handAnatomyCritical": true
+    }
+  },
+  "cameraDirection": {
+    "style": "observational cinematic realism",
+    "rules": [
+      "favor medium close shots and reaction holds over coverage",
+      "do not orbit around kneeling Dominic",
+      "do not use drone shots",
+      "do not use artificial rack-focus gimmicks",
+      "never cut away from Marion at the first instant of realization",
+      "hold silence after the question",
+      "camera operator feels physically present but unobtrusive"
+    ]
+  },
+  "soundDirection": {
+    "music": "none during proposal proof candidate",
+    "ambience": "real terrace air, distant soft environment only, no intelligible background voices",
+    "performance": "breaths and micro-pauses remain audible; no announcer delivery"
+  },
+  "quality": {
+    "photorealistic": true,
+    "identityFirst": true,
+    "continuityFirst": true,
+    "naturalMotion": true,
+    "anatomyCritical": true,
+    "handsCritical": true,
+    "ringContinuityCritical": true,
+    "noBeautyCommercialLook": true,
+    "noGenericAIActing": true,
+    "noSlowMotion": true
+  },
+  "approvalRequired": true,
+  "autoPublish": false
+}
