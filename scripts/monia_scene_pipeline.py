@@ -24,6 +24,7 @@ from scripts.monia_scene_emotion import plan_emotional_continuity
 from scripts.monia_scene_human_behavior import plan_human_behavior
 from scripts.monia_scene_environment import plan_environment
 from scripts.monia_scene_edit_rhythm import plan_edit_rhythm
+from scripts.monia_scene_ambience import plan_ambience
 
 
 def _write(path: Path, payload: dict[str, Any]) -> None:
@@ -108,6 +109,12 @@ def run_pipeline(spec_path: Path, work_dir: Path, publish_candidates: bool = Fal
         _write(scene_path, scene)
         _write(work_dir / "edit-rhythm-plan.json", edit_rhythm)
         stage("edit-rhythm", edit_rhythm.get("status") or "unknown", output=str(work_dir / "edit-rhythm-plan.json"))
+
+        ambience = plan_ambience(scene)
+        scene = ambience["scene"]
+        _write(scene_path, scene)
+        _write(work_dir / "ambience-plan.json", ambience)
+        stage("ambience", ambience.get("status") or "unknown", output=str(work_dir / "ambience-plan.json"))
 
         av_initial = build_av_plan(scene)
         av_initial_path = work_dir / "av-plan-estimated.json"
