@@ -3,6 +3,7 @@ import {hasMetDominic,hasFirstDominicMessage,canDominicUsePhoneAutonomously} fro
 import {buildAutonomousMediaPlan} from './monia/media-orchestrator';
 import {buildMonIAGenerationJob} from './monia/generation-job';
 import {getDominicPresence} from './monia/lucas-presence-engine';
+import {simulateDay1Matrix} from './day1-simulator';
 import type {MonIADirectorResult,MonIADirectorRequest} from './monia/director';
 
 type Check={name:string;ok:boolean;detail:string;group:string};
@@ -106,6 +107,15 @@ const timeline=[
  ['≥ 90 min plus tard','Premier message','“Tu es bien rentrée ?” seulement après la rencontre.'],
 ];
 
+const playthroughs=simulateDay1Matrix();
+for(const sim of playthroughs){
+  add('Parties simulées',`Route ${sim.route} atteint une rencontre cohérente`,sim.warnings.length===0,`${sim.context} · fenêtre ${sim.target} · rencontre ${sim.encounterAt}`);
+  add('Parties simulées',`Route ${sim.route} garde des directions explicites`,sim.steps.every(step=>Boolean(step.direction&&step.direction.trim())),`${sim.steps.length} étapes ont une direction de gameplay lisible.`);
+  const times=sim.steps.map(s=>Number(s.time.slice(0,2))*60+Number(s.time.slice(3,5)));
+  add('Parties simulées',`Route ${sim.route} fait avancer le temps`,times.every((t,i)=>i===0||t>=times[i-1]),'Aucune action ne remonte le temps.');
+}
+add('Sauvegarde multi-appareils','Reprise ordi/tablette/téléphone',false,'Pas encore de sauvegarde serveur: la partie principale reste liée au navigateur actuel.');
+
 const passed=checks.filter(c=>c.ok).length;
 const failed=checks.length-passed;
 const groups=[...new Set(checks.map(c=>c.group))];
@@ -115,9 +125,13 @@ app.innerHTML=`
   <header><span>SIMULATION ULTRA-COMPLÈTE · JOUR 1</span><h1>${failed===0?'Tout passe':'Des points restent à corriger'}</h1><p>${passed}/${checks.length} contrôles réussis · ${failed} échec(s)</p></header>
   <section class="score ${failed?'bad':'good'}"><strong>${passed}/${checks.length}</strong><span>contrôles</span></section>
   <section class="timeline"><h2>Parcours simulé</h2>${timeline.map(([t,l,d])=>`<article><time>${t}</time><div><strong>${l}</strong><p>${d}</p></div></article>`).join('')}</section>
+  <section class="playthroughs"><h2>Trois vraies parties simulées</h2>
+    ${playthroughs.map(sim=>`<article class="playthrough"><header><span>${sim.route}</span><strong>Fenêtre cachée ${sim.context} · cible ${sim.target} · rencontre ${sim.encounterAt}</strong></header><div class="trace">${sim.steps.map(step=>`<div class="traceStep"><time>${step.time}</time><div><b>${step.place}</b><strong>${step.action}</strong><p>${step.direction}</p>${step.checks.length?`<small>${step.checks.join(' · ')}</small>`:''}</div></div>`).join('')}</div>${sim.warnings.length?`<p class="warning">${sim.warnings.join(' · ')}</p>`:''}</article>`).join('')}
+  </section>
   ${groups.map(g=>`<section class="group"><h2>${g}</h2>${checks.filter(c=>c.group===g).map(c=>`<article class="${c.ok?'pass':'fail'}"><b>${c.ok?'PASS':'FAIL'}</b><div><strong>${c.name}</strong><p>${c.detail}</p></div></article>`).join('')}</section>`).join('')}
 </main>
 <style>
-.wrap{max-width:980px;margin:auto;padding:28px 0 60px}header{padding:12px 4px 24px}header span{font-size:11px;letter-spacing:.18em;opacity:.62}h1{font:500 38px/1.1 Georgia,serif;margin:8px 0}header p{opacity:.72}.score{display:flex;align-items:baseline;gap:10px;padding:18px 20px;border-radius:20px;margin-bottom:22px}.score.good{background:#183224}.score.bad{background:#4a2020}.score strong{font-size:32px}.score span{opacity:.7}.group,.timeline{background:#191714;border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:18px;margin:14px 0}.group h2,.timeline h2{font-size:14px;letter-spacing:.08em;text-transform:uppercase;opacity:.72;margin:0 0 12px}.group article,.timeline article{display:grid;grid-template-columns:76px 1fr;gap:12px;padding:12px 0;border-top:1px solid rgba(255,255,255,.07)}.group article:first-of-type,.timeline article:first-of-type{border-top:0}.group b{font-size:11px;letter-spacing:.1em;padding-top:2px}.pass b{color:#7ce3a2}.fail b{color:#ff8d8d}.group strong,.timeline strong{display:block}.group p,.timeline p{margin:4px 0 0;opacity:.66;line-height:1.4;font-size:14px}.timeline time{font-size:12px;opacity:.62;padding-top:2px}@media(max-width:620px){body{padding:12px}.wrap{padding-top:10px}h1{font-size:30px}.group article,.timeline article{grid-template-columns:64px 1fr}}
+.wrap{max-width:980px;margin:auto;padding:28px 0 60px}header{padding:12px 4px 24px}header span{font-size:11px;letter-spacing:.18em;opacity:.62}h1{font:500 38px/1.1 Georgia,serif;margin:8px 0}header p{opacity:.72}.score{display:flex;align-items:baseline;gap:10px;padding:18px 20px;border-radius:20px;margin-bottom:22px}.score.good{background:#183224}.score.bad{background:#4a2020}.score strong{font-size:32px}.score span{opacity:.7}.group,.timeline,.playthroughs{background:#191714;border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:18px;margin:14px 0}.group h2,.timeline h2,.playthroughs h2{font-size:14px;letter-spacing:.08em;text-transform:uppercase;opacity:.72;margin:0 0 12px}.group article,.timeline article{display:grid;grid-template-columns:76px 1fr;gap:12px;padding:12px 0;border-top:1px solid rgba(255,255,255,.07)}.group article:first-of-type,.timeline article:first-of-type{border-top:0}.group b{font-size:11px;letter-spacing:.1em;padding-top:2px}.pass b{color:#7ce3a2}.fail b{color:#ff8d8d}.group strong,.timeline strong{display:block}.group p,.timeline p{margin:4px 0 0;opacity:.66;line-height:1.4;font-size:14px}.timeline time{font-size:12px;opacity:.62;padding-top:2px}.playthrough{border-top:1px solid rgba(255,255,255,.08);padding:16px 0}.playthrough:first-of-type{border-top:0}.playthrough>header{display:grid;gap:5px;margin-bottom:12px}.playthrough>header span{text-transform:uppercase;font-size:11px;letter-spacing:.12em;opacity:.6}.trace{display:grid;gap:8px}.traceStep{display:grid;grid-template-columns:58px 1fr;gap:12px;padding:10px 0;border-top:1px solid rgba(255,255,255,.05)}.traceStep:first-child{border-top:0}.traceStep time{font-size:12px;opacity:.58}.traceStep b{display:block;font-size:11px;opacity:.55;margin-bottom:3px}.traceStep strong{display:block}.traceStep p{margin:4px 0 0;opacity:.72;font-size:14px}.traceStep small{display:block;margin-top:5px;opacity:.5}.warning{color:#ff9a9a}
+@media(max-width:620px){body{padding:12px}.wrap{padding-top:10px}h1{font-size:30px}.group article,.timeline article{grid-template-columns:64px 1fr}}
 </style>
 `;
