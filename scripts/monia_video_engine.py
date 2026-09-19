@@ -102,6 +102,8 @@ MARION = CharacterProfile(
 PROFILES = {p.key: p for p in (LUCAS, LUCAS_VISIO_TEST1, MARION)}
 FREE_WAN_PROVIDERS = tuple(worker.WAN_PROVIDERS)
 FREE_LTX_SPACE = worker.LTX_SPACE
+UPSAMPLER_WAN_SPACE = "Upsampler/wan-2-2-14b-image-to-video"
+UPSAMPLER_LTX_SPACE = "Upsampler/ltx-video"
 
 
 def _download_canon(profile: CharacterProfile, target: Path) -> None:
@@ -220,11 +222,69 @@ def _run_wan_provider(space: str, label: str, profile: CharacterProfile, source:
     raise RuntimeError("No generated video recovered: " + " | ".join(errors[-3:]))
 
 
+
+def _materialize_gradio_result(result: object, target: Path, label: str) -> str:
+    errors: list[str] = []
+    for candidate in worker.deep_candidates(result):
+        try:
+            worker.materialize(candidate, target)
+            if worker.looks_like_video(target):
+                return label
+        except Exception as exc:
+            errors.append(str(exc))
+    raise RuntimeError("No generated video recovered: " + " | ".join(errors[-3:]))
+
+
+def _run_upsampler_wan(profile: CharacterProfile, source: Path, target: Path) -> str:
+    token = os.environ.get("HF_TOKEN", "").strip() or None
+    client = Client(UPSAMPLER_WAN_SPACE, token=token, verbose=False)
+    duration = max(0.5, min(5.0, float(profile.duration)))
+    result = client.predict(
+        handle_file(str(source)),
+        profile.prompt,
+        6,
+        profile.negative,
+        duration,
+        1.0,
+        1.0,
+        42,
+        True,
+        None,
+        api_name="/generate_video",
+    )
+    return _materialize_gradio_result(result, target, "Wan 2.2 14B Lightning ZeroGPU")
+
+
+def _run_upsampler_ltx(profile: CharacterProfile, source: Path, target: Path) -> str:
+    token = os.environ.get("HF_TOKEN", "").strip() or None
+    client = Client(UPSAMPLER_LTX_SPACE, token=token, verbose=False)
+    # Keep resolution modest for shared ZeroGPU; preserve the requested aspect ratio.
+    height = 544 if profile.width >= profile.height else 768
+    width = round(height * profile.width / profile.height)
+    width = max(256, (width // 32) * 32)
+    height = max(256, (height // 32) * 32)
+    result = client.predict(
+        handle_file(str(source)),
+        profile.prompt,
+        float(max(1, min(10, profile.duration))),
+        False,
+        10,
+        True,
+        height,
+        width,
+        api_name="/generate_video",
+    )
+    return _materialize_gradio_result(result, target, "LTX Video ZeroGPU")
+
 def _provider_child(kind: str, space: str, label: str, profile: CharacterProfile, source: str, target: str, queue) -> None:
     target_path = Path(target)
     try:
         target_path.unlink(missing_ok=True)
-        if kind == "ltx":
+        if kind == "upsampler_wan":
+            provider = _run_upsampler_wan(profile, Path(source), target_path)
+        elif kind == "upsampler_ltx":
+            provider = _run_upsampler_ltx(profile, Path(source), target_path)
+        elif kind == "ltx":
             provider = _run_ltx(profile, Path(source), target_path)
         else:
             provider = _run_wan_provider(space, label, profile, Path(source), target_path)
@@ -239,7 +299,11 @@ def race_compute(profile: CharacterProfile, source: Path, target: Path) -> tuple
     """Run MonIA compute providers concurrently. First valid video wins."""
     ctx = mp.get_context("fork")
     queue = ctx.Queue()
-    specs = [("ltx", FREE_LTX_SPACE, worker.LTX_LABEL)] + [("wan", space, label) for space, label in FREE_WAN_PROVIDERS]
+    specs = [
+        ("upsampler_wan", UPSAMPLER_WAN_SPACE, "Wan 2.2 14B Lightning ZeroGPU"),
+        ("upsampler_ltx", UPSAMPLER_LTX_SPACE, "LTX Video ZeroGPU"),
+        ("ltx", FREE_LTX_SPACE, worker.LTX_LABEL),
+    ] + [("wan", space, label) for space, label in FREE_WAN_PROVIDERS]
     provider_limit = max(1, int(os.environ.get("MONIA_PROVIDER_LIMIT", str(len(specs)))))
     specs = specs[:provider_limit]
     processes: list[tuple[str, mp.Process, Path]] = []
