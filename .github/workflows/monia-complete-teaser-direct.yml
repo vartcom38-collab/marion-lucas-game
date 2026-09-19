@@ -27,7 +27,8 @@ jobs:
       MONIA_LTX_UPLOAD_TIMEOUT_SECONDS: "60"
       MONIA_LTX_SUBMIT_TIMEOUT_SECONDS: "60"
       MONIA_WAN_PROVIDER_TIMEOUT_SECONDS: "120"
-      MONIA_SCENE_WORKERS: "4"
+      MONIA_SCENE_WORKERS: "2"
+      MONIA_SCENE_ATTEMPTS: "2"
 
     steps:
       - uses: actions/checkout@v5
@@ -121,8 +122,16 @@ jobs:
           mapfile -t G < .teaser/paths.txt
           mkdir -p .teaser/norm
 
-          cp public/resources/living/street.mp4 .teaser/street.mp4
-          cp public/resources/living/arenes.mp4 .teaser/arenes.mp4
+          if [ -f public/resources/living/street.mp4 ]; then
+            cp public/resources/living/street.mp4 .teaser/street.mp4
+          else
+            curl -fL --retry 3 --retry-delay 2 -o .teaser/street.mp4 "https://marion-lucas.marionbolomey.fr/resources/living/street.mp4"
+          fi
+          if [ -f public/resources/living/arenes.mp4 ]; then
+            cp public/resources/living/arenes.mp4 .teaser/arenes.mp4
+          else
+            curl -fL --retry 3 --retry-delay 2 -o .teaser/arenes.mp4 "https://marion-lucas.marionbolomey.fr/resources/living/arenes.mp4"
+          fi
 
           INPUTS=("${G[0]}" ".teaser/street.mp4" "${G[1]}" "${G[2]}" "${G[3]}" ".teaser/arenes.mp4")
           for i in 1 2 3 4 5 6; do
