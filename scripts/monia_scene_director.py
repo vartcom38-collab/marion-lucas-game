@@ -77,7 +77,9 @@ def direct_scene(spec: dict[str, Any]) -> dict[str, Any]:
         shot_types = ["establishing", "medium", "action", "close-reaction", "exit-beat"]
         durations = [4, 5, 5, 5, 4]
         shots = []
-        present = [str(a) for a in (spec.get("initialActors") or actors)]
+        structured_beats = any(isinstance(b, dict) for b in beats)
+        default_initial = actors if not structured_beats else [actors[0]]
+        present = [str(a) for a in (spec.get("initialActors") or default_initial)]
         for index, raw_beat in enumerate(beats[:8]):
             beat = raw_beat if isinstance(raw_beat, dict) else {"action": str(raw_beat)}
             for leaving in beat.get("exits") or []:
