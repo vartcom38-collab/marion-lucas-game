@@ -28,6 +28,7 @@ export default defineConfig({
         dramaReview: resolve(__dirname, 'drama-review.html'),
         latestVisio: resolve(__dirname, 'latest-visio.html'),
         immersivePlaytest: resolve(__dirname, 'playtest-immersive.html'),
+        diagnosticPlaytest: resolve(__dirname, 'playtest-diagnostic.html'),
         visioTest: resolve(__dirname, 'visio-test.html'),
       },
       maxParallelFileOps: 128,
