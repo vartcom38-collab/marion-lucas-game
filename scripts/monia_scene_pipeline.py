@@ -17,6 +17,7 @@ from scripts.monia_scene_vision_judge import judge_samples
 from scripts.monia_scene_identity_review import write_identity_review
 from scripts.monia_scene_repair_runner import execute_repair_pass
 from scripts.monia_story_logic import validate_story_logic
+from scripts.monia_story_repair import repair_story_logic
 
 
 def _write(path: Path, payload: dict[str, Any]) -> None:
@@ -51,10 +52,20 @@ def run_pipeline(spec_path: Path, work_dir: Path, publish_candidates: bool = Fal
         stage("story-logic", story_logic.get("status") or "unknown", output=str(story_logic_path))
         journal["storyLogic"] = story_logic
         if story_logic.get("status") == "invalid":
-            journal["status"] = "blocked-story-logic"
-            journal["nextRequiredStage"] = "director-revision"
-            _write(journal_path, journal)
-            return journal
+            story_repair = repair_story_logic(scene)
+            _write(work_dir / "story-repair.json", story_repair)
+            stage("story-auto-repair", story_repair.get("status") or "unknown", output=str(work_dir / "story-repair.json"))
+            if story_repair.get("status") == "repaired":
+                scene = story_repair["scene"]
+                _write(scene_path, scene)
+                story_logic = story_repair["validation"]
+                journal["storyLogic"] = story_logic
+                stage("story-logic", story_logic.get("status") or "unknown", output=str(story_logic_path), repaired=True)
+            else:
+                journal["status"] = "blocked-story-logic"
+                journal["nextRequiredStage"] = "director-revision"
+                _write(journal_path, journal)
+                return journal
 
         av_initial = build_av_plan(scene)
         av_initial_path = work_dir / "av-plan-estimated.json"
