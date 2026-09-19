@@ -23,6 +23,7 @@ jobs:
       MONIA_SCENE_WORKERS: "1"
       MONIA_SCENE_ATTEMPTS: "1"
       MONIA_PROVIDER_LIMIT: "5"
+      MONIA_PROVIDER_STRATEGY: "sequential"
       MONIA_REUSE_PUBLISHED: "1"
 
     steps:
