@@ -28,7 +28,7 @@ def assemble_final(
     concat = output_dir / "video-concat.txt"
     concat.write_text("\n".join(f"file '{Path(str(s['path'])).resolve().as_posix()}'" for s in usable) + "\n", encoding="utf-8")
     video = output_dir / "picture.mp4"
-    _ffmpeg(["-f", "concat", "-safe", "0", "-i", str(concat), "-c:v", "libx264", "-an", "-pix_fmt", "yuv420p", "-movflags", "+faststart", str(video)])
+    _ffmpeg(["-f", "concat", "-safe", "0", "-i", str(concat), "-c:v", "libx264", "-c:a", "aac", "-b:a", "128k", "-pix_fmt", "yuv420p", "-movflags", "+faststart", str(video)])
 
     utterances = [u for u in av_plan.get("utterances") or [] if u.get("audioPath")]
     final = output_dir / "scene-final-candidate.mp4"
@@ -39,12 +39,16 @@ def assemble_final(
         args = ["-i", str(video)]
         filters = []
         mix_inputs = []
+        # Preserve low-level production ambience from generated shots when available.
+        # This is deliberately subtle: dialogue remains dominant and we do not invent fake room tone.
+        filters.append("[0:a]volume=0.18[room]" )
+        mix_inputs.append("[room]")
         for idx, u in enumerate(utterances, start=1):
             args += ["-i", str(u["audioPath"])]
             delay = max(0, int(u.get("startMs") or 0))
             filters.append(f"[{idx}:a]adelay={delay}:all=1[a{idx}]")
             mix_inputs.append(f"[a{idx}]")
-        filters.append("".join(mix_inputs) + f"amix=inputs={len(mix_inputs)}:duration=longest:dropout_transition=0[aout]")
+        filters.append("".join(mix_inputs) + f"amix=inputs={len(mix_inputs)}:duration=longest:dropout_transition=0:normalize=0[aout]")
         args += [
             "-filter_complex", ";".join(filters),
             "-map", "0:v:0", "-map", "[aout]",
@@ -59,7 +63,7 @@ def assemble_final(
         "output": str(final),
         "bytes": final.stat().st_size,
         "dialogueTracks": len(utterances),
-        "roomTone": "continuity-planned; synthetic/generated ambience not yet rendered",
+        "roomTone": "production ambience preserved at low level when source shots contain audio; no synthetic ambience invented",
         "approvalRequired": True,
         "autoPublish": False,
     }
