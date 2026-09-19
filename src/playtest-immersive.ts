@@ -1,15 +1,16 @@
 import {shouldTriggerDay1FirstContact} from './day1-chronology';
 type SceneKey='home'|'madeleine'|'esplanade'|'marine'|'arenes'|'feria'|'encounter';
 
+type SceneDef={title:string;sub:string;image:string;video?:string;audio:'home'|'street'|'feria'|'quiet'};
 const app=document.querySelector<HTMLDivElement>('#app')!;
-const scenes:Record<SceneKey,{title:string;sub:string;image:string}> = {
-  home:{title:'Nîmes · Appartement',sub:'Jour 1 · 09:00',image:'./resources/appartement-nimes.png'},
-  madeleine:{title:'Rue de la Madeleine',sub:'Vers le centre',image:'https://commons.wikimedia.org/wiki/Special:FilePath/Rue_de_la_Madeleine_in_Nimes_01.jpg?width=2200'},
-  esplanade:{title:'Esplanade Charles-de-Gaulle',sub:'Quelques minutes des arènes',image:'https://commons.wikimedia.org/wiki/Special:FilePath/Esplanade_Charles_de_Gaulle_in_Nimes_02.jpg?width=2200'},
-  marine:{title:'Avec Marine',sub:'En marchant vers les arènes',image:'https://commons.wikimedia.org/wiki/Special:FilePath/Esplanade_Charles_de_Gaulle_in_Nimes_02.jpg?width=2200'},
-  arenes:{title:'Arènes de Nîmes',sub:'Feria · la ville se densifie',image:'https://commons.wikimedia.org/wiki/Special:FilePath/Ar%C3%A8nes_N%C3%AEmes.jpg?width=2200'},
-  feria:{title:'Autour des arènes',sub:'Feria · foule en mouvement',image:'https://commons.wikimedia.org/wiki/Special:FilePath/Ar%C3%A8nes_N%C3%AEmes.jpg?width=2200'},
-  encounter:{title:'Un instant dans la foule',sub:'Rencontre imprévue',image:'https://commons.wikimedia.org/wiki/Special:FilePath/Ar%C3%A8nes_N%C3%AEmes.jpg?width=2200'},
+const scenes:Record<SceneKey,SceneDef> = {
+  home:{title:'Nîmes · Appartement',sub:'Jour 1 · 09:00',image:'./resources/appartement-nimes.png',audio:'home'},
+  madeleine:{title:'Rue de la Madeleine',sub:'Vers le centre',image:'./resources/nimes/nimes-street.webp',video:'./resources/living/street.mp4',audio:'street'},
+  esplanade:{title:'Esplanade Charles-de-Gaulle',sub:'Quelques minutes des arènes',image:'./resources/nimes/nimes-street.webp',video:'./resources/living/street.mp4',audio:'street'},
+  marine:{title:'Avec Marine',sub:'En marchant vers les arènes',image:'./resources/nimes/nimes-street.webp',video:'./resources/living/street.mp4',audio:'street'},
+  arenes:{title:'Arènes de Nîmes',sub:'Feria · la ville se densifie',image:'./resources/nimes/nimes-arenes.webp',video:'./resources/living/arenes.mp4',audio:'feria'},
+  feria:{title:'Autour des arènes',sub:'Feria · foule en mouvement',image:'./resources/nimes/nimes-arenes.webp',video:'./resources/living/arenes.mp4',audio:'feria'},
+  encounter:{title:'Un instant dans la foule',sub:'Rencontre imprévue',image:'./resources/nimes/nimes-arenes.webp',video:'./resources/living/arenes.mp4',audio:'feria'},
 };
 
 let scene:SceneKey='home';
@@ -25,8 +26,10 @@ const advance=(m:number)=>{minutes+=m};
 
 function render(actions:Array<{label:string;primary?:boolean;run:()=>void}>,copy:{eyebrow?:string;title:string;body:string},opts?:{marine?:string;video?:string;status?:string}){
   const s=scenes[scene];
+  window.dispatchEvent(new CustomEvent('playtest-ambience',{detail:{profile:s.audio,time:fmt(),scene,withMarine}}));
   app.innerHTML=`
   <main class="world" style="--bg:url('${s.image}')">
+    ${s.video?`<video class="ambientSceneVideo" src="${s.video}" autoplay muted loop playsinline preload="metadata"></video>`:''}
     <div class="motionLayer"></div>
     <div class="grain"></div>
     <header class="hud">
@@ -54,9 +57,10 @@ function render(actions:Array<{label:string;primary?:boolean;run:()=>void}>,copy
   </main>
   <style>
   *{box-sizing:border-box}.world{position:relative;width:100%;height:100%;background:linear-gradient(180deg,rgba(0,0,0,.08),rgba(0,0,0,.34)),var(--bg) center/cover no-repeat;isolation:isolate;animation:arrive .7s ease both}
-  .world:before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.3),transparent 34%,transparent 68%,rgba(0,0,0,.2));z-index:-1}
-  .motionLayer{position:absolute;inset:-2%;background:var(--bg) center/cover no-repeat;z-index:-2;animation:living 11s ease-in-out infinite alternate;filter:saturate(.96)}
-  .grain{position:absolute;inset:0;pointer-events:none;opacity:.11;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.45'/%3E%3C/svg%3E")}
+  .world:before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.3),transparent 34%,transparent 68%,rgba(0,0,0,.2));z-index:0;pointer-events:none}
+  .ambientSceneVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-3;filter:saturate(.98) contrast(1.02)}
+  .motionLayer{position:absolute;inset:-2%;background:var(--bg) center/cover no-repeat;z-index:-4;animation:living 11s ease-in-out infinite alternate;filter:saturate(.96)}
+  .grain{position:absolute;inset:0;pointer-events:none;z-index:1;opacity:.11;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.45'/%3E%3C/svg%3E")}
   .hud{position:absolute;top:26px;left:30px;text-shadow:0 3px 22px #000;z-index:2}.hud span,.guide span,.companion span,.generation span{font-size:10px;letter-spacing:.18em;opacity:.7}.hud h1{font-family:Georgia,serif;font-size:30px;margin:6px 0 3px;font-weight:500}.hud small{opacity:.76}
   .guide{position:absolute;left:50%;bottom:28px;transform:translateX(-50%);width:min(760px,calc(100% - 36px));padding:17px 18px 18px;border:1px solid rgba(255,255,255,.18);border-radius:20px;background:rgba(15,12,10,.72);backdrop-filter:blur(18px);box-shadow:0 18px 80px rgba(0,0,0,.36);z-index:3}.guide strong{display:block;font-size:17px;margin-top:6px}.guide p{margin:7px 0 0;opacity:.76;line-height:1.45}.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}.actions button{border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.07);color:#fff;border-radius:999px;padding:11px 15px;cursor:pointer;transition:.18s}.actions button:hover{transform:translateY(-2px);background:rgba(255,255,255,.14)}.actions .primary{background:#f3eee7;color:#181411;font-weight:750}
   .companion{position:absolute;left:28px;bottom:205px;width:min(330px,calc(100% - 56px));padding:14px 15px;border-radius:18px;border:1px solid rgba(255,255,255,.16);background:rgba(12,10,9,.64);backdrop-filter:blur(14px);z-index:3}.companion strong,.generation strong{display:block;margin-top:6px}.companion small,.generation small{display:block;margin-top:5px;opacity:.68;line-height:1.4}
