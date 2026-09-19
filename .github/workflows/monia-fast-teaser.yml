@@ -1,0 +1,138 @@
+name: MonIA Fast Teaser
+
+on:
+  push:
+    paths:
+      - '.github/workflows/monia-fast-teaser.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: monia-fast-teaser
+  cancel-in-progress: true
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      INFOMANIAK_FTP_HOST: ${{ secrets.INFOMANIAK_FTP_HOST }}
+      INFOMANIAK_FTP_USER: ${{ secrets.INFOMANIAK_FTP_USER }}
+      INFOMANIAK_FTP_PASSWORD: ${{ secrets.INFOMANIAK_FTP_PASSWORD }}
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install runtime
+        run: |
+          sudo apt-get update >/dev/null
+          sudo apt-get install -y ffmpeg fonts-dejavu-core >/dev/null
+          python -m pip install --disable-pip-version-check requests gradio_client >/dev/null
+
+      - name: Fetch living world clips
+        shell: bash
+        run: |
+          mkdir -p .fast
+          curl -fL --max-time 30 --retry 2 "https://marion-lucas.marionbolomey.fr/resources/living/street.mp4" -o .fast/street.mp4 || cp public/resources/marion-nimes.mp4 .fast/street.mp4
+          curl -fL --max-time 30 --retry 2 "https://marion-lucas.marionbolomey.fr/resources/living/arenes.mp4" -o .fast/arenes.mp4 || cp public/resources/lucas-intro.mp4 .fast/arenes.mp4
+
+      - name: Render Dominic V16 lines
+        continue-on-error: true
+        shell: bash
+        run: |
+          mkdir -p .fast/voice
+          PYTHONPATH="$PWD" python -m scripts.monia_lucas_v16_runtime_voice --text "Ça va ? Vous vous êtes pas fait mal ?" --emotion concerned --request-id fast-teaser-encounter
+          cp .monia-video/lucas-v16-runtime-fast-teaser-encounter.wav .fast/voice/encounter.wav
+          PYTHONPATH="$PWD" python -m scripts.monia_lucas_v16_runtime_voice --text "Je voulais juste t'entendre deux minutes." --emotion warm --request-id fast-teaser-visio
+          cp .monia-video/lucas-v16-runtime-fast-teaser-visio.wav .fast/voice/visio.wav
+
+      - name: Assemble fast teaser
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .fast/norm
+          INPUTS=("public/resources/marion-nimes.mp4" ".fast/street.mp4" "public/resources/lucas-intro.mp4" ".fast/arenes.mp4")
+          for i in 1 2 3 4; do
+            src="${INPUTS[$((i-1))]}"
+            ffmpeg -hide_banner -loglevel error -y -stream_loop -1 -i "$src"               -vf "scale=1280:720:force_original_aspect_ratio=increase,crop=1280:720,fps=24,format=yuv420p"               -an -t 4 -c:v libx264 -preset veryfast -crf 20 -movflags +faststart ".fast/norm/$i.mp4"
+          done
+
+          : > .fast/concat.txt
+          for i in 1 2 3 4; do echo "file '$PWD/.fast/norm/$i.mp4'" >> .fast/concat.txt; done
+          ffmpeg -hide_banner -loglevel error -y -f concat -safe 0 -i .fast/concat.txt -c copy .fast/base.mp4
+
+          cat > .fast/ui.ass <<'ASS'
+          [Script Info]
+          ScriptType: v4.00+
+          PlayResX: 1280
+          PlayResY: 720
+          WrapStyle: 2
+          [V4+ Styles]
+          Format: Name,Fontname,Fontsize,PrimaryColour,SecondaryColour,OutlineColour,BackColour,Bold,Italic,Underline,StrikeOut,ScaleX,ScaleY,Spacing,Angle,BorderStyle,Outline,Shadow,Alignment,MarginL,MarginR,MarginV,Encoding
+          Style: HUD,DejaVu Sans,22,&H00FFFFFF,&H000000FF,&H33000000,&HAA111111,0,0,0,0,100,100,0,0,3,1,0,7,34,34,26,1
+          Style: Choice,DejaVu Sans,25,&H00FFFFFF,&H000000FF,&H33000000,&HAA111111,0,0,0,0,100,100,0,0,3,1,0,2,36,36,38,1
+          Style: Title,DejaVu Sans,46,&H00FFFFFF,&H000000FF,&H33000000,&H66000000,1,0,0,0,100,100,2,0,3,1,0,5,50,50,82,1
+          Style: Sub,DejaVu Sans,24,&H00FFFFFF,&H000000FF,&H33000000,&H77000000,0,0,0,0,100,100,0,0,3,1,0,2,55,55,52,1
+          [Events]
+          Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+          Dialogue: 0,0:00:00.2,0:00:03.7,HUD,,0,0,0,,Jour 1  •  Appartement — Nîmes
+          Dialogue: 0,0:00:00.8,0:00:03.6,Choice,,0,0,0,,Téléphone     Se préparer     Sortir
+          Dialogue: 0,0:00:04.2,0:00:07.7,HUD,,0,0,0,,Nîmes  •  Feria  •  Monde vivant
+          Dialogue: 0,0:00:08.2,0:00:11.7,HUD,,0,0,0,,Dominic  •  Rencontre contextuelle
+          Dialogue: 0,0:00:12.2,0:00:14.8,HUD,,0,0,0,,Corrida  •  Espagne  •  Voyages  •  Projets  •  Famille
+          Dialogue: 0,0:00:14.4,0:00:15.9,Title,,0,0,0,,MARION & DOMINIC
+          Dialogue: 0,0:00:15.0,0:00:15.9,Sub,,0,0,0,,Une vie à vivre. Jamais exactement deux fois la même.
+          ASS
+
+          ffmpeg -hide_banner -loglevel error -y -i .fast/base.mp4 -vf "ass=.fast/ui.ass" -an             -c:v libx264 -preset veryfast -crf 19 -movflags +faststart .fast/video.mp4
+
+          if [ -s .fast/voice/encounter.wav ] && [ -s .fast/voice/visio.wav ]; then
+            ffmpeg -hide_banner -loglevel error -y               -f lavfi -t 16 -i "anullsrc=r=48000:cl=stereo"               -i .fast/voice/encounter.wav -i .fast/voice/visio.wav               -filter_complex "[1:a]adelay=8000|8000[v1];[2:a]adelay=12000|12000[v2];[0:a][v1][v2]amix=inputs=3:duration=first:dropout_transition=0[a]"               -map "[a]" -t 16 .fast/audio.wav
+            ffmpeg -hide_banner -loglevel error -y -i .fast/video.mp4 -i .fast/audio.wav               -map 0:v -map 1:a -c:v copy -c:a aac -b:a 160k -shortest -movflags +faststart .fast/final.mp4
+          else
+            cp .fast/video.mp4 .fast/final.mp4
+          fi
+          ffprobe -v error -show_entries format=duration,size -of json .fast/final.mp4
+
+      - name: Upload to Infomaniak
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import scripts.monia_intro_worker as w
+          src=Path('.fast/final.mp4')
+          assert src.exists() and src.stat().st_size > 100000
+          ftp=w.ftp_connect()
+          try:
+              root=w.remote_root(ftp)
+              url=w.upload_file(ftp,root,src,'monia-fast-teaser-v1.mp4')
+              print('MONIA_FAST_URL='+url)
+          finally:
+              ftp.quit()
+          PY
+
+      - name: Verify public video
+        shell: bash
+        run: |
+          python - <<'PY'
+          import time,requests
+          url='https://marion-lucas.marionbolomey.fr/resources/monia/generated/monia-fast-teaser-v1.mp4'
+          for _ in range(12):
+              try:
+                  r=requests.get(url+'?v=${{ github.run_id }}',headers={'Range':'bytes=0-63','Cache-Control':'no-cache'},timeout=15)
+                  if r.status_code in (200,206) and b'ftyp' in r.content[:32]:
+                      print('PUBLIC_OK',url)
+                      break
+              except Exception:
+                  pass
+              time.sleep(5)
+          else:
+              raise SystemExit('fast teaser not publicly reachable')
+          PY
