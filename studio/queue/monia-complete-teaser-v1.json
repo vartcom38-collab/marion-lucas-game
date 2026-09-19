@@ -1,0 +1,89 @@
+{
+  "id": "monia-complete-teaser-v1",
+  "state": "queued",
+  "createdAt": "2026-09-19T13:35:00+02:00",
+  "source": "monia-complete-game-teaser",
+  "candidateOnly": true,
+  "narrativeAuthority": false,
+  "sceneFamily": "complete-game-teaser",
+  "signature": "MONIA_COMPLETE_TEASER_V1",
+  "primaryCharacter": "marion",
+  "prompt": "Premium photorealistic official teaser for the complete Marion & Dominic interactive life-sim. Show real gameplay feeling, Nîmes living city atmosphere, Marine friendship, Dominic, phone/visio, tauromachy career, Spain, daily life, future and replayability. French Mediterranean realism, natural body language, subtle emotion, cinematic but clearly a game. No subtitles or baked UI because the final MonIA assembly adds the real interface overlays.",
+  "negativePrompt": "identity drift, wrong face, generic actor, face morphing, distorted anatomy, duplicate person, extra limbs, cartoon, illustration, text, subtitles, watermark, baked UI, slideshow, static photo zoom, exaggerated acting, instant romance, wedding montage, cheesy trailer",
+  "characters": [
+    {
+      "id": "marion",
+      "identityMode": "canonical-image-fallback",
+      "canonRef": "https://raw.githubusercontent.com/vartcom38-collab/marion-lucas-game/main/public/resources/photo.png",
+      "wardrobe": "natural contemporary Nîmes outfit, understated, elegant, age 20"
+    },
+    {
+      "id": "lucas",
+      "identityMode": "priority-image-pack",
+      "priorityImages": [
+        "https://raw.githubusercontent.com/vartcom38-collab/marion-lucas-game/main/assets/monia-atlas/lucas-priority-01.jpg.b64",
+        "https://raw.githubusercontent.com/vartcom38-collab/marion-lucas-game/main/assets/monia-atlas/lucas-priority-02.jpg.b64"
+      ],
+      "canonRef": "https://marion-lucas.marionbolomey.fr/resources/monia/canon/lucas/reference.jpg",
+      "wardrobe": "dark understated contemporary masculine outfit, consistent with Dominic canon"
+    }
+  ],
+  "motion": {
+    "referenceId": "complete-teaser-canon-motion-bank",
+    "tags": [
+      "natural-motion",
+      "micro-expression",
+      "full-body-presence",
+      "cinematic-landscape",
+      "gameplay-presence"
+    ],
+    "copyIdentity": false
+  },
+  "generation": {
+    "provider": "kaggle",
+    "router": "ltx",
+    "width": 768,
+    "height": 432,
+    "frames": 49,
+    "steps": 8,
+    "fps": 12,
+    "seconds": 4,
+    "seed": 260919,
+    "shotCount": 6,
+    "shotCharacters": [
+      "marion",
+      "marion",
+      "lucas",
+      "lucas",
+      "lucas",
+      null
+    ],
+    "shotReferenceIndex": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      null
+    ],
+    "shotImages": [
+      "https://marion-lucas.marionbolomey.fr/resources/nimes/marion-apartment-living.webp",
+      "https://marion-lucas.marionbolomey.fr/resources/nimes/nimes-street.webp",
+      "https://marion-lucas.marionbolomey.fr/resources/nimes/nimes-arenes.webp",
+      null,
+      "https://marion-lucas.marionbolomey.fr/resources/madrid/lucas-country-home-exterior.webp",
+      "https://marion-lucas.marionbolomey.fr/resources/nimes/nimes-street.webp"
+    ],
+    "shotPrompts": [
+      "SHOT 1 — GAMEPLAY MORNING. Marion in her Nîmes apartment in believable morning light, already inside a living game world. Preserve Marion canon exactly. She checks her phone, gets ready, crosses the room, natural breathing and small movements. Curtains and light move subtly. Premium horizontal 16:9 life-sim gameplay feeling. No baked text or UI.",
+      "SHOT 2 — NÎMES + MARINE. Marion walking through a lively historic Nîmes street during Feria preparations. Preserve Marion exactly. A natural young French female friend, Marine prototype, joins her in medium/wide framing; they smile, walk, pause and talk while pedestrians and terrace life continue around them. Marine is non-canon prototype, avoid definitive close-up. No baked text or UI.",
+      "SHOT 3 — FIRST DOMINIC PRESENCE. Dominic near the Arènes during Feria. Preserve Dominic/Lucas canon identity exactly from the priority pack: correct face, dark wavy hair, stubble, body proportions and strong natural presence. Start with a believable full-body or three-quarter view moving through the crowd, then a medium glance as a small crowd jostle creates a natural first-contact moment. No couple behavior, no romantic pose, no baked text.",
+      "SHOT 4 — FRENCH VISIO. Dominic in a private Madrid interior on a realistic smartphone front-camera video call. The viewer IS the invisible phone front camera. Arm-length head-and-shoulders/upper torso framing, natural breathing, irregular blink, gaze between screen and lens, tiny handheld drift, realistic exposure. Preserve exact Dominic identity. He is about to say a short warm French line. No external cinematic camera, no phone visible, no baked UI.",
+      "SHOT 5 — CAREER + SPAIN + LONG LIFE. Dominic in Spain after a professional tauromachy day, moving naturally near a finca or stone courtyard, grounded and tired rather than posing. Preserve his identity. Suggest travel, career obligations and a broader life beyond romance through environment and body language. Premium cinematic life-sim realism, no baked text.",
+      "SHOT 6 — REPLAYABILITY / WORLD. A living Nîmes street changing subtly across the day: different pedestrians, light, routes and Feria micro-events. No person required. The shot should feel like several possible lives inside the same city, with real environmental motion and a stable composition suitable for final title overlay. No baked text or UI."
+    ]
+  },
+  "output": {
+    "candidatePath": "public/resources/monia/candidates/monia-complete-teaser-v1/"
+  }
+}
