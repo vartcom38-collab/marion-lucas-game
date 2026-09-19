@@ -15,6 +15,16 @@ def _ffmpeg(args: list[str]) -> None:
         raise RuntimeError((p.stderr or p.stdout or "ffmpeg failed").strip())
 
 
+def _has_audio(path: Path) -> bool:
+    if not shutil.which("ffprobe"):
+        return False
+    p = subprocess.run(
+        ["ffprobe", "-v", "error", "-select_streams", "a:0", "-show_entries", "stream=codec_type", "-of", "csv=p=0", str(path)],
+        capture_output=True, text=True,
+    )
+    return p.returncode == 0 and "audio" in (p.stdout or "").strip().lower()
+
+
 def assemble_final(
     lipsync_result: dict[str, Any],
     av_plan: dict[str, Any],
@@ -39,10 +49,11 @@ def assemble_final(
         args = ["-i", str(video)]
         filters = []
         mix_inputs = []
-        # Preserve low-level production ambience from generated shots when available.
-        # This is deliberately subtle: dialogue remains dominant and we do not invent fake room tone.
-        filters.append("[0:a]volume=0.18[room]" )
-        mix_inputs.append("[room]")
+        has_room_tone = _has_audio(video)
+        # Preserve low-level production ambience only when an audio stream really exists.
+        if has_room_tone:
+            filters.append("[0:a]volume=0.18[room]")
+            mix_inputs.append("[room]")
         for idx, u in enumerate(utterances, start=1):
             args += ["-i", str(u["audioPath"])]
             delay = max(0, int(u.get("startMs") or 0))
@@ -63,7 +74,7 @@ def assemble_final(
         "output": str(final),
         "bytes": final.stat().st_size,
         "dialogueTracks": len(utterances),
-        "roomTone": "production ambience preserved at low level when source shots contain audio; no synthetic ambience invented",
+        "roomTone": "production ambience preserved at low level when source shots contain audio; otherwise dialogue-only; no synthetic ambience invented",
         "approvalRequired": True,
         "autoPublish": False,
     }
