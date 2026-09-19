@@ -1,0 +1,11 @@
+{
+  "id": "dominic-marion-proposal-v1",
+  "enabled": true,
+  "spec": "specs/monia-dominic-marion-proposal-v1.json",
+  "priority": "proof",
+  "requestedBy": "monia",
+  "purpose": "Generate the complete Dominic and Marion marriage proposal cinematic proof.",
+  "preserveCheckpoint": true,
+  "reuseValidatedAnchors": true,
+  "approvalRequired": true
+}
