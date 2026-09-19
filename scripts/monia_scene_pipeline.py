@@ -15,6 +15,7 @@ from scripts.monia_scene_visual_qa import write_contract
 from scripts.monia_scene_qa_sampler import extract_review_frames
 from scripts.monia_scene_vision_judge import judge_samples
 from scripts.monia_scene_identity_review import write_identity_review
+from scripts.monia_scene_repair_runner import execute_repair_pass
 
 
 def _write(path: Path, payload: dict[str, Any]) -> None:
@@ -22,7 +23,7 @@ def _write(path: Path, payload: dict[str, Any]) -> None:
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
-def run_pipeline(spec_path: Path, work_dir: Path, publish_candidates: bool = False) -> dict[str, Any]:
+def run_pipeline(spec_path: Path, work_dir: Path, publish_candidates: bool = False, semantic_verdict: Path | None = None) -> dict[str, Any]:
     spec = json.loads(spec_path.read_text(encoding="utf-8"))
     work_dir.mkdir(parents=True, exist_ok=True)
     journal_path = work_dir / "pipeline.json"
@@ -111,6 +112,15 @@ def run_pipeline(spec_path: Path, work_dir: Path, publish_candidates: bool = Fal
             )
             journal["status"] = "awaiting-visual-semantic-qa"
             journal["nextRequiredStage"] = "semantic-vision-evaluator"
+            if semantic_verdict and semantic_verdict.exists():
+                raw_verdict = json.loads(semantic_verdict.read_text(encoding="utf-8"))
+                stage("repair", "running", verdict=str(semantic_verdict))
+                repair = execute_repair_pass(scene, video_result, raw_verdict, work_dir / "repair", publish_candidates)
+                stage("repair", repair.get("status") or "unknown", output=str(work_dir / "repair"))
+                journal["repair"] = repair
+                if repair.get("status") == "repair-applied":
+                    journal["status"] = "repaired-candidate-ready"
+                    journal["nextRequiredStage"] = "rerun-visual-semantic-qa-on-repaired-shots"
         else:
             journal["nextRequiredStage"] = "resolve-blocked-stage"
     except Exception as exc:
@@ -126,8 +136,9 @@ def main() -> None:
     parser.add_argument("--spec", type=Path, required=True)
     parser.add_argument("--work-dir", type=Path, required=True)
     parser.add_argument("--publish-candidates", action="store_true")
+    parser.add_argument("--semantic-verdict", type=Path)
     args = parser.parse_args()
-    print(json.dumps(run_pipeline(args.spec, args.work_dir, args.publish_candidates), ensure_ascii=False))
+    print(json.dumps(run_pipeline(args.spec, args.work_dir, args.publish_candidates, args.semantic_verdict), ensure_ascii=False))
 
 
 if __name__ == "__main__":
