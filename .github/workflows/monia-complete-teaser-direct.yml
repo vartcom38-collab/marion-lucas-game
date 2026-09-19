@@ -12,7 +12,7 @@ permissions:
 
 concurrency:
   group: monia-complete-teaser-direct
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   render:
@@ -23,10 +23,11 @@ jobs:
       INFOMANIAK_FTP_USER: ${{ secrets.INFOMANIAK_FTP_USER }}
       INFOMANIAK_FTP_PASSWORD: ${{ secrets.INFOMANIAK_FTP_PASSWORD }}
       HF_TOKEN: ${{ secrets.HF_TOKEN }}
-      MONIA_RACE_TIMEOUT_SECONDS: "300"
-      LTX_UPLOAD_TIMEOUT_SECONDS: "90"
-      LTX_SUBMIT_TIMEOUT_SECONDS: "90"
-      WAN_PROVIDER_TIMEOUT_SECONDS: "180"
+      MONIA_RACE_TIMEOUT_SECONDS: "180"
+      LTX_UPLOAD_TIMEOUT_SECONDS: "60"
+      LTX_SUBMIT_TIMEOUT_SECONDS: "60"
+      WAN_PROVIDER_TIMEOUT_SECONDS: "120"
+      MONIA_SCENE_WORKERS: "4"
 
     steps:
       - uses: actions/checkout@v5
