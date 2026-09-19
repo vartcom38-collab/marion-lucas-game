@@ -18,17 +18,13 @@ def _materialize(value: Any, target: Path) -> None:
     if isinstance(value, str):
         candidates.append(value)
     elif isinstance(value, dict):
-        for key in ("path", "name", "url", "image"):
-            if value.get(key):
-                candidates.append(str(value[key]))
+        candidates.extend(str(value[k]) for k in ("path", "name", "url", "image") if value.get(k))
     elif isinstance(value, (list, tuple)):
         for item in value:
             if isinstance(item, str):
                 candidates.append(item)
             elif isinstance(item, dict):
-                for key in ("path", "name"):
-                    if item.get(key):
-                        candidates.append(str(item[key]))
+                candidates.extend(str(item[k]) for k in ("path", "name") if item.get(k))
     for candidate in candidates:
         path = Path(candidate)
         if path.exists() and path.is_file():
@@ -67,63 +63,21 @@ def _predict_with_timeout(space: str, token: str | None, api_name: str, args: li
     return message.get("result")
 
 
-def _local_reference(ref: str, output: Path, index: int) -> Path:
-    if ref.startswith(("http://", "https://")):
+def _local_reference(ref: Any, output: Path, idx: int) -> Path:
+    text = str(ref)
+    if text.startswith(("http://", "https://")):
         import requests
-        response = requests.get(ref, timeout=30, headers={"Cache-Control": "no-cache"})
+        response = requests.get(text, timeout=30, headers={"Cache-Control": "no-cache"})
         response.raise_for_status()
-        suffix = Path(ref.split("?", 1)[0]).suffix or ".png"
-        target = output.parent / f"{output.stem}-ref-{index}{suffix}"
-        target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_bytes(response.content)
-        return target
-    path = Path(ref)
+        suffix = Path(text.split("?", 1)[0]).suffix or ".png"
+        path = output.parent / f"{output.stem}-ref-{idx}{suffix}"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(response.content)
+        return path
+    path = Path(text)
     if not path.exists():
-        raise RuntimeError(f"Actor reference missing: {ref}")
+        raise RuntimeError(f"Actor reference missing: {text}")
     return path
-
-
-def _run_provider(provider: dict[str, Any], request: dict[str, Any], output: Path) -> dict[str, Any]:
-    space = str(provider.get("space") or "")
-    api_name = str(provider.get("apiName") or "")
-    mode = str(provider.get("mode") or "qwen-compose").lower()
-    token = os.environ.get("HF_TOKEN", "").strip() or None
-
-    board = str(request.get("identityBoard") or "")
-    if not board or not Path(board).exists():
-        raise RuntimeError("Identity board missing")
-
-    if mode in {"multi-reference", "qwen-compose"}:
-        refs = [str(x) for x in (request.get("references") or {}).values() if x]
-        if len(refs) < 2:
-            raise RuntimeError("qwen compose mode requires at least two actor references")
-        if len(refs) > 3:
-            refs = refs[:3]
-        local_refs = [_local_reference(ref, output, idx) for idx, ref in enumerate(refs)]
-        while len(local_refs) < 3:
-            local_refs.append(None)
-        images = [handle_file(str(path)) if path else None for path in local_refs]
-        call_api = api_name or "/on_compose_generate"
-        args = [
-            images[0], images[1], images[2],
-            str(request.get("prompt") or ""),
-            "Fast", 4, 1.0,
-            str(request.get("negative") or " "),
-            42, "", "", 1.0,
-        ]
-    else:
-        call_api = api_name
-        args = [
-            handle_file(board),
-            str(request.get("prompt") or ""),
-            str(request.get("negative") or ""),
-        ]
-
-    result = _predict_with_timeout(space, token, call_api, args)
-    _materialize(result, output)
-    if output.stat().st_size < 2048:
-        raise RuntimeError("Generated anchor candidate is too small")
-    return {"provider": space, "apiName": call_api, "mode": mode}
 
 
 def generate_anchor_candidate(request: dict[str, Any], output: Path) -> dict[str, Any]:
@@ -138,16 +92,54 @@ def generate_anchor_candidate(request: dict[str, Any], output: Path) -> dict[str
             "approvalRequired": True,
         }
 
+    token = os.environ.get("HF_TOKEN", "").strip() or None
     attempts: list[dict[str, Any]] = []
-    for provider in providers:
+
+    for selected in providers:
+        space = str(selected["space"])
+        api_name = str(selected.get("apiName") or "")
+        mode = str(selected.get("mode") or "qwen-compose").lower()
         try:
-            used = _run_provider(provider, request, output)
+            if mode in {"multi-reference", "qwen-compose"}:
+                refs = list((request.get("references") or {}).values())
+                if len(refs) < 2:
+                    raise RuntimeError("qwen compose mode requires at least two actor references")
+                refs = refs[:3]
+                local_refs = [_local_reference(ref, output, idx) for idx, ref in enumerate(refs)]
+                while len(local_refs) < 3:
+                    local_refs.append(None)
+                images = [handle_file(str(p)) if p else None for p in local_refs]
+                call_api = api_name or "/on_compose_generate"
+                args = [
+                    images[0], images[1], images[2],
+                    str(request.get("prompt") or ""),
+                    "Fast", 4, 1.0,
+                    str(request.get("negative") or " "),
+                    42, "", "", 1.0,
+                ]
+            else:
+                board = Path(str(request.get("identityBoard") or ""))
+                if not board.exists():
+                    raise RuntimeError("Identity board missing")
+                call_api = api_name
+                args = [
+                    handle_file(str(board)),
+                    str(request.get("prompt") or ""),
+                    str(request.get("negative") or ""),
+                ]
+
+            result = _predict_with_timeout(space, token, call_api, args)
+            _materialize(result, output)
+            if output.stat().st_size < 2048:
+                raise RuntimeError("Generated anchor candidate is too small")
+
             manifest = {
                 "status": "candidate",
                 "output": str(output),
-                **used,
-                "attempts": attempts,
-                "profile": "qwen-image-edit-2511-lightning-compose" if used["mode"] in {"multi-reference", "qwen-compose"} else "generic-single-board",
+                "provider": space,
+                "apiName": call_api,
+                "mode": mode,
+                "attempts": attempts + [{"provider": space, "status": "success"}],
                 "providerPolicy": provider_policy(),
                 "approvalRequired": True,
                 "autoApprove": False,
@@ -158,11 +150,8 @@ def generate_anchor_candidate(request: dict[str, Any], output: Path) -> dict[str
             )
             return manifest
         except Exception as exc:
-            attempts.append({
-                "provider": str(provider.get("space") or ""),
-                "mode": str(provider.get("mode") or ""),
-                "reason": f"{type(exc).__name__}: {exc}",
-            })
+            attempts.append({"provider": space, "status": "failed", "reason": str(exc)})
+            continue
 
     return {
         "status": "all-providers-unavailable",
