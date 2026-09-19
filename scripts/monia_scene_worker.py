@@ -3,9 +3,11 @@ from __future__ import annotations
 import argparse
 import io
 import json
+import os
 import re
 import shutil
 import subprocess
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict
 from pathlib import Path
 from typing import Any
@@ -229,7 +231,10 @@ def run_job(job_path: Path, publish: bool) -> dict[str, Any]:
         "shots": [],
     }
 
-    for index, shot in enumerate(job.get("shots") or []):
+    shots = list(job.get("shots") or [])
+    results: list[dict[str, Any] | None] = [None] * len(shots)
+
+    def process_shot(index: int, shot: dict[str, Any]) -> tuple[int, dict[str, Any]]:
         item: dict[str, Any] = {
             "id": shot.get("id") or f"s{index + 1}",
             "focusActor": shot.get("focusActor"),
@@ -252,7 +257,17 @@ def run_job(job_path: Path, publish: bool) -> dict[str, Any]:
             message = str(exc)
             item["status"] = "blocked-reference" if "sceneAnchor" in message else "failed"
             item["error"] = message
-        result["shots"].append(item)
+        return index, item
+
+    if shots:
+        max_workers = max(1, min(len(shots), int(os.environ.get("MONIA_SCENE_WORKERS", "4"))))
+        with ThreadPoolExecutor(max_workers=max_workers, thread_name_prefix="monia-shot") as pool:
+            futures = [pool.submit(process_shot, index, shot) for index, shot in enumerate(shots)]
+            for future in as_completed(futures):
+                index, item = future.result()
+                results[index] = item
+
+    result["shots"] = [item for item in results if item is not None]
 
     statuses = [s["status"] for s in result["shots"]]
     ready = sum(s == "candidate-ready" for s in statuses)
