@@ -130,10 +130,30 @@ def _profile_for_shot(job: dict[str, Any], shot: dict[str, Any], index: int) -> 
         raise ValueError(f"Shot {shot.get('id') or index + 1} has no generation prompt")
 
     continuity = str(job.get("continuityKey") or "")
+    performance = job.get("performance") or {}
+    dialogue = performance.get("dialogue") or []
+    performance_text = ""
+    if dialogue:
+        lines = []
+        for beat in dialogue:
+            speaker = beat.get("speaker")
+            text = beat.get("text")
+            emotion = beat.get("emotion")
+            delivery = beat.get("delivery")
+            listeners = ", ".join(beat.get("listeners") or [])
+            lines.append(
+                f"{speaker} says [{text}] with emotion [{emotion}] and delivery [{delivery}]; "
+                f"listeners [{listeners}] react continuously and naturally."
+            )
+        performance_text = (
+            "PERFORMANCE BIBLE: " + " ".join(lines) + " "
+            "Do not make non-speaking characters freeze. Preserve natural breath, gaze, anticipation, interruption timing and post-line reaction."
+        )
     prompt = " ".join([
         prompt,
         f"MONIA SCENE CONTINUITY={continuity}.",
         _continuity_directive(job, shot),
+        performance_text,
         "Preserve the exact locked canon identity for every visible canonical character.",
         "Do not copy any reference performer identity; references may guide movement/body language only.",
         "Preserve canonical visible tattoos when supported by the reference; never invent or erase canonical tattoo continuity. No facial scar unless canon explicitly requires one. No identity drift, no face morphing, no generic lookalike.",
