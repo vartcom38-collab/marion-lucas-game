@@ -9,6 +9,7 @@ from scripts.monia_scene_director import direct_scene
 from scripts.monia_scene_worker import run_job
 from scripts.monia_scene_av_planner import build_av_plan
 from scripts.monia_scene_voice_renderer import render_scene_dialogue
+from scripts.monia_scene_lipsync import apply_targeted_lipsync
 
 
 def _write(path: Path, payload: dict[str, Any]) -> None:
@@ -62,16 +63,20 @@ def run_pipeline(spec_path: Path, work_dir: Path, publish_candidates: bool = Fal
         else:
             stage("voice-timing", "blocked", reason="No stable character voice could be rendered.")
 
-        stage(
-            "lipsync",
-            "ready-for-speaking-shots" if rendered_voices else "blocked-no-voice",
-            policy="lip-sync speaking shots only; failure must remain non-fatal",
-        )
-
         video_ready = str(video_result.get("status") or "").startswith("candidate")
+        lipsync_result = None
+        if video_ready and rendered_voices:
+            measured_plan = av_measured if rendered_voices else av_initial
+            stage("lipsync", "running", policy="speaking shots only; non-fatal fallback")
+            lipsync_result = apply_targeted_lipsync(video_result, measured_plan, voice_dir, work_dir / "lipsync")
+            stage("lipsync", lipsync_result.get("status") or "unknown", output=str(work_dir / "lipsync" / "lipsync-result.json"))
+        else:
+            stage("lipsync", "blocked", reason="candidate video and at least one stable rendered voice are required")
+
         voices_complete = voice_result.get("status") == "complete"
-        journal["status"] = "ready-for-lipsync" if video_ready and voices_complete else ("candidate-video-ready" if video_ready else "partial")
-        journal["nextRequiredStage"] = "targeted-lipsync-and-final-mix" if video_ready and rendered_voices else "resolve-blocked-stage"
+        lipsync_ready = bool(lipsync_result and lipsync_result.get("status") in {"ready", "partial"})
+        journal["status"] = "ready-for-final-mix" if video_ready and voices_complete and lipsync_ready else ("candidate-video-ready" if video_ready else "partial")
+        journal["nextRequiredStage"] = "final-mix" if video_ready and rendered_voices else "resolve-blocked-stage"
     except Exception as exc:
         journal["status"] = "failed"
         journal["error"] = str(exc)
