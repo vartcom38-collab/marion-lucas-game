@@ -261,8 +261,21 @@ def _generate(profile: CharacterProfile, scene_anchor: dict[str, Any] | None = N
         _crop_anchor(scene_anchor, source, profile.width, profile.height, scene_anchor.get("requiredActors") or scene_anchor.get("actors"))
     else:
         _download_canon(profile, source)
+    # Reuse restored validated clips before spending GPU again.
+    local_manifest = target.with_name(target.name + ".quality.json")
+    if os.environ.get("MONIA_REUSE_LOCAL", "1") == "1" and target.exists() and target.stat().st_size > 100000:
+        try:
+            manifest_data = json.loads(local_manifest.read_text(encoding="utf-8")) if local_manifest.exists() else {}
+            fingerprint_matches = manifest_data.get("fingerprint") == _quality_fingerprint(profile) and manifest_data.get("passed") is True
+            if fingerprint_matches:
+                gate = _technical_quality_gate(target, profile)
+                if gate["passed"]:
+                    gate["cacheManifest"] = str(local_manifest)
+                    return target, "MonIA restored local checkpoint", gate
+        except Exception:
+            pass
     target.unlink(missing_ok=True)
-
+    local_manifest.unlink(missing_ok=True)
     if os.environ.get("MONIA_REUSE_PUBLISHED", "1") == "1":
         cache_url = f"{SITE}/resources/monia/generated/{profile.output_name}"
         manifest_url = cache_url + ".quality.json"
@@ -294,6 +307,7 @@ def _generate(profile: CharacterProfile, scene_anchor: dict[str, Any] | None = N
     if not gate["passed"]:
         target.unlink(missing_ok=True)
         raise RuntimeError("Premium technical quality gate rejected candidate: " + str(gate))
+    local_manifest.write_text(json.dumps({**gate, "profileKey": profile.key, "outputName": profile.output_name, "compute": provider}, ensure_ascii=False, indent=2), encoding="utf-8")
     return target, provider, gate
 
 def _run_ffmpeg(args: list[str]) -> None:
