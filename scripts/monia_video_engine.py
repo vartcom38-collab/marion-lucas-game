@@ -21,6 +21,7 @@ import scripts.monia_intro_worker as worker
 SITE = "https://marion-lucas.marionbolomey.fr"
 WORK_DIR = Path(".monia-video")
 WORK_DIR.mkdir(exist_ok=True)
+UNAVAILABLE_PROVIDERS: set[str] = set()
 
 RACE_TIMEOUT_SECONDS = int(os.environ.get("MONIA_RACE_TIMEOUT_SECONDS", "420"))
 LTX_UPLOAD_TIMEOUT_SECONDS = int(os.environ.get("MONIA_LTX_UPLOAD_TIMEOUT_SECONDS", "120"))
@@ -306,6 +307,10 @@ def race_compute(profile: CharacterProfile, source: Path, target: Path) -> tuple
         provider_limit = max(1, int(os.environ.get("MONIA_PROVIDER_LIMIT", str(len(specs)))))
         errors: list[str] = []
         for kind, space, label in specs[:provider_limit]:
+            if label in UNAVAILABLE_PROVIDERS:
+                errors.append(f"{label}: skipped by circuit breaker")
+                print(f"MONIA_SEQUENCE skipped provider={label} circuit-breaker=open", flush=True)
+                continue
             temp = WORK_DIR / f"{target.stem}.sequential-{len(errors)}{target.suffix}"
             temp.unlink(missing_ok=True)
             try:
@@ -327,6 +332,10 @@ def race_compute(profile: CharacterProfile, source: Path, target: Path) -> tuple
                 temp.unlink(missing_ok=True)
                 detail = f"{label}: {type(exc).__name__}: {exc}"
                 errors.append(detail)
+                lowered = str(exc).lower()
+                if any(token in lowered for token in ("zerogpu quota", "exceeded your zerogpu quota", "quota exceeded", "not enough gpu quota")):
+                    UNAVAILABLE_PROVIDERS.add(label)
+                    print(f"MONIA_SEQUENCE circuit-breaker opened provider={label}", flush=True)
                 print(f"MONIA_SEQUENCE failed provider={label} error={exc}", flush=True)
         raise RuntimeError("No MonIA video compute available: " + " | ".join(errors))
 
