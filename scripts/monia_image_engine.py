@@ -37,6 +37,7 @@ def _materialize(value: Any, target: Path) -> None:
 def generate_anchor_candidate(request: dict[str, Any], output: Path) -> dict[str, Any]:
     space = os.environ.get("MONIA_IMAGE_SPACE", "").strip()
     api_name = os.environ.get("MONIA_IMAGE_API_NAME", "").strip()
+    mode = os.environ.get("MONIA_IMAGE_MODE", "single-board").strip().lower()
     if not space or not api_name:
         return {
             "status": "backend-not-configured",
@@ -51,14 +52,37 @@ def generate_anchor_candidate(request: dict[str, Any], output: Path) -> dict[str
 
     token = os.environ.get("HF_TOKEN", "").strip() or None
     client = Client(space, token=token, verbose=False)
-    # Adapter contract: image, positive prompt, negative prompt.
-    # A provider-specific adapter can replace this without changing scene logic.
-    result = client.predict(
-        handle_file(board),
-        str(request.get("prompt") or ""),
-        str(request.get("negative") or ""),
-        api_name=api_name,
-    )
+    if mode == "multi-reference":
+        refs = list((request.get("references") or {}).values())
+        if len(refs) < 2:
+            raise RuntimeError("multi-reference mode requires at least two actor references")
+        if len(refs) > 3:
+            raise RuntimeError("configured multi-reference adapter currently supports at most three actor references")
+        local_refs = []
+        import requests
+        for idx, ref in enumerate(refs):
+            if str(ref).startswith(("http://", "https://")):
+                response = requests.get(str(ref), timeout=30, headers={"Cache-Control": "no-cache"})
+                response.raise_for_status()
+                suffix = Path(str(ref).split("?", 1)[0]).suffix or ".png"
+                temp = output.parent / f"{output.stem}-ref-{idx}{suffix}"
+                temp.write_bytes(response.content)
+                local_refs.append(temp)
+            else:
+                local_refs.append(Path(str(ref)))
+        while len(local_refs) < 3:
+            local_refs.append(None)
+        args = [handle_file(str(p)) if p else None for p in local_refs]
+        args += [str(request.get("prompt") or ""), 1, "16:9"]
+        result = client.predict(*args, api_name=api_name)
+    else:
+        # Generic fallback contract: identity board, positive prompt, negative prompt.
+        result = client.predict(
+            handle_file(board),
+            str(request.get("prompt") or ""),
+            str(request.get("negative") or ""),
+            api_name=api_name,
+        )
     _materialize(result, output)
     if output.stat().st_size < 2048:
         raise RuntimeError("Generated anchor candidate is too small")
@@ -68,6 +92,7 @@ def generate_anchor_candidate(request: dict[str, Any], output: Path) -> dict[str
         "output": str(output),
         "provider": space,
         "apiName": api_name,
+        "mode": mode,
         "approvalRequired": True,
         "autoApprove": False,
         "semanticIdentityReviewRequired": True,
