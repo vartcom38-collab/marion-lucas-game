@@ -1,0 +1,138 @@
+name: MonIA Quality Proof
+
+on:
+  push:
+    paths:
+      - '.github/workflows/monia-quality-proof.yml'
+      - 'scripts/monia_lipsync.py'
+      - 'scripts/monia_scene_worker.py'
+      - 'scripts/monia_video_engine.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: monia-quality-proof
+  cancel-in-progress: true
+
+jobs:
+  proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      INFOMANIAK_FTP_HOST: ${{ secrets.INFOMANIAK_FTP_HOST }}
+      INFOMANIAK_FTP_USER: ${{ secrets.INFOMANIAK_FTP_USER }}
+      INFOMANIAK_FTP_PASSWORD: ${{ secrets.INFOMANIAK_FTP_PASSWORD }}
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      MONIA_RACE_TIMEOUT_SECONDS: "240"
+      MONIA_LTX_UPLOAD_TIMEOUT_SECONDS: "60"
+      MONIA_LTX_SUBMIT_TIMEOUT_SECONDS: "60"
+      MONIA_SCENE_WORKERS: "1"
+      MONIA_SCENE_ATTEMPTS: "2"
+      MONIA_PROVIDER_LIMIT: "2"
+      MONIA_REUSE_PUBLISHED: "1"
+      MONIA_LIPSYNC_SPACE: "henrybit/musetalk-1-5"
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install MonIA quality runtime
+        run: |
+          sudo apt-get update >/dev/null
+          sudo apt-get install -y ffmpeg >/dev/null
+          python -m pip install --disable-pip-version-check gradio_client pillow requests >/dev/null
+
+      - name: Build proof scene
+        shell: bash
+        run: |
+          mkdir -p .proof
+          cat > .proof/job.json <<'JSON'
+          {
+            "id": "monia-quality-proof-dominic-visio-v1",
+            "format": "16:9",
+            "continuityKey": "quality-proof-dominic-visio-v1",
+            "approvalRequired": true,
+            "autoPublish": false,
+            "shots": [
+              {
+                "id": "dominic-visio-proof",
+                "focusActor": "Lucas",
+                "actors": ["Lucas"],
+                "duration": 4,
+                "prompt": "Premium photorealistic smartphone front-camera visio of Dominic canon in a believable private Madrid interior at night. Viewer is Marion through Dominic's invisible phone front camera. Arm-length upper-body framing, exact canonical face, hair, stubble, body proportions and visible tattoos when naturally in frame. Real human breathing, irregular blink, tiny posture shift, micro-expression, gaze moving between screen and lens, slight hand-held phone drift, subtle autofocus and exposure breathing. No cinematic external camera, no phone visible, no text, no subtitles, no beauty filter, no generic AI face. This must feel like a real live video call, not a generated showcase clip."
+              }
+            ]
+          }
+          JSON
+
+      - name: Generate fresh MonIA proof video
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONPATH="$PWD" python -m scripts.monia_scene_worker --job .proof/job.json --publish-candidates > .proof/result.json
+          cat .proof/result.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          raw=Path('.proof/result.json').read_text(encoding='utf-8')
+          data=json.loads(raw[raw.find('{'):])
+          shots=data.get('shots') or []
+          assert len(shots)==1 and shots[0].get('status')=='candidate-ready', data
+          Path('.proof/video_path.txt').write_text(shots[0]['path'],encoding='utf-8')
+          PY
+
+      - name: Render Dominic V16
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONPATH="$PWD" python -m scripts.monia_lucas_v16_runtime_voice             --text "Je voulais juste t'entendre deux minutes. T'as passé une bonne journée ?"             --emotion warm             --request-id monia-quality-proof
+          cp .monia-video/lucas-v16-runtime-monia-quality-proof.wav .proof/voice.wav
+          ffprobe -v error -show_entries format=duration,size -of json .proof/voice.wav
+
+      - name: Lip sync with free MuseTalk
+        shell: bash
+        run: |
+          set -euo pipefail
+          VIDEO="$(cat .proof/video_path.txt)"
+          PYTHONPATH="$PWD" python -m scripts.monia_lipsync --video "$VIDEO" --audio .proof/voice.wav --output .proof/final.mp4
+          ffprobe -v error -show_entries format=duration,size -of json .proof/final.mp4
+
+      - name: Upload proof to Infomaniak
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import scripts.monia_intro_worker as w
+          src=Path('.proof/final.mp4')
+          assert src.exists() and src.stat().st_size>100000
+          ftp=w.ftp_connect()
+          try:
+              root=w.remote_root(ftp)
+              print(w.upload_file(ftp,root,src,'monia-quality-proof-dominic-visio-v1.mp4'))
+          finally:
+              ftp.quit()
+          PY
+
+      - name: Verify proof public URL
+        shell: bash
+        run: |
+          python - <<'PY'
+          import time,requests
+          url='https://marion-lucas.marionbolomey.fr/resources/monia/generated/monia-quality-proof-dominic-visio-v1.mp4'
+          for _ in range(12):
+              try:
+                  r=requests.get(url+'?v=${{ github.run_id }}',headers={'Range':'bytes=0-63','Cache-Control':'no-cache'},timeout=15)
+                  if r.status_code in (200,206) and b'ftyp' in r.content[:32]:
+                      print('PUBLIC_OK',url)
+                      break
+              except Exception:
+                  pass
+              time.sleep(5)
+          else:
+              raise SystemExit('proof video not publicly reachable')
+          PY
