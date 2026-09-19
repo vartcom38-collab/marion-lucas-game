@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import os
 from typing import Any
 import json
 
@@ -13,7 +14,7 @@ from scripts.monia_image_engine import generate_anchor_candidate
 
 def prepare_scene_anchors(scene: dict[str, Any], output_dir: Path) -> dict[str, Any]:
     output_dir.mkdir(parents=True, exist_ok=True)
-    library_dir = output_dir.parent / "anchor-library"
+    library_dir = Path(os.environ.get("MONIA_ANCHOR_LIBRARY_DIR", ".monia-video/anchor-library"))
     library_dir.mkdir(parents=True, exist_ok=True)
     job_refs = scene.get("actorReferences") or {}
     items = []
