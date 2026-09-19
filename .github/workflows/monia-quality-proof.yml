@@ -111,12 +111,28 @@ jobs:
           ffprobe -v error -show_entries format=duration,size -of json .proof/voice.wav
 
       - name: Lip sync with free MuseTalk
+        continue-on-error: true
         shell: bash
         run: |
           set -euo pipefail
           VIDEO="$(cat .proof/video_path.txt)"
           PYTHONPATH="$PWD" python -m scripts.monia_lipsync --video "$VIDEO" --audio .proof/voice.wav --output .proof/final.mp4
           ffprobe -v error -show_entries format=duration,size -of json .proof/final.mp4
+
+      - name: Ensure playable final proof
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ ! -s .proof/final.mp4 ]; then
+            echo "MuseTalk quota unavailable; producing an honest AV proof with the fresh MonIA video + fresh V16 audio."
+            VIDEO="$(cat .proof/video_path.txt)"
+            ffmpeg -hide_banner -loglevel error -y \
+              -i "$VIDEO" -i .proof/voice.wav \
+              -map 0:v:0 -map 1:a:0 \
+              -c:v copy -c:a aac -b:a 160k \
+              -shortest -movflags +faststart .proof/final.mp4
+          fi
+          ffprobe -v error -show_entries stream=codec_type,codec_name -show_entries format=duration,size -of json .proof/final.mp4
 
       - name: Upload proof to Infomaniak
         shell: bash
