@@ -314,14 +314,26 @@ def race_compute(profile: CharacterProfile, source: Path, target: Path) -> tuple
             temp = WORK_DIR / f"{target.stem}.sequential-{len(errors)}{target.suffix}"
             temp.unlink(missing_ok=True)
             try:
-                if kind == "upsampler_wan":
-                    provider = _run_upsampler_wan(profile, source, temp)
-                elif kind == "upsampler_ltx":
-                    provider = _run_upsampler_ltx(profile, source, temp)
-                elif kind == "ltx":
-                    provider = _run_ltx(profile, source, temp)
-                else:
-                    provider = _run_wan_provider(space, label, profile, source, temp)
+                ctx = mp.get_context("fork")
+                provider_queue = ctx.Queue()
+                process = ctx.Process(
+                    target=_provider_child,
+                    args=(kind, space, label, profile, str(source), str(temp), provider_queue),
+                )
+                process.start()
+                provider_timeout = max(30, int(os.environ.get("MONIA_PROVIDER_TIMEOUT_SECONDS", "150")))
+                process.join(provider_timeout)
+                if process.is_alive():
+                    process.terminate()
+                    process.join(5)
+                    raise TimeoutError(f"provider exceeded {provider_timeout}s")
+                try:
+                    message = provider_queue.get_nowait()
+                except Empty:
+                    raise RuntimeError("provider exited without result")
+                if not message.get("ok"):
+                    raise RuntimeError(str(message.get("error") or "provider failed"))
+                provider = str(message.get("label") or label)
                 if not worker.looks_like_video(temp):
                     raise RuntimeError("provider returned invalid video")
                 target.unlink(missing_ok=True)
