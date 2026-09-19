@@ -88,7 +88,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python scripts/monia_scene_worker.py --job .teaser/job.json > .teaser/result-output.json
+          PYTHONPATH="$PWD" python -m scripts.monia_scene_worker --job .teaser/job.json > .teaser/result-output.json
           cat .teaser/result-output.json
           python - <<'PY'
           import json
@@ -107,7 +107,7 @@ jobs:
         shell: bash
         run: |
           mkdir -p .teaser/voice
-          python scripts/monia_lucas_v16_runtime_voice.py --text "Ça va ? Vous vous êtes pas fait mal ?" --emotion concerned --request-id teaser-direct-encounter
+          PYTHONPATH="$PWD" python -m scripts.monia_lucas_v16_runtime_voice --text "Ça va ? Vous vous êtes pas fait mal ?" --emotion concerned --request-id teaser-direct-encounter
           cp .monia-video/lucas-v16-runtime-teaser-direct-encounter.wav .teaser/voice/encounter.wav
           python scripts/monia_lucas_v16_runtime_voice.py --text "Je voulais juste t'entendre deux minutes." --emotion warm --request-id teaser-direct-visio
           cp .monia-video/lucas-v16-runtime-teaser-direct-visio.wav .teaser/voice/visio.wav
