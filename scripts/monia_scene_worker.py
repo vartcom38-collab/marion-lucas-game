@@ -302,7 +302,8 @@ def run_job(job_path: Path, publish: bool) -> dict[str, Any]:
                 "bytes": path.stat().st_size,
                 "profile": asdict(profile),
                 "sceneAnchorId": scene_anchor.get("id") if scene_anchor else None,
-                "attempts": len(errors) + 1 if errors else 1,\n                "quality": quality,
+                "attempts": len(errors) + 1 if errors else 1,
+                "quality": quality,
             })
             if errors:
                 item["recoveredFrom"] = errors
