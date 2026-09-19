@@ -132,10 +132,15 @@ def _profile_for_shot(job: dict[str, Any], shot: dict[str, Any], index: int) -> 
     continuity = str(job.get("continuityKey") or "")
     performance = job.get("performance") or {}
     dialogue = performance.get("dialogue") or []
+    shot_speaker = str(shot.get("speaker") or "").strip().lower()
+    shot_dialogue = [
+        beat for beat in dialogue
+        if not shot_speaker or str(beat.get("speaker") or "").strip().lower() == shot_speaker
+    ]
     performance_text = ""
-    if dialogue:
+    if shot_dialogue:
         lines = []
-        for beat in dialogue:
+        for beat in shot_dialogue:
             speaker = beat.get("speaker")
             text = beat.get("text")
             emotion = beat.get("emotion")
