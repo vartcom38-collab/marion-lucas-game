@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 import os
 import shutil
+import multiprocessing as mp
+from queue import Empty
 from pathlib import Path
 from typing import Any
 
@@ -32,6 +34,34 @@ def _materialize(value: Any, target: Path) -> None:
             shutil.copy2(p, target)
             return
     raise RuntimeError("Image compositor returned no local image result")
+
+
+def _predict_child(space: str, token: str | None, api_name: str, args: list[Any], queue) -> None:
+    try:
+            result = client.predict(*args, api_name=api_name)
+        queue.put({"ok": True, "result": result})
+    except Exception as exc:
+        queue.put({"ok": False, "error": f"{type(exc).__name__}: {exc}"})
+
+
+def _predict_with_timeout(space: str, token: str | None, api_name: str, args: list[Any]) -> Any:
+    timeout = max(30, int(os.environ.get("MONIA_IMAGE_TIMEOUT_SECONDS", "240")))
+    ctx = mp.get_context("fork")
+    queue = ctx.Queue()
+    process = ctx.Process(target=_predict_child, args=(space, token, api_name, args, queue))
+    process.start()
+    process.join(timeout)
+    if process.is_alive():
+        process.terminate()
+        process.join(5)
+        raise TimeoutError(f"image backend exceeded {timeout}s")
+    try:
+        message = queue.get_nowait()
+    except Empty:
+        raise RuntimeError("image backend exited without result")
+    if not message.get("ok"):
+        raise RuntimeError(str(message.get("error") or "image backend failed"))
+    return message.get("result")
 
 
 def generate_anchor_candidate(request: dict[str, Any], output: Path) -> dict[str, Any]:
@@ -76,14 +106,29 @@ def generate_anchor_candidate(request: dict[str, Any], output: Path) -> dict[str
         # techfreakworm/qwen-image-editor Compose signature:
         # target, ref1, ref2, prompt, speed, steps, true_cfg, negative, seed,
         # lora_repo, lora_file, lora_weight.
-        result = client.predict(
+        call_api = api_name or "/on_compose_generate"
+        args = [
             images[0], images[1], images[2],
             str(request.get("prompt") or ""),
             "Fast", 4, 1.0,
             str(request.get("negative") or " "),
             42, "", "", 1.0,
-            api_name=api_name or "/on_compose_generate",
-        )
+        ]
+        try:
+            result = _predict_with_timeout(space, token, call_api, args)
+        except Exception as exc:
+            lowered = str(exc).lower()
+            unavailable = any(x in lowered for x in ("quota", "zerogpu", "gpu", "timeout", "timed out", "exceeded"))
+            return {
+                "status": "backend-unavailable" if unavailable else "backend-error",
+                "output": None,
+                "provider": space,
+                "apiName": call_api,
+                "mode": mode,
+                "reason": str(exc),
+                "retryable": unavailable,
+                "approvalRequired": True,
+            }
     else:
                 local_refs.append(Path(str(ref)))
         while len(local_refs) < 3:
