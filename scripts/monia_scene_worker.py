@@ -24,6 +24,7 @@ from scripts.monia_video_engine import (
     publish_candidate,
 )
 import scripts.monia_intro_worker as worker
+from scripts.monia_identity_conditioning import identity_conditioning_plan
 
 SCENE_DIR = WORK_DIR / "scenes"
 SCENE_DIR.mkdir(parents=True, exist_ok=True)
@@ -57,12 +58,14 @@ def _download_reference(url: str) -> bytes:
     return response.content
 
 
-def _crop_anchor(anchor: dict[str, Any], target: Path, width: int, height: int) -> None:
+def _crop_anchor(anchor: dict[str, Any], target: Path, width: int, height: int, required_actors: list[str] | None = None) -> None:
     if anchor.get("status") != "validated":
         raise RuntimeError("Scene anchor rejected: only validated anchors may guide multi-character generation")
     actors = {str(a).lower() for a in anchor.get("actors") or []}
-    if not {"lucas", "marion"}.issubset(actors):
-        raise RuntimeError("Scene anchor rejected: validated Marion + Lucas identities are both required")
+    required = {str(a).lower() for a in (required_actors or [])}
+    missing = required - actors
+    if missing:
+        raise RuntimeError("Scene anchor rejected: missing validated identities: " + ", ".join(sorted(missing)))
     url = str(anchor.get("sourceUrl") or "").strip()
     crop = anchor.get("crop") or {}
     if not url:
@@ -186,6 +189,9 @@ def _profile_for_shot(job: dict[str, Any], shot: dict[str, Any], index: int) -> 
                 actor_refs[actor] = str(explicit)
             else:
                 raise RuntimeError(f"multi-character identity reference missing for actor: {actor}")
+    conditioning = identity_conditioning_plan({"actors": actors}, actor_refs)
+    if len(actors) > 1 and not scene_anchor:
+        raise RuntimeError("multi-character shot requires a validated composite sceneAnchor before video generation")
     if len(actors) > 1:
         refs = "; ".join(f"{name}={url}" for name, url in actor_refs.items())
         prompt += (
@@ -243,7 +249,7 @@ def _generate(profile: CharacterProfile, scene_anchor: dict[str, Any] | None = N
     source = SCENE_DIR / f"{profile.key}-reference.png"
     target = SCENE_DIR / profile.output_name
     if scene_anchor:
-        _crop_anchor(scene_anchor, source, profile.width, profile.height)
+        _crop_anchor(scene_anchor, source, profile.width, profile.height, scene_anchor.get("requiredActors") or scene_anchor.get("actors"))
     else:
         _download_canon(profile, source)
     target.unlink(missing_ok=True)
