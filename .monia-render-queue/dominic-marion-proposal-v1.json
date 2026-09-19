@@ -8,6 +8,6 @@
   "preserveCheckpoint": true,
   "reuseValidatedAnchors": true,
   "approvalRequired": true,
-  "attempt": 8,
-  "reason": "cumulative-render-checkpoint-v1"
+  "attempt": 9,
+  "reason": "retry-with-ffmpeg-media-runtime"
 }
