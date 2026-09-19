@@ -28,6 +28,8 @@ from scripts.monia_identity_conditioning import identity_conditioning_plan
 
 SCENE_DIR = WORK_DIR / "scenes"
 SCENE_DIR.mkdir(parents=True, exist_ok=True)
+QUALITY_DIR = WORK_DIR / "quality"
+QUALITY_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def _slug(value: str) -> str:
