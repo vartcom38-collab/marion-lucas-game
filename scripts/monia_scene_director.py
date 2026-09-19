@@ -30,6 +30,29 @@ def direct_scene(spec: dict[str, Any]) -> dict[str, Any]:
     appearance = spec.get("appearance") or {}
     spatial = spec.get("spatial") or {}
     mode = str(spec.get("mode") or "cinematic").lower()
+    dialogue = spec.get("dialogue") or []
+    performance_beats = []
+    for index, line in enumerate(dialogue):
+        if not isinstance(line, dict):
+            continue
+        speaker = str(line.get("speaker") or "").strip()
+        text = str(line.get("text") or "").strip()
+        if not speaker or not text:
+            continue
+        listeners = [a for a in actors if a.lower() != speaker.lower()]
+        performance_beats.append({
+            "index": index + 1,
+            "speaker": speaker,
+            "text": text,
+            "intent": line.get("intent") or "speak naturally to the other character, never recite",
+            "emotion": line.get("emotion") or mood,
+            "delivery": line.get("delivery") or "human conversational timing with subtle breath and imperfect micro-pauses",
+            "listeners": listeners,
+            "listenerBehavior": line.get("listenerBehavior") or "listen actively with tiny eye, breath and facial reactions; never freeze while the speaker talks",
+            "allowOverlap": bool(line.get("allowOverlap", False)),
+            "pauseBeforeMs": int(line.get("pauseBeforeMs") or 0),
+            "pauseAfterMs": int(line.get("pauseAfterMs") or 180),
+        })
 
     if mode == "visio":
         shots = [{
@@ -95,8 +118,22 @@ def direct_scene(spec: dict[str, Any]) -> dict[str, Any]:
                 "screen direction",
             ],
         },
+        "performance": {
+            "dialogue": performance_beats,
+            "voiceRules": {
+                "Dominic": "use current approved/candidate Dominic voice strategy; preserve stable identity while emotion and energy vary naturally",
+                "global": "no announcer cadence, no word-by-word delivery, no perfectly even pauses; preserve breaths, hesitation, interruption and listener reactions when context calls for them",
+            },
+            "syncRules": [
+                "lip sync only the active speaker",
+                "listeners keep natural micro-motion",
+                "reaction may begin before a line fully ends",
+                "room tone continues through cuts",
+                "voice distance must match camera and character position",
+            ],
+        },
         "director": {
-            "engine": "monia-scene-director-v1",
+            "engine": "monia-scene-director-v2",
             "sourceIntent": intent,
             "mode": mode,
             "rules": [
@@ -105,6 +142,7 @@ def direct_scene(spec: dict[str, Any]) -> dict[str, Any]:
                 "short motivated shots",
                 "natural performance over advertisement posing",
                 "preserve geography and eyelines",
+                "cut for performance and reaction, not merely visual variety",
             ],
         },
         "shots": shots,
