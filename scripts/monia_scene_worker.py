@@ -313,6 +313,20 @@ def run_job(job_path: Path, publish: bool) -> dict[str, Any]:
             message = str(exc)
             item["status"] = "blocked-reference" if "sceneAnchor" in message else "failed"
             item["error"] = message
+        checkpoint = QUALITY_DIR / f"{_slug(str(job.get('id') or 'job'))}-{index + 1:02d}.json"
+        checkpoint.write_text(json.dumps({
+            "jobId": job.get("id"),
+            "continuityKey": job.get("continuityKey"),
+            "shotIndex": index,
+            "shotId": item.get("id"),
+            "status": item.get("status"),
+            "compute": item.get("compute"),
+            "candidateUrl": item.get("candidateUrl"),
+            "quality": item.get("quality"),
+            "bytes": item.get("bytes"),
+            "error": item.get("error"),
+        }, ensure_ascii=False, indent=2), encoding="utf-8")
+        item["checkpoint"] = str(checkpoint)
         return index, item
 
     if shots:
