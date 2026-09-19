@@ -1,3 +1,4 @@
+import {shouldTriggerDay1FirstContact} from './day1-chronology';
 type SceneKey='home'|'madeleine'|'esplanade'|'marine'|'arenes'|'feria'|'encounter';
 
 const app=document.querySelector<HTMLDivElement>('#app')!;
@@ -15,6 +16,9 @@ let scene:SceneKey='home';
 let minutes=540;
 let withMarine=false;
 let encounterGenerated=false;
+let firstContactEarliestAbs=0;
+const firstContactTarget=703; // deterministic hidden playtest window, equivalent to the real Day 1 morning window
+
 
 const fmt=()=>String(Math.floor(minutes/60)).padStart(2,'0')+':'+String(minutes%60).padStart(2,'0');
 const advance=(m:number)=>{minutes+=m};
@@ -95,6 +99,7 @@ function esplanade(fromMarine:boolean){
 
 function meetMarine(){
   withMarine=true;scene='marine';
+  if(!firstContactEarliestAbs)firstContactEarliestAbs=1440+minutes+85;
   render([
     {label:'Marcher avec elle vers les arènes',primary:true,run:()=>{advance(9);arenes()}},
     {label:'Faire un détour par l’esplanade',run:()=>{advance(5);esplanade(true)}},
@@ -110,12 +115,38 @@ function arenes(){
   ],{eyebrow:'ARÈNES','title':'La Feria prend vraiment de la place.','body':'La foule devient plus dense. Tu sais toujours comment avancer, mais tu ne sais pas ce qui va se passer ensuite.'},withMarine?{marine:'“C’est déjà blindé… reste avec moi.”'}:undefined);
 }
 
-function feria(){
+function encounterEligible(){
+  return shouldTriggerDay1FirstContact({
+    day:1,
+    place:'arenes',
+    metDominic:false,
+    flags:{firstContactTarget,firstContactEarliest:firstContactEarliestAbs}
+  },minutes);
+}
+
+function continueFeria(mins:number,label:string){
+  advance(mins);
+  if(encounterEligible()){generateEncounter();return}
   scene='feria';
   render([
-    {label:'Continuer à avancer',primary:true,run:()=>{advance(4);generateEncounter()}},
-    {label:'Regarder autour avant',run:()=>{advance(2);generateEncounter()}},
-  ],{eyebrow:'FERIA · EN MOUVEMENT','title':'Le passage se resserre devant vous.','body':'Tu continues dans la foule. Le jeu ne t’annonce pas la rencontre ; il te guide seulement dans l’action présente.'},withMarine?{marine:'“Attends, passe par là.”'}:undefined);
+    {label:'Continuer avec Marine',primary:true,run:()=>continueFeria(14,'continuer')},
+    {label:'Passer par une terrasse',run:()=>continueFeria(18,'terrasse')},
+    {label:'Faire un tour autour des arènes',run:()=>continueFeria(16,'tour')},
+  ],{
+    eyebrow:'FERIA · '+fmt(),
+    title:label==='terrasse'?'Vous vous laissez ralentir quelques minutes.':'La Feria continue autour de vous.',
+    body:'La journée avance réellement. Tu as toujours une direction, mais le jeu ne te dit pas quand quelque chose d’important va arriver.'
+  },withMarine?{marine:label==='terrasse'?'“On reste deux minutes et on repart.”':'“Viens, on continue par là.”'}:undefined);
+}
+
+function feria(){
+  scene='feria';
+  if(encounterEligible()){generateEncounter();return}
+  render([
+    {label:'Continuer avec Marine',primary:true,run:()=>continueFeria(14,'continuer')},
+    {label:'Passer par une terrasse',run:()=>continueFeria(18,'terrasse')},
+    {label:'Faire un tour autour des arènes',run:()=>continueFeria(16,'tour')},
+  ],{eyebrow:'FERIA · EN MOUVEMENT','title':'Le passage se resserre devant vous.','body':'Tu continues dans la foule. La rencontre ne partira que lorsque le vrai moteur Jour 1 l’autorise.'},withMarine?{marine:'“Attends, passe par là.”'}:undefined);
 }
 
 async function generateEncounter(){
