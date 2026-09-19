@@ -23,7 +23,7 @@ jobs:
       INFOMANIAK_FTP_USER: ${{ secrets.INFOMANIAK_FTP_USER }}
       INFOMANIAK_FTP_PASSWORD: ${{ secrets.INFOMANIAK_FTP_PASSWORD }}
       HF_TOKEN: ${{ secrets.HF_TOKEN }}
-      MONIA_RACE_TIMEOUT_SECONDS: "180"
+      MONIA_RACE_TIMEOUT_SECONDS: "210"
       MONIA_LTX_UPLOAD_TIMEOUT_SECONDS: "60"
       MONIA_LTX_SUBMIT_TIMEOUT_SECONDS: "60"
       MONIA_WAN_PROVIDER_TIMEOUT_SECONDS: "120"
@@ -91,7 +91,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          PYTHONPATH="$PWD" python -m scripts.monia_scene_worker --job .teaser/job.json > .teaser/result-output.json
+          PYTHONPATH="$PWD" python -m scripts.monia_scene_worker --job .teaser/job.json --publish-candidates > .teaser/result-output.json
           cat .teaser/result-output.json
           python - <<'PY'
           import json
