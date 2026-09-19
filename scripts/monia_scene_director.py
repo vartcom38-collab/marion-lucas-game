@@ -80,6 +80,8 @@ def direct_scene(spec: dict[str, Any]) -> dict[str, Any]:
         structured_beats = any(isinstance(b, dict) for b in beats)
         default_initial = actors if not structured_beats else [actors[0]]
         present = [str(a) for a in (spec.get("initialActors") or default_initial)]
+        story_memory = []
+        knowledge = {str(a): list((spec.get("characterKnowledge") or {}).get(str(a), [])) for a in actors}
         for index, raw_beat in enumerate(beats[:8]):
             beat = raw_beat if isinstance(raw_beat, dict) else {"action": str(raw_beat)}
             for leaving in beat.get("exits") or []:
@@ -96,23 +98,36 @@ def direct_scene(spec: dict[str, Any]) -> dict[str, Any]:
             action = str(beat.get("action") or beat.get("prompt") or "Natural continuation of the scene.")
             camera = str(beat.get("camera") or "motivated cinematic coverage")
             emotion = str(beat.get("emotion") or mood)
+            cause = str(beat.get("because") or (story_memory[-1] if story_memory else "scene opening"))
+            consequence = str(beat.get("consequence") or action)
+            learns = beat.get("learns") or {}
+            for character, facts in learns.items():
+                knowledge.setdefault(str(character), [])
+                knowledge[str(character)].extend([str(x) for x in (facts if isinstance(facts, list) else [facts])])
+            active_knowledge = {a: knowledge.get(a, []) for a in beat_actors}
             shots.append({
                 "id": str(beat.get("id") or (shot_types[index] if index < len(shot_types) else f"beat-{index+1}")),
                 "focusActor": focus,
                 "actors": beat_actors,
                 "speaker": speaker or None,
+                "because": cause,
+                "consequence": consequence,
+                "characterKnowledge": active_knowledge,
                 "entrances": [str(x) for x in beat.get("entrances") or []],
                 "exits": [str(x) for x in beat.get("exits") or []],
                 "duration": int(beat.get("duration") or (durations[index] if index < len(durations) else 4)),
                 "prompt": (
                     f"Photorealistic premium live-action scene. Overall intent: {intent}. "
-                    f"Current dramatic beat: {action} Camera intention: {camera}. Emotion: {emotion}. "
+                    f"Current dramatic beat: {action} It happens because: {cause}. Its story consequence is: {consequence}. "
+                    f"Camera intention: {camera}. Emotion: {emotion}. "
+                    f"Character knowledge at this exact moment: {json.dumps(active_knowledge, ensure_ascii=False)}. "
                     f"Only these characters are physically present in this shot: {', '.join(beat_actors)}. "
                     "Do not show characters before their entrance or after their exit. "
                     "Natural human blocking, imperfect timing, realistic eye-lines, breathing and micro-reactions. "
                     "Camera placement must feel motivated by the previous shot, never like an unrelated generated clip."
                 ),
             })
+            story_memory.append(consequence)
 
     return {
         "id": scene_id,
@@ -155,12 +170,13 @@ def direct_scene(spec: dict[str, Any]) -> dict[str, Any]:
             ],
         },
         "director": {
-            "engine": "monia-scene-director-v3",
+            "engine": "monia-scene-director-v4",
             "sourceIntent": intent,
             "mode": mode,
             "rules": [
                 "story causality before visual spectacle",
                 "character presence follows entrances and exits; never reveal a character before story arrival",
+                "every reaction must be causally grounded in prior beats and current character knowledge",
                 "identity and continuity before camera novelty",
                 "short motivated shots",
                 "natural performance over advertisement posing",
