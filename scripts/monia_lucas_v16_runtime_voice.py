@@ -80,6 +80,42 @@ def duration(path: Path) -> float:
     return float(out)
 
 
+def render_line(text: str, emotion: str = "neutral", request_id: str = "", publish_candidate: bool = False) -> dict:
+    text = " ".join(text.strip().split())
+    if not text:
+        raise RuntimeError("Lucas runtime voice requires non-empty text")
+    if len(text) > 600:
+        raise RuntimeError("Lucas runtime voice line is too long; split long scenes into natural dialogue beats")
+    if emotion not in EMOTION_DIRECTIONS:
+        emotion = "neutral"
+
+    request_id = request_id.strip() or hashlib.sha256(f"{text}|{emotion}".encode("utf-8")).hexdigest()[:12]
+    stem = f"lucas-v16-runtime-{_slug(request_id)}"
+    raw = engine.WORK_DIR / f"{stem}-raw.wav"
+    target = engine.WORK_DIR / f"{stem}.wav"
+    manifest_path = engine.WORK_DIR / f"{stem}.json"
+    description = f"{BASE_DESCRIPTION} Scene performance direction: {EMOTION_DIRECTIONS[emotion]}"
+    token = os.environ.get("HF_TOKEN", "").strip() or None
+    client = Client(SPACE, token=token, verbose=False, download_files=True)
+    result = client.predict(text, LANGUAGE, description, api_name="/generate_voice_design")
+    generated = _resolve_audio(result)
+    shutil.copyfile(generated, raw)
+    target.unlink(missing_ok=True)
+    finish_v16_tone(raw, target)
+    raw.unlink(missing_ok=True)
+    seconds = duration(target)
+    manifest = {
+        "voice_id": VOICE_ID, "request_id": request_id, "text": text, "emotion": emotion,
+        "language": "fr-FR", "output": str(target), "duration": round(seconds, 3),
+        "source_mode": "direct-synthetic-voice-design", "uses_real_person_voice_clone": False,
+        "uses_v17_or_v18": False, "speed_or_pitch_warp": False, "canonical_reference_promotion": False,
+    }
+    if publish_candidate:
+        manifest["candidate_url"] = engine.publish_candidate(target)
+    manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+    return manifest
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Render arbitrary MonIA Lucas dialogue with the approved V16 direct synthetic voice direction")
     parser.add_argument("--text", required=True)
@@ -87,49 +123,7 @@ def main() -> None:
     parser.add_argument("--request-id", default="")
     parser.add_argument("--publish-candidate", action="store_true")
     args = parser.parse_args()
-
-    text = " ".join(args.text.strip().split())
-    if not text:
-        raise RuntimeError("Lucas runtime voice requires non-empty text")
-    if len(text) > 600:
-        raise RuntimeError("Lucas runtime voice line is too long; split long scenes into natural dialogue beats")
-
-    request_id = args.request_id.strip() or hashlib.sha256(f"{text}|{args.emotion}".encode("utf-8")).hexdigest()[:12]
-    stem = f"lucas-v16-runtime-{_slug(request_id)}"
-    raw = engine.WORK_DIR / f"{stem}-raw.wav"
-    target = engine.WORK_DIR / f"{stem}.wav"
-    manifest_path = engine.WORK_DIR / f"{stem}.json"
-
-    description = f"{BASE_DESCRIPTION} Scene performance direction: {EMOTION_DIRECTIONS[args.emotion]}"
-    token = os.environ.get("HF_TOKEN", "").strip() or None
-    client = Client(SPACE, token=token, verbose=False, download_files=True)
-    result = client.predict(text, LANGUAGE, description, api_name="/generate_voice_design")
-    generated = _resolve_audio(result)
-
-    shutil.copyfile(generated, raw)
-    target.unlink(missing_ok=True)
-    finish_v16_tone(raw, target)
-    raw.unlink(missing_ok=True)
-
-    seconds = duration(target)
-    manifest = {
-        "voice_id": VOICE_ID,
-        "request_id": request_id,
-        "text": text,
-        "emotion": args.emotion,
-        "language": "fr-FR",
-        "output": target.name,
-        "duration": round(seconds, 3),
-        "source_mode": "direct-synthetic-voice-design",
-        "uses_real_person_voice_clone": False,
-        "uses_v17_or_v18": False,
-        "speed_or_pitch_warp": False,
-        "canonical_reference_promotion": False,
-    }
-    if args.publish_candidate:
-        manifest["candidate_url"] = engine.publish_candidate(target)
-
-    manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+    manifest = render_line(args.text, args.emotion, args.request_id, args.publish_candidate)
     print("MONIA_LUCAS_V16_RUNTIME " + json.dumps(manifest, ensure_ascii=False))
 
 
