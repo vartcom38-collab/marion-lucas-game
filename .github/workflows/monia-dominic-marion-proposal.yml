@@ -2,6 +2,12 @@ name: MonIA Dominic Marion Proposal
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "specs/monia-dominic-marion-proposal-v1.json"
+      - ".monia-triggers/proposal-render"
 
 concurrency:
   group: monia-video-gpu
