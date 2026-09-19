@@ -1,0 +1,87 @@
+name: MonIA Render Queue
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".monia-render-queue/**"
+  workflow_dispatch:
+
+concurrency:
+  group: monia-video-gpu
+  cancel-in-progress: false
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    outputs:
+      requests: ${{ steps.queue.outputs.requests }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: queue
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          files = sorted(Path(".monia-render-queue").glob("*.json"))
+          payload = []
+          for path in files:
+              try:
+                  data = json.loads(path.read_text(encoding="utf-8"))
+                  if data.get("enabled", True) and data.get("spec"):
+                      payload.append({"request": str(path), "spec": data["spec"], "id": data.get("id", path.stem)})
+              except Exception:
+                  pass
+          print("requests=" + json.dumps(payload, separators=(",", ":")))
+          with open(__import__("os").environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
+              out.write("requests=" + json.dumps(payload, separators=(",", ":")) + "\n")
+          PY
+
+  render:
+    needs: discover
+    if: needs.discover.outputs.requests != '[]'
+    strategy:
+      max-parallel: 1
+      fail-fast: false
+      matrix:
+        item: ${{ fromJson(needs.discover.outputs.requests) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      MONIA_IMAGE_SPACE: ${{ vars.MONIA_IMAGE_SPACE }}
+      MONIA_IMAGE_API_NAME: ${{ vars.MONIA_IMAGE_API_NAME }}
+      MONIA_IMAGE_MODE: qwen-compose
+      MONIA_IMAGE_TIMEOUT_SECONDS: "240"
+      MONIA_ANCHOR_LIBRARY_DIR: .monia-video/anchor-library
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Restore visual memory
+        uses: actions/cache@v4
+        with:
+          path: .monia-video/anchor-library
+          key: monia-anchor-library-v2-${{ runner.os }}
+          restore-keys: |
+            monia-anchor-library-v2-
+            monia-anchor-library-v1-
+      - name: Render scene
+        run: |
+          mkdir -p ".monia-video/queue/${{ matrix.item.id }}"
+          python -m scripts.monia_scene_pipeline \
+            "${{ matrix.item.spec }}" \
+            --work-dir ".monia-video/queue/${{ matrix.item.id }}"
+      - name: Preserve checkpoint and candidates
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: monia-render-${{ matrix.item.id }}
+          path: .monia-video/queue/${{ matrix.item.id }}
+          if-no-files-found: warn
