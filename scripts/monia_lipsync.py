@@ -16,7 +16,7 @@ def run(video: Path, audio: Path, output: Path) -> dict:
         raise FileNotFoundError("video or audio input missing")
     space=os.environ.get("MONIA_LIPSYNC_SPACE","henrybit/musetalk-1-5")
     token=os.environ.get("HF_TOKEN","").strip() or None
-    client=Client(space,token=token,verbose=False)
+    client=Client(space,hf_token=token,verbose=False)
     result=client.predict(
         handle_file(str(audio)),
         handle_file(str(video)),
