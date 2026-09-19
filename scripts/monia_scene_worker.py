@@ -177,23 +177,30 @@ def _generate(profile: CharacterProfile, scene_anchor: dict[str, Any] | None = N
     else:
         _download_canon(profile, source)
     target.unlink(missing_ok=True)
+
     if os.environ.get("MONIA_REUSE_PUBLISHED", "1") == "1":
         cache_url = f"{SITE}/resources/monia/generated/{profile.output_name}"
         try:
             cached = requests.get(cache_url, timeout=30, headers={"Cache-Control": "no-cache"})
             if cached.status_code == 200 and len(cached.content) > 100000:
                 target.write_bytes(cached.content)
-                if worker.looks_like_video(target):
-                    gate = _technical_quality_gate(target, profile)\n                    if gate["passed"]:\n                        return target, "MonIA published cache", gate\n                    target.unlink(missing_ok=True)
+                gate = _technical_quality_gate(target, profile)
+                if gate["passed"]:
+                    return target, "MonIA published cache", gate
                 target.unlink(missing_ok=True)
         except Exception:
             target.unlink(missing_ok=True)
+
     provider, provider_errors = race_compute(profile, source, target)
     if not worker.looks_like_video(target):
         detail = " | ".join(provider_errors[-3:]) if provider_errors else "invalid video"
         raise RuntimeError("Generated scene shot is not a valid video: " + detail)
-    return target, provider
 
+    gate = _technical_quality_gate(target, profile)
+    if not gate["passed"]:
+        target.unlink(missing_ok=True)
+        raise RuntimeError("Premium technical quality gate rejected candidate: " + str(gate))
+    return target, provider, gate
 
 def _run_ffmpeg(args: list[str]) -> None:
     if not shutil.which("ffmpeg"):
