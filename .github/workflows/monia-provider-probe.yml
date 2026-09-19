@@ -1,0 +1,44 @@
+name: MonIA Provider Probe
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/monia-provider-probe.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --disable-pip-version-check gradio_client >/dev/null
+      - name: Probe current ZeroGPU video APIs
+        shell: bash
+        run: |
+          python - <<'PY'
+          import os, json
+          from gradio_client import Client
+          spaces=[
+            "Upsampler/wan-2-2-14b-image-to-video",
+            "zerogpu-aoti/wan2-2-14b-fast",
+            "kulkas2pintu/Wan2.2-14B-Fast-Preview",
+            "Upsampler/ltx-video",
+          ]
+          token=os.environ.get("HF_TOKEN") or None
+          for space in spaces:
+              print("\n===== SPACE",space,"=====")
+              try:
+                  c=Client(space,token=token,verbose=False)
+                  info=c.view_api(return_format="dict")
+                  print(json.dumps(info,ensure_ascii=False)[:30000])
+              except Exception as e:
+                  print("ERROR",type(e).__name__,str(e))
+          PY
