@@ -7,5 +7,7 @@
   "purpose": "Generate the complete Dominic and Marion marriage proposal cinematic proof.",
   "preserveCheckpoint": true,
   "reuseValidatedAnchors": true,
-  "approvalRequired": true
+  "approvalRequired": true,
+  "attempt": 2,
+  "reason": "retry-after-runtime-install-fix"
 }
