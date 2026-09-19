@@ -79,7 +79,7 @@ jobs:
         run: |
           mkdir -p ".monia-video/queue/${{ matrix.item.id }}"
           python -m scripts.monia_scene_pipeline \
-            "${{ matrix.item.spec }}" \
+            --spec "${{ matrix.item.spec }}" \
             --work-dir ".monia-video/queue/${{ matrix.item.id }}"
       - name: Preserve checkpoint and candidates
         if: always()
