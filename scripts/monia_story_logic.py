@@ -20,7 +20,9 @@ def validate_story_logic(job: dict[str, Any]) -> dict[str, Any]:
 
         if index == 0:
             present |= actors - entrances
+        was_present = set(present)
         present -= exits
+        duplicate_entrances = entrances & was_present
         present |= entrances
 
         impossible = actors - present
@@ -30,9 +32,8 @@ def validate_story_logic(job: dict[str, Any]) -> dict[str, Any]:
             errors.append({"shotId": shot_id, "type": "speaker-not-visible", "actor": speaker})
         if focus and focus not in actors:
             warnings.append({"shotId": shot_id, "type": "focus-actor-not-visible", "actor": focus})
-        reentries = entrances & present & seen
-        if reentries:
-            warnings.append({"shotId": shot_id, "type": "possible-reentry", "actors": sorted(reentries)})
+        if duplicate_entrances:
+            warnings.append({"shotId": shot_id, "type": "duplicate-entry-while-already-present", "actors": sorted(duplicate_entrances)})
         seen |= actors
         present = set(actors)
 
