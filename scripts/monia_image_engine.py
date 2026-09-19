@@ -36,7 +36,7 @@ def _materialize(value: Any, target: Path) -> None:
 
 def _predict_child(space: str, token: str | None, api_name: str, args: list[Any], queue: Any) -> None:
     try:
-        client = Client(space, token=token, verbose=False)
+        client = Client(space, hf_token=token, verbose=False)
         result = client.predict(*args, api_name=api_name)
         queue.put({"ok": True, "result": result})
     except Exception as exc:
