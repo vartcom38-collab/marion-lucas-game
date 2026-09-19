@@ -1,0 +1,213 @@
+name: MonIA Complete Teaser V1
+
+on:
+  push:
+    paths:
+      - '.github/workflows/monia-complete-teaser-v1.yml'
+      - 'studio/queue/monia-complete-teaser-v1.json'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: monia-complete-teaser-v1
+  cancel-in-progress: false
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    env:
+      MONIA_JOB_ID: monia-complete-teaser-v1
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install system and Python tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg fonts-dejavu-core
+          python -m pip install --upgrade kaggle gradio_client requests pillow
+
+      - name: Prepare MonIA Kaggle worker
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .kaggle-worker
+          cp notebooks/monia_kaggle_oneclick.ipynb .kaggle-worker/monia_kaggle_oneclick.ipynb
+          cp kaggle/monia-worker/kernel-metadata.json .kaggle-worker/kernel-metadata.json
+          cp studio/queue/monia-complete-teaser-v1.json .kaggle-worker/job.json
+          python - <<'PY'
+          import base64, json
+          from pathlib import Path
+          job=Path('.kaggle-worker/job.json')
+          data=json.loads(job.read_text(encoding='utf-8'))
+          assert data['id']=='monia-complete-teaser-v1'
+          assert data['candidateOnly'] is True
+          assert data['narrativeAuthority'] is False
+          nb_path=Path('.kaggle-worker/monia_kaggle_oneclick.ipynb')
+          nb=json.loads(nb_path.read_text(encoding='utf-8'))
+          payload=base64.b64encode(job.read_bytes()).decode('ascii')
+          cell={
+            'cell_type':'code','execution_count':None,'metadata':{},'outputs':[],
+            'source':['import base64\n','from pathlib import Path\n',f"Path('/kaggle/working/job.json').write_bytes(base64.b64decode('{payload}'))\n","print('MonIA complete teaser job materialized')\n"],
+          }
+          nb['cells'].insert(1,cell)
+          nb_path.write_text(json.dumps(nb,ensure_ascii=False,indent=1),encoding='utf-8')
+          PY
+
+      - name: Validate Kaggle token
+        env:
+          KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+        run: |
+          test -n "${KAGGLE_API_TOKEN:-}"
+          kaggle config view >/dev/null
+
+      - name: Submit MonIA GPU worker
+        env:
+          KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+        run: |
+          kaggle kernels push -p .kaggle-worker
+
+      - name: Wait for MonIA GPU worker
+        env:
+          KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          KERNEL="marionbolomey/monia-headless-worker"
+          for attempt in $(seq 1 60); do
+            STATUS="$(kaggle kernels status "$KERNEL" 2>&1 || true)"
+            echo "[$attempt/60] $STATUS"
+            if echo "$STATUS" | grep -Eqi 'complete|completed'; then exit 0; fi
+            if echo "$STATUS" | grep -Eqi 'error|failed|cancelled|canceled'; then exit 1; fi
+            sleep 60
+          done
+          exit 1
+
+      - name: Download MonIA clips
+        env:
+          KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="/tmp/monia-kaggle-output"
+          rm -rf "$OUT"
+          mkdir -p "$OUT"
+          kaggle kernels output "marionbolomey/monia-headless-worker" -p "$OUT" -o
+          SRC="$OUT/monia-studio/$MONIA_JOB_ID"
+          test -f "$SRC/result.json"
+          DEST="public/resources/monia/candidates/$MONIA_JOB_ID"
+          mkdir -p "$DEST"
+          cp "$SRC/result.json" "$DEST/result.json"
+          python - <<'PY'
+          import json, os, shutil
+          from pathlib import Path
+          src=Path('/tmp/monia-kaggle-output/monia-studio')/os.environ['MONIA_JOB_ID']
+          dest=Path('public/resources/monia/candidates')/os.environ['MONIA_JOB_ID']
+          data=json.loads((src/'result.json').read_text(encoding='utf-8'))
+          assert data.get('state')=='candidate'
+          assert data.get('candidateOnly') is True
+          clips=data.get('clips') or []
+          assert len(clips)==6, clips
+          for name in clips:
+            assert name.startswith('shot-') and name.endswith('.mp4')
+            shutil.copy2(src/name,dest/name)
+          print('MonIA teaser clips:', clips)
+          PY
+
+      - name: Render Dominic French V16 lines
+        continue-on-error: true
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .teaser-voice
+          python scripts/monia_lucas_v16_runtime_voice.py             --text "Ça va ? Vous vous êtes pas fait mal ?"             --emotion concerned             --request-id teaser-v1-encounter
+          cp .monia-video/lucas-v16-runtime-teaser-v1-encounter.wav .teaser-voice/encounter.wav
+          python scripts/monia_lucas_v16_runtime_voice.py             --text "Je voulais juste t'entendre deux minutes."             --emotion warm             --request-id teaser-v1-visio
+          cp .monia-video/lucas-v16-runtime-teaser-v1-visio.wav .teaser-voice/visio.wav
+
+      - name: Assemble MonIA complete teaser MP4
+        shell: bash
+        run: |
+          set -euo pipefail
+          SRC="public/resources/monia/candidates/$MONIA_JOB_ID"
+          WORK=".teaser-build"
+          OUT="public/resources/monia/presentations"
+          mkdir -p "$WORK" "$OUT"
+
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          src=Path('public/resources/monia/candidates')/os.environ['MONIA_JOB_ID']
+          data=json.loads((src/'result.json').read_text(encoding='utf-8'))
+          clips=data['clips']
+          Path('.teaser-build/clips.txt').write_text('\n'.join(str(src/n) for n in clips),encoding='utf-8')
+          PY
+
+          mapfile -t CLIPS < "$WORK/clips.txt"
+          for i in 1 2 3 4 5 6; do
+            idx=$((i-1))
+            clip="${CLIPS[$idx]}"
+            audio="$WORK/audio-$i.wav"
+            if [ "$i" = "3" ] && [ -s ".teaser-voice/encounter.wav" ]; then
+              ffmpeg -hide_banner -loglevel error -y -f lavfi -t 4 -i "anullsrc=r=48000:cl=stereo" -i .teaser-voice/encounter.wav -filter_complex "[0:a][1:a]amix=inputs=2:duration=first:dropout_transition=0[a]" -map "[a]" -t 4 "$audio"
+            elif [ "$i" = "4" ] && [ -s ".teaser-voice/visio.wav" ]; then
+              ffmpeg -hide_banner -loglevel error -y -f lavfi -t 4 -i "anullsrc=r=48000:cl=stereo" -i .teaser-voice/visio.wav -filter_complex "[0:a][1:a]amix=inputs=2:duration=first:dropout_transition=0[a]" -map "[a]" -t 4 "$audio"
+            else
+              ffmpeg -hide_banner -loglevel error -y -f lavfi -t 4 -i "anullsrc=r=48000:cl=stereo" "$audio"
+            fi
+
+            ffmpeg -hide_banner -loglevel error -y -i "$clip" -i "$audio"               -vf "scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2,fps=24,format=yuv420p"               -map 0:v:0 -map 1:a:0 -t 4               -c:v libx264 -preset medium -crf 19 -c:a aac -b:a 160k -ar 48000               -movflags +faststart "$WORK/norm-$i.mp4"
+          done
+
+          printf "file '%s'\n" "$PWD/$WORK/norm-1.mp4" "$PWD/$WORK/norm-2.mp4" "$PWD/$WORK/norm-3.mp4" "$PWD/$WORK/norm-4.mp4" "$PWD/$WORK/norm-5.mp4" "$PWD/$WORK/norm-6.mp4" > "$WORK/concat.txt"
+          ffmpeg -hide_banner -loglevel error -y -f concat -safe 0 -i "$WORK/concat.txt" -c copy "$WORK/base.mp4"
+
+          cat > "$WORK/teaser.ass" <<'ASS'
+          [Script Info]
+          ScriptType: v4.00+
+          PlayResX: 1280
+          PlayResY: 720
+          WrapStyle: 2
+
+          [V4+ Styles]
+          Format: Name,Fontname,Fontsize,PrimaryColour,SecondaryColour,OutlineColour,BackColour,Bold,Italic,Underline,StrikeOut,ScaleX,ScaleY,Spacing,Angle,BorderStyle,Outline,Shadow,Alignment,MarginL,MarginR,MarginV,Encoding
+          Style: HUD,DejaVu Sans,24,&H00FFFFFF,&H000000FF,&H33000000,&H99000000,0,0,0,0,100,100,0,0,3,1,0,7,36,36,28,1
+          Style: Choices,DejaVu Sans,25,&H00FFFFFF,&H000000FF,&H33000000,&HAA111111,0,0,0,0,100,100,0,0,3,1,0,2,36,36,34,1
+          Style: Label,DejaVu Sans,20,&H00FFFFFF,&H000000FF,&H33000000,&H99000000,1,0,0,0,100,100,2,0,3,1,0,8,36,36,40,1
+          Style: Title,DejaVu Sans,44,&H00FFFFFF,&H000000FF,&H33000000,&H66000000,1,0,0,0,100,100,3,0,3,1,0,5,80,80,80,1
+          Style: Sub,DejaVu Sans,25,&H00FFFFFF,&H000000FF,&H33000000,&H77000000,0,0,0,0,100,100,0,0,3,1,0,2,80,80,55,1
+
+          [Events]
+          Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+          Dialogue: 0,0:00:00.20,0:00:03.80,HUD,,0,0,0,,Jour 1  •  08:54  •  Appartement — Nîmes
+          Dialogue: 0,0:00:00.70,0:00:03.80,Choices,,0,0,0,,Regarder le téléphone     Se préparer     Sortir
+          Dialogue: 0,0:00:04.10,0:00:07.80,HUD,,0,0,0,,Nîmes  •  Feria
+          Dialogue: 0,0:00:04.60,0:00:07.80,Choices,,0,0,0,,Parler avec Marine     Continuer     Terrasse
+          Dialogue: 0,0:00:08.20,0:00:11.70,Label,,0,0,0,,CINÉMATIQUE CONTEXTUELLE
+          Dialogue: 0,0:00:12.10,0:00:15.70,HUD,,0,0,0,,Dominic  •  Visio
+          Dialogue: 0,0:00:16.15,0:00:19.75,HUD,,0,0,0,,Agenda  •  Espagne  •  Corrida  •  Voyages  •  Projets
+          Dialogue: 0,0:00:20.15,0:00:22.15,Title,,0,0,0,,Chaque partie change
+          Dialogue: 0,0:00:22.15,0:00:23.95,Title,,0,0,0,,MARION & DOMINIC
+          Dialogue: 0,0:00:22.45,0:00:23.95,Sub,,0,0,0,,Une vie à vivre. Jamais exactement deux fois la même.
+          ASS
+
+          ffmpeg -hide_banner -loglevel error -y -i "$WORK/base.mp4"             -vf "ass=$WORK/teaser.ass"             -c:v libx264 -preset medium -crf 18 -c:a copy -movflags +faststart             "$OUT/monia-complete-teaser-v1.mp4"
+
+          ffprobe -v error -show_entries format=duration,size -of json "$OUT/monia-complete-teaser-v1.mp4"
+
+      - name: Commit MonIA teaser result
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "public/resources/monia/candidates/$MONIA_JOB_ID" "public/resources/monia/presentations/monia-complete-teaser-v1.mp4"
+          git commit -m "MonIA complete teaser v1 render" || exit 0
+          git pull --rebase origin main
+          git push origin HEAD:main
