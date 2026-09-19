@@ -5,6 +5,8 @@ from pathlib import Path
 from typing import Any
 
 from scripts.monia_anchor_library import register_validated_anchor
+from scripts.monia_anchor_repair import build_anchor_repair_request
+from scripts.monia_image_engine import generate_anchor_candidate
 
 
 def apply_anchor_reviews(
@@ -28,7 +30,30 @@ def apply_anchor_reviews(
             continue
         status = str(review.get("status") or "").lower()
         if status != "approved":
-            rejected.append({"shotId": shot_id, "review": review})
+            request_path = Path(str(item.get("compositeRequest") or ""))
+            previous_candidate = Path(str((item.get("candidate") or {}).get("output") or ""))
+            repair_pass = int(review.get("repairPass") or 0)
+            if request_path.exists() and repair_pass < 2:
+                original_request = json.loads(request_path.read_text(encoding="utf-8"))
+                repair_request = build_anchor_repair_request(original_request, review)
+                repair_request["repairPass"] = repair_pass + 1
+                repair_dir = library_dir.parent / "anchor-repairs"
+                repair_dir.mkdir(parents=True, exist_ok=True)
+                repair_request_path = repair_dir / f"{shot_id}-repair-{repair_pass + 1}.json"
+                repair_request_path.write_text(json.dumps(repair_request, ensure_ascii=False, indent=2), encoding="utf-8")
+                repair_output = repair_dir / f"{shot_id}-repair-{repair_pass + 1}.png"
+                repair_candidate = generate_anchor_candidate(repair_request, repair_output)
+                rejected.append({
+                    "shotId": shot_id,
+                    "review": review,
+                    "repairPass": repair_pass + 1,
+                    "repairRequest": str(repair_request_path),
+                    "repairCandidate": repair_candidate,
+                    "previousCandidate": str(previous_candidate) if previous_candidate else None,
+                    "next": "semantic-review-repair-candidate" if repair_candidate.get("status") == "candidate" else "retry-compute",
+                })
+            else:
+                rejected.append({"shotId": shot_id, "review": review, "next": "manual-director-revision"})
             continue
 
         contract_path = Path(str(item.get("contract")))
