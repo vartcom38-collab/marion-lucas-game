@@ -1,7 +1,7 @@
 import type { MonIACompactContext } from './profile';
 import type { MonIADirectorResult, MonIAChannel, MonIAEmotion } from './director';
 
-export type MonIAExperienceMode = 'message'|'voice-note'|'live-visio'|'cinematic-drama';
+export type MonIAExperienceMode = 'message'|'voice-note'|'audio-call'|'live-visio'|'cinematic-drama';
 export type MonIAFraming = 'close'|'chest'|'waist'|'full-body'|'two-shot'|'adaptive';
 export type MonIAVideoQuality = 'preview'|'production';
 
@@ -59,7 +59,8 @@ function contextText(c:MonIACompactContext){
 }
 
 function inferMode(result:MonIADirectorResult):MonIAExperienceMode{
-  if(result.channel==='visio'||result.channel==='call')return 'live-visio';
+  if(result.channel==='visio')return 'live-visio';
+  if(result.channel==='call')return 'audio-call';
   if(result.channel==='scene'||result.channel==='video')return 'cinematic-drama';
   if(result.channel==='voice')return 'voice-note';
   return 'message';
@@ -87,6 +88,7 @@ function inferWardrobe(c:MonIACompactContext){
 
 function targetDuration(mode:MonIAExperienceMode,result:MonIADirectorResult){
   if(mode==='live-visio')return Math.max(20,Math.min(180,result.scene?.duration||45));
+  if(mode==='audio-call')return 0;
   if(mode==='cinematic-drama')return Math.max(15,Math.min(75,result.scene?.duration||30));
   if(mode==='voice-note')return 0;
   return 0;
@@ -95,7 +97,7 @@ function targetDuration(mode:MonIAExperienceMode,result:MonIADirectorResult){
 export function buildAutonomousMediaPlan(result:MonIADirectorResult,context:MonIACompactContext):MonIAMediaPlan{
   const mode=inferMode(result);
   const visualRequired=mode==='live-visio'||mode==='cinematic-drama';
-  const voiceRequired=mode==='voice-note'||mode==='live-visio'||mode==='cinematic-drama';
+  const voiceRequired=mode==='voice-note'||mode==='audio-call'||mode==='live-visio'||mode==='cinematic-drama';
   const duration=targetDuration(mode,result);
   const framing=inferFraming(mode,result,context);
   const multiShot=mode==='cinematic-drama' && duration>8;
@@ -126,14 +128,14 @@ export function buildAutonomousMediaPlan(result:MonIADirectorResult,context:MonI
     voice:{
       required:voiceRequired,
       text:result.spokenText||result.text,
-      liveTurnTaking:mode==='live-visio',
+      liveTurnTaking:mode==='live-visio'||mode==='audio-call',
       lipSyncRequired:mode==='live-visio'||mode==='cinematic-drama',
       emotion:result.emotion,
     },
     assembly:{
       multiShot,
       targetSceneDuration:duration,
-      clipDurationRange:mode==='live-visio'?[2,8]:[3,6],
+      clipDurationRange:mode==='live-visio'?[2,8]:mode==='audio-call'?[0,0]:[3,6],
       reuseValidatedClips:true,
       generateMissingClips:visualRequired,
     },
@@ -143,6 +145,7 @@ export function buildAutonomousMediaPlan(result:MonIADirectorResult,context:MonI
       visualRequired?'Toute sortie visuelle finale exige une vraie vidéo animée.':'Aucune vidéo nécessaire pour ce tour.',
       visualRequired?'Les images/atlas canoniques servent uniquement de verrou d’identité et de référence, jamais de rendu final.':'',
       mode==='live-visio'?'La visio utilise des états continus écoute/réponse/idle et une voix synchronisée pour donner une sensation d’appel vivant.':'',
+      mode==='audio-call'?'Un appel audio reste non visuel; aucune caméra ni vidéo ne doit être créée.':'',
       multiShot?'Les scènes longues sont construites par plusieurs clips vrais assemblés automatiquement afin d’éviter un plan artificiellement long.':'',
     ].filter(Boolean),
   };
