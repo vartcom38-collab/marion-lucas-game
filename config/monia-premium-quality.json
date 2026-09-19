@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "name": "MonIA Premium Visual Director",
+  "target": "premium photorealistic cinematic output comparable in finish to leading commercial AI visual tools",
+  "principles": {
+    "identityFirst": true,
+    "continuityFirst": true,
+    "naturalMotion": true,
+    "cinematicComposition": true,
+    "artifactRejection": true,
+    "reuseValidatedCandidates": true,
+    "neverRegenerateValidatedWork": true
+  },
+  "qualityGates": {
+    "identity": {
+      "required": true,
+      "checks": ["face geometry continuity", "hair continuity", "skin and stubble continuity", "body proportions", "canonical tattoos when visible"],
+      "reject": ["generic lookalike", "identity drift", "face morphing", "invented scar", "invented or erased canonical tattoos"]
+    },
+    "motion": {
+      "required": true,
+      "checks": ["human breathing", "natural blinking", "physically plausible head and body motion", "stable temporal anatomy"],
+      "reject": ["frozen subject", "rubber motion", "jitter", "teleporting limbs", "warped hands", "temporal morphing"]
+    },
+    "cinematography": {
+      "required": true,
+      "checks": ["motivated camera", "natural lens perspective", "coherent light", "shot appropriate depth", "non-advertising realism"],
+      "reject": ["random camera movement", "synthetic glamour look", "overprocessed skin", "unmotivated dramatic lighting"]
+    },
+    "sceneIntent": {
+      "required": true,
+      "checks": ["requested action is visible", "environment matches story", "shot type matches cinematic/visio/gameplay intent"]
+    },
+    "technical": {
+      "required": true,
+      "checks": ["valid mp4", "stable dimensions", "24fps normalization", "no watermark", "no subtitles unless explicitly requested"]
+    }
+  },
+  "generationPolicy": {
+    "candidateCountPreferred": 3,
+    "selectBestCandidate": true,
+    "repairInsteadOfRestart": true,
+    "fallbackAcrossProviders": true,
+    "cacheValidatedPerShot": true,
+    "publishOnlyAfterQualityGate": true
+  },
+  "dominic": {
+    "identityAuthority": "https://marion-lucas.marionbolomey.fr/resources/monia/canon/lucas/reference.jpg",
+    "voice": "V16",
+    "voiceDirection": "low, warm, close, slightly rough, natural young masculine French voice; fluid and never robotic",
+    "priority": ["identity", "naturalness", "temporal stability", "cinematic realism", "lip sync"]
+  }
+}
