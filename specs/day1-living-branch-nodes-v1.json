@@ -1,0 +1,33 @@
+{
+ "version":"1.0",
+ "slice":"1998-may-day1",
+ "nodes":[
+  {
+   "id":"D1_HOME_WAKE_001","kind":"living-video","durationTarget":"8-14s","state":{"place":"Marion apartment","timeBand":"morning","characters":["Marion"]},
+   "action":"Marion is already living in the room; natural morning movement, no pose for camera.",
+   "hold":{"durationTarget":"6-12s","loop":"micro-motion-safe","actions":["breathing","small gaze changes","hand movement","weight shift","environment motion"]},
+   "choices":[
+    {"intent":"check-phone","label":"Regarder le téléphone","next":["D1_PHONE_001","D1_PHONE_002"]},
+    {"intent":"get-ready","label":"Me préparer","next":["D1_READY_001"]},
+    {"intent":"coffee","label":"Prendre un café","next":["D1_COFFEE_001","D1_COFFEE_002"]},
+    {"intent":"stay-a-moment","label":"Rester encore un peu","next":["D1_HOME_IDLE_001"]}
+   ]
+  },
+  {
+   "id":"D1_READY_001","kind":"living-video","state":{"characters":["Marion"],"place":"Marion apartment"},"action":"Transition into getting-ready context without wardrobe discontinuity.",
+   "hold":{"loop":"micro-motion-safe"},"choices":[
+    {"intent":"outfit-a","label":"Tenue 1","next":["D1_OUTFIT_A_001"]},
+    {"intent":"outfit-b","label":"Tenue 2","next":["D1_OUTFIT_B_001"]},
+    {"intent":"outfit-c","label":"Tenue 3","next":["D1_OUTFIT_C_001"]},
+    {"intent":"outfit-d","label":"Tenue 4","next":["D1_OUTFIT_D_001"]},
+    {"intent":"outfit-e","label":"Tenue 5","next":["D1_OUTFIT_E_001"]}
+   ]
+  },
+  {
+   "id":"D1_MARINE_TRIGGER","kind":"director-event","playerCannotSchedule":true,
+   "eligibility":"director chooses a plausible moment after enough morning life has occurred",
+   "effect":"Marine contact enters phone state; content must not spoil Dominic encounter."
+  }
+ ],
+ "transitionRules":["next clip begins from compatible body position when possible","audio ambience overlaps cut","choice overlay never burns into video","losing branches unload after selection","selected branch starts immediately","director may insert eligible event instead of deterministic next node"]
+}
