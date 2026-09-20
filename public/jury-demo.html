@@ -17,6 +17,10 @@ video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .cursor{position:absolute;width:20px;height:20px;border-radius:50%;border:2px solid white;box-shadow:0 0 0 7px rgba(255,255,255,.12);transition:1s ease}
 .phone{position:absolute;right:5vw;top:18vh;width:min(350px,32vw);padding:18px;border:1px solid rgba(255,255,255,.35);border-radius:18px;background:rgba(10,10,10,.68);backdrop-filter:blur(12px)}
 .phone b{display:block;margin-bottom:8px}.phone span{opacity:.8}
+.incoming{position:absolute;right:5vw;top:17vh;width:min(390px,36vw);padding:20px;border:1px solid rgba(255,255,255,.42);border-radius:14px;background:rgba(17,20,16,.82);backdrop-filter:blur(10px);box-shadow:0 18px 50px rgba(0,0,0,.35)}
+.incoming .era{font-size:11px;letter-spacing:.16em;opacity:.55;margin-bottom:12px}.incoming .caller{font-family:Georgia,serif;font-size:clamp(26px,3vw,44px);margin-bottom:3px}.incoming .status{font-size:14px;opacity:.7;margin-bottom:18px}
+.callactions{display:flex;gap:10px}.callactions button{flex:1;padding:12px;border-radius:7px;border:1px solid rgba(255,255,255,.35);background:rgba(0,0,0,.22);color:#fff;font:inherit}.callactions button:first-child{background:rgba(255,255,255,.9);color:#111}
+.rings{display:inline-block;margin-left:8px;letter-spacing:3px;animation:ring 1.2s infinite}@keyframes ring{50%{opacity:.25}}
 .explain{position:absolute;right:5vw;bottom:7vh;max-width:44vw;font-size:clamp(17px,2vw,31px);line-height:1.25;text-shadow:0 2px 18px #000}
 .flow{position:absolute;inset:14vh 6vw 12vh;display:flex;align-items:center;justify-content:center;gap:1.2vw}
 .node{padding:22px 18px;border:1px solid #777;border-radius:14px;background:#111;min-width:150px;text-align:center;font-size:clamp(14px,1.25vw,20px)}
@@ -31,6 +35,7 @@ video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 <div class="choices hidden" id="choices"><div class="choice">Répondre à Marine</div><div class="choice">Finir de se préparer</div><div class="choice">Sortir maintenant</div></div>
 <div class="cursor hidden" id="cursor"></div>
 <div class="phone hidden" id="phone"><b>Marine</b><span>Tu descends ? Je suis presque arrivée.</span></div>
+<div class="incoming hidden" id="incoming"><div class="era">TÉLÉPHONE · 1998</div><div class="caller">Dominic <span class="rings">)))</span></div><div class="status">Appel entrant</div><div class="callactions"><button>Décrocher</button><button>Laisser sonner</button></div></div>
 <div class="explain hidden" id="explain"></div>
 <div class="flow hidden" id="flow"><div class="node">État de la partie</div><div class="arrow">→</div><div class="node">Contexte + mémoire</div><div class="arrow">→</div><div class="node">Scène compatible</div><div class="arrow">→</div><div class="node">Conséquence</div><div class="arrow">→</div><div class="node memory">Mémoire MonIA</div></div>
 </main>
@@ -41,14 +46,15 @@ const V={
  phone:'https://pikaso.cdnpk.net/private/production/5501873542/9528ec23-6db2-470a-ad70-10e4d1163b7a-0.mp4?token=exp=1790294400~hmac=f4ec6fad3d272f32b899f146d844496094224ee029a503fbdc47d0f0064c815c',
  motion:'https://pikaso.cdnpk.net/private/production/5500260735/be35cd8f-953e-4419-9568-a7dc01c1c624-0.mp4?token=exp=1790294400~hmac=c5f554912bb8c0acada900bf54be92c67441f165839bdeafef843c51411839a9'
 };
-const film=document.querySelector('#film'),title=document.querySelector('#title'),topT=document.querySelector('#top'),choices=document.querySelector('#choices'),cursor=document.querySelector('#cursor'),phone=document.querySelector('#phone'),explain=document.querySelector('#explain'),flow=document.querySelector('#flow');
-function reset(){title.innerHTML='';topT.textContent='';choices.classList.add('hidden');cursor.classList.add('hidden');phone.classList.add('hidden');explain.classList.add('hidden');flow.classList.add('hidden');film.style.opacity=1}
+const film=document.querySelector('#film'),title=document.querySelector('#title'),topT=document.querySelector('#top'),choices=document.querySelector('#choices'),cursor=document.querySelector('#cursor'),phone=document.querySelector('#phone'),incoming=document.querySelector('#incoming'),explain=document.querySelector('#explain'),flow=document.querySelector('#flow');
+function reset(){title.innerHTML='';topT.textContent='';choices.classList.add('hidden');cursor.classList.add('hidden');phone.classList.add('hidden');incoming.classList.add('hidden');explain.classList.add('hidden');flow.classList.add('hidden');film.style.opacity=1}
 function play(src){if(film.src!==src){film.src=src;film.play().catch(()=>{})}}
 const scenes=[
 ()=>{reset();play(V.nimes);topT.textContent='NÎMES · MAI 1998';title.innerHTML='Une vie.<span class="sub">Pas un scénario figé.</span>'},
 ()=>{reset();play(V.marion);topT.textContent='VOUS JOUEZ MARION';choices.classList.remove('hidden');explain.classList.remove('hidden');explain.textContent='Le film continue pendant que vous décidez.'},
 ()=>{choices.classList.remove('hidden');cursor.classList.remove('hidden');cursor.style.left='18vw';cursor.style.top='74vh';document.querySelectorAll('.choice')[2].classList.add('active');explain.textContent='Un choix ne lance pas une scène pré-écrite : MonIA cherche une suite compatible.'},
 ()=>{reset();play(V.phone);phone.classList.remove('hidden');topT.textContent='LE MONDE CONTINUE';explain.classList.remove('hidden');explain.textContent='Messages, appels et événements apparaissent dans le contexte — sans remplacer la scène.'},
+()=>{reset();play(V.phone);incoming.classList.remove('hidden');topT.textContent='DOMINIC PREND L’INITIATIVE';explain.classList.remove('hidden');explain.textContent='Marion reçoit l’appel pendant que la scène continue. Le joueur choisit seulement sa réaction.'},
 ()=>{reset();play(V.motion);topT.textContent='DOMINIC EST AUTONOME';title.innerHTML='Vous contrôlez Marion.<span class="sub">Pas Dominic. Il peut venir, appeler, partir, travailler ou réagir de lui-même.</span>'},
 ()=>{reset();play(V.marion);topT.textContent='UNE DÉCISION ≠ UNE SEULE SUITE';title.innerHTML='Même choix. Autre partie.<span class="sub">Relation · mémoire · heure · lieu · carrière · événements cachés · historique de la partie</span>'},
 ()=>{reset();film.style.opacity=.18;topT.textContent='SOUS LE CAPOT';flow.classList.remove('hidden');explain.classList.remove('hidden');explain.textContent='MonIA conserve les conséquences puis les réinjecte dans les scènes futures.'},
