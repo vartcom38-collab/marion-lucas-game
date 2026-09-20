@@ -73,4 +73,4 @@ export async function playLivingNode(node:LivingNode){
  else window.setTimeout(()=>{root.classList.add('holding');showChoices(node)},node.fallbackMs||250);
 }
 export function closeLivingNode(){const root=state.root;if(!root)return;state.video?.pause();state.hold?.pause();root.remove();state.node=null;state.root=null;state.video=null;state.hold=null;state.preloads.clear()}
-window.addEventListener('monia:play-living-node',((e:CustomEvent<LivingNode>)=>playLivingNode(e.detail)) as EventListener);
+window.addEventListener('monia:play-living-node',((e:CustomEvent<LivingNode>)=>{const canonical=day1Nodes[e.detail?.id];playLivingNode(canonical||e.detail)}) as EventListener);
