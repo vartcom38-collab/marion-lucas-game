@@ -89,6 +89,20 @@ def render_line(text: str, emotion: str = "neutral", request_id: str = "", publi
     if emotion not in EMOTION_DIRECTIONS:
         emotion = "neutral"
 
+    voice_cache_key = hashlib.sha256(f"{VOICE_ID}|{LANGUAGE}|{text}|{emotion}".encode("utf-8")).hexdigest()
+    voice_cache_dir = Path(os.environ.get("MONIA_VOICE_CACHE_DIR", ".monia-video/voice-cache"))
+    voice_cache_dir.mkdir(parents=True, exist_ok=True)
+    cached_wav = voice_cache_dir / f"{voice_cache_key}.wav"
+    cached_manifest = voice_cache_dir / f"{voice_cache_key}.json"
+    if cached_wav.exists() and cached_wav.stat().st_size >= 4096 and cached_manifest.exists():
+        try:
+            cached = json.loads(cached_manifest.read_text(encoding="utf-8"))
+            if cached.get("voice_id") == VOICE_ID and cached.get("text") == text and cached.get("emotion") == emotion:
+                cached["output"] = str(cached_wav)
+                cached["source_mode"] = "persistent-approved-voice-cache"
+                return cached
+        except Exception:
+            pass
     request_id = request_id.strip() or hashlib.sha256(f"{text}|{emotion}".encode("utf-8")).hexdigest()[:12]
     stem = f"lucas-v16-runtime-{_slug(request_id)}"
     raw = engine.WORK_DIR / f"{stem}-raw.wav"
@@ -113,6 +127,11 @@ def render_line(text: str, emotion: str = "neutral", request_id: str = "", publi
     if publish_candidate:
         manifest["candidate_url"] = engine.publish_candidate(target)
     manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+    shutil.copy2(target, cached_wav)
+    cache_manifest = dict(manifest)
+    cache_manifest["output"] = str(cached_wav)
+    cache_manifest["cache_key"] = voice_cache_key
+    cached_manifest.write_text(json.dumps(cache_manifest, ensure_ascii=False, indent=2), encoding="utf-8")
     return manifest
 
 
