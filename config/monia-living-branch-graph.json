@@ -1,0 +1,17 @@
+{
+ "version":"1.0",
+ "name":"MonIA Living Branch Graph",
+ "node":{
+  "fields":["id","sceneFamily","entryConditions","videoVariants","livingHold","choices","directorTransitions","effects","preloadTargets"],
+  "livingHold":{"required":true,"purpose":"Keep characters and environment naturally moving while choices are visible","maxLoopVisibility":"imperceptible"},
+  "choices":{"count":"3-5","each":["label","intent","requirements","effects","candidateNextNodes"]},
+  "directorTransitions":{"purpose":"Allow events not chosen by player","examples":["Dominic acts","phone rings","press event","career interruption","NPC arrives","world surprise"]}
+ },
+ "resolver":{
+  "nextNodeDependsOn":["choice","saveSeed","worldState","relationshipMemory","calendar","career","outfits","location","knowledge","antiRepeatHistory"],
+  "sameChoiceMayHaveMultipleValidNextNodes":true,
+  "neverExposeNodeIds":true
+ },
+ "preload":{"whileLivingHold":["all immediately eligible next videos","phone overlays","audio"],"afterChoice":"cancel losing branches and preload next horizon"},
+ "replay":{"recordExperiencedNodeFamilies":true,"preferUnseenCompatibleVariants":true,"canonicalAnchorsProtected":true}
+}
