@@ -41,6 +41,7 @@ const day1Nodes:Record<string,LivingNode>={
  ]}
 };
 
+function setFilmState(active:boolean){document.querySelector<HTMLElement>('.game')?.classList.toggle('livingSceneActive',active);document.body.classList.toggle('livingSceneActive',active)}
 function ensureRoot(){
  let root=document.getElementById('livingBranchPlayer');
  if(!root){root=document.createElement('section');root.id='livingBranchPlayer';root.className='livingBranchPlayer';root.innerHTML='<video class="livingEntry" playsinline></video><video class="livingHold" playsinline loop muted></video><div class="livingChoices" aria-live="polite"></div>';document.body.appendChild(root)}
@@ -67,10 +68,10 @@ async function selectChoice(choice:LivingChoice){
  closeLivingNode();
 }
 export async function playLivingNode(node:LivingNode){
- const root=ensureRoot();state.node=node;state.history.push(node.id);state.history=state.history.slice(-8);root.classList.add('active');root.classList.remove('holding','choiceOpen','choiceCommitted');root.dataset.node=node.id;
+ const root=ensureRoot();setFilmState(true);state.node=node;state.history.push(node.id);state.history=state.history.slice(-8);root.classList.add('active');root.classList.remove('holding','choiceOpen','choiceCommitted');root.dataset.node=node.id;
  if(node.holdSrc&&state.hold){state.hold.src=node.holdSrc;state.hold.currentTime=0;state.hold.muted=true;await state.hold.play().catch(()=>{})}
  if(node.entrySrc&&state.video){state.video.src=node.entrySrc;state.video.currentTime=0;state.video.muted=true;await state.video.play().catch(()=>{});state.video.onended=()=>{root.classList.add('holding');showChoices(node)}}
  else window.setTimeout(()=>{root.classList.add('holding');showChoices(node)},node.fallbackMs||250);
 }
-export function closeLivingNode(){const root=state.root;if(!root)return;state.video?.pause();state.hold?.pause();root.remove();state.node=null;state.root=null;state.video=null;state.hold=null;state.preloads.clear()}
+export function closeLivingNode(){setFilmState(false);const root=state.root;if(!root)return;state.video?.pause();state.hold?.pause();root.remove();state.node=null;state.root=null;state.video=null;state.hold=null;state.preloads.clear()}
 window.addEventListener('monia:play-living-node',((e:CustomEvent<LivingNode>)=>{const canonical=day1Nodes[e.detail?.id];playLivingNode(canonical||e.detail)}) as EventListener);
