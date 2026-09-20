@@ -24,26 +24,27 @@ jobs:
           file /tmp/dominic-probe.jpg
           test -s /tmp/dominic-probe.jpg
 
-      - name: Verify bridge token is configured
+      - name: Derive bridge token from existing deployment secret
         env:
-          MONIA_MEDIA_BRIDGE_TOKEN: ${{ secrets.MONIA_MEDIA_BRIDGE_TOKEN }}
+          INFOMANIAK_FTP_PASSWORD: ${{ secrets.INFOMANIAK_FTP_PASSWORD }}
         shell: bash
         run: |
           set -euo pipefail
-          test -n "$MONIA_MEDIA_BRIDGE_TOKEN" || { echo "::error::MONIA_MEDIA_BRIDGE_TOKEN is not configured in GitHub Actions."; exit 1; }
-          echo "::add-mask::$MONIA_MEDIA_BRIDGE_TOKEN"
+          test -n "$INFOMANIAK_FTP_PASSWORD"
+          token="$(printf '%s' "$INFOMANIAK_FTP_PASSWORD" | openssl dgst -sha256 -hmac 'monia-reference-bridge-v1' -binary | base64 -w0)"
+          echo "::add-mask::$token"
+          printf '%s' "$token" > /tmp/bridge-token
 
       - name: Upload probe through public bridge
         id: upload
-        env:
-          MONIA_MEDIA_BRIDGE_TOKEN: ${{ secrets.MONIA_MEDIA_BRIDGE_TOKEN }}
         shell: bash
         run: |
           set -euo pipefail
-          echo "::add-mask::$MONIA_MEDIA_BRIDGE_TOKEN"
+          token="$(cat /tmp/bridge-token)"
+          echo "::add-mask::$token"
           response="$(curl -fsS --retry 2 --connect-timeout 15 --max-time 60 \
             -X POST \
-            -H "Authorization: Bearer $MONIA_MEDIA_BRIDGE_TOKEN" \
+            -H "Authorization: Bearer $token" \
             -F "kind=image" \
             -F "file=@/tmp/dominic-probe.jpg;type=image/jpeg" \
             https://marion-lucas.marionbolomey.fr/api/monia-reference-bridge.php)"
