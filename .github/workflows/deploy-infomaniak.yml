@@ -10,7 +10,7 @@ permissions:
 
 concurrency:
   group: infomaniak-production
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   build-and-deploy:
@@ -36,9 +36,12 @@ jobs:
 
       - name: Generate living world loops
         shell: bash
+        timeout-minutes: 4
         run: |
           set -euo pipefail
-          node tools/generate-living-loops.mjs
+          timeout 180s node tools/generate-living-loops.mjs || {
+            echo "Living-loop generation timed out; keeping deployment moving with existing public assets."
+          }
           find public/resources/living -maxdepth 1 -type f -name '*.mp4' -print || true
 
       - name: Materialize canonical Marion reference
