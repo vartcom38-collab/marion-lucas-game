@@ -1,0 +1,30 @@
+{
+ "version":"1.0",
+ "slice":"1998-may-day1-social-to-first-contact",
+ "principles":["Dominic meeting occurs Day 1","player never sees encounter selector","Marine does not exist only to deliver Dominic","Marion outfit and prior choices persist","meeting context can differ between saves"],
+ "marine":{
+   "triggerContexts":["while-coffee","after-getting-ready","while-checking-phone","shortly-before-leaving"],
+   "contactVariants":["message","call","follow-up-message"],
+   "conversationFamilies":["daily-life","plans","Nimes","friends","clothes","mood","small-gossip","practical-plan"],
+   "rules":["conversation length varies","topics depend on what Marion already did","no Dominic spoiler before encounter","Marine remembers Marion responses"]
+ },
+ "departure":{
+   "choices":["leave-with-plan","delay","change-small-detail","check-phone-first"],
+   "stateTransfer":["outfit-id","bag","phone","money","energy","mood","Marine-plan","time"],
+   "transitionMedia":["door-exit","building-exit","street-arrival"],
+   "directorCanInterrupt":["new-message","Marine-follow-up","minor-home-event"]
+ },
+ "nimes":{
+   "livingFamilies":["street-walk","cafe-terrace","feria-atmosphere","arena-periphery","shop-window","meeting-Marine"],
+   "ambientVariation":["crowd-density","sun-light","street-performer","vendor","traffic","bells","tourists","locals","minor-delay"],
+   "realPlaceRule":"Named Nimes locations require real visual reference packs."
+ },
+ "firstContactWindow":{
+   "hiddenCandidateFamilies":["arena-midday","feria-afternoon","feria-evening"],
+   "selectionInputs":["save-seed","current-time","Marion-route","Marine-presence","crowd","outfit","prior-delays","anti-repeat-history"],
+   "canonicalOutcome":"Marion and Dominic meet on Day 1",
+   "variable":["who-notices-first","physical-spacing","first-line-family","Marine-presence","minor-incident","conversation-length","how-contact-details-become-possible"],
+   "afterContact":["Marion-reaction","Marine-reaction-if-present","Dominic-departure-reason","memory-write","later-message-eligibility"]
+ },
+ "preload":"Once route makes encounter families impossible, unload them and prepare only remaining compatible candidates."
+}
