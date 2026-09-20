@@ -62,10 +62,12 @@ jobs:
           if [ ! -s dist/resources/monia/canon/marion/reference.webp ] && [ ! -s dist/resources/monia/canon/marion/reference.png ]; then
             echo "Canonical Marion binary not materialized yet; gameplay deploy continues because identity generation remains gated by multiview QA."
           fi
+          mkdir -p dist/config
+          cp config/monia-visio-approved.json dist/config/monia-visio-approved.json
           test -f dist/config/monia-visio-approved.json
           node - <<'NODE'
           const fs=require('fs');
-          const m=JSON.parse(fs.readFileSync('dist/config/monia-visio-approved.json','utf8'));
+          const m=JSON.parse(fs.readFileSync('config/monia-visio-approved.json','utf8'));
           if(m.status!=='locked') process.exit(1);
           if(m.fallback!==null) process.exit(1);
           if(!Object.values(m.states||{}).every(v=>v===null)) process.exit(1);
