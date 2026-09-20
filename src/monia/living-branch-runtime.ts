@@ -36,8 +36,22 @@ const day1Nodes:Record<string,LivingNode>={
   {id:'phone',label:'Vérifier mon téléphone',nextNodeIds:['D1_PHONE_MARINE'],effects:{minutes:3}}
  ]},
  D1_READY_TO_GO:{id:'D1_READY_TO_GO',fallbackMs:180,choices:[
-  {id:'leave',label:'Sortir dans Nîmes',nextNodeIds:[],effects:{minutes:8,place:'nimes',memory:'Tu as quitté l’appartement pour commencer vraiment la journée.',flags:{day1LeftHome:true}}},
+  {id:'leave',label:'Sortir dans Nîmes',nextNodeIds:['D1_NIMES_ENTRY'],effects:{minutes:8,place:'nimes',memory:'Tu as quitté l’appartement pour commencer vraiment la journée.',flags:{day1LeftHome:true}}},
   {id:'coffee',label:'Un dernier café avant de partir',nextNodeIds:['D1_COFFEE'],effects:{minutes:7,energy:2}}
+ ]},
+ D1_NIMES_ENTRY:{id:'D1_NIMES_ENTRY',fallbackMs:450,choices:[
+  {id:'walk',label:'Marcher vers le centre',nextNodeIds:['D1_NIMES_WALK'],effects:{minutes:12,memory:'Tu as pris la direction du centre de Nîmes.',flags:{day1InNimes:true}}},
+  {id:'marine',label:'Regarder où est Marine',nextNodeIds:['D1_NIMES_WALK'],effects:{minutes:4,flags:{day1LookingForMarine:true}}},
+  {id:'wander',label:'Prendre mon temps',nextNodeIds:['D1_NIMES_WALK'],effects:{minutes:9,stress:-1}}
+ ]},
+ D1_NIMES_WALK:{id:'D1_NIMES_WALK',fallbackMs:450,choices:[
+  {id:'arenes',label:'Continuer vers les arènes',nextNodeIds:['D1_MARINE_APPROACH'],effects:{minutes:10,memory:'Tu t’es rapprochée des arènes sans savoir ce que la journée allait provoquer.',flags:{day1NearArenes:true}}},
+  {id:'message',label:'Envoyer un message à Marine',nextNodeIds:['D1_MARINE_APPROACH'],effects:{minutes:4,flags:{day1PingedMarine:true}}},
+  {id:'observe',label:'Regarder la ville autour de moi',nextNodeIds:['D1_MARINE_APPROACH'],effects:{minutes:7}}
+ ]},
+ D1_MARINE_APPROACH:{id:'D1_MARINE_APPROACH',fallbackMs:550,choices:[
+  {id:'join',label:'Rejoindre Marine',nextNodeIds:[],effects:{minutes:6,memory:'Tu as retrouvé Marine près des arènes.',flags:{day1MarineReached:true}}},
+  {id:'wait',label:'L’attendre quelques minutes',nextNodeIds:[],effects:{minutes:5,flags:{day1WaitingMarine:true}}}
  ]}
 };
 
