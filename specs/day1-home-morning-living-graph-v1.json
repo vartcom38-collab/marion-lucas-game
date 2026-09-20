@@ -1,0 +1,62 @@
+{
+  "version": 1,
+  "id": "day1-home-morning-living-graph-v1",
+  "window": "09:00-10:15",
+  "design": {
+    "ordinaryChoiceNeverEndsDay": true,
+    "ordinaryChoiceNeverEndsMorningByItself": true,
+    "choicesPerBeat": "2-4",
+    "timeAdvanceMinutes": "3-18",
+    "repeatPolicy": "avoid immediate repetition; allow plausible returns",
+    "directorInterruptions": true,
+    "videoTransition": "preload-compatible-next"
+  },
+  "nodes": [
+    {"id":"D1_HOME_WAKE","videoEntry":"D1_H01","videoHold":"D1_H02","choices":[
+      {"id":"phone","label":"Regarder le téléphone","minutes":4,"next":["D1_PHONE_MARINE","D1_HOME_AFTER_PHONE"]},
+      {"id":"coffee","label":"Faire un café","minutes":10,"next":["D1_COFFEE"]},
+      {"id":"wash","label":"Aller se préparer","minutes":14,"next":["D1_GET_READY"]},
+      {"id":"linger","label":"Rester encore un peu","minutes":8,"next":["D1_QUIET_WINDOW"]}
+    ]},
+    {"id":"D1_PHONE_MARINE","videoEntry":"D1_P01","videoHold":"D1_P02","choices":[
+      {"id":"reply","label":"Répondre à Marine","minutes":5,"next":["D1_HOME_AFTER_PHONE"],"effects":{"flags":["marineRepliedMorning"]}},
+      {"id":"later","label":"Répondre plus tard","minutes":2,"next":["D1_HOME_AFTER_PHONE"],"effects":{"flags":["marineReplyDeferred"]}}
+    ]},
+    {"id":"D1_HOME_AFTER_PHONE","videoEntry":"D1_H02","choices":[
+      {"id":"coffee","label":"Faire un café","minutes":10,"next":["D1_COFFEE"]},
+      {"id":"ready","label":"Me préparer","minutes":14,"next":["D1_GET_READY"]},
+      {"id":"quiet","label":"Profiter encore du calme","minutes":7,"next":["D1_QUIET_WINDOW"]}
+    ]},
+    {"id":"D1_COFFEE","videoEntry":"D1_F01","choices":[
+      {"id":"drink-window","label":"Le boire près de la fenêtre","minutes":8,"next":["D1_QUIET_WINDOW"]},
+      {"id":"phone","label":"Regarder mon téléphone","minutes":4,"next":["D1_PHONE_MARINE","D1_HOME_AFTER_PHONE"]},
+      {"id":"ready","label":"Me préparer ensuite","minutes":13,"next":["D1_GET_READY"]}
+    ]},
+    {"id":"D1_QUIET_WINDOW","videoEntry":"D1_F03","choices":[
+      {"id":"ready","label":"Bon, je me prépare","minutes":13,"next":["D1_GET_READY"]},
+      {"id":"phone","label":"Voir mon téléphone","minutes":4,"next":["D1_PHONE_MARINE","D1_HOME_AFTER_PHONE"]},
+      {"id":"linger","label":"Encore quelques minutes","minutes":6,"next":["D1_QUIET_WINDOW"],"maxConsecutive":1}
+    ]},
+    {"id":"D1_GET_READY","videoEntry":"D1_F02","choices":[
+      {"id":"outfit","label":"Choisir ma tenue","minutes":8,"next":["D1_READY_TO_GO"]},
+      {"id":"phone","label":"Vérifier mon téléphone","minutes":3,"next":["D1_PHONE_MARINE","D1_READY_TO_GO"]},
+      {"id":"finish","label":"Finir de me préparer","minutes":6,"next":["D1_READY_TO_GO"]}
+    ]},
+    {"id":"D1_READY_TO_GO","videoHold":"D1_H02","choices":[
+      {"id":"leave","label":"Sortir","minutes":3,"next":["D1_EXIT_HOME"]},
+      {"id":"coffee","label":"Un dernier café","minutes":9,"next":["D1_COFFEE"]},
+      {"id":"phone","label":"Regarder une dernière fois mon téléphone","minutes":3,"next":["D1_PHONE_MARINE","D1_READY_TO_GO"]}
+    ]},
+    {"id":"D1_EXIT_HOME","videoEntry":"D1_F04","autoNext":["D1_NIMES_ENTRY"],"effects":{"place":"nimes","flags":["day1LeftHome"]}},
+    {"id":"D1_NIMES_ENTRY","videoEntry":"D1_N01","videoHold":"D1_N04","choices":[
+      {"id":"walk","label":"Marcher un peu","minutes":12,"next":["D1_NIMES_WALK"]},
+      {"id":"marine","label":"Voir où est Marine","minutes":4,"next":["D1_MARINE_APPROACH"]},
+      {"id":"wander","label":"Flâner sans but précis","minutes":15,"next":["D1_NIMES_WALK"]}
+    ]},
+    {"id":"D1_NIMES_WALK","videoEntry":"D1_N02","videoHold":"D1_N04","directorMayInterrupt":true,"choices":[
+      {"id":"marine","label":"Rejoindre Marine","minutes":8,"next":["D1_MARINE_APPROACH"]},
+      {"id":"continue","label":"Continuer à marcher","minutes":10,"next":["D1_NIMES_WALK"],"maxConsecutive":1}
+    ]},
+    {"id":"D1_MARINE_APPROACH","videoEntry":"D1_N03","videoHold":"D1_N04","directorMayInterrupt":true,"nextPhase":"day1-nimes-social-graph"}
+  ]
+}
