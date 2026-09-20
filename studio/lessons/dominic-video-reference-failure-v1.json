@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "lessonType": "generation-failure",
+  "character": "Dominic",
+  "purpose": "jury autonomous-world demonstration",
+  "provider": "Magnific connector",
+  "model": "bytedance-seedance-mini-2.0",
+  "attempt": {
+    "durationSeconds": 5,
+    "resolution": "480p",
+    "aspectRatio": "16:9",
+    "reference": "MonIA atlas-canon.webp via imported creation",
+    "creditsQuoted": 350
+  },
+  "result": {
+    "status": "failed",
+    "reason": "Frame image is corrupt or incomplete",
+    "creditsActuallyConsumed": "verify before next paid attempt"
+  },
+  "lesson": [
+    "The MonIA atlas image can be imported as an image creation but is not safe as a Seedance video reference in its current encoding.",
+    "Validate reference decodability for target video model before submitting paid generation.",
+    "Do not fall back to text-only Dominic identity.",
+    "Repair/re-encode canonical reference or select another valid canonical frame from MonIA."
+  ],
+  "nextAction": "Use another valid canonical Dominic JPEG/reference from MonIA or re-encode the atlas before retrying."
+}
