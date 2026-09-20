@@ -1,0 +1,7 @@
+{
+ "version":"1.0",
+ "character":"Marion",
+ "requiredChecks":["front-face","left-or-right-profile","three-quarter","eye-shape-and-spacing","nose-profile","mouth","cheek-mole","jawline","hairline","hair-color-and-texture","age-presentation-around-20"],
+ "rejectIf":["identity drifts toward another woman","looks materially older than game canon","mole disappears across close views","face shape changes between shots","reference-board printed text contaminates prompt"],
+ "approval":"User visual judgment remains final."
+}
