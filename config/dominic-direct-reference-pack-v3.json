@@ -1,0 +1,99 @@
+{
+  "version": 3,
+  "character": "Dominic",
+  "authority": "user-provided original screenshots 2026-09-20",
+  "status": "canonical-direct-files",
+  "sources": [
+    {
+      "file": "IMG_4468(1).jpeg",
+      "priority": "identity-high",
+      "rules": [
+        "use Dominic identity/geometry/expression/body only",
+        "ignore social-media UI/text/background/other people",
+        "scene wardrobe is not universal canon"
+      ]
+    },
+    {
+      "file": "IMG_4467(1).jpeg",
+      "priority": "identity-high",
+      "rules": [
+        "use Dominic identity/geometry/expression/body only",
+        "ignore social-media UI/text/background/other people",
+        "scene wardrobe is not universal canon"
+      ]
+    },
+    {
+      "file": "IMG_4466(1).jpeg",
+      "priority": "identity-high",
+      "rules": [
+        "use Dominic identity/geometry/expression/body only",
+        "ignore social-media UI/text/background/other people",
+        "scene wardrobe is not universal canon"
+      ]
+    },
+    {
+      "file": "IMG_4465(1).jpeg",
+      "priority": "identity-high",
+      "rules": [
+        "use Dominic identity/geometry/expression/body only",
+        "ignore social-media UI/text/background/other people",
+        "scene wardrobe is not universal canon"
+      ]
+    },
+    {
+      "file": "IMG_4425(1).jpeg",
+      "priority": "identity-support",
+      "rules": [
+        "use Dominic identity/geometry/expression/body only",
+        "ignore social-media UI/text/background/other people",
+        "scene wardrobe is not universal canon"
+      ]
+    },
+    {
+      "file": "IMG_3772(3).jpeg",
+      "priority": "identity-support",
+      "rules": [
+        "use Dominic identity/geometry/expression/body only",
+        "ignore social-media UI/text/background/other people",
+        "scene wardrobe is not universal canon"
+      ]
+    },
+    {
+      "file": "IMG_3771(2).jpeg",
+      "priority": "identity-support",
+      "rules": [
+        "use Dominic identity/geometry/expression/body only",
+        "ignore social-media UI/text/background/other people",
+        "scene wardrobe is not universal canon"
+      ]
+    },
+    {
+      "file": "IMG_3770(1).jpeg",
+      "priority": "identity-support",
+      "rules": [
+        "use Dominic identity/geometry/expression/body only",
+        "ignore social-media UI/text/background/other people",
+        "scene wardrobe is not universal canon"
+      ]
+    }
+  ],
+  "generationPolicy": {
+    "identity": "Use several direct originals when engine supports multi-reference; otherwise build a clean reference board derived from these originals.",
+    "motion": "Pair visual identity with config/lucas-video-bank.json behavior references.",
+    "qa": [
+      "face geometry",
+      "hair",
+      "brows",
+      "eyes",
+      "jaw",
+      "stubble",
+      "body proportions",
+      "continuity"
+    ],
+    "forbid": [
+      "text-only reconstruction when originals available",
+      "copying screenshot UI",
+      "copying source scene verbatim"
+    ]
+  }
+}
