@@ -1,0 +1,25 @@
+{
+ "version":"1.0",
+ "slice":"post-first-contact",
+ "goal":"Make the meeting matter immediately without forcing romance beats.",
+ "memoryWritten":{
+  "Marion":["first-impression","comfort","curiosity","embarrassment","attraction-if-earned","details-noticed","what-was-said"],
+  "Dominic":["first-impression","Marion-response-style","details-noticed","contact-status","reason-for-leaving"],
+  "Marine":["what-she-witnessed","Marion-visible-reaction","what-Marion-later-tells-her"]
+ },
+ "sameDayBranches":[
+  "continue-with-Marine","short-private-reflection","ordinary-activity","unexpected-career-sighting","go-home-earlier","stay-out-later"
+ ],
+ "laterMessage":{
+  "canonicalFamily":"Tu es bien rentrée ?",
+  "timing":"director-selected later window",
+  "requirements":["contact details plausibly exchanged","Dominic has plausible phone access","not during incompatible career beat"],
+  "presentationVariants":["direct-message","message-arrives-while-Marion-busy","message-seen-later"],
+  "responseChoices":"3-5 contextual options plus optional delay/non-response when plausible"
+ },
+ "nextDayBridge":{
+  "corridaCanonProtected":true,
+  "knowledgeRule":"Marion learns about corrida only through plausible information flow.",
+  "possibleEffects":["interest","nervousness","Marine-discussion","schedule-change","nothing-immediate"]
+ }
+}
