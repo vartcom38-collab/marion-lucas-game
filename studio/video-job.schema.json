@@ -3,62 +3,280 @@
   "$id": "https://marion-lucas.marionbolomey.fr/studio/video-job.schema.json",
   "title": "MonIA Studio Video Job",
   "type": "object",
-  "required": ["id", "state", "createdAt", "source", "candidateOnly", "narrativeAuthority", "sceneFamily", "prompt", "characters", "output"],
+  "required": [
+    "id",
+    "state",
+    "createdAt",
+    "source",
+    "candidateOnly",
+    "narrativeAuthority",
+    "sceneFamily",
+    "prompt",
+    "characters",
+    "output"
+  ],
   "properties": {
-    "id": {"type": "string", "minLength": 1},
-    "state": {"enum": ["queued", "running", "candidate", "failed", "cancelled"]},
-    "createdAt": {"type": "string"},
-    "source": {"enum": ["gameplay", "anticipation", "review-regeneration"]},
-    "candidateOnly": {"const": true},
-    "narrativeAuthority": {"const": false},
-    "sceneFamily": {"type": "string"},
-    "signature": {"type": "string"},
-    "prompt": {"type": "string"},
-    "negativePrompt": {"type": "string"},
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "state": {
+      "enum": [
+        "queued",
+        "running",
+        "candidate",
+        "failed",
+        "cancelled"
+      ]
+    },
+    "createdAt": {
+      "type": "string"
+    },
+    "source": {
+      "enum": [
+        "gameplay",
+        "anticipation",
+        "review-regeneration"
+      ]
+    },
+    "candidateOnly": {
+      "const": true
+    },
+    "narrativeAuthority": {
+      "const": false
+    },
+    "sceneFamily": {
+      "type": "string"
+    },
+    "signature": {
+      "type": "string"
+    },
+    "prompt": {
+      "type": "string"
+    },
+    "negativePrompt": {
+      "type": "string"
+    },
     "characters": {
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["id", "canonRef"],
+        "required": [
+          "id",
+          "canonRef"
+        ],
         "properties": {
-          "id": {"enum": ["marion", "lucas", "child", "secondary"]},
-          "canonRef": {"type": "string"},
-          "wardrobe": {"type": "string"}
+          "id": {
+            "enum": [
+              "marion",
+              "lucas",
+              "child",
+              "secondary"
+            ]
+          },
+          "canonRef": {
+            "type": "string"
+          },
+          "wardrobe": {
+            "type": "string"
+          }
         }
       }
     },
     "motion": {
       "type": "object",
       "properties": {
-        "referenceId": {"type": "string"},
-        "tags": {"type": "array", "items": {"type": "string"}},
-        "copyIdentity": {"const": false}
+        "referenceId": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "copyIdentity": {
+          "const": false
+        }
       }
     },
     "continuity": {
       "type": "object",
       "properties": {
-        "previousFrameUrl": {"type": "string"},
-        "reusePreviousFrame": {"type": "boolean"}
+        "previousFrameUrl": {
+          "type": "string"
+        },
+        "reusePreviousFrame": {
+          "type": "boolean"
+        }
       }
     },
     "generation": {
       "type": "object",
       "properties": {
-        "provider": {"enum": ["kaggle"]},
-        "router": {"enum": ["auto", "wan", "ltx"]},
-        "width": {"type": "integer"},
-        "height": {"type": "integer"},
-        "seconds": {"type": "number"},
-        "seed": {"type": "integer"}
+        "provider": {
+          "enum": [
+            "kaggle",
+            "monia",
+            "magnific"
+          ]
+        },
+        "router": {
+          "enum": [
+            "auto",
+            "wan",
+            "ltx"
+          ]
+        },
+        "width": {
+          "type": "integer"
+        },
+        "height": {
+          "type": "integer"
+        },
+        "seconds": {
+          "type": "number"
+        },
+        "seed": {
+          "type": "integer"
+        }
       }
     },
     "output": {
       "type": "object",
-      "required": ["candidatePath"],
+      "required": [
+        "candidatePath"
+      ],
       "properties": {
-        "candidatePath": {"type": "string"},
-        "approvedPath": {"type": "string"}
+        "candidatePath": {
+          "type": "string"
+        },
+        "approvedPath": {
+          "type": "string"
+        }
+      }
+    },
+    "generationPolicy": {
+      "enum": [
+        "autonomous-first",
+        "quality-first",
+        "magnific-assisted",
+        "compare"
+      ],
+      "default": "autonomous-first"
+    },
+    "allowPaidExternal": {
+      "type": "boolean",
+      "default": false
+    },
+    "learningCapture": {
+      "type": "boolean",
+      "default": true
+    },
+    "playableContext": {
+      "type": "object",
+      "properties": {
+        "entryState": {
+          "type": "string"
+        },
+        "exitState": {
+          "type": "string"
+        },
+        "gameplayBetweenClips": {
+          "type": "boolean"
+        },
+        "choices": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "nextSceneFamily": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "conversationTopics": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "location": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "realWorld": {
+          "type": "boolean"
+        },
+        "referenceRequired": {
+          "type": "boolean"
+        },
+        "referenceUrls": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "fidelityNotes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "references": {
+      "type": "object",
+      "properties": {
+        "identity": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "behavior": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "wardrobe": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "location": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "wardrobeContinuity": {
+      "type": "object",
+      "properties": {
+        "outfitId": {
+          "type": "string"
+        },
+        "lockedUntil": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "string"
+        }
       }
     }
   }
