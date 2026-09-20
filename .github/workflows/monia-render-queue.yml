@@ -86,9 +86,9 @@ jobs:
           path: |
             .monia-video/scenes
             .monia-video/quality
-          key: monia-scene-clips-v1-${{ matrix.item.id }}-${{ github.run_id }}
+          key: monia-scene-clips-v2-${{ matrix.item.id }}-${{ github.run_id }}
           restore-keys: |
-            monia-scene-clips-v1-${{ matrix.item.id }}-
+            monia-scene-clips-v2-${{ matrix.item.id }}-
       - name: Restore cumulative voice lines
         uses: actions/cache@v4
         with:
