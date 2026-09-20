@@ -56,6 +56,7 @@ jobs:
       MONIA_IMAGE_MODE: qwen-compose
       MONIA_IMAGE_TIMEOUT_SECONDS: "240"
       MONIA_ANCHOR_LIBRARY_DIR: .monia-video/anchor-library
+      MONIA_VOICE_CACHE_DIR: .monia-video/voice-cache
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -70,7 +71,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install "gradio_client>=1.3,<2" "requests>=2.31,<3" "Pillow>=10,<12"
       - name: Validate MonIA Python
-        run: python -m py_compile scripts/monia_image_engine.py scripts/monia_scene_pipeline.py scripts/monia_scene_anchor_planner.py scripts/monia_scene_worker.py
+        run: python -m py_compile scripts/monia_image_engine.py scripts/monia_scene_pipeline.py scripts/monia_scene_anchor_planner.py scripts/monia_scene_worker.py scripts/monia_lucas_v16_runtime_voice.py
       - name: Restore visual memory
         uses: actions/cache@v4
         with:
@@ -88,6 +89,13 @@ jobs:
           key: monia-scene-clips-v1-${{ matrix.item.id }}-${{ github.run_id }}
           restore-keys: |
             monia-scene-clips-v1-${{ matrix.item.id }}-
+      - name: Restore cumulative voice lines
+        uses: actions/cache@v4
+        with:
+          path: .monia-video/voice-cache
+          key: monia-voice-v16-v1-${{ matrix.item.id }}-${{ github.run_id }}
+          restore-keys: |
+            monia-voice-v16-v1-${{ matrix.item.id }}-
       - name: Render scene
         run: |
           mkdir -p ".monia-video/queue/${{ matrix.item.id }}"
