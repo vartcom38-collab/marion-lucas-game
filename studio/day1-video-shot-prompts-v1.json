@@ -1,0 +1,25 @@
+{
+  "version":1,
+  "id":"day1-video-shot-prompts-v1",
+  "globalDirection":{
+    "look":"photorealistic cinematic naturalism, May 1998, no modern objects, no baked UI, no subtitles",
+    "camera":"human observational camera, restrained movement, no glossy commercial posing",
+    "performance":"micro-actions, breathing, eye movement, imperfect timing, no mannequin stillness",
+    "continuity":"same apartment geography, light progression consistent with elapsed time, outfit from save",
+    "identity":"Marion-visible shots remain blocked until canonical multiview identity is attached and approved"
+  },
+  "shots":[
+    {"id":"D1_H01","prompt":"Warm May morning inside Marion's Nîmes apartment. Empty room establishing shot, curtains and plants moving subtly, real street life outside, lived-in details, 1998 only. Slow natural camera drift. Leave lower frame visually calm for optional gameplay choices.","safeToGenerateWithoutMarion":true},
+    {"id":"D1_H02","prompt":"Matching living hold of the same Nîmes apartment and exact lighting. Subtle curtain movement, shifting sunlight, distant street motion, tiny environmental changes. Seamless-feeling 8-12 second hold, no person entering frame.","safeToGenerateWithoutMarion":true},
+    {"id":"D1_P01","prompt":"Close observational insert around a period-appropriate phone interaction integrated with the apartment morning. No modern smartphone aesthetics, no baked text or interface; gameplay renders message UI separately.","safeToGenerateWithoutMarion":true},
+    {"id":"D1_N01","prompt":"Authentic Nîmes in May 1998, late morning. Real local architecture and street character, natural pedestrians and period-correct vehicles/clothing, documentary-cinematic observation, no generic Mediterranean substitute.","safeToGenerateWithoutMarion":true,"requiresRealNimesReferences":true},
+    {"id":"D1_H03","prompt":"Canonical Marion, age presentation about 20, crosses her apartment naturally and notices her phone. She does not pose or look into camera. Small sleepy morning gestures and believable weight shifts.","identityGate":"marion"},
+    {"id":"D1_F01","prompt":"Canonical Marion makes coffee in her Nîmes apartment. Ordinary imperfect gestures, briefly distracted, consistent wardrobe and morning light, no performance for camera.","identityGate":"marion"},
+    {"id":"D1_F02","prompt":"Canonical Marion gets ready to leave: hair, mirror, jacket or bag, wardrobe exactly from current save. Concise continuous action, natural pace, no montage glamour.","identityGate":"marion"},
+    {"id":"D1_F03","prompt":"Canonical Marion spends a quiet moment near the apartment window, looking toward the street, subtle breathing and thought, no melodrama.","identityGate":"marion"},
+    {"id":"D1_F04","prompt":"Canonical Marion takes her things and exits the apartment. Preserve exact outfit, hair and bag for the next exterior shot. End on a clean movement raccord.","identityGate":"marion"},
+    {"id":"D1_N02","prompt":"Canonical Marion walks through authentic Nîmes, May 1998. Natural crowd occlusion and street rhythm, outfit continuous from apartment exit, observational camera.","identityGate":"marion","requiresRealNimesReferences":true},
+    {"id":"D1_N03","prompt":"Canonical Marion meets Marine naturally while already moving in Nîmes. Friendly ordinary interaction, overlapping attention with the street, no staged greeting pose. Keep branch-friendly ending.","identityGate":"marion","requiresMarineReference":true,"requiresRealNimesReferences":true},
+    {"id":"D1_N04","prompt":"Living hold in authentic Nîmes with Marion/Marine or environment continuing subtle motion while gameplay choices can appear. No frozen actors, no obvious loop reset.","identityGate":"conditional"}
+  ]
+}
