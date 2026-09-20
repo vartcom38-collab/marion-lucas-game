@@ -8,6 +8,6 @@
   "preserveCheckpoint": true,
   "reuseValidatedAnchors": true,
   "approvalRequired": true,
-  "attempt": 9,
-  "reason": "retry-with-ffmpeg-media-runtime"
+  "attempt": 10,
+  "reason": "cumulative-video-and-dominic-voice-cache"
 }
