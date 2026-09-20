@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "lessonType": "observed-generation",
+  "purpose": "jury gameplay phone interaction clean plate",
+  "recipe": {
+    "duration": 6,
+    "resolution": "480p",
+    "aspectRatio": "16:9",
+    "referenceStrategy": "3 canonical Marion image references",
+    "shotDesign": "period phone interaction + continuous performance + negative space for runtime/post UI",
+    "constraints": [
+      "no baked UI",
+      "no text/subtitles",
+      "no modern smartphone",
+      "face remains readable",
+      "camera anticipates blocking"
+    ],
+    "costCredits": 420
+  },
+  "result": {
+    "status": "completed",
+    "approval": "pending human review"
+  },
+  "learnedRules": [
+    "For gameplay demonstrations generate clean plates, never UI inside video.",
+    "Compose negative space intentionally for runtime overlays.",
+    "Short 6s controlled clip is sufficient for one gameplay beat and reduces cost.",
+    "Use canonical multi-reference identity set for Marion.",
+    "Period props must be explicitly constrained."
+  ]
+}
