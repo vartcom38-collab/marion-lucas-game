@@ -1,0 +1,18 @@
+{
+ "version":"1.0",
+ "id":"1998-may-day1-playable-proof",
+ "goal":"Prove the final gameplay grammar before mass video production.",
+ "mustProve":[
+  "canonical Marion identity","living video continues under choices","3-5 contextual choices","instant branch transition",
+  "outfit continuity","NPC autonomous transition","phone/menu coexistence","no visible generation wait","save/reload continuity"
+ ],
+ "sequence":[
+  {"id":"home-01","type":"living-video","focus":"Marion morning apartment","choiceWindow":true},
+  {"id":"home-02","type":"branch","focus":"chosen morning action/outfit","choiceWindow":true},
+  {"id":"marine-01","type":"director-event","focus":"Marine contact without exposing future Dominic context"},
+  {"id":"transition-01","type":"living-video","focus":"leave/stay/preparation consequences"},
+  {"id":"nimes-01","type":"branch-family","focus":"real Nimes context; multiple compatible routes"},
+  {"id":"meeting-window","type":"canonical-anchor","focus":"Dominic first meeting occurs Day 1; staging selected secretly"}
+ ],
+ "productionRule":"Do not expand the library until home-01 -> choice -> home-02 works end-to-end with approved identity and seamless transition."
+}
