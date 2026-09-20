@@ -1,0 +1,81 @@
+{
+  "version": 1,
+  "character": "Dominic",
+  "sourceAuthority": "MonIA/GitHub",
+  "status": "ready-for-materialization",
+  "selectedReferenceSources": [
+    {
+      "path": "assets/lucas-reference-compact.b64",
+      "role": [
+        "identity",
+        "face"
+      ]
+    },
+    {
+      "path": "assets/lucas-reference-from-user-video.jpg.b64",
+      "role": [
+        "identity",
+        "motion-derived-frame"
+      ]
+    },
+    {
+      "path": "assets/monia-atlas/lucas-priority-01.jpg.b64",
+      "role": [
+        "priority identity"
+      ]
+    },
+    {
+      "path": "assets/monia-atlas/lucas-priority-02.jpg.b64",
+      "role": [
+        "priority identity"
+      ]
+    },
+    {
+      "path": "config/lucas-reference-bank.json",
+      "role": [
+        "reference routing",
+        "motion",
+        "performance"
+      ]
+    },
+    {
+      "path": "config/lucas-video-bank.json",
+      "role": [
+        "behavior routing",
+        "motion",
+        "posture",
+        "gaze",
+        "micro-expression"
+      ]
+    }
+  ],
+  "routingRules": {
+    "autonomous_world_demo": [
+      "canonical identity",
+      "presence",
+      "gaze",
+      "reaction",
+      "general_motion"
+    ],
+    "home": [
+      "relaxed_posture",
+      "body_movement",
+      "gesture_rhythm"
+    ],
+    "speaking": [
+      "presence",
+      "speech_rhythm",
+      "gaze",
+      "jaw_head_coordination"
+    ],
+    "identityQA": [
+      "face_geometry",
+      "hair",
+      "eyes",
+      "stubble",
+      "skin_tone"
+    ]
+  },
+  "generationGate": "Never generate Dominic from text alone when canonical MonIA assets exist.",
+  "nextMaterialization": "Decode selected .b64 references into image assets, register a reusable DOMINIC_CANON generation pack, then generate the autonomous-world jury shot."
+}
