@@ -1,0 +1,22 @@
+{
+ "version":"1.0",
+ "principle":"Simulate a believable life, including overlooked transitions and consequences, without turning life into a checklist.",
+ "domains":[
+  {"name":"forming-couple","examples":["telling friends","meeting each other's friends","meeting parents","meeting siblings","first family meal","first invitation to a family event","first shared birthday","first holiday period"]},
+  {"name":"private-couple","examples":["first sexual milestone","first morning after","sleep habits","privacy boundaries","contraception discussions when contextually relevant","desire mismatch","reconnection after absence","hotel/private life during travel"]},
+  {"name":"domestic","examples":["keys","leaving belongings at each other's home","toiletries appearing","laundry","food preferences","sleep schedules","chores","hosting friends","first shared purchase","moving decisions"]},
+  {"name":"career-pressure","examples":["apoderado demands","training fatigue","contract changes","late travel","press duties","fan attention","injury recovery","missed plans","career triumph affecting mood"]},
+  {"name":"public-private-boundary","examples":["being recognized","autograph interruptions","paparazzi","rumors","magazine photos","family seeing press","privacy strategy","public couple status"]},
+  {"name":"family-building","examples":["future discussion","pregnancy discovery","medical appointments","body changes","birth preparation","postpartum routines","childcare","career-family scheduling"]},
+  {"name":"aging-life","examples":["parents aging","friendships changing","children growing","career transition","property projects","finca","bereavement possibilities","later-life routines"]}
+ ],
+ "hiddenLogic":{
+  "someEventsCanonical":true,
+  "someEventsConditional":true,
+  "someEventsRandomized":true,
+  "someEventsNeverOccurInASave":true,
+  "timingMustFollowCausality":true,
+  "playerIsNotAskedToScheduleLifeMilestones":true
+ },
+ "preparation":"Year skeletons exist ahead; exact days become detailed as the player approaches them."
+}
