@@ -47,6 +47,21 @@ jobs:
       - name: Build Vite application
         run: npm run build
 
+      - name: Materialize derived bridge auth hash
+        env:
+          INFOMANIAK_FTP_PASSWORD: ${{ secrets.INFOMANIAK_FTP_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$INFOMANIAK_FTP_PASSWORD"
+          token="$(printf '%s' "$INFOMANIAK_FTP_PASSWORD" | openssl dgst -sha256 -hmac 'monia-reference-bridge-v1' -binary | base64 -w0)"
+          echo "::add-mask::$token"
+          hash="$(php -r 'echo password_hash(getenv("TOKEN"), PASSWORD_DEFAULT);' TOKEN="$token" 2>/dev/null || true)"
+          if [ -z "$hash" ]; then
+            hash="$(TOKEN="$token" php -r 'echo password_hash(getenv("TOKEN"), PASSWORD_DEFAULT);')"
+          fi
+          printf "<?php return '%s';\n" "$hash" > dist/api/.monia-reference-bridge-auth.php
+
       - name: Verify build
         shell: bash
         run: |
