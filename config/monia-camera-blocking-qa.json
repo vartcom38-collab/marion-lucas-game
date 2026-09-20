@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "rule": "blocking-first",
+  "pipeline": [
+    "action",
+    "subject blocking",
+    "start/end frame positions",
+    "camera/framing",
+    "generation",
+    "first-mid-last-frame QA"
+  ],
+  "requirements": {
+    "accidentalFaceLoss": "reject",
+    "emotionalBeatFaceReadable": true,
+    "choiceHoldFaceReadable": true,
+    "standing": "anticipate vertical movement; add headroom and use tilt/pedestal/pull-out/head tracking when needed",
+    "walking": "use subtle tracking or compose wide enough to preserve face and body continuity",
+    "intentionalProfileOrBack": "allowed only when directorially motivated",
+    "mobileSafeComposition": true
+  },
+  "qa": [
+    "face visible at first frame",
+    "face visible/readable at middle frame when story requires it",
+    "face not accidentally cropped at final frame",
+    "identity stable",
+    "hands/body continuous",
+    "camera movement motivated"
+  ],
+  "userFeedback": "When Marion stands, her face must not disappear because the framing failed."
+}
