@@ -1,0 +1,73 @@
+name: Probe MonIA Reference Bridge
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Materialize existing Dominic probe reference
+        shell: bash
+        run: |
+          set -euo pipefail
+          base64 -d assets/lucas-reference-compact.b64 > /tmp/dominic-probe.jpg
+          file /tmp/dominic-probe.jpg
+          test -s /tmp/dominic-probe.jpg
+
+      - name: Verify bridge token is configured
+        env:
+          MONIA_MEDIA_BRIDGE_TOKEN: ${{ secrets.MONIA_MEDIA_BRIDGE_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$MONIA_MEDIA_BRIDGE_TOKEN" || { echo "::error::MONIA_MEDIA_BRIDGE_TOKEN is not configured in GitHub Actions."; exit 1; }
+          echo "::add-mask::$MONIA_MEDIA_BRIDGE_TOKEN"
+
+      - name: Upload probe through public bridge
+        id: upload
+        env:
+          MONIA_MEDIA_BRIDGE_TOKEN: ${{ secrets.MONIA_MEDIA_BRIDGE_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "::add-mask::$MONIA_MEDIA_BRIDGE_TOKEN"
+          response="$(curl -fsS --retry 2 --connect-timeout 15 --max-time 60 \
+            -X POST \
+            -H "Authorization: Bearer $MONIA_MEDIA_BRIDGE_TOKEN" \
+            -F "kind=image" \
+            -F "file=@/tmp/dominic-probe.jpg;type=image/jpeg" \
+            https://marion-lucas.marionbolomey.fr/api/monia-reference-bridge.php)"
+          printf '%s' "$response" > /tmp/bridge-response.json
+          python - <<'PY'
+          import json
+          d=json.load(open('/tmp/bridge-response.json'))
+          assert d.get('ok') is True, d
+          assert d.get('mime') in ('image/jpeg','image/png','image/webp'), d
+          assert int(d.get('bytes',0)) > 255, d
+          url=d.get('url','')
+          assert url.startswith('/resources/monia/bridge/'), d
+          with open('/tmp/public-url','w') as f:
+              f.write('https://marion-lucas.marionbolomey.fr'+url)
+          print('Bridge upload accepted:', d['mime'], d['bytes'], 'bytes')
+          print('Stored path:', url)
+          PY
+
+      - name: Verify returned public image
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="$(cat /tmp/public-url)"
+          curl -fsSL --retry 3 --connect-timeout 15 --max-time 60 "$url" -o /tmp/public-reference
+          test -s /tmp/public-reference
+          mime="$(file --brief --mime-type /tmp/public-reference)"
+          case "$mime" in
+            image/jpeg|image/png|image/webp) ;;
+            *) echo "::error::Unexpected public MIME: $mime"; exit 1 ;;
+          esac
+          echo "Public bridge asset verified: $mime ($(wc -c < /tmp/public-reference) bytes)"
