@@ -34,7 +34,7 @@ function renderStrip(){
   const game=document.querySelector<HTMLElement>('.game');
   if(!game||document.querySelector('.overlay.open')||document.querySelector('.surprisePlayer'))return;
   const snap=getLifeDirectorSnapshot();if(!snap)return;
-  const firstLivingMorning=snap.day===1&&/^09:/.test(String(snap.time||''))&&game.classList.contains('immersivePlayable');
+  const firstLivingMorning=snap.day===1&&Number(String(snap.time||'00:00').split(':')[0])<10&&game.classList.contains('immersivePlayable');
   if(firstLivingMorning){game.querySelector('.lifeNarrativeStrip')?.remove();return}
   let strip=game.querySelector<HTMLElement>('.lifeNarrativeStrip');
   if(!strip){strip=document.createElement('section');strip.className='lifeNarrativeStrip';game.append(strip)}
@@ -54,7 +54,7 @@ function renderStrip(){
 function cleanLegacyHud(){
   const game=document.querySelector<HTMLElement>('.game');if(!game)return;
   const snap=getLifeDirectorSnapshot();
-  const firstLivingMorning=Boolean(snap&&snap.day===1&&/^09:/.test(String(snap.time||''))&&game.classList.contains('immersivePlayable'));
+  const firstLivingMorning=Boolean(snap&&snap.day===1&&Number(String(snap.time||'00:00').split(':')[0])<10&&game.classList.contains('immersivePlayable'));
   game.classList.toggle('lifeNarrativeMode',!firstLivingMorning);
 }
 function refresh(){cleanLegacyHud();renderStrip()}
