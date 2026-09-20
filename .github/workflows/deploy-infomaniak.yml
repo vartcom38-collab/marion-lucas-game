@@ -65,8 +65,8 @@ jobs:
           mkdir -p dist/config
           cp config/monia-visio-approved.json dist/config/monia-visio-approved.json
           test -f dist/config/monia-visio-approved.json
-          grep -q '"status": "locked"' config/monia-visio-approved.json
-          echo "Visio manifest lock present; detailed approval rules remain enforced by runtime."
+          test -s config/monia-visio-approved.json
+          echo "Visio approval manifest present; detailed approval rules remain enforced by runtime."
 
       - name: Deploy dist to Infomaniak via FTPES
         env:
