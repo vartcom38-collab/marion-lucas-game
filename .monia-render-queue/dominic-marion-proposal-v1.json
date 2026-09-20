@@ -8,6 +8,6 @@
   "preserveCheckpoint": true,
   "reuseValidatedAnchors": true,
   "approvalRequired": true,
-  "attempt": 10,
-  "reason": "cumulative-video-and-dominic-voice-cache"
+  "attempt": 11,
+  "reason": "exact-shot-resume-v2-first-visible-build"
 }
