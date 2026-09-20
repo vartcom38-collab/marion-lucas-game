@@ -51,6 +51,9 @@ jobs:
     timeout-minutes: 90
     env:
       HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      INFOMANIAK_FTP_HOST: ${{ secrets.INFOMANIAK_FTP_HOST }}
+      INFOMANIAK_FTP_USER: ${{ secrets.INFOMANIAK_FTP_USER }}
+      INFOMANIAK_FTP_PASSWORD: ${{ secrets.INFOMANIAK_FTP_PASSWORD }}
       MONIA_IMAGE_SPACE: ${{ vars.MONIA_IMAGE_SPACE }}
       MONIA_IMAGE_API_NAME: ${{ vars.MONIA_IMAGE_API_NAME }}
       MONIA_IMAGE_MODE: qwen-compose
@@ -102,6 +105,51 @@ jobs:
           python -m scripts.monia_scene_pipeline \
             --spec "${{ matrix.item.spec }}" \
             --work-dir ".monia-video/queue/${{ matrix.item.id }}"
+      - name: Publish watchable AV candidate to Infomaniak
+        if: always()
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import scripts.monia_intro_worker as w
+          item = "${{ matrix.item.id }}"
+          src = Path(".monia-video/queue") / item / "final" / "scene-final-candidate.mp4"
+          if not src.exists() or src.stat().st_size <= 100000:
+              print("NO_AV_CANDIDATE_YET")
+              raise SystemExit(0)
+          remote = "monia-" + item + "-candidate.mp4"
+          ftp = w.ftp_connect()
+          try:
+              root = w.remote_root(ftp)
+              print(w.upload_file(ftp, root, src, remote))
+          finally:
+              ftp.quit()
+          PY
+      - name: Verify public AV candidate
+        if: always()
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import time, requests
+          item = "${{ matrix.item.id }}"
+          local = Path(".monia-video/queue") / item / "final" / "scene-final-candidate.mp4"
+          if not local.exists() or local.stat().st_size <= 100000:
+              print("NO_AV_CANDIDATE_TO_VERIFY")
+              raise SystemExit(0)
+          url = "https://marion-lucas.marionbolomey.fr/resources/monia/generated/monia-" + item + "-candidate.mp4"
+          for _ in range(12):
+              try:
+                  r = requests.get(url + "?v=${{ github.run_id }}", headers={"Range":"bytes=0-63","Cache-Control":"no-cache"}, timeout=15)
+                  if r.status_code in (200,206) and b"ftyp" in r.content[:32]:
+                      print("PUBLIC_CANDIDATE_OK", url)
+                      break
+              except Exception:
+                  pass
+              time.sleep(5)
+          else:
+              raise SystemExit("candidate video not publicly reachable")
+          PY
       - name: Preserve checkpoint and candidates
         if: always()
         uses: actions/upload-artifact@v4
