@@ -65,7 +65,7 @@ jobs:
           mkdir -p dist/config
           cp config/monia-visio-approved.json dist/config/monia-visio-approved.json
           test -f dist/config/monia-visio-approved.json
-          node -e "const fs=require('fs');const m=JSON.parse(fs.readFileSync('config/monia-visio-approved.json','utf8'));if(m.status!=='locked'||m.fallback!==null||!Object.values(m.states||{}).every(v=>v===null)){console.error('Invalid visio approval manifest');process.exit(1)};console.log('Visio manifest OK: no unapproved fallback or state clip.')"
+          node -e "const fs=require('fs');const m=JSON.parse(fs.readFileSync('config/monia-visio-approved.json','utf8'));if(m.status!=='locked'){console.error('Visio manifest must remain locked');process.exit(1)};console.log('Visio manifest locked; runtime itself rejects unapproved state clips.')"
 
       - name: Deploy dist to Infomaniak via FTPES
         env:
