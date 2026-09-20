@@ -62,7 +62,18 @@ function ensureRoot(){
  state.root=root;state.video=root.querySelector('.livingEntry');state.hold=root.querySelector('.livingHold');return root;
 }
 function preload(url:string){if(!url||state.preloads.has(url))return;const v=document.createElement('video');v.preload='auto';v.playsInline=true;v.muted=true;v.src=url;state.preloads.set(url,v)}
+function readSave(){try{return JSON.parse(localStorage.getItem('marion-lucas-save-v4')||'null')}catch{return null}}
+function forceProgression(choice:LivingChoice){
+ const s=readSave(),t=String(s?.time||'09:00').split(':').map(Number),minutes=(t[0]||0)*60+(t[1]||0);
+ const recent=state.history.slice(-6),homeLoops=recent.filter(id=>['D1_PHONE_MARINE','D1_HOME_AFTER_PHONE','D1_COFFEE','D1_QUIET_WINDOW'].includes(id)).length;
+ if(minutes>=625||homeLoops>=4){
+  if(['D1_PHONE_MARINE','D1_HOME_AFTER_PHONE','D1_COFFEE','D1_QUIET_WINDOW'].includes(state.node?.id||'')&&choice.id!=='ready'&&choice.id!=='linger')return day1Nodes.D1_GET_READY;
+  if(state.node?.id==='D1_READY_TO_GO'&&choice.id==='coffee')return day1Nodes.D1_NIMES_ENTRY;
+ }
+ return null;
+}
 function candidateNode(choice:LivingChoice){
+ const forced=forceProgression(choice);if(forced)return forced;
  const ids=(choice.nextNodeIds||[]).filter(id=>!state.history.slice(-3).includes(id));
  const pool=ids.length?ids:(choice.nextNodeIds||[]);
  return pool.length?day1Nodes[pool[Math.floor(Math.random()*pool.length)]]:null;
