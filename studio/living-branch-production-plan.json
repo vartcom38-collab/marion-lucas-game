@@ -1,0 +1,18 @@
+{
+ "version":"1.0",
+ "purpose":"Turn branch graph into a finite pre-generated video library.",
+ "assetTypes":["entry-clip","living-hold","choice-exit","director-interrupt","neutral-bridge","phone-overlay","reaction-clip"],
+ "naming":"<day>_<node>_<state-signature>_<variant>",
+ "stateSignature":["character-set","outfit-id","location-id","time-band","relationship-phase","physical-state"],
+ "generationOrder":[
+  "canonical identity tests",
+  "one complete home choice fork",
+  "Marine trigger variants",
+  "one Nimes route",
+  "one first-contact family",
+  "post-contact branch",
+  "then breadth expansion"
+ ],
+ "approvalGates":["identity","motion","raccord","continuity","natural dialogue","audio","mobile framing"],
+ "costControl":["never mass-generate before gate approval","reuse living holds","generate exits only for eligible states","prune impossible outfit branches after selection"]
+}
