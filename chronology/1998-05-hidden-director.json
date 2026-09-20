@@ -1,0 +1,24 @@
+{
+ "version":"1.0",
+ "period":"1998-05",
+ "status":"hidden-working-calendar",
+ "rules":["exact surprises are director-only","Day 1 first meeting protected","Day 2 corrida protected pending canon redesign","remaining days are generated from causality rather than fixed romance checklist"],
+ "dailyStateTemplate":["wake-location","people-present","appointments","Dominic-career-blocks","Marion-plans","relationship-state","family-friend-opportunities","press-risk","travel","health","energy","prepared-media-horizon"],
+ "phaseWindows":[
+  {"phase":"first-contact","range":"Day 1","focus":["meeting","immediate-memory","Marine context"]},
+  {"phase":"early-after-contact","range":"following days","focus":["message rhythm","ordinary life","corrida context","curiosity","independent schedules"]},
+  {"phase":"recognition","range":"later variable window","focus":["repeat contact opportunities","friends","career interruptions","public/private contrast"]},
+  {"phase":"relationship-development","range":"eligibility-driven","focus":["trust","attraction","boundaries","family/social awareness","distance caused by career"]}
+ ],
+ "directorDailyQuestions":[
+  "Where is Dominic required to be for his career?",
+  "What does Marion actually know today?",
+  "Who can plausibly contact whom?",
+  "What ordinary activity gives this day texture?",
+  "Which unresolved memory may echo today?",
+  "Is a surprise warranted or would quiet life be more believable?",
+  "Which 3-5 choices genuinely belong to Marion at the next decision point?",
+  "Which outcomes belong to Dominic/world and must not be offered as player buttons?"
+ ],
+ "mediaStrategy":{"detailAhead":"next 1-3 days","branchLibraryAhead":"probable families","monthSkeleton":"state/event windows only","massGenerateOnlyAfterVerticalSliceApproval":true}
+}
