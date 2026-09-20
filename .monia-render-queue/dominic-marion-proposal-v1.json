@@ -8,6 +8,6 @@
   "preserveCheckpoint": true,
   "reuseValidatedAnchors": true,
   "approvalRequired": true,
-  "attempt": 12,
-  "reason": "exact-shot-resume-v2-hashlib-fixed"
+  "attempt": 13,
+  "reason": "resume-acquired-video-and-partial-voices"
 }
