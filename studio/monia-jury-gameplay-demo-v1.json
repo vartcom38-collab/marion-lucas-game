@@ -1,0 +1,89 @@
+{
+  "version": 1,
+  "title": "MonIA Jury Gameplay Demonstration",
+  "purpose": "Video finale de démonstration pour un jury : expliquer visuellement le gameplay, pas faire une bande-annonce.",
+  "durationTargetSeconds": 150,
+  "principles": [
+    "Le film reste vivant pendant les choix; jamais de freeze.",
+    "Le joueur contrôle Marion uniquement quand elle a réellement la main.",
+    "Dominic et le monde sont autonomes.",
+    "Téléphone, agenda, carte et garde-robe sont contextuels et ne remplacent pas la scène.",
+    "Les conséquences et souvenirs persistent.",
+    "Une nouvelle sauvegarde peut suivre une autre route compatible.",
+    "Les vidéos sources restent propres; interface et choix sont ajoutés au montage/runtime."
+  ],
+  "sequence": [
+    {
+      "t": "00:00-00:10",
+      "visual": "Nîmes mai 1998 puis Marion",
+      "overlay": "NÎMES · MAI 1998 / Une vie, pas un scénario figé"
+    },
+    {
+      "t": "00:10-00:30",
+      "visual": "Marion continue à bouger; 3 choix discrets apparaissent",
+      "overlay": "VOUS JOUEZ MARION",
+      "demo": [
+        "Répondre à Marine",
+        "Finir de se préparer",
+        "Sortir maintenant"
+      ]
+    },
+    {
+      "t": "00:30-00:45",
+      "visual": "clic sur un choix puis transition immédiate sans chargement",
+      "overlay": "Chaque décision ouvre une situation compatible"
+    },
+    {
+      "t": "00:45-01:00",
+      "visual": "téléphone : message de Marine pendant que le monde continue",
+      "overlay": "Les interactions secondaires restent contextuelles"
+    },
+    {
+      "t": "01:00-01:20",
+      "visual": "rencontre Dominic; il agit/réagit sans choix imposé au joueur",
+      "overlay": "Dominic n'est pas une marionnette du joueur"
+    },
+    {
+      "t": "01:20-01:40",
+      "visual": "split/rewind de la même situation vers deux suites différentes",
+      "overlay": "Une même décision peut produire plusieurs suites selon l'état de la partie"
+    },
+    {
+      "t": "01:40-02:00",
+      "visual": "montage jours/mois/années, carrière, couple, lieux réels",
+      "overlay": "Le temps, les souvenirs et les conséquences s'accumulent"
+    },
+    {
+      "t": "02:00-02:20",
+      "visual": "schéma MonIA sous le capot : état sauvegarde → contexte → scène compatible → conséquence → mémoire",
+      "overlay": "MonIA dirige le monde en arrière-plan"
+    },
+    {
+      "t": "02:20-02:30",
+      "visual": "retour au film vivant, choix apparaissant sur Marion",
+      "overlay": "MARION & DOMINIC · UN FILM INTERACTIF VIVANT"
+    }
+  ],
+  "moniaLearning": {
+    "inputs": [
+      "état sauvegarde",
+      "chronologie",
+      "lieu réel + époque",
+      "mémoire relationnelle",
+      "carrière",
+      "tenues/continuité",
+      "événements cachés",
+      "historique anti-répétition"
+    ],
+    "decisionRule": "Sélectionner/préparer une scène compatible sans bloquer le joueur, puis mémoriser les conséquences.",
+    "locationRule": "Tout lieu réel passe par références photographiques réelles + références historiques de l'époque avant génération.",
+    "cameraRule": "Anticiper blocking et déplacement; conserver visage/action lisibles sauf intention contraire.",
+    "presentationRule": "La mécanique doit être comprise en regardant la démo, avec textes courts; aucune longue narration obligatoire."
+  },
+  "existingAssets": {
+    "nimesOpening": "ovkq416829",
+    "marionGameplayPlate": "tCxK3xBmZJ",
+    "approvedMarionMotion": "cpf8aAT0eP",
+    "apartmentPlate": "s729yscl8e"
+  }
+}
