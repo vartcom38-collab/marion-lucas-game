@@ -9,3 +9,10 @@
 .game.livingFilmMode .homePhotoStage,.game.livingFilmMode .approvedHome{padding-bottom:0!important}
 .livingBranchPlayer+.premiumNav{z-index:190}
 @media(max-width:760px){.game.livingFilmMode .premiumNav{max-width:calc(100vw - 16px);bottom:max(7px,env(safe-area-inset-bottom));padding:4px}.game.livingFilmMode .premiumNav button{min-width:0;padding:4px 5px}.game.livingFilmMode .premiumNav span{display:none}.game.livingFilmMode .premiumNav b{font-size:14px}}
+
+/* During a living scene, nothing competes with performance or choices. */
+body.livingSceneActive .premiumNav{opacity:.12!important;z-index:160!important}
+body.livingSceneActive .approvedTopLeft,body.livingSceneActive .phoneToast,body.livingSceneActive .dayOneImpulse,body.livingSceneActive .dayOneCompanion,body.livingSceneActive .dayOneNimesArrival,body.livingSceneActive .lifeNarrativeStrip{opacity:0!important;pointer-events:none!important}
+body.livingSceneActive .overlay.open{z-index:210}
+body.livingSceneActive .livingBranchPlayer{z-index:170}
+body.livingSceneActive .livingChoices{z-index:176}
