@@ -1,0 +1,8 @@
+{
+ "version":"1.0",
+ "rule":"Outfits are persistent world objects, not prompt adjectives.",
+ "outfitState":["id","owner","era","garments","shoes","underlayers","jewelry","bag","hair","makeup","weather","occasion","cleanliness","visualRefs"],
+ "continuity":["cannot change without access to wardrobe/luggage","travel wardrobe limited by packed items","formal/corrida events constrain plausible dress","same outfit persists through adjacent scenes","cinematics must resolve exact outfit id"],
+ "marion":{"day1TargetChoices":5,"future":"wardrobe grows through shopping, gifts, travel and life stages"},
+ "dominic":{"categories":["home","training","travel","casual","feria","formal","corrida-preparation","post-corrida","winter","summer"],"directorChoosesFromSchedule":true}
+}
