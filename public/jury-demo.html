@@ -21,6 +21,11 @@ video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .incoming .era{font-size:11px;letter-spacing:.16em;opacity:.55;margin-bottom:12px}.incoming .caller{font-family:Georgia,serif;font-size:clamp(26px,3vw,44px);margin-bottom:3px}.incoming .status{font-size:14px;opacity:.7;margin-bottom:18px}
 .callactions{display:flex;gap:10px}.callactions button{flex:1;padding:12px;border-radius:7px;border:1px solid rgba(255,255,255,.35);background:rgba(0,0,0,.22);color:#fff;font:inherit}.callactions button:first-child{background:rgba(255,255,255,.9);color:#111}
 .rings{display:inline-block;margin-left:8px;letter-spacing:3px;animation:ring 1.2s infinite}@keyframes ring{50%{opacity:.25}}
+.timeline-phone{position:absolute;inset:11vh 6vw 9vh;display:flex;align-items:center;justify-content:center;gap:2.2vw}
+.phone-era{width:min(250px,20vw);min-height:300px;border:1px solid rgba(255,255,255,.3);border-radius:22px;background:rgba(8,8,8,.72);padding:18px;text-align:center;display:flex;flex-direction:column;justify-content:center;gap:14px}
+.phone-era strong{font-size:clamp(18px,2vw,30px)}.phone-era small{opacity:.6;line-height:1.35}.phone-era.current{transform:scale(1.08);border-color:#fff}
+.video-call{width:min(330px,27vw);height:min(570px,67vh);border:7px solid #181818;border-radius:34px;background:#111;overflow:hidden;position:relative;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.video-call video{width:100%;height:100%;object-fit:cover}.video-call .vcname{position:absolute;left:16px;top:18px;text-shadow:0 2px 10px #000;font-weight:600}.video-call .vcmeta{position:absolute;left:16px;top:43px;font-size:12px;opacity:.75}.video-call .hang{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);width:48px;height:48px;border-radius:50%;background:#eee;color:#111;display:grid;place-items:center;font-size:20px}
 .explain{position:absolute;right:5vw;bottom:7vh;max-width:44vw;font-size:clamp(17px,2vw,31px);line-height:1.25;text-shadow:0 2px 18px #000}
 .flow{position:absolute;inset:14vh 6vw 12vh;display:flex;align-items:center;justify-content:center;gap:1.2vw}
 .node{padding:22px 18px;border:1px solid #777;border-radius:14px;background:#111;min-width:150px;text-align:center;font-size:clamp(14px,1.25vw,20px)}
@@ -37,6 +42,7 @@ video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 <div class="phone hidden" id="phone"><b>Marine</b><span>Tu descends ? Je suis presque arrivée.</span></div>
 <div class="incoming hidden" id="incoming"><div class="era">TÉLÉPHONE · 1998</div><div class="caller">Dominic <span class="rings">)))</span></div><div class="status">Appel entrant</div><div class="callactions"><button>Décrocher</button><button>Laisser sonner</button></div></div>
 <div class="explain hidden" id="explain"></div>
+<div class="timeline-phone hidden" id="phoneTimeline"><div class="phone-era"><small>1998</small><strong>Appel</strong><small>Décrocher · laisser sonner</small></div><div class="arrow">→</div><div class="phone-era"><small>Années suivantes</small><strong>SMS</strong><small>Les usages et l’appareil évoluent avec l’époque</small></div><div class="arrow">→</div><div class="video-call"><video id="visioFilm" muted autoplay loop playsinline></video><div class="vcname">Dominic</div><div class="vcmeta">Appel vidéo</div><div class="hang">⌁</div></div></div>
 <div class="flow hidden" id="flow"><div class="node">État de la partie</div><div class="arrow">→</div><div class="node">Contexte + mémoire</div><div class="arrow">→</div><div class="node">Scène compatible</div><div class="arrow">→</div><div class="node">Conséquence</div><div class="arrow">→</div><div class="node memory">Mémoire MonIA</div></div>
 </main>
 <script>
@@ -46,8 +52,8 @@ const V={
  phone:'https://pikaso.cdnpk.net/private/production/5501873542/9528ec23-6db2-470a-ad70-10e4d1163b7a-0.mp4?token=exp=1790294400~hmac=f4ec6fad3d272f32b899f146d844496094224ee029a503fbdc47d0f0064c815c',
  motion:'https://pikaso.cdnpk.net/private/production/5500260735/be35cd8f-953e-4419-9568-a7dc01c1c624-0.mp4?token=exp=1790294400~hmac=c5f554912bb8c0acada900bf54be92c67441f165839bdeafef843c51411839a9'
 };
-const film=document.querySelector('#film'),title=document.querySelector('#title'),topT=document.querySelector('#top'),choices=document.querySelector('#choices'),cursor=document.querySelector('#cursor'),phone=document.querySelector('#phone'),incoming=document.querySelector('#incoming'),explain=document.querySelector('#explain'),flow=document.querySelector('#flow');
-function reset(){title.innerHTML='';topT.textContent='';choices.classList.add('hidden');cursor.classList.add('hidden');phone.classList.add('hidden');incoming.classList.add('hidden');explain.classList.add('hidden');flow.classList.add('hidden');film.style.opacity=1}
+const film=document.querySelector('#film'),title=document.querySelector('#title'),topT=document.querySelector('#top'),choices=document.querySelector('#choices'),cursor=document.querySelector('#cursor'),phone=document.querySelector('#phone'),incoming=document.querySelector('#incoming'),explain=document.querySelector('#explain'),flow=document.querySelector('#flow'),phoneTimeline=document.querySelector('#phoneTimeline'),visioFilm=document.querySelector('#visioFilm');
+function reset(){title.innerHTML='';topT.textContent='';choices.classList.add('hidden');cursor.classList.add('hidden');phone.classList.add('hidden');incoming.classList.add('hidden');explain.classList.add('hidden');flow.classList.add('hidden');phoneTimeline.classList.add('hidden');film.style.opacity=1}
 function play(src){if(film.src!==src){film.src=src;film.play().catch(()=>{})}}
 const scenes=[
 ()=>{reset();play(V.nimes);topT.textContent='NÎMES · MAI 1998';title.innerHTML='Une vie.<span class="sub">Pas un scénario figé.</span>'},
@@ -57,6 +63,7 @@ const scenes=[
 ()=>{reset();play(V.phone);incoming.classList.remove('hidden');topT.textContent='DOMINIC PREND L’INITIATIVE';explain.classList.remove('hidden');explain.textContent='Marion reçoit l’appel pendant que la scène continue. Le joueur choisit seulement sa réaction.'},
 ()=>{reset();play(V.motion);topT.textContent='DOMINIC EST AUTONOME';title.innerHTML='Vous contrôlez Marion.<span class="sub">Pas Dominic. Il peut venir, appeler, partir, travailler ou réagir de lui-même.</span>'},
 ()=>{reset();play(V.marion);topT.textContent='UNE DÉCISION ≠ UNE SEULE SUITE';title.innerHTML='Même choix. Autre partie.<span class="sub">Relation · mémoire · heure · lieu · carrière · événements cachés · historique de la partie</span>'},
+()=>{reset();film.style.opacity=.12;topT.textContent='LE TÉLÉPHONE ÉVOLUE AVEC LES ANNÉES';phoneTimeline.classList.remove('hidden');visioFilm.src=V.motion;visioFilm.play().catch(()=>{});explain.classList.remove('hidden');explain.textContent='Quand la visio devient cohérente avec l’époque, Dominic apparaît réellement dans le téléphone — et reste autonome pendant l’appel.'},
 ()=>{reset();film.style.opacity=.18;topT.textContent='SOUS LE CAPOT';flow.classList.remove('hidden');explain.classList.remove('hidden');explain.textContent='MonIA conserve les conséquences puis les réinjecte dans les scènes futures.'},
 ()=>{reset();play(V.marion);topT.textContent='MARION & DOMINIC';title.innerHTML='UN FILM INTERACTIF VIVANT<span class="sub">Vous choisissez. Le monde, lui, continue d’exister.</span>';choices.classList.remove('hidden')}
 ];
