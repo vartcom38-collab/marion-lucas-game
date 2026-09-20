@@ -1,0 +1,41 @@
+{
+  "version":"1.0",
+  "workingEpoch":{"startMonth":"1998-05","marionAge":20,"dominicAge":22,"exactDay":"director-selects-after-calendar-validation"},
+  "goal":"Generate historically plausible but non-repeating Dominic temporadas. Never copy a real torero calendar.",
+  "historicalInspiration":{
+    "period":"late 1990s",
+    "patterns":["dense schedules for rising matadors","apoderado strategy affects prestigious plazas","results alter later contracts","American winter campaigns can extend the season","injury/recovery can cancel or reshape commitments","media and television rights can affect negotiations"],
+    "copyRealToreroSchedule":false
+  },
+  "seasonGenerator":{
+    "seedScope":"new-save",
+    "stableWithinSave":true,
+    "regenerateOnNewSave":true,
+    "yearToYearVariationRequired":true,
+    "inputs":["careerLevel","previousSeasonResults","injuryHistory","apoderadoStrategy","pressHeat","relationshipState","familyConstraints","financialNeeds","travelFatigue","randomSeed"],
+    "contractPipeline":["rumor","approach","negotiation","offer","signed","public","travel","performed","result","aftermath"],
+    "constraints":[
+      "Never schedule Dominic in two physically impossible places.",
+      "Preserve realistic travel and recovery time.",
+      "Do not repeat an identical corrida calendar across years or saves.",
+      "Major ferias are opportunities, not guaranteed appearances.",
+      "Results and injuries must be able to alter later unsigned dates.",
+      "Signed contracts require an explicit cancellation/replacement reason to disappear."
+    ]
+  },
+  "dayGenerator":{
+    "everyCalendarDayHasState":true,
+    "dayTypes":["corrida","travel","training","finca","contract-meeting","press","recovery","family","couple","social","rest","mixed"],
+    "ordinaryDaysMatter":true,
+    "continuity":["sleep","fatigue","injury","location","outfit","luggage","vehicle","money","relationship","knowledge"]
+  },
+  "variation":{
+    "sameDayNeverGuaranteedAcrossSaves":true,
+    "ambientEvents":["calls","press request","friend visit","traffic","weather consequence","restaurant invitation","training change","minor domestic event"],
+    "protectedCanon":"Canonical life milestones remain protected while context, timing windows and lived route can vary."
+  },
+  "generationAhead":{
+    "horizons":{"immediate":"next 30-90 playable minutes","day":"remaining plausible day branches","week":"high-probability commitments","season":"contract and travel skeleton"},
+    "videoRule":"Pre-generate only branches whose probability and reuse justify cost; never block player for speculative generation."
+  }
+}
