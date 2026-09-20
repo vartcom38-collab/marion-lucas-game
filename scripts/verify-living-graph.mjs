@@ -1,0 +1,10 @@
+import fs from 'node:fs';
+const src=fs.readFileSync('src/monia/living-branch-runtime.ts','utf8');
+const ids=[...src.matchAll(/\n\s(D1_[A-Z0-9_]+):\{id:'([^']+)'/g)].map(m=>m[1]);
+const declared=new Set(ids);
+const targets=[...src.matchAll(/nextNodeIds:\[([^\]]*)\]/g)].flatMap(m=>[...m[1].matchAll(/'([^']+)'/g)].map(x=>x[1]));
+const missing=[...new Set(targets.filter(x=>!declared.has(x)))];
+if(missing.length)throw new Error('Missing living nodes: '+missing.join(', '));
+if(!declared.has('D1_HOME_WAKE_001')||!declared.has('D1_MARINE_APPROACH'))throw new Error('Day 1 endpoints missing');
+if(!src.includes("nextNodeIds:['D1_NIMES_ENTRY']"))throw new Error('Home does not connect to Nimes');
+console.log('Living graph OK:',declared.size,'nodes,',targets.length,'branch targets, 0 missing.');
