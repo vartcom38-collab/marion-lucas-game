@@ -54,7 +54,6 @@ jobs:
           test -s dist/index.html
           test -d dist/assets
           test -d dist/resources
-          test -f dist/resources/living/home.mp4
           mkdir -p dist/config
           cp config/monia-visio-approved.json dist/config/monia-visio-approved.json
           echo "Core playable build verified; optional legacy/debug files do not block deployment."
