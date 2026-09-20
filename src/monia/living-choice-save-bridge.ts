@@ -12,7 +12,9 @@ function apply(e:CustomEvent){const s=read();if(!s)return;const fx=(e.detail?.ef
  if(typeof fx.place==='string')s.place=fx.place;
  if(typeof fx.memory==='string')remember(s,fx.memory);
  if(fx.flags&&typeof fx.flags==='object')Object.assign(s.flags,fx.flags);
- s.flags.lastLivingNode=String(e.detail?.nodeId||'');s.flags.lastLivingChoice=String(e.detail?.choiceId||'');s.updatedAt=Date.now();
+ s.flags.lastLivingNode=String(e.detail?.nodeId||'');s.flags.lastLivingChoice=String(e.detail?.choiceId||'');
+ const trail=String(s.flags.livingChoiceTrail||'').split('|').filter(Boolean);trail.push(`${e.detail?.nodeId||''}:${e.detail?.choiceId||''}`);s.flags.livingChoiceTrail=trail.slice(-16).join('|');
+ s.updatedAt=Date.now();
  localStorage.setItem(KEY,JSON.stringify(s));
  window.dispatchEvent(new CustomEvent('marion:day-one-refresh'));window.dispatchEvent(new Event('storage'));
 }
