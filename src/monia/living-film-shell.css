@@ -1,0 +1,11 @@
+/* Living-film shell: the world is the interface. Persistent tools stay secondary. */
+.game.livingFilmMode .approvedObjective,.game.livingFilmMode .approvedExplore,.game.livingFilmMode .approvedSceneNav,.game.livingFilmMode .mainAction,.game.livingFilmMode .lifeNarrativeStrip,.game.livingFilmMode .dayOneImpulse,.game.livingFilmMode .firstDayGuide,.game.livingFilmMode .firstDayTutorial{display:none!important}
+.game.livingFilmMode .premiumNav{position:fixed;z-index:165;top:auto;right:auto;left:50%;bottom:max(10px,env(safe-area-inset-bottom));transform:translateX(-50%);width:auto;max-width:calc(100vw - 24px);gap:2px;padding:5px 7px;border:1px solid rgba(255,255,255,.13);border-radius:999px;background:rgba(9,9,10,.38);backdrop-filter:blur(14px);box-shadow:0 10px 38px rgba(0,0,0,.22);opacity:.42;transition:opacity .18s ease,background .18s ease}
+.game.livingFilmMode .premiumNav:hover,.game.livingFilmMode .premiumNav:focus-within{opacity:1;background:rgba(9,9,10,.68)}
+.game.livingFilmMode .premiumNav button{min-width:54px;padding:5px 8px}
+.game.livingFilmMode .premiumNav span{font-size:6px}
+.game.livingFilmMode .premiumNav b{font-size:15px}
+.game.livingFilmMode .approvedTopLeft{z-index:164;opacity:.62;pointer-events:none}
+.game.livingFilmMode .homePhotoStage,.game.livingFilmMode .approvedHome{padding-bottom:0!important}
+.livingBranchPlayer+.premiumNav{z-index:190}
+@media(max-width:760px){.game.livingFilmMode .premiumNav{max-width:calc(100vw - 16px);bottom:max(7px,env(safe-area-inset-bottom));padding:4px}.game.livingFilmMode .premiumNav button{min-width:0;padding:4px 5px}.game.livingFilmMode .premiumNav span{display:none}.game.livingFilmMode .premiumNav b{font-size:14px}}
