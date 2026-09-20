@@ -1,0 +1,28 @@
+{
+ "version":"1.0",
+ "purpose":"Hidden life-logic catalog. Milestones are consequences of lived chronology, not player menu items.",
+ "classes":{
+  "relationship-firsts":["first-private-date","first-kiss","first-night-together","first-sexual-relationship-milestone","first-morning-after","first-I-love-you-window","first-real-argument","first-reconciliation","first-time-apart-because-of-career","first-reunion-after-long-separation"],
+  "social-family-firsts":["first-meeting-Marine-as-couple","first-meeting-Marion-parents","first-meeting-Dominic-parents","first-sibling-introduction","first-family-meal","first-friend-group-event","first-family-conflict","first-shared-holiday"],
+  "public-life-firsts":["first-public-appearance","first-recognition-of-Marion","first-paparazzi-photo","first-couple-press-mention","first-misleading-headline","first-interview-pressure"],
+  "torero-life-firsts":["first-corrida-Marion-attends","first-pre-corrida-separation","first-wait-during-corrida","first-injury-Marion-experiences","first-hospital-wait","first-contract-negotiation-affecting-couple","first-long-tour","first-major-triumph-together","first-major-career-disappointment"],
+  "shared-life-firsts":["first-trip","first-hotel-night","first-key-to-home","first-cohabitation","first-major-purchase","first-financial-decision","first-pet-possibility","first-home-project","first-move"],
+  "family-building":["engagement-window","marriage-preparation","wedding","pregnancy-discovery","pregnancy-private-life","birth","postpartum-adjustment","new-parent-routines","future-child-development"],
+  "later-life":["career-transition","finca-project","breeding-project","parents-aging","bereavement-possibilities","children-growing","identity-changes","retirement-transition"]
+ },
+ "logic":{
+  "notEveryMilestoneGuaranteed":true,
+  "canonicalMilestonesUseEligibilityWindows":true,
+  "nonCanonicalMilestonesMayNeverOccur":true,
+  "prerequisites":["time","relationship-state","knowledge","place","career-state","family-state","health","prior-events"],
+  "directorMayDelayForPlausibility":true,
+  "neverScheduleBecausePlayerNeedsContent":true,
+  "memoryEchoesYearsLater":true
+ },
+ "sceneDesign":{
+  "importantFirstsGetMoreSetupAndAftermath":true,
+  "ordinaryScenesBetweenMilestonesRequired":true,
+  "choicesAppearOnlyWhereMarionActuallyHasAgency":true,
+  "worldAndDominicRetainAgency":true
+ }
+}
