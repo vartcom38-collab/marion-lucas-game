@@ -1,0 +1,28 @@
+{
+ "version":"1.0",
+ "designGoal":"Every playable day feels inhabited; important events emerge inside ordinary life.",
+ "activityFamilies":{
+  "home":["wake","shower","dress","hair-makeup","breakfast","coffee","clean","laundry","cook","read","music","tv","rest","decorate","pack","unpack","phone"],
+  "outside":["walk","cafe","restaurant","shopping","errand","market","visit","drive","train","airport","hotel","arena-area","feria","park"],
+  "social":["message","call","visit","meal","drink","invitation","conversation","unexpected-meeting","group-evening"],
+  "couple":["quiet-time","meal","teasing","conversation","affection","disagreement","reconciliation","planning","waiting","reunion","private-intimacy"],
+  "torero-life":["training","equipment","apoderado-call","contract-meeting","cuadrilla","travel","hotel","press","corrida","medical","recovery","finca"],
+  "family":["call","visit","meal","celebration","help","news","tension","childcare"],
+  "life-projects":["housing","decoration","vehicle","wedding","pregnancy","baby","travel","finca","breeding"]
+ },
+ "conversationEngine":{
+  "topicsHaveMemory":true,
+  "topics":["daily-life","past","family","friends","career","fear","future","money","travel","jealousy-without-infidelity","press","children","home","humor","private-jokes"],
+  "rules":["do not repeat recently exhausted topic","NPC can initiate","silence is allowed","conversation can be interrupted","later dialogue can recall exact prior exchanges"]
+ },
+ "eventDensity":{
+  "noConstantDrama":true,
+  "quietDaysAllowed":true,
+  "majorEventsNeedContrast":true,
+  "ambientMicroEventsPerDay":"variable"
+ },
+ "consequenceMemory":{
+  "short":["hours","days"],"medium":["weeks","months"],"long":["years","life"],
+  "examples":["promise","gift","argument-topic","favorite-place","fear","career-result","injury","shared-joke","missed-appointment"]
+ }
+}
