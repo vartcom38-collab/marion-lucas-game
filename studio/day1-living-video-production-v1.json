@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "id": "day1-may1998-living-video-production-v1",
+  "principle": "Une journée est une succession dense de moments vécus. Les vidéos sont des plans/nœuds courts raccordables; aucun choix ordinaire ne clôt une matinée ou une journée.",
+  "continuity": {"date":"May 1998","marionAge":20,"dominicAge":22,"dominicKnownAtStart":false,"locationStart":"Appartement de Marion, Nîmes","identityGate":"Aucun plan montrant clairement Marion ou Dominic ne passe live sans validation identité multivue."},
+  "runtimeRules": {"preloadNext":true,"noVisibleGenerationWait":true,"choicesOverLivingPerformance":true,"maxVisibleChoices":4,"worldContinuesDuringChoice":true,"majorLifeEvents":"director-only"},
+  "sequences": [
+    {"id":"D1_HOME_0900","window":"09:00–09:20","purpose":"Réveil de la journée, liberté immédiate","shots":[
+      {"id":"D1_H01","kind":"environment-entry","duration":"5-8s","visual":"Appartement de Nîmes au matin, lumière vivante, rideau/plantes/rue en mouvement, aucune personne requise.","identityRequired":false,"branches":["phone","coffee","wash","linger"]},
+      {"id":"D1_H02","kind":"living-hold","duration":"8-12s loop-safe","visual":"Même axe, micro-mouvements naturels du décor; espace libre pour choix discrets.","identityRequired":false},
+      {"id":"D1_H03","kind":"marion-medium","duration":"5-8s","visual":"Marion 20 ans traverse naturellement la pièce et remarque son téléphone, sans regarder caméra.","identityRequired":true}
+    ]},
+    {"id":"D1_PHONE_MARINE","window":"09:03–09:30","purpose":"Marine existe dans le téléphone, pas en panneau bloquant","shots":[
+      {"id":"D1_P01","kind":"insert","duration":"3-5s","visual":"Téléphone/notification intégrée au gameplay; pas de visage requis.","identityRequired":false},
+      {"id":"D1_P02","kind":"reaction","duration":"4-7s","visual":"Marion lit puis micro-réagit; réaction compatible avec plusieurs réponses.","identityRequired":true}
+    ]},
+    {"id":"D1_HOME_FLOW","window":"09:10–10:00","purpose":"Faire vivre le matin sans saut temporel massif","shots":[
+      {"id":"D1_F01","kind":"coffee","duration":"6-10s","visual":"Préparation d’un café, gestes ordinaires, appartement cohérent.","identityRequired":true},
+      {"id":"D1_F02","kind":"getting-ready","duration":"7-12s","visual":"Préparation concise: cheveux, veste/sac, miroir; tenue issue du save.","identityRequired":true},
+      {"id":"D1_F03","kind":"quiet","duration":"6-10s","visual":"Moment calme près de la fenêtre; ville vivante dehors.","identityRequired":true},
+      {"id":"D1_F04","kind":"exit","duration":"5-8s","visual":"Marion prend ses affaires et quitte l’appartement; raccord vers Nîmes.","identityRequired":true}
+    ]},
+    {"id":"D1_NIMES","window":"10:00–12:00+","purpose":"Ville réellement vécue avant les événements majeurs","shots":[
+      {"id":"D1_N01","kind":"establishing","duration":"5-8s","visual":"Nîmes réel, matin de mai 1998, architecture et ambiance référencées.","identityRequired":false,"realPlaceReferenceRequired":true},
+      {"id":"D1_N02","kind":"walk","duration":"7-12s","visual":"Marion marche dans Nîmes, foule naturelle, continuité tenue.","identityRequired":true,"realPlaceReferenceRequired":true},
+      {"id":"D1_N03","kind":"marine-presence","duration":"7-12s","visual":"Moment avec Marine en mouvement; conversation ordinaire, pas de pose face caméra.","identityRequired":true},
+      {"id":"D1_N04","kind":"living-hold","duration":"8-12s loop-safe","visual":"Marche/terrasse/foule avec micro-actions pendant que les choix apparaissent.","identityRequired":true}
+    ]}
+  ],
+  "generationPriority": ["D1_H01","D1_H02","D1_P01","D1_N01","D1_H03","D1_P02","D1_F01","D1_F02","D1_F03","D1_F04","D1_N02","D1_N03","D1_N04"],
+  "approvalGates": ["visual-continuity","period-1998","real-nimes-when-applicable","marion-identity-if-visible","natural-human-motion","branch-raccord","no-ui-baked-into-video"],
+  "output": "public/resources/living/day1/"
+}
