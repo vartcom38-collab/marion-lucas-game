@@ -1,0 +1,95 @@
+{
+  "id": "day1-apartment-marine-vslice-v1",
+  "title": "Début jouable — appartement puis Marine",
+  "purpose": "Valider le rythme jeu/cinématique/choix avant de produire la bibliothèque complète.",
+  "rules": {
+    "noEmbeddedUI": true,
+    "noForcedDominicArrival": true,
+    "canonicalFacesMandatory": true,
+    "realLocationsUsePhotoReferences": true,
+    "clipsAreGameplayBuildingBlocks": true
+  },
+  "structure": [
+    {
+      "id": "home-life",
+      "kind": "gameplay+cinematic",
+      "targetMinutes": "8-15",
+      "content": [
+        "réveil / vie naturelle",
+        "téléphone et messages",
+        "exploration légère de l'appartement",
+        "préparation"
+      ],
+      "choices": [
+        "rythme de préparation",
+        "interactions téléphone",
+        "ordre de certaines actions"
+      ]
+    },
+    {
+      "id": "wardrobe",
+      "kind": "gameplay",
+      "content": [
+        "4 à 5 tenues pré-générées cohérentes"
+      ],
+      "effect": "La tenue choisie devient une contrainte de continuité pour toutes les scènes suivantes jusqu'au prochain changement."
+    },
+    {
+      "id": "transition-out",
+      "kind": "gameplay+short-cinematic",
+      "content": [
+        "sortie organique de l'appartement",
+        "raccord vers extérieur"
+      ],
+      "note": "Pas de téléportation narrative vers Dominic."
+    },
+    {
+      "id": "marine-meeting",
+      "kind": "branching-conversation",
+      "targetMinutes": "5-12",
+      "content": [
+        "vraie discussion",
+        "plusieurs sujets",
+        "réactions et silences",
+        "actions contextuelles"
+      ],
+      "choices": [
+        "répondre franchement",
+        "éluder",
+        "plaisanter",
+        "changer de sujet",
+        "proposer de bouger / rester"
+      ],
+      "effect": "Les réponses alimentent état relationnel, sujets connus et variantes futures."
+    },
+    {
+      "id": "open-end",
+      "kind": "gameplay",
+      "content": [
+        "continuer la journée selon l'état du monde"
+      ],
+      "note": "Dominic n'est pas déclenché automatiquement dans ce vertical slice."
+    }
+  ],
+  "replayVariation": {
+    "stable": [
+      "canon des personnages",
+      "chronologie fondamentale",
+      "cohérence des relations"
+    ],
+    "variable": [
+      "tenues proposées",
+      "messages secondaires",
+      "sujets de conversation",
+      "ordre des micro-événements",
+      "certaines activités",
+      "timing et conditions des rencontres futures"
+    ]
+  },
+  "generation": {
+    "policy": "autonomous-first",
+    "magnificRole": "support/teacher/repair/compare",
+    "captureLessons": true,
+    "allowPaidExternalByDefault": false
+  }
+}
