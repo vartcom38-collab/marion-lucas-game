@@ -1,0 +1,27 @@
+{
+ "version":"1.0",
+ "visibility":"MonIA-only",
+ "architecture":{
+   "canonAnchors":"must eventually occur if still canon-valid",
+   "windows":"events may occur within bounded periods rather than fixed instants",
+   "opportunities":"may disappear without player ever seeing them",
+   "conditionalBranches":"exist only while prerequisites remain true",
+   "echoes":"small choices can return much later",
+   "surprises":"must be causally plausible even when unexpected"
+ },
+ "selection":{
+   "score":["eligibility","continuity","novelty","emotional-rhythm","character-agency","world-plausibility","media-readiness"],
+   "antiPattern":["no event every X minutes","no guaranteed identical meeting staging","no repeated conversation sequence","no NPC teleportation","no wardrobe reset"]
+ },
+ "knowledgeBoundary":{
+   "directorKnowsFuturePossibilities":true,
+   "charactersKnowOnlyLearnedFacts":true,
+   "playerSeesOnlyMarionReachableInformation":true
+ },
+ "longLifeExpansion":{
+   "yearSkeletonPreparedAhead":true,
+   "nextMonthsDetailedAhead":true,
+   "nextWeekHighlyDetailed":true,
+   "currentDayHourAware":true
+ }
+}
