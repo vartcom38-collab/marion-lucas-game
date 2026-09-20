@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Marion & Dominic — Démonstration jury</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;background:#050505;color:#fff;font-family:Inter,Arial,sans-serif;overflow:hidden}
+#stage{position:relative;width:100vw;height:100vh;background:#090909}
+video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.08),rgba(0,0,0,.04) 55%,rgba(0,0,0,.52))}
+.top{position:absolute;left:5vw;top:5vh;font-size:clamp(12px,1.1vw,18px);letter-spacing:.22em;text-transform:uppercase;opacity:.8}
+.title{position:absolute;left:5vw;bottom:10vh;max-width:72vw;font-size:clamp(32px,5vw,78px);font-weight:650;line-height:1.02}
+.sub{display:block;font-size:.32em;font-weight:400;letter-spacing:.02em;margin-top:16px;opacity:.82}
+.choices{position:absolute;left:6vw;bottom:8vh;display:flex;flex-direction:column;gap:12px;width:min(430px,42vw)}
+.choice{border:1px solid rgba(255,255,255,.42);background:rgba(8,8,8,.52);backdrop-filter:blur(10px);padding:15px 18px;border-radius:12px;font-size:clamp(14px,1.35vw,22px);transition:.25s}
+.choice.active{background:#fff;color:#111;transform:translateX(10px)}
+.cursor{position:absolute;width:20px;height:20px;border-radius:50%;border:2px solid white;box-shadow:0 0 0 7px rgba(255,255,255,.12);transition:1s ease}
+.phone{position:absolute;right:5vw;top:18vh;width:min(350px,32vw);padding:18px;border:1px solid rgba(255,255,255,.35);border-radius:18px;background:rgba(10,10,10,.68);backdrop-filter:blur(12px)}
+.phone b{display:block;margin-bottom:8px}.phone span{opacity:.8}
+.explain{position:absolute;right:5vw;bottom:7vh;max-width:44vw;font-size:clamp(17px,2vw,31px);line-height:1.25;text-shadow:0 2px 18px #000}
+.flow{position:absolute;inset:14vh 6vw 12vh;display:flex;align-items:center;justify-content:center;gap:1.2vw}
+.node{padding:22px 18px;border:1px solid #777;border-radius:14px;background:#111;min-width:150px;text-align:center;font-size:clamp(14px,1.25vw,20px)}
+.arrow{font-size:32px;opacity:.6}.memory{border-color:#fff}
+.badge{position:absolute;right:5vw;top:5vh;border:1px solid rgba(255,255,255,.35);padding:8px 12px;border-radius:99px;font-size:12px;letter-spacing:.12em}
+.hidden{display:none!important}
+</style></head>
+<body><main id="stage">
+<video id="film" autoplay muted playsinline></video><div class="shade"></div>
+<div class="top" id="top"></div><div class="badge">DÉMONSTRATION DU GAMEPLAY</div>
+<div class="title" id="title"></div>
+<div class="choices hidden" id="choices"><div class="choice">Répondre à Marine</div><div class="choice">Finir de se préparer</div><div class="choice">Sortir maintenant</div></div>
+<div class="cursor hidden" id="cursor"></div>
+<div class="phone hidden" id="phone"><b>Marine</b><span>Tu descends ? Je suis presque arrivée.</span></div>
+<div class="explain hidden" id="explain"></div>
+<div class="flow hidden" id="flow"><div class="node">État de la partie</div><div class="arrow">→</div><div class="node">Contexte + mémoire</div><div class="arrow">→</div><div class="node">Scène compatible</div><div class="arrow">→</div><div class="node">Conséquence</div><div class="arrow">→</div><div class="node memory">Mémoire MonIA</div></div>
+</main>
+<script>
+const V={
+ nimes:'https://pikaso.cdnpk.net/private/production/5501799974/89e2dd09-c77d-47eb-a90f-68295b44650b-0.mp4?token=exp=1790294400~hmac=78e9ea72ef88013c9a393f265d1c47214c0c987878a04343950a602f9cdc1f40',
+ marion:'https://pikaso.cdnpk.net/private/production/5501818173/c274d744-5270-41a3-ae46-df9257ba3a42-0.mp4?token=exp=1790294400~hmac=5c661e9cd8faee6d9f99b11eaad0b07942f040e69f5a9547c144d7ce903eb41c',
+ phone:'https://pikaso.cdnpk.net/private/production/5501873542/9528ec23-6db2-470a-ad70-10e4d1163b7a-0.mp4?token=exp=1790294400~hmac=f4ec6fad3d272f32b899f146d844496094224ee029a503fbdc47d0f0064c815c',
+ motion:'https://pikaso.cdnpk.net/private/production/5500260735/be35cd8f-953e-4419-9568-a7dc01c1c624-0.mp4?token=exp=1790294400~hmac=c5f554912bb8c0acada900bf54be92c67441f165839bdeafef843c51411839a9'
+};
+const film=document.querySelector('#film'),title=document.querySelector('#title'),topT=document.querySelector('#top'),choices=document.querySelector('#choices'),cursor=document.querySelector('#cursor'),phone=document.querySelector('#phone'),explain=document.querySelector('#explain'),flow=document.querySelector('#flow');
+function reset(){title.innerHTML='';topT.textContent='';choices.classList.add('hidden');cursor.classList.add('hidden');phone.classList.add('hidden');explain.classList.add('hidden');flow.classList.add('hidden');film.style.opacity=1}
+function play(src){if(film.src!==src){film.src=src;film.play().catch(()=>{})}}
+const scenes=[
+()=>{reset();play(V.nimes);topT.textContent='NÎMES · MAI 1998';title.innerHTML='Une vie.<span class="sub">Pas un scénario figé.</span>'},
+()=>{reset();play(V.marion);topT.textContent='VOUS JOUEZ MARION';choices.classList.remove('hidden');explain.classList.remove('hidden');explain.textContent='Le film continue pendant que vous décidez.'},
+()=>{choices.classList.remove('hidden');cursor.classList.remove('hidden');cursor.style.left='18vw';cursor.style.top='74vh';document.querySelectorAll('.choice')[2].classList.add('active');explain.textContent='Un choix ne lance pas une scène pré-écrite : MonIA cherche une suite compatible.'},
+()=>{reset();play(V.phone);phone.classList.remove('hidden');topT.textContent='LE MONDE CONTINUE';explain.classList.remove('hidden');explain.textContent='Messages, appels et événements apparaissent dans le contexte — sans remplacer la scène.'},
+()=>{reset();play(V.motion);topT.textContent='DOMINIC EST AUTONOME';title.innerHTML='Vous contrôlez Marion.<span class="sub">Pas Dominic. Il peut venir, appeler, partir, travailler ou réagir de lui-même.</span>'},
+()=>{reset();play(V.marion);topT.textContent='UNE DÉCISION ≠ UNE SEULE SUITE';title.innerHTML='Même choix. Autre partie.<span class="sub">Relation · mémoire · heure · lieu · carrière · événements cachés · historique de la partie</span>'},
+()=>{reset();film.style.opacity=.18;topT.textContent='SOUS LE CAPOT';flow.classList.remove('hidden');explain.classList.remove('hidden');explain.textContent='MonIA conserve les conséquences puis les réinjecte dans les scènes futures.'},
+()=>{reset();play(V.marion);topT.textContent='MARION & DOMINIC';title.innerHTML='UN FILM INTERACTIF VIVANT<span class="sub">Vous choisissez. Le monde, lui, continue d’exister.</span>';choices.classList.remove('hidden')}
+];
+let i=0; scenes[0](); setInterval(()=>{i=(i+1)%scenes.length;document.querySelectorAll('.choice').forEach(x=>x.classList.remove('active'));scenes[i]()},7000);
+</script></body></html>
