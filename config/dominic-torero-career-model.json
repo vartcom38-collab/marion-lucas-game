@@ -1,0 +1,43 @@
+{
+  "version": "1.0",
+  "character": "Dominic",
+  "legacyCodeName": "Lucas",
+  "profession": "torero",
+  "careerIsSimulation": true,
+  "careerClock": {
+    "phases": ["preseason","training","contract-negotiation","travel","pre-corrida","corrida-day","post-corrida","recovery","press","off-season"],
+    "longTerm": ["rise","consolidation","major-figura-pressure","maturity","late-career-transition","possible-finca-and-breeding"]
+  },
+  "contract": {
+    "fields": ["id","season","date","city","country","plaza","feria","promoter","apoderadoStatus","billing","bullRanch","fee","expenses","travelPlan","hotel","cuadrilla","pressDuties","trainingPlan","riskLevel","familyAttendance","MarionAttendance","result","injuries","medicalFollowup","pressImpact","careerImpact","relationshipImpact"],
+    "states": ["rumored","discussed","negotiating","offered","signed","announced","completed","cancelled","postponed"]
+  },
+  "professionalNetwork": {
+    "apoderado": {"persistent": true, "roles": ["contracts","strategy","negotiation","calendar","press coordination"]},
+    "cuadrilla": {"persistentRoster": true, "roles": ["banderilleros","picadores","mozo-de-espadas","support"]},
+    "family": {"influence": true},
+    "press": {"memory": true, "canAffectFutureOpportunities": true}
+  },
+  "corridaDay": {
+    "beats": ["wake","physical-state","meal","quiet-time","travel-to-plaza","hotel-or-home-preparation","suit-up","departure","arrival","pre-ring","corrida","medical-if-needed","press","return","private-aftermath"],
+    "coupleEffects": ["distance","waiting","fear","support","rituals","reunion","fatigue","tension","relief"]
+  },
+  "training": ["physical conditioning","technical practice","cape/muleta work","mental preparation","finca/tienta when appropriate","recovery"],
+  "riskAndRecovery": {
+    "injuriesPersist": true,
+    "severityAffectsCalendar": true,
+    "medicalClearanceCanAffectContracts": true,
+    "emotionalConsequencesPersist": true
+  },
+  "travel": {
+    "countries": ["Spain","France","Mexico","other-career-destinations"],
+    "affects": ["availability","relationship","sleep","wardrobe","media","family plans","future scenes"]
+  },
+  "longTerm": {
+    "retirementNotFixed": true,
+    "possibleTransitionAgeRange": "45-50",
+    "possibleFinca": true,
+    "possibleToroBravoBreeding": true,
+    "mustEmergeFromCareerAndLifeState": true
+  }
+}
