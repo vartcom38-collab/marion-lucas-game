@@ -1,0 +1,133 @@
+{
+  "version": "jury-gameplay-overview-v1",
+  "targetDurationSeconds": 150,
+  "generationBudgetCredits": 0,
+  "rule": "Reuse approved clean plates. UI/text added in post/runtime. No new generation unless review proves indispensable.",
+  "segments": [
+    {
+      "t": "00:00-00:08",
+      "video": "ovkq416829",
+      "purpose": "Nîmes 1998 / opening",
+      "overlay": [
+        "NÎMES · MAI 1998",
+        "UNE VIE, PAS UN SCÉNARIO FIGÉ"
+      ]
+    },
+    {
+      "t": "00:08-00:24",
+      "video": "tCxK3xBmZJ",
+      "purpose": "player inhabits Marion",
+      "overlay": [
+        "VOUS JOUEZ MARION",
+        "QUE FAIT MARION ?",
+        "Répondre à Marine",
+        "Finir de se préparer",
+        "Sortir maintenant"
+      ]
+    },
+    {
+      "t": "00:24-00:34",
+      "video": "8a15g4EIrU",
+      "purpose": "choice becomes immediate action",
+      "overlay": [
+        "ACTION DU JOUEUR · SORTIR MAINTENANT",
+        "RÉSULTAT À L’ÉCRAN · MARION AGIT"
+      ]
+    },
+    {
+      "t": "00:34-00:48",
+      "video": "iGdMjgA3uK",
+      "purpose": "phone/messages as gameplay",
+      "overlay": [
+        "TÉLÉPHONE",
+        "Marine · Tu es où ?",
+        "Je finis de me préparer.",
+        "Dépêche-toi 😄"
+      ]
+    },
+    {
+      "t": "00:48-01:02",
+      "video": "tCxK3xBmZJ",
+      "purpose": "agenda as life tool",
+      "overlay": [
+        "AGENDA",
+        "10:30 · Retrouver Marine",
+        "Y aller",
+        "Prévenir",
+        "Continuer ici"
+      ]
+    },
+    {
+      "t": "01:02-01:15",
+      "video": "ovkq416829",
+      "purpose": "map/destination",
+      "overlay": [
+        "CARTE · NÎMES",
+        "Chez Marion",
+        "Centre",
+        "Arènes",
+        "Le joueur choisit un lieu, jamais une scène"
+      ]
+    },
+    {
+      "t": "01:15-01:29",
+      "video": "MBQCrfJDCm",
+      "purpose": "autonomous world / Dominic",
+      "overlay": [
+        "ÉVÉNEMENT DU MONDE",
+        "Dominic agit de lui-même"
+      ]
+    },
+    {
+      "t": "01:29-01:43",
+      "video": "8a15ONvIrU",
+      "purpose": "Dominic initiates call",
+      "overlay": [
+        "LE JOUEUR N’A RIEN DÉCLENCHÉ",
+        "APPEL ENTRANT · DOMINIC",
+        "Décrocher",
+        "Plus tard"
+      ]
+    },
+    {
+      "t": "01:43-01:58",
+      "video": "8a15ONvIrU",
+      "purpose": "call/visio mechanic mockup",
+      "overlay": [
+        "APPEL EN COURS",
+        "Le regarder sans rien dire",
+        "Le taquiner",
+        "Lui demander ce qu’il fait"
+      ]
+    },
+    {
+      "t": "01:58-02:12",
+      "video": "TdEar70VNR",
+      "purpose": "memory affects later relationship",
+      "overlay": [
+        "PLUS TARD",
+        "MonIA retient cette interaction",
+        "Pas de barre d’amour : des souvenirs vécus"
+      ]
+    },
+    {
+      "t": "02:12-02:22",
+      "video": "TdEar70VNR",
+      "purpose": "years/technology evolution",
+      "overlay": [
+        "LES ANNÉES PASSENT",
+        "Téléphone · messages · photos · visio",
+        "La vie et les outils évoluent avec l’époque"
+      ]
+    },
+    {
+      "t": "02:22-02:30",
+      "video": "tCxK3xBmZJ",
+      "purpose": "closing back to gameplay",
+      "overlay": [
+        "VOTRE MARION. VOTRE HISTOIRE.",
+        "Chaque partie peut évoluer autrement."
+      ]
+    }
+  ]
+}
