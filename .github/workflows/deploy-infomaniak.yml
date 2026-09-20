@@ -27,22 +27,9 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
-      - name: Install FFmpeg
-        shell: bash
-        run: |
-          set -euo pipefail
-          sudo apt-get update -y
-          sudo apt-get install -y ffmpeg
-
-      - name: Generate living world loops
-        shell: bash
-        timeout-minutes: 4
-        run: |
-          set -euo pipefail
-          timeout 180s node tools/generate-living-loops.mjs || {
-            echo "Living-loop generation timed out; keeping deployment moving with existing public assets."
-          }
-          find public/resources/living -maxdepth 1 -type f -name '*.mp4' -print || true
+      # Living-world MP4 generation is deliberately NOT part of production deploy.
+      # It previously blocked the deployment queue for 20+ minutes.
+      # Those media assets are generated separately and committed/published independently.
 
       - name: Materialize canonical Marion reference
         shell: bash
