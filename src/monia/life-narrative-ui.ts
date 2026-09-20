@@ -34,6 +34,8 @@ function renderStrip(){
   const game=document.querySelector<HTMLElement>('.game');
   if(!game||document.querySelector('.overlay.open')||document.querySelector('.surprisePlayer'))return;
   const snap=getLifeDirectorSnapshot();if(!snap)return;
+  const firstLivingMorning=snap.day===1&&/^09:/.test(String(snap.time||''))&&game.classList.contains('immersivePlayable');
+  if(firstLivingMorning){game.querySelector('.lifeNarrativeStrip')?.remove();return}
   let strip=game.querySelector<HTMLElement>('.lifeNarrativeStrip');
   if(!strip){strip=document.createElement('section');strip.className='lifeNarrativeStrip';game.append(strip)}
   strip.innerHTML=`<div class="lifeNarrativeCopy"><span>${snap.chapter} · Jour ${snap.day} · ${snap.time}</span><p>${snap.narrative}</p></div><div class="lifeChoiceRow">${snap.choices.map((c,i)=>`<button type="button" data-life-choice="${c.id}" data-life-index="${i}"><b>${i+1}</b><span>${c.label}</span></button>`).join('')}</div><div class="lifeFreeRow"><small>Ou fais autre chose</small><button type="button" data-life-free="phone" aria-label="Téléphone">Téléphone</button><button type="button" data-life-free="map" aria-label="Carte">Carte</button><button type="button" data-life-free="wardrobe" aria-label="Garde-robe">Tenues</button><button type="button" data-life-free="journal" aria-label="Journal">Journal</button></div>`;
@@ -51,7 +53,9 @@ function renderStrip(){
 
 function cleanLegacyHud(){
   const game=document.querySelector<HTMLElement>('.game');if(!game)return;
-  game.classList.add('lifeNarrativeMode');
+  const snap=getLifeDirectorSnapshot();
+  const firstLivingMorning=Boolean(snap&&snap.day===1&&/^09:/.test(String(snap.time||''))&&game.classList.contains('immersivePlayable'));
+  game.classList.toggle('lifeNarrativeMode',!firstLivingMorning);
 }
 function refresh(){cleanLegacyHud();renderStrip()}
 const observer=new MutationObserver(()=>window.requestAnimationFrame(refresh));
