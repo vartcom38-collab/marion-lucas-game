@@ -1,7 +1,7 @@
 export type LivingChoice={id:string;label:string;next?:string[];nextNodeIds?:string[];effects?:Record<string,unknown>};
 export type LivingNode={id:string;entrySrc?:string;holdSrc?:string;choices:LivingChoice[];directorNext?:string[];fallbackMs?:number;directorBeat?:{kind:'message'|'presence'|'world';from?:string;text?:string};framing?:{subject?:string;faceReadable?:boolean;movement?:string}};
-type RuntimeState={node:LivingNode|null;video:HTMLVideoElement|null;hold:HTMLVideoElement|null;root:HTMLElement|null;preloads:Map<string,HTMLVideoElement>;history:string[]};
-const state:RuntimeState={node:null,video:null,hold:null,root:null,preloads:new Map(),history:[]};
+type RuntimeState={node:LivingNode|null;video:HTMLVideoElement|null;hold:HTMLVideoElement|null;root:HTMLElement|null;preloads:Map<string,HTMLVideoElement>;history:string[];token:number};
+const state:RuntimeState={node:null,video:null,hold:null,root:null,preloads:new Map(),history:[],token:0};
 
 const MARION_MORNING_VIDEO='https://pikaso.cdnpk.net/private/production/5500260735/be35cd8f-953e-4419-9568-a7dc01c1c624-0.mp4?token=exp=1790294400~hmac=c5f554912bb8c0acada900bf54be92c67441f165839bdeafef843c51411839a9';
 
@@ -83,11 +83,11 @@ async function selectChoice(choice:LivingChoice){
  closeLivingNode();
 }
 export async function playLivingNode(node:LivingNode){
- const root=ensureRoot();setFilmState(true);state.node=node;state.history.push(node.id);state.history=state.history.slice(-8);root.classList.add('active');root.classList.remove('holding','choiceOpen','choiceCommitted');root.dataset.node=node.id;
+ const root=ensureRoot();const token=++state.token;setFilmState(true);state.node=node;state.history.push(node.id);state.history=state.history.slice(-8);root.classList.add('active');root.classList.remove('holding','choiceOpen','choiceCommitted');root.dataset.node=node.id;
  if(node.holdSrc&&state.hold){state.hold.src=node.holdSrc;state.hold.currentTime=0;state.hold.muted=true;await state.hold.play().catch(()=>{})}
  showDirectorBeat(node);
- if(node.entrySrc&&state.video){state.video.src=node.entrySrc;state.video.currentTime=0;state.video.muted=true;await state.video.play().catch(()=>{});state.video.onended=()=>{root.classList.add('holding');showChoices(node)}}
- else window.setTimeout(()=>{root.classList.add('holding');showChoices(node)},node.fallbackMs||250);
+ if(node.entrySrc&&state.video){let opened=false;const open=()=>{if(opened||token!==state.token)return;opened=true;root.classList.add('holding');showChoices(node)};state.video.src=node.entrySrc;state.video.currentTime=0;state.video.muted=true;state.video.onended=open;state.video.onerror=open;await state.video.play().catch(()=>{});window.setTimeout(open,6500)}
+ else window.setTimeout(()=>{if(token!==state.token)return;/* no generated branch clip yet: preserve the last moving hold instead of exposing a frozen entry frame */if(state.hold?.src){root.classList.add('holding');state.hold.play().catch(()=>{})}showChoices(node)},node.fallbackMs||250);
 }
-export function closeLivingNode(){setFilmState(false);const root=state.root;if(!root)return;state.video?.pause();state.hold?.pause();root.remove();state.node=null;state.root=null;state.video=null;state.hold=null;state.preloads.clear()}
+export function closeLivingNode(){state.token++;setFilmState(false);const root=state.root;if(!root)return;state.video?.pause();state.hold?.pause();root.remove();state.node=null;state.root=null;state.video=null;state.hold=null;state.preloads.clear()}
 window.addEventListener('monia:play-living-node',((e:CustomEvent<LivingNode>)=>{const canonical=day1Nodes[e.detail?.id];playLivingNode(canonical||e.detail)}) as EventListener);
