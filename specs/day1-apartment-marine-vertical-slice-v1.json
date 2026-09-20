@@ -91,5 +91,36 @@
     "magnificRole": "support/teacher/repair/compare",
     "captureLessons": true,
     "allowPaidExternalByDefault": false
+  },
+  "existingGameplayIntegration": {
+    "preserve": [
+      "src/day-one-director.ts",
+      "src/marine-conversation.ts",
+      "src/day1-chronology.ts",
+      "src/first-day-comfort.ts"
+    ],
+    "rule": "Do not replace existing Day 1 simulation with a linear cinematic. Generated media enriches existing states and transitions.",
+    "firstContactVariation": "Preserve seeded encounter windows and contexts already implemented; Dominic arrival must remain unknown to the player.",
+    "marineConversation": "Preserve topic pool, response choices, elapsed-time effects and before/after-contact phases."
+  },
+  "displayTargets": {
+    "master": "landscape desktop/iPad",
+    "responsive": [
+      "desktop",
+      "iPad landscape/portrait",
+      "iPhone portrait/landscape"
+    ],
+    "cinematicRule": "Generate landscape master media with face/action safe zones so responsive layouts can contain or crop without losing identity-critical content.",
+    "phoneMediaRule": "Vertical media is allowed only as in-world phone/visio/photo content, not as the master game format."
+  },
+  "firstVisibleProduction": {
+    "phase": "gameplay-first",
+    "steps": [
+      "Keep opening directly playable; do not force a long intro movie.",
+      "Replace placeholder apartment presentation progressively with canonical visual assets.",
+      "Make wardrobe a real choice whose selected outfit persists into generated scenes.",
+      "Use Marine message and existing free-morning logic as the first branching pressure, not a forced quest.",
+      "Attach generated clips only where they add embodiment: dressing transition, leaving home, meeting/reaction beats, major cinematic moments."
+    ]
   }
 }
