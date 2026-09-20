@@ -390,6 +390,35 @@ def run_job(job_path: Path, publish: bool) -> dict[str, Any]:
         }
         try:
             profile, scene_anchor = _profile_for_shot(job, shot, index)
+            checkpoint = QUALITY_DIR / f"{_slug(str(job.get('id') or 'job'))}-{index + 1:02d}.json"
+            expected_fingerprint = _quality_fingerprint(profile)
+            if checkpoint.exists():
+                try:
+                    previous = json.loads(checkpoint.read_text(encoding="utf-8"))
+                    previous_path = Path(str(previous.get("path") or ""))
+                    if (
+                        previous.get("status") == "candidate-ready"
+                        and previous.get("fingerprint") == expected_fingerprint
+                        and previous_path.exists()
+                        and previous_path.stat().st_size > 100000
+                    ):
+                        gate = _technical_quality_gate(previous_path, profile)
+                        if gate.get("passed") is True:
+                            item.update({
+                                "status": "candidate-ready",
+                                "compute": "MonIA restored shot checkpoint",
+                                "path": str(previous_path),
+                                "bytes": previous_path.stat().st_size,
+                                "profile": asdict(profile),
+                                "sceneAnchorId": scene_anchor.get("id") if scene_anchor else None,
+                                "attempts": 0,
+                                "quality": gate,
+                                "restoredCheckpoint": True,
+                            })
+                            item["checkpoint"] = str(checkpoint)
+                            return index, item
+                except Exception:
+                    pass
             attempts = max(1, int(os.environ.get("MONIA_SCENE_ATTEMPTS", "2")))
             errors: list[str] = []
             path = None
@@ -442,6 +471,8 @@ def run_job(job_path: Path, publish: bool) -> dict[str, Any]:
             "candidateUrl": item.get("candidateUrl"),
             "quality": item.get("quality"),
             "bytes": item.get("bytes"),
+            "path": item.get("path"),
+            "fingerprint": _quality_fingerprint(profile) if "profile" in locals() else None,
             "error": item.get("error"),
         }, ensure_ascii=False, indent=2), encoding="utf-8")
         item["checkpoint"] = str(checkpoint)
