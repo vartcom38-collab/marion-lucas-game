@@ -41,6 +41,15 @@ jobs:
           node tools/generate-living-loops.mjs
           find public/resources/living -maxdepth 1 -type f -name '*.mp4' -print || true
 
+      - name: Materialize canonical Marion reference
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public/resources/monia/canon/marion
+          base64 --decode assets/monia-atlas/marion.webp.b64 > public/resources/monia/canon/marion/reference.webp
+          test -s public/resources/monia/canon/marion/reference.webp
+          file public/resources/monia/canon/marion/reference.webp | grep -qi 'Web/P image'
+
       - name: Build Vite application
         run: npm run build
 
@@ -56,6 +65,7 @@ jobs:
           test -f dist/api/monia-media-store.php
           test -f dist/api/monia-ai.php
           test -f dist/resources/living/home.mp4
+          test -s dist/resources/monia/canon/marion/reference.webp
           test -f dist/config/monia-visio-approved.json
           node - <<'NODE'
           const fs=require('fs');
