@@ -1,0 +1,17 @@
+{
+ "version":"1.0",
+ "period":"1998-05-early",
+ "visibility":"director-only",
+ "design":"Day-by-day causal branch envelopes, not a fixed script.",
+ "days":[
+  {"day":"D1","fixed":["first meeting"],"systems":["Marine","Nimes route","first-contact","later-message eligibility"],"density":"high"},
+  {"day":"D2","fixed":["corrida remains protected canon"],"systems":["knowledge flow","attendance possibility","torero preparation","Marine echo","post-contact messaging"],"density":"high"},
+  {"day":"D3","fixed":[],"systems":["corrida aftermath","recovery","independent schedules","contact rhythm","press seed possibility"],"density":"variable"},
+  {"day":"D4","fixed":[],"systems":["ordinary Marion life","Dominic career obligations","social opportunity","memory echo"],"density":"quiet-capable"},
+  {"day":"D5","fixed":[],"systems":["relationship opportunity window","friends/family background","career interruption"],"density":"variable"},
+  {"day":"D6","fixed":[],"systems":["independent life","possible reunion","travel/contract preparation"],"density":"variable"},
+  {"day":"D7","fixed":[],"systems":["week-memory consolidation","future-week preparation","anti-repeat adjustment"],"density":"director-selected"}
+ ],
+ "rule":"Exact events, timing and outcomes are selected from eligibility at runtime and are intentionally omitted from player-facing data.",
+ "continuity":["no unexplained teleport","no unexplained wardrobe reset","no knowledge leak","career schedule constrains Dominic","quiet days are valid","relationship pace follows lived interactions"]
+}
