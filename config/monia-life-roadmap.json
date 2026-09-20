@@ -1,0 +1,33 @@
+{
+  "version": "1.0",
+  "visibility": "director-only",
+  "scope": "whole playable life",
+  "rule": "Define destinations and possibility spaces without forcing a single linear route.",
+  "yearTemplate": {
+    "identity": ["ages","homeBase","relationshipStatus","familyComposition"],
+    "places": ["primaryHome","secondaryHomes","careerCities","familyPlaces","travelDestinations"],
+    "career": ["seasonGoals","contracts","training","press","injuryPossibilities","financialEffects"],
+    "couple": ["sharedRoutines","tensions","milestones","privateLife","projects"],
+    "family": ["parents","friends","childrenIfAny","pregnancyIfAny","careResponsibilities"],
+    "materialLife": ["homes","vehicles","wardrobes","objects","decor","finances"],
+    "hiddenBranches": ["optionalEvents","delayedConsequences","missableEvents","surprises","alternateContexts"],
+    "mediaPlan": ["mustPreGenerate","predictiveCandidates","runtimeFallbacks"]
+  },
+  "lifeDomains": [
+    "meeting-and-early-romance","couple-formation","career-seasons","distance-and-reunions",
+    "families-and-friends","engagement","wedding","homes","pregnancy-and-parenthood",
+    "travel","press-and-public-life","injury-and-recovery","money-and-contracts",
+    "finca-project","bull-breeding","aging","late-career","ordinary-daily-life"
+  ],
+  "detailPolicy": {
+    "nearTerm": "day-by-day and hour-aware",
+    "midTerm": "week/month plus important days",
+    "longTerm": "year architecture with expandable event graphs",
+    "expandBeforeReach": true
+  },
+  "spoilerProtection": {
+    "playerUIReadsOnlyReachedFacts": true,
+    "generationReceivesOnlySceneRelevantFutureSafeContext": true,
+    "debugFutureGraphDisabledInPlayerBuild": true
+  }
+}
