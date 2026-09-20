@@ -50,8 +50,17 @@ const day1Nodes:Record<string,LivingNode>={
   {id:'observe',label:'Regarder la ville autour de moi',nextNodeIds:['D1_MARINE_APPROACH'],effects:{minutes:7}}
  ]},
  D1_MARINE_APPROACH:{id:'D1_MARINE_APPROACH',fallbackMs:550,directorBeat:{kind:'presence',from:'Marine',text:'Marine apparaît dans le mouvement de la ville, sans interrompre la scène.'},choices:[
-  {id:'join',label:'Rejoindre Marine',nextNodeIds:[],effects:{minutes:6,memory:'Tu as retrouvé Marine près des arènes.',flags:{day1MarineReached:true}}},
-  {id:'wait',label:'L’attendre quelques minutes',nextNodeIds:[],effects:{minutes:5,flags:{day1WaitingMarine:true}}}
+  {id:'join',label:'Rejoindre Marine',nextNodeIds:['D1_WITH_MARINE'],effects:{minutes:6,memory:'Tu as retrouvé Marine près des arènes.',flags:{day1MarineReached:true}}},
+  {id:'wait',label:'L’attendre quelques minutes',nextNodeIds:['D1_WITH_MARINE'],effects:{minutes:5,flags:{day1WaitingMarine:true}}}
+ ]},
+ D1_WITH_MARINE:{id:'D1_WITH_MARINE',fallbackMs:650,directorBeat:{kind:'world',text:'Vous marchez ensemble. La ville continue autour de vous.'},choices:[
+  {id:'talk',label:'Continuer à discuter avec Marine',nextNodeIds:['D1_FIRST_CONTACT_GATE'],effects:{minutes:12,flags:{day1MarineWalk:true}}},
+  {id:'crowd',label:'Se laisser porter par la foule',nextNodeIds:['D1_FIRST_CONTACT_GATE'],effects:{minutes:9,flags:{day1FeriaCrowd:true}}},
+  {id:'coffee',label:'Prendre quelque chose avec elle',nextNodeIds:['D1_FIRST_CONTACT_GATE'],effects:{minutes:14,energy:2,flags:{day1MarineCoffee:true}}}
+ ]},
+ D1_FIRST_CONTACT_GATE:{id:'D1_FIRST_CONTACT_GATE',fallbackMs:850,directorBeat:{kind:'world',text:'Quelque chose change dans le mouvement autour de vous. Tu ne l’as pas décidé.'},choices:[
+  {id:'react',label:'Réagir naturellement',nextNodeIds:[],effects:{minutes:4,flags:{day1FirstContactGateReached:true}}},
+  {id:'observe',label:'Regarder ce qui se passe',nextNodeIds:[],effects:{minutes:3,flags:{day1FirstContactGateReached:true}}}
  ]}
 };
 
