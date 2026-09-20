@@ -31,11 +31,11 @@ video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .node{padding:22px 18px;border:1px solid #777;border-radius:14px;background:#111;min-width:150px;text-align:center;font-size:clamp(14px,1.25vw,20px)}
 .arrow{font-size:32px;opacity:.6}.memory{border-color:#fff}
 .badge{position:absolute;right:5vw;top:5vh;border:1px solid rgba(255,255,255,.35);padding:8px 12px;border-radius:99px;font-size:12px;letter-spacing:.12em}
-.hidden{display:none!important}
+.playerhud{position:absolute;inset:0;pointer-events:none}.playerhud .date{position:absolute;left:3vw;top:3vh;font-size:12px;letter-spacing:.12em;opacity:.72}.playerhud .hint{position:absolute;right:3vw;bottom:3vh;font-size:12px;opacity:.55}.playerhud .phoneicon{position:absolute;right:3vw;top:3vh;width:38px;height:38px;border:1px solid rgba(255,255,255,.35);border-radius:50%;display:grid;place-items:center;background:rgba(0,0,0,.25)}.jury-note{position:absolute;left:50%;top:3vh;transform:translateX(-50%);padding:7px 12px;border-radius:99px;background:rgba(0,0,0,.48);font-size:11px;letter-spacing:.08em;opacity:.75}.hidden{display:none!important}
 </style></head>
 <body><main id="stage">
 <video id="film" autoplay muted playsinline></video><div class="shade"></div>
-<div class="top" id="top"></div><div class="badge">DÉMONSTRATION DU GAMEPLAY</div>
+<div class="playerhud" id="playerhud"><div class="date">NÎMES · MAI 1998</div><div class="phoneicon">☎</div><div class="hint">Le film continue en temps réel</div></div><div class="jury-note">VUE DU JOUEUR</div><div class="top" id="top"></div>
 <div class="title" id="title"></div>
 <div class="choices hidden" id="choices"><div class="choice">Répondre à Marine</div><div class="choice">Finir de se préparer</div><div class="choice">Sortir maintenant</div></div>
 <div class="cursor hidden" id="cursor"></div>
@@ -55,13 +55,16 @@ const V={
 const film=document.querySelector('#film'),title=document.querySelector('#title'),topT=document.querySelector('#top'),choices=document.querySelector('#choices'),cursor=document.querySelector('#cursor'),phone=document.querySelector('#phone'),incoming=document.querySelector('#incoming'),explain=document.querySelector('#explain'),flow=document.querySelector('#flow'),phoneTimeline=document.querySelector('#phoneTimeline'),visioFilm=document.querySelector('#visioFilm');
 function reset(){title.innerHTML='';topT.textContent='';choices.classList.add('hidden');cursor.classList.add('hidden');phone.classList.add('hidden');incoming.classList.add('hidden');explain.classList.add('hidden');flow.classList.add('hidden');phoneTimeline.classList.add('hidden');film.style.opacity=1}
 function play(src){if(film.src!==src){film.src=src;film.play().catch(()=>{})}}
+const gameplayChoices=()=>{choices.innerHTML='<div class="choice">Répondre à Marine</div><div class="choice">Finir de se préparer</div><div class="choice">Sortir maintenant</div>'};
+const callChoices=()=>{choices.innerHTML='<div class="choice">Décrocher</div><div class="choice">Laisser sonner</div>'};
 const scenes=[
 ()=>{reset();play(V.nimes);topT.textContent='NÎMES · MAI 1998';title.innerHTML='Une vie.<span class="sub">Pas un scénario figé.</span>'},
-()=>{reset();play(V.marion);topT.textContent='VOUS JOUEZ MARION';choices.classList.remove('hidden');explain.classList.remove('hidden');explain.textContent='Le film continue pendant que vous décidez.'},
-()=>{choices.classList.remove('hidden');cursor.classList.remove('hidden');cursor.style.left='18vw';cursor.style.top='74vh';document.querySelectorAll('.choice')[2].classList.add('active');explain.textContent='Un choix ne lance pas une scène pré-écrite : MonIA cherche une suite compatible.'},
+()=>{reset();gameplayChoices();play(V.marion);topT.textContent='';choices.classList.remove('hidden');explain.classList.remove('hidden');explain.textContent='Le film continue pendant que vous décidez.'},
+()=>{gameplayChoices();choices.classList.remove('hidden');cursor.classList.remove('hidden');cursor.style.left='18vw';cursor.style.top='74vh';document.querySelectorAll('.choice')[2].classList.add('active');explain.textContent='Un choix ne lance pas une scène pré-écrite : MonIA cherche une suite compatible.'},
 ()=>{reset();play(V.phone);phone.classList.remove('hidden');topT.textContent='LE MONDE CONTINUE';explain.classList.remove('hidden');explain.textContent='Messages, appels et événements apparaissent dans le contexte — sans remplacer la scène.'},
-()=>{reset();play(V.phone);incoming.classList.remove('hidden');topT.textContent='DOMINIC PREND L’INITIATIVE';explain.classList.remove('hidden');explain.textContent='Marion reçoit l’appel pendant que la scène continue. Le joueur choisit seulement sa réaction.'},
-()=>{reset();play(V.motion);topT.textContent='DOMINIC EST AUTONOME';title.innerHTML='Vous contrôlez Marion.<span class="sub">Pas Dominic. Il peut venir, appeler, partir, travailler ou réagir de lui-même.</span>'},
+()=>{reset();callChoices();play(V.phone);incoming.classList.remove('hidden');choices.classList.remove('hidden');topT.textContent='';explain.classList.remove('hidden');explain.textContent='Dominic a appelé de lui-même. Vous choisissez seulement la réaction de Marion.'},
+()=>{callChoices();cursor.classList.remove('hidden');cursor.style.left='17vw';cursor.style.top='76vh';document.querySelectorAll('.choice')[0].classList.add('active');incoming.querySelector('.status').textContent='Connexion…';explain.textContent='Décrocher ne coupe pas le film : l’interaction s’intègre à la scène.'},
+()=>{reset();play(V.motion);topT.textContent='';title.innerHTML='Vous contrôlez Marion.<span class="sub">Pas Dominic. Il peut venir, appeler, partir, travailler ou réagir de lui-même.</span>'},
 ()=>{reset();play(V.marion);topT.textContent='UNE DÉCISION ≠ UNE SEULE SUITE';title.innerHTML='Même choix. Autre partie.<span class="sub">Relation · mémoire · heure · lieu · carrière · événements cachés · historique de la partie</span>'},
 ()=>{reset();film.style.opacity=.12;topT.textContent='LE TÉLÉPHONE ÉVOLUE AVEC LES ANNÉES';phoneTimeline.classList.remove('hidden');visioFilm.src=V.motion;visioFilm.play().catch(()=>{});explain.classList.remove('hidden');explain.textContent='Quand la visio devient cohérente avec l’époque, Dominic apparaît réellement dans le téléphone — et reste autonome pendant l’appel.'},
 ()=>{reset();film.style.opacity=.18;topT.textContent='SOUS LE CAPOT';flow.classList.remove('hidden');explain.classList.remove('hidden');explain.textContent='MonIA conserve les conséquences puis les réinjecte dans les scènes futures.'},
