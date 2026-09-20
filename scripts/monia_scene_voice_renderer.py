@@ -26,13 +26,20 @@ def render_scene_dialogue(scene: dict[str, Any], output_dir: Path) -> dict[str, 
             allowed = {"neutral", "warm", "amused", "tender", "concerned", "tired", "whisper"}
             if emotion not in allowed:
                 emotion = "neutral"
-            manifest = render_dominic(text, emotion, f"{scene.get('id')}-line-{index}", False)
-            shutil.copy2(Path(manifest["output"]), target)
-            rendered.append({
-                "index": index, "speaker": speaker, "path": str(target),
-                "duration": manifest["duration"], "voiceId": manifest["voice_id"],
-                "status": "rendered",
-            })
+            try:
+                manifest = render_dominic(text, emotion, f"{scene.get('id')}-line-{index}", False)
+                shutil.copy2(Path(manifest["output"]), target)
+                rendered.append({
+                    "index": index, "speaker": speaker, "path": str(target),
+                    "duration": manifest["duration"], "voiceId": manifest["voice_id"],
+                    "status": "rendered",
+                    "sourceMode": manifest.get("source_mode"),
+                })
+            except Exception as exc:
+                blocked.append({
+                    "index": index, "speaker": speaker, "status": "compute-deferred",
+                    "retryable": True, "reason": str(exc),
+                })
         else:
             blocked.append({
                 "index": index, "speaker": speaker, "status": "voice-reference-required",
