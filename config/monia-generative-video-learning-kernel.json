@@ -1,0 +1,102 @@
+{
+  "version": 1,
+  "name": "MonIA Generative Video Learning Kernel",
+  "goal": "Rendre MonIA capable d'orchestrer elle-même la génération vidéo et de remplacer progressivement la dépendance à Magnific, tout en utilisant des modèles vidéo disponibles comme moteurs interchangeables.",
+  "learnFromEveryGeneration": true,
+  "principle": "Ne pas tenter de copier le service propriétaire Magnific. Apprendre le workflow observable, les décisions de réalisation et les relations entrée→sortie→validation, puis les reproduire dans notre propre orchestrateur.",
+  "pipeline": [
+    "intent_parse",
+    "canon_and_continuity_retrieval",
+    "real_location_evidence_retrieval",
+    "scene_plan",
+    "blocking_plan",
+    "camera_plan",
+    "reference_selection",
+    "prompt_compile",
+    "model_route",
+    "generation",
+    "technical_qa",
+    "identity_qa",
+    "location_qa",
+    "motion_qa",
+    "gameplay_qa",
+    "human_validation",
+    "lesson_store",
+    "approved_asset_registry"
+  ],
+  "generationLesson": {
+    "capture": [
+      "scene_intent",
+      "model_and_mode",
+      "duration",
+      "resolution",
+      "aspect_ratio",
+      "all_reference_roles",
+      "prompt",
+      "negative_constraints",
+      "camera_motion",
+      "audio_strategy",
+      "generation_cost",
+      "generation_time",
+      "result_asset",
+      "accepted_or_rejected",
+      "rejection_reasons",
+      "identity_drift",
+      "location_drift",
+      "camera_failures",
+      "motion_failures",
+      "continuity_failures",
+      "successful_patterns"
+    ],
+    "derive": [
+      "best model per shot type",
+      "minimum viable duration/resolution",
+      "reference weighting strategy",
+      "prompt templates by scene type",
+      "camera/blocking rules",
+      "cost-quality frontier",
+      "retry policy"
+    ]
+  },
+  "magnificObservedMechanicsToLearn": [
+    "plan before expensive generation",
+    "use canonical image/video references",
+    "separate start/end keyframes from general references when model requires it",
+    "route shot to model based on capabilities",
+    "generate short controlled clips instead of long speculative clips",
+    "preserve clean video plates; gameplay UI in post/runtime",
+    "poll generation until terminal state",
+    "render/review output before approval",
+    "concatenate approved clips only",
+    "reuse approved assets instead of regenerating",
+    "store reusable character/location references",
+    "track credit cost and prefer cheapest model that meets quality target"
+  ],
+  "replacementArchitecture": {
+    "planner": "MonIA scene director",
+    "referenceStore": "MonIA canon/location/character library",
+    "promptCompiler": "MonIA prompt compiler",
+    "router": "provider-agnostic video model router",
+    "providers": [
+      "self-hosted GPU models",
+      "external model APIs when needed"
+    ],
+    "validator": "MonIA multimodal QA + human approval gate",
+    "memory": "generation lesson store",
+    "runtime": "approved branch-video registry"
+  },
+  "autonomyTarget": [
+    "MonIA chooses generation recipe from scene requirements",
+    "MonIA can run A/B low-cost drafts",
+    "MonIA rejects identity/location/camera failures",
+    "MonIA escalates quality only when necessary",
+    "MonIA learns from user approvals/rejections",
+    "Provider can be swapped without changing game logic"
+  ],
+  "nonGoals": [
+    "reverse engineer proprietary Magnific internals",
+    "copy proprietary weights/code",
+    "claim zero compute cost"
+  ],
+  "costPolicy": "Reuse > transform approved asset > cheap draft > standard generation > premium generation. Never premium-first without a scene-specific reason."
+}
