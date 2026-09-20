@@ -1,0 +1,11 @@
+{
+ "version":"1.0",
+ "system":"autonomous press and paparazzi simulation",
+ "inputs":["Dominic-fame","recent-results","feria-importance","public-location","Marion-visibility","relationship-status","rumors","injury","career-contracts","family-events"],
+ "actors":["sports-press","society-press","local-press","photographers","paparazzi","television","radio"],
+ "events":["photo-captured","interview-request","headline","rumor","misleading-context","career-profile","relationship-coverage","injury-coverage","contract-news"],
+ "delayedPublication":true,
+ "playerDoesNotChooseCoverage":true,
+ "consequences":["privacy","mood","family-reaction","apoderado-response","career-pressure","future-dialogue","public-recognition"],
+ "continuity":"A captured image or quote becomes a persistent world fact and may resurface later."
+}
