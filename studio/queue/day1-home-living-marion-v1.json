@@ -1,0 +1,65 @@
+{
+  "id": "day1-home-living-marion-v1",
+  "state": "queued",
+  "createdAt": "2026-09-20T10:00:00+02:00",
+  "source": "gameplay",
+  "candidateOnly": true,
+  "narrativeAuthority": false,
+  "sceneFamily": "day1-home-living-idle",
+  "signature": "DAY1_HOME_LIVING_MARION_CANON_V1",
+  "generationPolicy": "magnific-assisted",
+  "allowPaidExternal": false,
+  "learningCapture": true,
+  "prompt": "Photorealistic cinematic morning in Marion's Nîmes apartment. Marion is alone and naturally living in the space, not posing: a small ordinary movement near the living room and kitchen, relaxed breathing, subtle glance toward her phone or the room, believable weight shifts and micro-expressions. Preserve Marion's canonical identity exactly from the MonIA atlas. Warm natural morning light, restrained handheld/cinematic camera, premium realism. This is one embodied visual beat inside interactive gameplay, not an intro trailer. No dialogue, no story reveal, no Dominic, no Marine, no UI, no text.",
+  "negativePrompt": "identity drift, different woman, face morphing, beauty-filter face, age change, duplicate person, extra limbs, deformed hands, exaggerated acting, fashion pose, vertical framing, subtitles, text, watermark, UI, Dominic, Lucas, Marine, spoiler, slideshow, photo zoom",
+  "characters": [
+    {
+      "id": "marion",
+      "canonRef": "assets/monia-atlas/marion.webp.b64",
+      "wardrobe": "continuity-bound to selected Day 1 outfit; for first neutral candidate use understated natural contemporary morning clothes"
+    }
+  ],
+  "playableContext": {
+    "entryState": "Day 1, home, free morning gameplay",
+    "exitState": "Return control to the same apartment state",
+    "gameplayBetweenClips": true,
+    "choices": [],
+    "conversationTopics": []
+  },
+  "location": {
+    "name": "Marion apartment — living/kitchen",
+    "realWorld": false,
+    "referenceRequired": true,
+    "referenceUrls": [
+      "public/resources/nimes/marion-apartment-living.webp",
+      "public/resources/nimes/marion-apartment-kitchen.webp"
+    ],
+    "fidelityNotes": [
+      "Use existing apartment assets as spatial and mood authority",
+      "Do not redesign the apartment between shots"
+    ]
+  },
+  "references": {
+    "identity": [
+      "assets/monia-atlas/marion.webp.b64"
+    ],
+    "behavior": [],
+    "wardrobe": [],
+    "location": [
+      "public/resources/nimes/marion-apartment-living.webp",
+      "public/resources/nimes/marion-apartment-kitchen.webp"
+    ]
+  },
+  "generation": {
+    "provider": "magnific",
+    "router": "auto",
+    "width": 1280,
+    "height": 720,
+    "seconds": 7,
+    "seed": 2092026
+  },
+  "output": {
+    "candidatePath": "public/resources/monia/candidates/day1-home-living-marion-v1/",
+    "approvedPath": "public/resources/monia/approved/day1-home-living-marion-v1.mp4"
+  }
+}
