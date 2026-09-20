@@ -1,0 +1,45 @@
+{
+ "version":"1.0",
+ "epoch":{"workingStart":"1998-05","marionAge":20,"dominicAge":22},
+ "coreLoop":["free-life","hidden-director-evaluation","natural-event","optional-cinematic","player-interaction","persistent-consequence","free-life"],
+ "simulation":{
+   "clocks":["date","time","season","age","career-season","relationship-duration","pregnancy-if-active","injury-recovery"],
+   "playerState":["location","activity","outfit","hair","makeup","inventory","money","energy","stress","mood","knowledge","relationships","appointments"],
+   "npcState":["location","schedule","outfit","energy","mood","knowledge","relationships","career-obligations","private-goals"],
+   "worldState":["weather","real-calendar","ferias","open-places","travel-times","press-context","house-state","vehicles","objects"]
+ },
+ "systems":[
+   "home-life","wardrobe","phone","messages","calls","visio","agenda","map-travel","social-life","conversation",
+   "relationship-memory","attraction-intimacy","family","friends","career-torero","contracts","training","corridas",
+   "travel","press","money","shopping","restaurants","health-injury","pregnancy-parenthood","housing-decoration",
+   "finca-project","vehicles","weather","sleep-fatigue","surprises","cinematic-director"
+ ],
+ "director":{
+   "playerNeverSeesTree":true,
+   "evaluatesAfterEveryMeaningfulAction":true,
+   "eventInputs":["time","place","people","knowledge","memories","choices","career","relationships","outfits","objects","random-seed","media-readiness"],
+   "eventTypes":["ambient","social","romantic","career","family","press","travel","health","domestic","surprise","canonical-anchor"],
+   "rules":["never force impossible presence","never reveal unknown information","never repeat exact lived route when alternatives exist","ordinary time is playable","canonical anchors may have variable context"]
+ },
+ "dayRuntime":{
+   "morning":["wake-state","phone","agenda","home-actions","wardrobe","breakfast","messages","optional-plans"],
+   "day":["free-movement","appointments","work/career-context","friends","shopping","travel","emergent-events"],
+   "evening":["social","couple","family","restaurant","home","calls","career-aftermath"],
+   "night":["private-life","reflection","sleep-choice","late-event-possibility"],
+   "dayEndsOnlyWhenPlayerSleepsOrStoryJustifiesTransition":true
+ },
+ "replay":{
+   "newSaveSeed":true,
+   "sameCanonDifferentRoute":true,
+   "variationAxes":["timing","weather","outfits","conversation-topics","who-initiates","locations","ambient-events","contract-calendar","corrida-results","travel","minor-conflicts","surprises"],
+   "antiRepeatMemory":true
+ },
+ "cinema":{
+   "videoNeverContainsUI":true,
+   "videoDoesNotOwnGameState":true,
+   "choicePointsReturnToGameplay":true,
+   "generationMustNotBlockPlayer":true,
+   "resolverKeys":["scene-family","characters","identity-version","outfits","location","time-of-day","relationship-phase","branch","physical-state"],
+   "fallbackOrder":["exact-prepared","compatible-modular","predictively-prepared","gameplay-rendered-transition"]
+ }
+}
