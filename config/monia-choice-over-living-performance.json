@@ -1,0 +1,17 @@
+{
+ "version":"1.0",
+ "name":"Choice Over Living Performance",
+ "referenceIntent":"Match the interaction grammar demonstrated by the user reference: actor keeps performing while a contextual choice overlays the scene.",
+ "timeline":[
+  {"phase":"approach","video":"normal authored performance","ui":"none"},
+  {"phase":"choice-open","video":"continuous living performance","ui":"3-5 contextual choices fade/slide in"},
+  {"phase":"thinking","video":"actor never freezes; micro-actions continue","ui":"choices remain responsive"},
+  {"phase":"commit","video":"current motion reaches safe raccord frame","ui":"selected option acknowledges immediately"},
+  {"phase":"branch","video":"preloaded target clip begins","ui":"choice overlay disappears"},
+  {"phase":"consequence","video":"branch performance continues","ui":"only reappears at next genuine decision point"}
+ ],
+ "performance":["eye movement","breathing","weight shift","small hand actions","looking at another character","environment response"],
+ "forbidden":["freeze-frame choice screen","hard black loading screen","generation spinner","same hold loop obviously repeating","choice that controls Dominic when Marion would not plausibly control him"],
+ "camera":"Choices must not cover faces, hands carrying important action, or subtitles.",
+ "mobile":"Buttons adapt around safe zones and remain thumb reachable without turning the cinematic into a phone-game HUD."
+}
