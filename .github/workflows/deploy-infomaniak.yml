@@ -36,7 +36,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p public/resources/monia/canon/marion
-          tr -d '[:space:]' < assets/monia-atlas/marion.webp.b64 | base64 --decode > public/resources/monia/canon/marion/reference.webp
+          cat assets/monia-atlas/chunks/marion-00.b64 assets/monia-atlas/chunks/marion-01.b64 assets/monia-atlas/chunks/marion-02.b64 assets/monia-atlas/chunks/marion-03.b64 assets/monia-atlas/chunks/marion-04.b64 | tr -d '[:space:]' | base64 --decode > public/resources/monia/canon/marion/reference.webp
           test -s public/resources/monia/canon/marion/reference.webp
           file public/resources/monia/canon/marion/reference.webp | grep -qi 'Web/P image'
 
