@@ -1,0 +1,22 @@
+{
+ "version":1,
+ "character":"Dominic",
+ "authority":"user-provided reference screenshots 2026-09-20",
+ "sources":[
+  {"file":"IMG_4466.jpeg","use":["three-quarter","expression","hair","jaw","stubble"]},
+  {"file":"IMG_4467.jpeg","use":["front","eye-spacing","nose","mouth","hair","jaw"]},
+  {"file":"IMG_4468.jpeg","use":["profile-down","motion-reference","choice-overlay-behavior-reference"]},
+  {"file":"IMG_4465.jpeg","use":["multi-angle","profile","three-quarter","interaction-distance","body-proportions"]}
+ ],
+ "identityRules":[
+  "Preserve the same facial geometry across all shots.",
+  "Use dark swept hair, strong brows, light stubble and the facial proportions visible in the references.",
+  "Do not copy the wedding, blood, hospital, woman, UI, social-media frame or background as Dominic canon.",
+  "Tattoo treatment follows the project's current explicit Dominic canon rather than being inferred from these screenshots.",
+  "Game-age presentation must follow Dominic's canonical age at the current date."
+ ],
+ "gameplayReference":{
+  "IMG_4468.jpeg":"Reference for a character remaining alive in motion while an overlaid choice becomes available; do not copy its UI design."
+ },
+ "status":"canonical-visual-pack-confirmed-by-user"
+}
