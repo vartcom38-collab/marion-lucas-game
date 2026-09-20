@@ -1,0 +1,26 @@
+{
+ "version":"1.0",
+ "scope":"adult Marion and adult Dominic only",
+ "purpose":"Model romantic and non-explicit intimate life as part of relationship continuity.",
+ "eligibility":["both adults","relationship-state compatible","contextually plausible","character agency preserved"],
+ "presentationLevels":[
+  "affection-only","romantic-kiss","private-closeness","sensual-non-explicit","fade-to-black","post-intimacy","morning-after"
+ ],
+ "directorRules":[
+  "Never expose an intimacy menu.",
+  "Never make intimacy mechanically mandatory.",
+  "Do not repeat identical staging.",
+  "Use emotion and relationship context before spectacle.",
+  "Preserve outfits/undressing implications only through non-explicit continuity.",
+  "After-scene state may affect mood, dialogue, sleep, relationship memory and next-day behavior.",
+  "No explicit sexual-act depiction."
+ ],
+ "branching":{
+  "playerMayRespondWhenAChoiceNaturallyExists":true,
+  "DominicCanInitiateOrDeclineAutonomously":true,
+  "MarionCanDeclineThroughPlayerChoiceWhenChoiceIsPresented":true,
+  "directorMayUseEllipseInsteadOfChoice":true
+ },
+ "media":["prepared cinematic","living hold","fade/transition","post-scene cinematic"],
+ "memory":["firsts","comfort","tension","reconciliation","shared-jokes","important-conversations","privacy-context"]
+}
