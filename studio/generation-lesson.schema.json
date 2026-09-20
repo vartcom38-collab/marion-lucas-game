@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://marion-lucas.marionbolomey.fr/studio/generation-lesson.schema.json",
+  "title": "MonIA Generation Lesson",
+  "type": "object",
+  "required": ["version", "jobId", "selectedProvider", "result", "qa", "userVerdict", "lesson"],
+  "properties": {
+    "version": {"const": 1},
+    "jobId": {"type": ["string", "null"]},
+    "sceneFamily": {"type": ["string", "null"]},
+    "playableContext": {"type": ["object", "null"]},
+    "location": {"type": ["object", "null"]},
+    "characters": {"type": ["array", "null"]},
+    "wardrobeContinuity": {"type": ["object", "null"]},
+    "prompt": {"type": ["string", "null"]},
+    "negativePrompt": {"type": ["string", "null"]},
+    "generationPolicy": {"enum": ["autonomous-first", "quality-first", "magnific-assisted", "compare"]},
+    "selectedProvider": {"enum": ["monia", "magnific"]},
+    "routingReason": {"type": "string"},
+    "references": {"type": ["object", "array", "null"]},
+    "result": {"type": "object"},
+    "qa": {"type": "object"},
+    "repairs": {"type": "array"},
+    "userVerdict": {"type": ["string", "null"]},
+    "lesson": {"type": "object"}
+  }
+}
