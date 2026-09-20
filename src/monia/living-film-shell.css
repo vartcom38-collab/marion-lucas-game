@@ -16,3 +16,8 @@ body.livingSceneActive .approvedTopLeft,body.livingSceneActive .phoneToast,body.
 body.livingSceneActive .overlay.open{z-index:210}
 body.livingSceneActive .livingBranchPlayer{z-index:170}
 body.livingSceneActive .livingChoices{z-index:176}
+
+/* Living-film is the primary experience: legacy game chrome must never sit on top of it. */
+.game.livingFilmMode .premiumNav,.game.livingFilmMode .approvedTopLeft,.game.livingFilmMode .approvedTopActions,.game.livingFilmMode .approvedStats,.game.livingFilmMode .calendarNudge,.game.livingFilmMode .agendaPulse,.game.livingFilmMode .phoneToast,.game.livingFilmMode .gameHotspot,.game.livingFilmMode .exactControls,.game.livingFilmMode .hud,.game.livingFilmMode .storyPulse,.game.livingFilmMode .arrivalMoment{display:none!important}
+.game.livingFilmMode .worldBackdrop{position:absolute;inset:0}
+.game.livingFilmMode .homePhotoStage,.game.livingFilmMode .exteriorScene{min-height:100dvh;height:100dvh}
