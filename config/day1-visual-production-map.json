@@ -1,0 +1,109 @@
+{
+  "version": 1,
+  "goal": "Attach generated visual media to existing gameplay without turning Day 1 into a linear movie.",
+  "targets": {
+    "masterAspect": "16:9",
+    "desktop": true,
+    "ipad": true,
+    "iphoneResponsive": true,
+    "safeZone": {
+      "xPercent": 18,
+      "yPercent": 10
+    }
+  },
+  "slots": [
+    {
+      "id": "day1-home-living-idle",
+      "state": {
+        "day": 1,
+        "place": "home",
+        "space": "living"
+      },
+      "kind": "ambient-loop",
+      "duration": "6-10s",
+      "priority": "P0",
+      "identity": [
+        "marion"
+      ],
+      "location": "marion-apartment-living",
+      "uiOverlay": false,
+      "notes": "Natural morning presence; gameplay remains interactive over/after the shot."
+    },
+    {
+      "id": "day1-wardrobe-transition",
+      "state": {
+        "day": 1,
+        "place": "home"
+      },
+      "kind": "transition",
+      "duration": "4-7s",
+      "priority": "P0",
+      "identity": [
+        "marion"
+      ],
+      "variantsBy": "outfit",
+      "uiOverlay": false,
+      "notes": "Generated after outfit assets are approved; chosen outfit becomes continuity lock."
+    },
+    {
+      "id": "day1-leave-home",
+      "state": {
+        "day": 1,
+        "from": "home",
+        "to": "nimes"
+      },
+      "kind": "transition",
+      "duration": "5-8s",
+      "priority": "P1",
+      "identity": [
+        "marion"
+      ],
+      "location": "marion-apartment-exterior",
+      "uiOverlay": false
+    },
+    {
+      "id": "day1-marine-rendezvous",
+      "state": {
+        "day": 1,
+        "with": "Marine",
+        "metDominic": false
+      },
+      "kind": "conversation-beat",
+      "duration": "6-12s per beat",
+      "priority": "P1",
+      "identity": [
+        "marion",
+        "marine"
+      ],
+      "location": "real-nimes",
+      "uiOverlay": false,
+      "notes": "Conversation choices remain game UI; clips provide embodied reactions/continuity."
+    },
+    {
+      "id": "day1-first-contact",
+      "state": {
+        "day": 1,
+        "metDominic": false
+      },
+      "kind": "branch-cinematic",
+      "duration": "multi-shot",
+      "priority": "P2",
+      "identity": [
+        "marion",
+        "dominic"
+      ],
+      "variantsBy": "firstContactContext",
+      "location": "real-nimes",
+      "uiOverlay": false,
+      "notes": "Three existing contexts: arena-midday, feria-afternoon, feria-evening. Never reveal which is coming."
+    }
+  ],
+  "generationRules": {
+    "canonicalIdentityRequired": true,
+    "realLocationReferenceRequired": true,
+    "noGeneratedButtons": true,
+    "noOldGeneratedFrameAsIdentitySource": true,
+    "magnificTeacherCapture": true,
+    "paidExternalDefault": false
+  }
+}
