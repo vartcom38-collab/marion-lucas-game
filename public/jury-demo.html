@@ -122,8 +122,16 @@ function advance(){
   timer=setTimeout(()=>{i=(i+1)%scenes.length;advance()},d);
 }
 advance();
-</script><div id="filmBadge">MARION &amp; DOMINIC · GAMEPLAY OVERVIEW</div>
+</script><div id="filmProgress"><span></span></div>
+<style>
+#filmProgress{display:none;position:fixed;left:0;right:0;bottom:0;height:2px;z-index:120;background:rgba(255,255,255,.12)}
+#filmProgress span{display:block;height:100%;width:0;background:rgba(255,255,255,.75)}
+body.film-mode #filmProgress{display:block}
+</style>
+<div id="filmBadge">MARION &amp; DOMINIC · GAMEPLAY OVERVIEW</div>
 <script>
-(()=>{const q=new URLSearchParams(location.search);if(q.get('film')==='1'){document.body.classList.add('film-mode');document.documentElement.requestFullscreen?.().catch(()=>{});}})
+(()=>{const q=new URLSearchParams(location.search);if(q.get('film')==='1'){document.body.classList.add('film-mode');document.documentElement.requestFullscreen?.().catch(()=>{});
+const bar=document.querySelector('#filmProgress span');const total=150000;const start=performance.now();
+const tick=n=>{bar.style.width=Math.min(100,((n-start)/total)*100)+'%';if(n-start<total)requestAnimationFrame(tick)};requestAnimationFrame(tick);}})
 ();
 </script></body></html>
