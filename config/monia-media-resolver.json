@@ -1,0 +1,19 @@
+{
+ "version":"1.0",
+ "purpose":"Select media without visible waiting.",
+ "request":["sceneFamily","gameStateSnapshot","requiredCharacters","requiredOutfits","location","timeWindow","emotionalBeat","nextChoicePoint"],
+ "matchPriority":["identity exact","outfit exact","location exact","story-state compatible","physical-state compatible","time-light compatible"],
+ "preparation":{
+   "aheadWindows":["next-30-min","rest-of-day","next-appointments"],
+   "cancelImpossibleBranchesImmediately":true,
+   "reusePreparedAssetsAcrossSavesWhenStateCompatible":true,
+   "neverGenerateAllCartesianCombinations":true
+ },
+ "runtime":{
+   "ifExactReady":"play",
+   "ifModularReady":"compose-and-play",
+   "ifGenerationRunning":"keep-gameplay-alive-and-delay-trigger-naturally",
+   "ifNoMedia":"use-gameplay-native-presentation",
+   "showGenerationSpinner":false
+ }
+}
