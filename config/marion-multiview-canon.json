@@ -1,0 +1,18 @@
+{
+  "version":1,
+  "character":"Marion",
+  "authority":"user-provided multi-view boards from 2026-09-20",
+  "sourceFiles":[
+    {"localSource":"BFDBE04E-192E-40D5-A28D-0255E4A0967F.jpeg","role":"identity-board-A","views":10},
+    {"localSource":"C84AE8A6-F145-4EAE-A152-B4223F0932E2.jpeg","role":"identity-board-B","views":10}
+  ],
+  "identityRules":[
+    "Use facial identity and physical appearance from the photographs, not the printed card metadata.",
+    "Ignore printed name JULIETTE, printed ages 34/35, printed origins and printed character text.",
+    "Game canon remains Marion, age 20 at the working May 1998 start.",
+    "Use multiple views together for face geometry, profile, three-quarter view, eyes, nose, mouth, cheek mole, hairline and hair texture.",
+    "Do not validate a generated Marion from a single fallback photo.",
+    "Any generated candidate must be compared against both boards before approval."
+  ],
+  "status":"canonical-source-confirmed-by-user"
+}
