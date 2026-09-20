@@ -1,0 +1,26 @@
+{
+ "version":"1.0",
+ "workingStart":"1998-05",
+ "constructionMode":"progressive hidden chronology",
+ "layers":{
+  "wholeLife":"canonical milestones + flexible windows",
+  "year":"home, ages, career arc, relationship/family arc, financial/material arc, major places",
+  "month":"contracts, travel skeleton, social/family opportunities, relationship rhythm, press exposure",
+  "week":"appointments, training, likely meetings, household life, media preparation horizon",
+  "day":"hour-aware playable branch graph",
+  "scene":"living video nodes + 3-5 choices + director transitions"
+ },
+ "dailyTemplate":{
+  "stateAtWake":["date","location","who-is-present","sleep","energy","mood","health","relationship","outfit-state","phone-state","agenda"],
+  "worldAgenda":["Dominic-career","Marion-plans","friends-family","press","travel","weather","real-world-place-context"],
+  "hiddenPossibilities":["ambient","social","career","relationship","family","press-paparazzi","health","surprise"],
+  "preparedBranches":"Only eligible near-future nodes are media-prepared.",
+  "endOfDay":["memories-written","relationship-updated","career-updated","objects-locations-updated","anti-repeat-history-updated","next-day-horizon-prepared"]
+ },
+ "antiRepeat":{
+  "trackAcrossSave":true,
+  "newSavePrefersUnseenRoutes":true,
+  "sameCanonicalMilestoneMayUseDifferentContext":true,
+  "sameChoiceCanResolveDifferentlyWhenWorldStateDiffers":true
+ }
+}
