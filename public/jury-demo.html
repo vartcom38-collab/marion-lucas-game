@@ -96,5 +96,14 @@ const scenes=[
 ()=>{reset();film.style.opacity=.18;topT.textContent='SOUS LE CAPOT';flow.classList.remove('hidden');explain.classList.remove('hidden');explain.textContent='MonIA conserve les conséquences puis les réinjecte dans les scènes futures.'},
 ()=>{reset();play(V.marion);topT.textContent='MARION & DOMINIC';title.innerHTML='UN FILM INTERACTIF VIVANT<span class="sub">Vous choisissez. Le monde, lui, continue d’exister.</span>';choices.classList.remove('hidden')}
 ];
-let i=0; scenes[0](); setInterval(()=>{i=(i+1)%scenes.length;document.querySelectorAll('.choice,.reaction,#visioReactions div').forEach(x=>x.classList.remove('active'));scenes[i]()},7000);
+const durations=[6000,9000,5000,7000,7000,6500,7000,6500,8500,7000,8000,6500,7000,7000,6500,6500,6500,8500,7000,7000,9000,8000];
+let i=0,timer;
+function advance(){
+  clearTimeout(timer);
+  document.querySelectorAll('.choice,.reaction,#visioReactions div').forEach(x=>x.classList.remove('active'));
+  scenes[i]();
+  const d=durations[i]||7000;
+  timer=setTimeout(()=>{i=(i+1)%scenes.length;advance()},d);
+}
+advance();
 </script></body></html>
