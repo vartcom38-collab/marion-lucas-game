@@ -53,6 +53,7 @@ function removeCompanion(){document.getElementById('dayOneCompanion')?.remove()}
 function removeNimesArrival(){document.getElementById('dayOneNimesArrival')?.remove()}
 
 function mountImpulse(s:SaveLike){
+  if(document.body.classList.contains('livingSceneActive')){removeImpulse();return}
   if(s.day!==1||s.metLucas||s.place!=='home'||!s.flags.dayOneSocialSeeded||mins(s.time)<550){removeImpulse();return}
   const game=document.querySelector<HTMLElement>('main.game.immersivePlayable');
   if(!game)return;
@@ -72,6 +73,7 @@ function mountImpulse(s:SaveLike){
 }
 
 function mountNimesArrival(s:SaveLike){
+  if(document.body.classList.contains('livingSceneActive')){removeNimesArrival();return}
   if(s.day!==1||s.metLucas||s.place!=='nimes'||!s.flags.dayOneSocialSeeded){removeNimesArrival();return}
   setSocialPresence('Marine',{status:getSocialPresence('Marine')?.status==='with-marion'?'with-marion':'nearby',place:'nimes',source:'day-one-nimes-arrival'},s.day,s.time);
   const game=document.querySelector<HTMLElement>('main.game');if(!game)return;
@@ -91,6 +93,7 @@ function mountNimesArrival(s:SaveLike){
 }
 
 function showEscalation(s:SaveLike){
+  if(document.body.classList.contains('livingSceneActive'))return;
   if(escalationOpen||s.flags.dayOneMarineCallSeen||s.day!==1||s.place!=='home'||s.metLucas||mins(s.time)<660)return;
   const game=document.querySelector<HTMLElement>('main.game.immersivePlayable');if(!game)return;
   escalationOpen=true;s.flags.dayOneMarineCallSeen=true;
@@ -120,6 +123,7 @@ const marineWalkMoments=[
 ];
 
 function showCompanionMoment(s:SaveLike){
+  if(document.body.classList.contains('livingSceneActive'))return;
   const presence=getSocialPresence('Marine');
   if(companionMomentOpen||presence?.status!=='with-marion'||s.metLucas||s.place==='home')return;
   const game=document.querySelector<HTMLElement>('main.game');if(!game)return;
