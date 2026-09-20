@@ -1,0 +1,9 @@
+{
+ "version":"1.0",
+ "name":"Living Hold Runtime Contract",
+ "videoLayers":{"baseClip":"prepared cinematic node","holdClip":"seamless micro-motion continuation","ui":"HTML/game overlay only","audio":"continuous ambience and optional score stem"},
+ "choiceEntry":{"startHoldBeforeButtons":true,"buttonCount":"3-5","buttonsMayAppearStaggered":true,"characterMustNotFreeze":true},
+ "selection":{"lockInputImmediately":true,"preloadedTargetStarts":"as soon as transition-safe frame is reached","crossfadeAudio":true,"visualCut":"prefer action/body-position match","cancelOtherPreloads":true},
+ "directorInterrupt":{"allowed":true,"examples":["phone-rings","NPC-speaks","external-event"],"mayRemoveChoices":true},
+ "failure":{"neverShowGenerationUI":true,"fallback":"continue hold or use prepared neutral bridge"}
+}
