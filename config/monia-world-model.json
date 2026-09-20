@@ -1,0 +1,38 @@
+{
+  "version": "1.0",
+  "purpose": "Hidden authoritative world model for MonIA. Never expose unreached branches to the player.",
+  "authority": ["project canon", "master document", "validated reference packs", "approved game-state facts"],
+  "principles": {
+    "canonNeverContradicted": true,
+    "playerDiscoveryProtected": true,
+    "generationNeverBlocksGameplay": true,
+    "continuityPersistsAcrossScenes": true,
+    "unknownFactsRemainUnknown": true
+  },
+  "time": {
+    "granularity": ["life", "year", "season", "month", "week", "day", "hour", "scene"],
+    "startDate": "TO_LOCK",
+    "ageProgression": true,
+    "realCalendar": true
+  },
+  "entities": {
+    "person": ["identity","age","location","schedule","knowledge","memory","relationshipState","career","health","energy","mood","wardrobe","appearance","possessions","finances","commitments","secrets"],
+    "place": ["realOrFictional","canonicalReferences","geography","travelTimes","rooms","access","peoplePresent","eventsPossible","timeOfDayState"],
+    "outfit": ["owner","garments","shoes","jewelry","bag","hair","makeup","weatherCompatibility","occasionTags","visualReferences"],
+    "relationship": ["participants","status","trust","attraction","tension","intimacy","sharedMemories","unresolvedTopics","knowledgeAsymmetry"]
+  },
+  "continuityRules": [
+    "A character cannot change outfit without a plausible opportunity.",
+    "A character cannot know information not yet learned.",
+    "Travel consumes plausible time.",
+    "Objects persist until moved, lost, given or replaced.",
+    "Physical consequences persist for their plausible duration.",
+    "A generated scene must match current identities, outfits, location, time and relationship state."
+  ],
+  "hiddenDirector": {
+    "horizon": ["immediate next beats", "rest of day", "next days", "season", "year", "long-life arc"],
+    "eventClasses": ["canonical-anchor","conditional","opportunity","ambient","relationship","career","family","travel","press","health","surprise"],
+    "selectionInputs": ["calendar","location","player choices","elapsed time","relationships","memories","career obligations","availability of characters","random seed","prepared media"],
+    "neverReveal": ["future branch graph","hidden conditions","unreached surprises","random rolls"]
+  }
+}
