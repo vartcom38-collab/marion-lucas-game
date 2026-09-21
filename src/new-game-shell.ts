@@ -1,10 +1,10 @@
 import './new-game-shell.css';
 
 type Tool='phone'|'agenda'|'map'|'memories'|null;
-type DemoState={tool:Tool,phoneView:'home'|'messages'|'call',selected:string|null,place:string,time:string,memories:string[]};
+type DemoState={tool:Tool,phoneView:'home'|'messages'|'call',selected:string|null,place:string,time:string,memories:string[],beat:string,metDominic:boolean};
 const SAVE='marion-lucas-save-v4';
 const UI='marion-ui-prototype-v1';
-const load=():DemoState=>{try{return {...{tool:null,phoneView:'home',selected:null,place:'Chez Marion',time:'09:12',memories:[]},...JSON.parse(localStorage.getItem(UI)||'{}')}}catch{return {tool:null,phoneView:'home',selected:null,place:'Chez Marion',time:'09:12',memories:[]}}};
+const load=():DemoState=>{try{return {...{tool:null,phoneView:'home',selected:null,place:'Chez Marion',time:'09:12',memories:[],beat:'morning',metDominic:false},...JSON.parse(localStorage.getItem(UI)||'{}')}}catch{return {tool:null,phoneView:'home',selected:null,place:'Chez Marion',time:'09:12',memories:[]}}};
 const state=load(); const persist=()=>localStorage.setItem(UI,JSON.stringify(state));
 function mount(){
  const app=document.getElementById('app');if(!app)return;document.getElementById('newGameShell')?.remove();
@@ -15,13 +15,32 @@ function mount(){
  <header class="ng-top"><div class="ng-id"><b>Marion</b><span>Nîmes · Mai 1998 · <i id="ngTime">${state.time}</i></span></div><nav>
  <button data-tool="phone">☎<small>Téléphone</small><i class="badge">${game.phoneUnread||1}</i></button>
  <button data-tool="agenda">▦<small>Agenda</small></button><button data-tool="map">⌖<small>Carte</small></button><button data-tool="memories">✦<small>Souvenirs</small></button></nav></header>
- <div class="ng-toast" hidden></div><section class="ng-now"><p>QU’EST-CE QUE TU FAIS MAINTENANT ?</p><div class="ng-choices">
- <button data-intent="marine">Répondre à Marine</button><button data-intent="prepare">Finir de te préparer</button><button data-intent="leave">Sortir maintenant</button></div></section>
+ <div class="ng-toast" hidden></div><section class="ng-now"><p>QU’EST-CE QUE TU FAIS MAINTENANT ?</p><div class="ng-choices" id="ngChoices"></div></section>
  <aside class="ng-panel" hidden><button class="ng-close">×</button><div class="ng-panel-body"></div></aside>`;
  app.appendChild(root);
  const panel=root.querySelector('.ng-panel') as HTMLElement,body=root.querySelector('.ng-panel-body') as HTMLElement,toast=root.querySelector('.ng-toast') as HTMLElement;
  const say=(x:string)=>{toast.textContent=x;toast.hidden=false;setTimeout(()=>toast.hidden=true,1800)};
  const open=(tool:Tool)=>{state.tool=tool;persist();renderPanel()};
+ const choices=root.querySelector('#ngChoices') as HTMLElement;
+ const choiceSets:any={
+ morning:[['marine','Répondre à Marine'],['prepare','Finir de te préparer'],['leave','Sortir maintenant']],
+ ready:[['agenda','Regarder ce qui est prévu'],['leave','Partir maintenant'],['wait','Prendre encore quelques minutes']],
+ outside:[['centre','Aller vers le centre'],['arena','Passer par les Arènes'],['marine','Retrouver Marine']],
+ encounter:[['look','Soutenir son regard'],['smile','Lui sourire'],['continue','Continuer ton chemin']]
+ };
+ const renderChoices=()=>{const set=choiceSets[state.beat]||choiceSets.morning;choices.innerHTML=set.map((x:any)=>'<button data-dynamic="'+x[0]+'">'+x[1]+'</button>').join('');choices.querySelectorAll('[data-dynamic]').forEach(b=>b.addEventListener('click',()=>act((b as HTMLElement).dataset.dynamic!)))};
+ const act=(intent:string)=>{
+  choices.querySelectorAll('button').forEach(x=>x.classList.toggle('chosen',(x as HTMLElement).dataset.dynamic===intent));
+  if(intent==='marine'){open('phone');}
+  else if(intent==='prepare'){state.beat='ready';state.time='09:28';say('Marion termine de se préparer.');}
+  else if(intent==='agenda'){open('agenda');}
+  else if(intent==='wait'){state.time='09:41';say('Le temps passe. Les autres continuent leur journée.');}
+  else if(intent==='leave'){state.beat='outside';state.place='Centre-ville';state.time='09:46';say('Marion sort. Aucun écran de chargement : la vie continue.');}
+  else if(intent==='centre'){state.place='Centre-ville';state.time='10:02';say('Tu vas vers le centre.');}
+  else if(intent==='arena'){state.place='Arènes';state.time='10:06';state.beat='encounter';say('Quelqu’un attire ton attention dans la foule…');}
+  else if(intent==='look'||intent==='smile'||intent==='continue'){state.metDominic=true;state.memories.unshift(intent==='continue'?'Une première rencontre à peine esquissée.':'Un premier échange de regards près des Arènes.');state.beat='outside';say('Le monde retient ce moment. Dominic reste libre de sa réaction.');}
+  (root.querySelector('#ngTime') as HTMLElement).textContent=state.time;persist();renderChoices();window.dispatchEvent(new CustomEvent('marion:player-intent',{detail:{intent,place:state.place,beat:state.beat}}));
+ };
  function renderPanel(){if(!state.tool){panel.hidden=true;return}panel.hidden=false;
   if(state.tool==='phone') body.innerHTML=`<em>TÉLÉPHONE · 1998</em><h2>Téléphone</h2><div class="ng-tabs"><button data-phone="messages">Messages</button><button data-phone="call">Appels</button><button>Contacts</button></div><article class="ng-thread" data-phone="messages"><b>Marine</b><span>Tu es où ?</span><small>maintenant</small></article><article><b>Dominic</b><span>Vous ne vous connaissez pas encore.</span></article>`;
   if(state.tool==='agenda') body.innerHTML=`<em>AGENDA</em><h2>Ma journée</h2><article><b>10:30 · Retrouver Marine</b><span>Centre-ville</span><div class="ng-inline"><button data-agenda="go">Y aller</button><button data-agenda="warn">Prévenir</button><button data-agenda="ignore">Continuer ici</button></div></article><article><b>Après-midi</b><span>Temps libre</span></article><article><b>Soirée</b><span>Rien de prévu… pour l’instant.</span></article>`;
@@ -35,7 +54,7 @@ function mount(){
  }
  root.querySelectorAll('[data-tool]').forEach(x=>x.addEventListener('click',()=>open((x as HTMLElement).dataset.tool as Tool)));
  root.querySelector('.ng-close')?.addEventListener('click',()=>{state.tool=null;persist();renderPanel()});
- root.querySelectorAll('[data-intent]').forEach(x=>x.addEventListener('click',()=>{root.querySelectorAll('[data-intent]').forEach(y=>y.classList.remove('chosen'));x.classList.add('chosen');const intent=(x as HTMLElement).dataset.intent!;state.selected=intent;if(intent==='marine')open('phone');if(intent==='prepare')say('Marion continue de se préparer.');if(intent==='leave'){state.memories.unshift('Tu as décidé de sortir sans attendre.');state.place='Centre-ville';say('Marion agit immédiatement.');}persist();window.dispatchEvent(new CustomEvent('marion:player-intent',{detail:{intent}}))}));
+ renderChoices();
  renderPanel();
 }
 window.addEventListener('DOMContentLoaded',()=>setTimeout(mount,80));setTimeout(mount,600);
