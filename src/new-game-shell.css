@@ -685,3 +685,30 @@
 .ng-top nav button[aria-label="Menu"]{margin-left:3px}
 .ng-top nav button[aria-label="Menu"]:before{content:"";position:absolute;left:-5px;top:8px;bottom:8px;width:1px;background:#ffffff13}
 @media(max-width:700px){.ng-system-actions{grid-template-columns:1fr}.ng-system-actions button:first-child,.ng-system-actions button:last-child{grid-column:auto}.ng-panel[data-tool="system"]{width:auto}}
+
+/* Final reference-board responsive pass */
+@media(min-width:1200px){
+ .ng-now{left:4.5vw;bottom:4.5vh;width:min(900px,66vw)}
+ .ng-panel[data-tool="phone"]{right:6vw}
+ .ng-panel[data-tool="agenda"],.ng-panel[data-tool="map"],.ng-panel[data-tool="memories"]{right:5vw}
+ .ng-top{left:4.5vw;right:4.5vw}
+}
+@media(min-width:701px) and (max-width:1050px){
+ .ng-top .ng-id b{font-size:34px}.ng-top nav button{width:36px;height:36px}
+ .ng-now{width:min(760px,88vw)}.ng-choices button{font-size:11px}
+ .ng-panel[data-tool="agenda"],.ng-panel[data-tool="map"],.ng-panel[data-tool="memories"]{width:min(580px,62vw)}
+ .ng-panel[data-tool="memories"] .ng-memory{grid-template-columns:1fr 1fr}
+}
+@media(max-width:700px){
+ .ng-shell{min-height:100dvh}.ng-top{align-items:flex-start}
+ .ng-top nav{max-width:190px;flex-wrap:wrap;justify-content:flex-end;background:transparent;border:0;backdrop-filter:none}
+ .ng-top nav button{background:rgba(8,7,7,.46);border:1px solid #ffffff12}
+ .ng-now{left:4vw;right:4vw;bottom:max(2vh,env(safe-area-inset-bottom));padding:12px}
+ .ng-now-copy{margin-bottom:9px}.ng-choices button:first-child{order:-1}
+ .ng-panel{left:2vw;right:2vw;top:max(7vh,env(safe-area-inset-top));bottom:2vh;max-height:none;border-radius:18px!important}
+ .ng-panel[data-tool="agenda"],.ng-panel[data-tool="map"],.ng-panel[data-tool="memories"]{bottom:2vh;overflow:auto}
+ .ng-panel[data-tool="phone"]{padding-top:env(safe-area-inset-top)}
+ .ng-panel[data-tool="phone"] .ng-device{width:min(360px,94vw)}
+ .ng-panel[data-tool="phone"] .ng-device-screen{max-height:86dvh;min-height:78dvh}
+ .ng-memory:before{overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+}
