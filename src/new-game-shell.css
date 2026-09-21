@@ -914,3 +914,18 @@
  #newGameShell .ng-panel[data-tool="memories"] .ng-memory{grid-template-columns:1fr 1fr!important}
  #newGameShell .ng-cinematic{padding-left:18px;padding-right:18px;padding-bottom:max(34px,env(safe-area-inset-bottom))}
 }
+
+/* Final board parity: quiet chrome, scene always remains the hero */
+#newGameShell .ng-top nav{opacity:.82;transition:opacity .18s ease}
+#newGameShell .ng-top nav:hover,#newGameShell .ng-top nav:focus-within{opacity:1}
+#newGameShell .ng-now{background:linear-gradient(145deg,rgba(16,13,13,.64),rgba(8,7,7,.52));border-color:#ffffff2e}
+#newGameShell .ng-now-copy{padding-left:2px}
+#newGameShell .ng-now-copy b{font-family:Georgia,serif;font-weight:500}
+#newGameShell .ng-choices button{font-weight:500}
+#newGameShell .ng-choices button:not(:first-child):hover{background:rgba(44,38,38,.88);border-color:#ffffff2b}
+#newGameShell .ng-panel:not([data-tool="phone"]){overflow:hidden}
+#newGameShell .ng-panel:not([data-tool="phone"]) .ng-panel-body{position:relative}
+#newGameShell .ng-panel:not([data-tool="phone"]) .ng-panel-body:before{content:"";position:absolute;pointer-events:none;left:0;right:0;top:0;height:1px;background:linear-gradient(90deg,transparent,#ffffff1d,transparent)}
+#newGameShell .ng-device-screen button,#newGameShell .ng-panel button{user-select:none}
+#newGameShell .ng-scene video,#newGameShell .ng-scene img{user-select:none;-webkit-user-drag:none}
+@media(hover:none){#newGameShell .ng-top nav{opacity:1}}
