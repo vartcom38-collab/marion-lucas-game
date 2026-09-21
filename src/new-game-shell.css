@@ -1017,3 +1017,15 @@
  #newGameShell.tool-open .ng-panel[data-tool="phone"] .ng-device{animation:ngPhoneLift .26s cubic-bezier(.2,.8,.2,1) both}
  @keyframes ngPhoneLift{from{opacity:0;transform:translateY(22px) scale(.97) rotateX(2deg)}to{opacity:1;transform:translateY(0) scale(1) rotateX(0)}}
 }
+
+/* Final board depth: panels belong to the scene instead of covering it */
+#newGameShell.tool-open .ng-scene:after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,rgba(0,0,0,.08),rgba(0,0,0,.22));z-index:2}
+#newGameShell .ng-panel{z-index:20}
+#newGameShell .ng-panel:not([data-tool="phone"]){box-shadow:0 28px 80px #0009,0 1px 0 #ffffff10 inset}
+#newGameShell .ng-panel:not([data-tool="phone"]) .ng-panel-body>em{display:block;margin-bottom:7px;font-size:9px;letter-spacing:.16em;text-transform:uppercase}
+#newGameShell .ng-panel:not([data-tool="phone"]) .ng-panel-body>h2{letter-spacing:-.04em}
+#newGameShell .ng-panel .ng-close{z-index:4}
+@media(max-width:700px){
+ #newGameShell.tool-open .ng-scene:after{background:linear-gradient(180deg,transparent 22%,rgba(0,0,0,.4))}
+ #newGameShell .ng-panel:not([data-tool="phone"]){box-shadow:0 -24px 70px #0008,0 1px 0 #ffffff12 inset}
+}
