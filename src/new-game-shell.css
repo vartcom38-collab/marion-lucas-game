@@ -955,3 +955,22 @@
 #newGameShell .ng-place-list button:active{transform:scale(.99)}
 #newGameShell .ng-media video,#newGameShell .ng-media img{will-change:transform}
 @media(hover:none){#newGameShell .ng-choices button:after{display:none}}
+
+/* Visual QA: keep approved layout stable on short laptop screens */
+@media(min-width:701px) and (max-height:760px){
+ #newGameShell .ng-top{top:18px}
+ #newGameShell .ng-top .ng-id b{font-size:34px}
+ #newGameShell .ng-now{bottom:18px;padding:13px}
+ #newGameShell .ng-now-copy{margin-bottom:9px}
+ #newGameShell .ng-choices button{min-height:42px}
+ #newGameShell .ng-panel:not([data-tool="phone"]){top:4vh!important;max-height:92vh!important}
+ #newGameShell .ng-panel[data-tool="phone"]{max-height:94vh!important}
+ #newGameShell .ng-panel[data-tool="phone"] .ng-device{transform:scale(.88)}
+ #newGameShell .ng-panel[data-tool="agenda"] .ng-map,#newGameShell .ng-panel[data-tool="map"] .ng-map{height:320px}
+}
+@media(min-width:1500px){
+ #newGameShell .ng-top{left:5.5vw;right:5.5vw}
+ #newGameShell .ng-now{left:5.5vw;width:min(980px,62vw)}
+ #newGameShell .ng-top .ng-id b{font-size:48px}
+ #newGameShell .ng-choices button{min-height:54px}
+}
