@@ -674,3 +674,14 @@
 .event-mode .ng-id{opacity:.12}.event-mode .ng-media{transform:scale(1.012)}
 .ng-timejump{left:auto;right:4.5vw;bottom:4vh;padding:8px 11px;border:1px solid #ffffff12;border-radius:999px;background:#0004;backdrop-filter:blur(10px)}
 @media(max-width:700px){.ng-cinematic{padding:0 5vw 8vh}.ng-cinematic strong{font-size:32px}.ng-cinematic span{font-size:11px}.ng-timejump{display:none}}
+
+/* Final mockup pass — system menu and global chrome */
+.ng-system{display:grid;gap:10px}.ng-system>em{font-size:9px;letter-spacing:.2em;opacity:.45}.ng-system>h2{margin:0 0 8px;font:30px/1 Georgia,serif}.ng-system .ng-worldhint{margin:4px 0 10px}
+.ng-system-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.ng-system-actions button{min-height:54px;display:grid;align-content:center;gap:3px;padding:12px 14px;border-radius:10px}.ng-system-actions button:first-child{grid-column:1/-1;background:linear-gradient(135deg,rgba(231,125,146,.92),rgba(189,81,107,.88));color:#24191b;border-color:#f2a1b2}.ng-system-actions button:last-child{grid-column:1/-1}
+.ng-system-actions button small{font-size:8px;opacity:.55}
+.ng-panel[data-tool="system"]{width:min(430px,90vw)}
+.ng-status{display:flex;justify-content:space-between;align-items:center;font-size:8px;opacity:.55;letter-spacing:.03em}
+.appbadge{position:absolute;right:9px;top:8px;display:grid;place-content:center;min-width:17px;height:17px;padding:0 4px;border-radius:999px;background:#e47990;color:#fff;font:9px Inter,sans-serif}
+.ng-top nav button[aria-label="Menu"]{margin-left:3px}
+.ng-top nav button[aria-label="Menu"]:before{content:"";position:absolute;left:-5px;top:8px;bottom:8px;width:1px;background:#ffffff13}
+@media(max-width:700px){.ng-system-actions{grid-template-columns:1fr}.ng-system-actions button:first-child,.ng-system-actions button:last-child{grid-column:auto}.ng-panel[data-tool="system"]{width:auto}}
