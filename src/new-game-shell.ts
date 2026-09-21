@@ -23,9 +23,9 @@ function mount(){
  const cinematic=root.querySelector('.ng-cinematic') as HTMLElement;
  const sceneTitle=root.querySelector('#ngSceneTitle') as HTMLElement,sceneSub=root.querySelector('#ngSceneSub') as HTMLElement;
  const sceneVideo=root.querySelector('#ngSceneVideo') as HTMLVideoElement,sceneImage=root.querySelector('#ngSceneImage') as HTMLImageElement;
- const setMedia=(media:any)=>{if(!media)return;const src=typeof media==='string'?media:media.src||media.url;if(!src)return;const type=(typeof media==='object'&&media.type)||(/\.(mp4|webm)(\?|$)/i.test(src)?'video':'image');sceneVideo.pause();sceneVideo.hidden=true;sceneImage.hidden=true;if(type==='video'){sceneVideo.src=src;sceneVideo.hidden=false;sceneVideo.play().catch(()=>{})}else{sceneImage.src=src;sceneImage.hidden=false}};
+ const setMedia=(media:any)=>{if(!media)return;const src=typeof media==='string'?media:media.src||media.url;if(!src)return;const type=(typeof media==='object'&&media.type)||(/\.(mp4|webm)(\?|$)/i.test(src)?'video':'image');sceneVideo.pause();sceneVideo.hidden=true;sceneImage.hidden=true;root.dataset.mediaId=(typeof media==='object'&&(media.id||media.mediaId))||identity().mediaId||'';if(type==='video'){sceneVideo.src=src;sceneVideo.hidden=false;sceneVideo.play().catch(()=>{})}else{sceneImage.src=src;sceneImage.hidden=false}};
  const syncRuntimeMedia=()=>{const r=runtime();setMedia(r.scene?.media||r.media||r.currentMedia)};
- const setScene=(title:string,sub:string)=>{sceneTitle.textContent=title;sceneSub.textContent=sub};
+ const setScene=(title:string,sub:string)=>{sceneTitle.textContent=title;sceneSub.textContent=sub;root.dataset.sceneId=identity().sceneId};
  const eventBeat=(kicker:string,title:string,sub:string,after?:()=>void)=>{state.tool=null;panel.hidden=true;root.classList.add('event-mode');choices.classList.add('waiting');cinematic.hidden=false;(cinematic.querySelector('small') as HTMLElement).textContent=kicker;(cinematic.querySelector('strong') as HTMLElement).textContent=title;(cinematic.querySelector('span') as HTMLElement).textContent=sub;setTimeout(()=>{cinematic.hidden=true;root.classList.remove('event-mode');choices.classList.remove('waiting');after?.()},1800)};
  const say=(x:string)=>{toast.textContent=x;toast.hidden=false;setTimeout(()=>toast.hidden=true,1800)};
  const worldInitiative=()=>{if(!state.hasDominicNumber||state.contactStage>1)return;state.contactStage=2;persist();const variant=(Math.abs((game.seed||17)+state.memories.length)%2);if(variant===0){incoming('Dominic')}else{state.memories.unshift('Dominic a envoyé son premier message.');say('Nouveau message de Dominic : « Tu es bien rentrée ? »');state.tool='phone';persist();renderPanel()}};
@@ -35,7 +35,9 @@ function mount(){
  const open=(tool:Tool)=>{state.tool=tool;root.classList.toggle('tool-open',!!tool);persist();renderPanel()};
  const choices=root.querySelector('#ngChoices') as HTMLElement;
  const hasTease=()=>state.memories.some(x=>x.includes('taquiner'));
- const engineChoices=()=>{const runtime=(window as any).MONIA_GAMEPLAY_STATE||(window as any).marionGameplayState;const list=runtime?.choices||runtime?.proposals||runtime?.intents;return Array.isArray(list)?list.map((x:any)=>[String(x.id||x.intent||x.key),String(x.label||x.text||x.title)]):null};
+ const engineChoices=()=>{const rt=runtime();const list=rt?.choices||rt?.proposals||rt?.intents;return Array.isArray(list)?list.map((x:any)=>[String(x.id||x.choiceId||x.intent||x.key),String(x.label||x.text||x.title),x]):null};
+ const identity=()=>{const rt=runtime(),scene=rt.scene||{};return {runId:rt.runId||game.runId||game.seed||'local',sceneId:scene.id||rt.sceneId||('day-'+state.day+'-'+state.beat),mediaId:scene.mediaId||rt.mediaId||null,locationId:scene.locationId||state.place,day:state.day,year:state.year,beat:state.beat}};
+ const emitChoice=(intent:string,choice:any={})=>{const ids=identity();emit(intent,{...ids,choiceId:choice?.id||choice?.choiceId||intent,choice,sourceMediaId:ids.mediaId});window.dispatchEvent(new CustomEvent('monia:choice-selected',{detail:{...ids,choiceId:choice?.id||choice?.choiceId||intent,intent}}))};
  const choiceSets:any={
  morning:[['marine','Répondre à Marine'],['prepare','Finir de te préparer'],['leave','Sortir maintenant']],
  ready:[['agenda','Regarder ce qui est prévu'],['leave','Partir maintenant'],['wait','Prendre encore quelques minutes']],
@@ -47,8 +49,8 @@ function mount(){
  night:[['sleep','Aller dormir'],['memory','Repenser à la journée'],['phone','Regarder ton téléphone']],
  day2:[['agenda','Voir ta journée'],['phone','Regarder ton téléphone'],['outside2','Commencer la journée']]
  };
- const renderChoices=()=>{let set=engineChoices()||[...(choiceSets[state.beat]||choiceSets.morning)];root.classList.toggle('has-decisions',set.length>0);if(state.metDominic&&hasTease()&&state.beat==='outside')set.unshift(['echo','Reprendre votre petite blague']);choices.innerHTML=set.map((x:any)=>'<button data-dynamic="'+x[0]+'">'+x[1]+'</button>').join('');choices.querySelectorAll('[data-dynamic]').forEach(b=>b.addEventListener('click',()=>act((b as HTMLElement).dataset.dynamic!)))};
- const act=(intent:string)=>{
+ const renderChoices=()=>{let set=engineChoices()||[...(choiceSets[state.beat]||choiceSets.morning)];root.classList.toggle('has-decisions',set.length>0);if(state.metDominic&&hasTease()&&state.beat==='outside')set.unshift(['echo','Reprendre votre petite blague']);choices.innerHTML=set.map((x:any)=>'<button data-dynamic="'+x[0]+'">'+x[1]+'</button>').join('');choices.querySelectorAll('[data-dynamic]').forEach((b,i)=>b.addEventListener('click',()=>act((b as HTMLElement).dataset.dynamic!,set[i]?.[2]||{})))};
+ const act=(intent:string,choice:any={})=>{
   choices.classList.add('committed');setTimeout(()=>choices.classList.remove('committed'),420);
   choices.querySelectorAll('button').forEach(x=>x.classList.toggle('chosen',(x as HTMLElement).dataset.dynamic===intent));
   if(intent==='marine'){open('phone');}
@@ -69,7 +71,7 @@ function mount(){
   else if(intent==='sleep'){state.day+=1;state.time='08:37';state.place='Chez Marion';state.beat='day2';state.tool=null;setScene('CHEZ MARION · MATIN','Une nouvelle journée commence à partir de ce que tu as vécu.');state.memories.unshift('Jour '+(state.day-1)+' terminé.');eventBeat('JOUR '+state.day,'Le lendemain matin.','Rien n’a été remis à zéro.',()=>renderChoices());}
   else if(intent==='outside2'){state.place='Nîmes';state.time='09:10';state.beat='later';setScene('NÎMES · NOUVELLE JOURNÉE','Les engagements et relations continuent.');say('Tu reprends ta vie là où elle en est.');}
   else if(intent==='phone'){open('phone');}
-  (root.querySelector('#ngTime') as HTMLElement).textContent=state.time;(root.querySelector('#ngDay') as HTMLElement).textContent=String(state.day);persist();renderChoices();emit(intent);
+  (root.querySelector('#ngTime') as HTMLElement).textContent=state.time;(root.querySelector('#ngDay') as HTMLElement).textContent=String(state.day);persist();renderChoices();emitChoice(intent,choice);
  };
  function renderPanel(){if(!state.tool){panel.hidden=true;root.classList.remove('tool-open');return}panel.hidden=false;panel.dataset.tool=state.tool||'';panel.classList.toggle('era-1998',state.tool==='phone'&&state.year<2001);panel.classList.toggle('era-modern',state.tool==='phone'&&state.year>=2010);
   if(state.tool==='phone'){const era=state.year<2001?'APPELS · SMS':state.year<2008?'SMS · CONTACTS · APPELS':state.year<2014?'SMARTPHONE · PHOTOS · MESSAGES':'MESSAGES · PHOTOS · VISIO'; body.innerHTML=`<div class="ng-device"><div class="ng-device-screen"><em>TÉLÉPHONE · ${state.year}</em><h2>${state.year<2001?'MARION':'Téléphone'}</h2><p class="ng-era">${era}</p><div class="ng-tabs"><button data-phone="messages">Messages</button><button data-phone="call">Appels</button><button>Contacts</button></div><article class="ng-thread" data-phone="messages"><b>Marine</b><span>Tu es où ?</span><small>maintenant</small></article><article><b>Dominic</b><span>${state.hasDominicNumber?'Dans vos contacts':state.metDominic?'Rencontré aujourd’hui · aucun numéro':'Vous ne vous connaissez pas encore.'}</span></article></div><div class="ng-device-keys"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>`;}
