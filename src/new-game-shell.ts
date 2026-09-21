@@ -4,7 +4,7 @@ type Tool='phone'|'agenda'|'map'|'memories'|null;
 type DemoState={tool:Tool,phoneView:'home'|'messages'|'call',selected:string|null,place:string,time:string,memories:string[],beat:string,metDominic:boolean,year:number,hasDominicNumber:boolean,contactStage:number,day:number};
 const SAVE='marion-lucas-save-v4';
 const UI='marion-ui-prototype-v1';
-const load=():DemoState=>{try{return {...{tool:null,phoneView:'home',selected:null,place:'Chez Marion',time:'09:12',memories:[],beat:'morning',metDominic:false,year:1998,hasDominicNumber:false,contactStage:0,day:1},...JSON.parse(localStorage.getItem(UI)||'{}')}}catch{return {tool:null,phoneView:'home',selected:null,place:'Chez Marion',time:'09:12',memories:[]}}};
+const load=():DemoState=>{try{return {...{tool:null,phoneView:'home',selected:null,place:'Chez Marion',time:'09:12',memories:[],beat:'morning',metDominic:false,year:1998,hasDominicNumber:false,contactStage:0,day:1},...JSON.parse(localStorage.getItem(UI)||'{}')}}catch{return {tool:null,phoneView:'home',selected:null,place:'Chez Marion',time:'09:12',memories:[],beat:'morning',metDominic:false,year:1998,hasDominicNumber:false,contactStage:0,day:1}}};
 const state=load(); const persist=()=>localStorage.setItem(UI,JSON.stringify(state));
 function mount(){
  const app=document.getElementById('app');if(!app)return;document.getElementById('newGameShell')?.remove();
@@ -30,13 +30,19 @@ function mount(){
  const open=(tool:Tool)=>{state.tool=tool;persist();renderPanel()};
  const choices=root.querySelector('#ngChoices') as HTMLElement;
  const hasTease=()=>state.memories.some(x=>x.includes('taquiner'));
+ const engineChoices=()=>{const runtime=(window as any).MONIA_GAMEPLAY_STATE||(window as any).marionGameplayState;const list=runtime?.choices||runtime?.proposals||runtime?.intents;return Array.isArray(list)?list.map((x:any)=>[String(x.id||x.intent||x.key),String(x.label||x.text||x.title)]):null};
  const choiceSets:any={
  morning:[['marine','Répondre à Marine'],['prepare','Finir de te préparer'],['leave','Sortir maintenant']],
  ready:[['agenda','Regarder ce qui est prévu'],['leave','Partir maintenant'],['wait','Prendre encore quelques minutes']],
  outside:[['centre','Aller vers le centre'],['arena','Passer par les Arènes'],['marine','Retrouver Marine']],
- encounter:[['look','Soutenir son regard'],['smile','Lui sourire'],['continue','Continuer ton chemin']],\n afterMeet:[['number','Échanger vos numéros'],['marine','Rejoindre Marine'],['leaveMeet','Le laisser repartir']],\n later:[['day','Continuer ta journée'],['phone','Regarder ton téléphone'],['agenda','Voir ce qui est prévu']],\n evening:[['home','Rentrer chez toi'],['stay','Rester encore un peu'],['phone','Regarder ton téléphone']],\n night:[['sleep','Aller dormir'],['memory','Repenser à la journée'],['phone','Regarder ton téléphone']],\n day2:[['agenda','Voir ta journée'],['phone','Regarder ton téléphone'],['outside2','Commencer la journée']]
+ encounter:[['look','Soutenir son regard'],['smile','Lui sourire'],['continue','Continuer ton chemin']],
+ afterMeet:[['number','Échanger vos numéros'],['marine','Rejoindre Marine'],['leaveMeet','Le laisser repartir']],
+ later:[['day','Continuer ta journée'],['phone','Regarder ton téléphone'],['agenda','Voir ce qui est prévu']],
+ evening:[['home','Rentrer chez toi'],['stay','Rester encore un peu'],['phone','Regarder ton téléphone']],
+ night:[['sleep','Aller dormir'],['memory','Repenser à la journée'],['phone','Regarder ton téléphone']],
+ day2:[['agenda','Voir ta journée'],['phone','Regarder ton téléphone'],['outside2','Commencer la journée']]
  };
- const renderChoices=()=>{let set=[...(choiceSets[state.beat]||choiceSets.morning)];if(state.metDominic&&hasTease()&&state.beat==='outside')set.unshift(['echo','Reprendre votre petite blague']);choices.innerHTML=set.map((x:any)=>'<button data-dynamic="'+x[0]+'">'+x[1]+'</button>').join('');choices.querySelectorAll('[data-dynamic]').forEach(b=>b.addEventListener('click',()=>act((b as HTMLElement).dataset.dynamic!)))};
+ const renderChoices=()=>{let set=engineChoices()||[...(choiceSets[state.beat]||choiceSets.morning)];if(state.metDominic&&hasTease()&&state.beat==='outside')set.unshift(['echo','Reprendre votre petite blague']);choices.innerHTML=set.map((x:any)=>'<button data-dynamic="'+x[0]+'">'+x[1]+'</button>').join('');choices.querySelectorAll('[data-dynamic]').forEach(b=>b.addEventListener('click',()=>act((b as HTMLElement).dataset.dynamic!)))};
  const act=(intent:string)=>{
   choices.querySelectorAll('button').forEach(x=>x.classList.toggle('chosen',(x as HTMLElement).dataset.dynamic===intent));
   if(intent==='marine'){open('phone');}
@@ -57,7 +63,7 @@ function mount(){
   else if(intent==='sleep'){state.day+=1;state.time='08:37';state.place='Chez Marion';state.beat='day2';state.tool=null;setScene('CHEZ MARION · MATIN','Une nouvelle journée commence à partir de ce que tu as vécu.');state.memories.unshift('Jour '+(state.day-1)+' terminé.');eventBeat('JOUR '+state.day,'Le lendemain matin.','Rien n’a été remis à zéro.',()=>renderChoices());}
   else if(intent==='outside2'){state.place='Nîmes';state.time='09:10';state.beat='later';setScene('NÎMES · NOUVELLE JOURNÉE','Les engagements et relations continuent.');say('Tu reprends ta vie là où elle en est.');}
   else if(intent==='phone'){open('phone');}
-  (root.querySelector('#ngTime') as HTMLElement).textContent=state.time;(root.querySelector('#ngDay') as HTMLElement).textContent=String(state.day);persist();renderChoices();window.dispatchEvent(new CustomEvent('marion:player-intent',{detail:{intent,place:state.place,beat:state.beat}}));
+  (root.querySelector('#ngTime') as HTMLElement).textContent=state.time;(root.querySelector('#ngDay') as HTMLElement).textContent=String(state.day);persist();renderChoices();window.dispatchEvent(new CustomEvent('marion:player-intent',{detail:{intent,place:state.place,beat:state.beat,day:state.day,year:state.year,memories:[...state.memories],hasDominicNumber:state.hasDominicNumber}}));
  };
  function renderPanel(){if(!state.tool){panel.hidden=true;return}panel.hidden=false;
   if(state.tool==='phone'){const era=state.year<2001?'APPELS · SMS':state.year<2008?'SMS · CONTACTS · APPELS':state.year<2014?'SMARTPHONE · PHOTOS · MESSAGES':'MESSAGES · PHOTOS · VISIO'; body.innerHTML=`<em>TÉLÉPHONE · ${state.year}</em><h2>Téléphone</h2><p class="ng-era">${era}</p><div class="ng-tabs"><button data-phone="messages">Messages</button><button data-phone="call">Appels</button><button>Contacts</button></div><article class="ng-thread" data-phone="messages"><b>Marine</b><span>Tu es où ?</span><small>maintenant</small></article><article><b>Dominic</b><span>${state.hasDominicNumber?'Dans vos contacts':state.metDominic?'Rencontré aujourd’hui · aucun numéro':'Vous ne vous connaissez pas encore.'}</span></article>`;}
@@ -77,3 +83,5 @@ function mount(){
  renderPanel();
 }
 window.addEventListener('DOMContentLoaded',()=>setTimeout(mount,80));setTimeout(mount,600);
+
+window.addEventListener('monia:gameplay-state',()=>{const r=document.getElementById('newGameShell');if(r){const e=new Event('ng:refresh');r.dispatchEvent(e)}});
