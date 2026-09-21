@@ -278,3 +278,30 @@
 #newGameShell .ng-memory b{font:400 17px/1.2 Georgia,serif}
 #newGameShell .ng-memory span{font-size:10px;opacity:.46;margin-top:5px}
 #newGameShell .ng-timejump{display:none!important}
+
+/* APPROVED MOCKUP A→Z v2 — phone, agenda and gallery become cinematic objects */
+#newGameShell .ng-device{width:min(360px,100%);margin:0 auto}
+#newGameShell .ng-iphone{padding:8px;border-radius:34px;background:#080808;box-shadow:0 24px 70px rgba(0,0,0,.48),inset 0 0 0 1px rgba(255,255,255,.16)}
+#newGameShell .ng-device-screen{min-height:610px;border-radius:27px;padding:18px 16px 22px;overflow:hidden;background:linear-gradient(180deg,#171719,#0d0d0f);border:1px solid rgba(255,255,255,.06)}
+#newGameShell .ng-status{display:flex;justify-content:space-between;font-size:9px;opacity:.56;margin-bottom:28px}
+#newGameShell .ng-appgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px 10px;margin:25px 0}
+#newGameShell .ng-appgrid button{position:relative;border:0;background:none;color:inherit;display:grid;justify-items:center;gap:7px;font-size:10px}
+#newGameShell .ng-appgrid button>b{display:grid;place-items:center;width:48px;height:48px;border-radius:15px;background:rgba(255,255,255,.10);font-size:21px;font-weight:400}
+#newGameShell .ng-appgrid .appbadge{position:absolute;top:-5px;right:13px;min-width:17px;height:17px;padding:0 4px;border-radius:10px;background:#a5443d;color:#fff;font-size:9px;display:grid;place-items:center;font-style:normal}
+#newGameShell .ng-thread{display:grid;grid-template-columns:1fr auto;gap:3px 10px;padding:14px 2px;border-top:1px solid rgba(255,255,255,.08)}
+#newGameShell .ng-thread span{grid-column:1;font-size:11px;opacity:.55}
+#newGameShell .ng-thread small{grid-column:2;grid-row:1;font-size:9px;opacity:.38}
+#newGameShell .ng-paper{max-width:560px;margin:auto}
+#newGameShell .ng-agenda-list{display:grid;margin-top:22px}
+#newGameShell .ng-agenda-list article{display:grid;grid-template-columns:90px 1fr;gap:4px 14px;padding:17px 0;border-bottom:1px solid rgba(255,255,255,.09)}
+#newGameShell .ng-agenda-list article>small{grid-row:1/3;font-size:9px;letter-spacing:.08em;opacity:.44}
+#newGameShell .ng-agenda-list article>b{font:400 18px/1.1 Georgia,serif}
+#newGameShell .ng-agenda-list article>span{font-size:10px;opacity:.48}
+#newGameShell .ng-calendar-filters{display:flex;gap:6px;margin:8px 0 20px}
+#newGameShell .ng-calendar-filters span{padding:6px 9px;border:1px solid rgba(255,255,255,.1);border-radius:20px;font-size:9px;opacity:.65}
+#newGameShell .ng-gallery{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:18px}
+#newGameShell .ng-gallery article,#newGameShell .ng-gallery figure{margin:0;min-width:0}
+#newGameShell .ng-photo,#newGameShell .ng-gallery img,#newGameShell .ng-photo-placeholder{width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:12px;background:rgba(255,255,255,.055)}
+#newGameShell .ng-gallery b,#newGameShell .ng-gallery figcaption{display:block;font-size:11px;margin-top:7px;font-weight:500}
+#newGameShell .ng-gallery small{font-size:9px;opacity:.42}
+@media(max-width:700px){#newGameShell .ng-device-screen{min-height:560px}#newGameShell .ng-agenda-list article{grid-template-columns:72px 1fr}#newGameShell .ng-gallery{grid-template-columns:repeat(2,1fr)}}
