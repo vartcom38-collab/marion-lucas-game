@@ -399,3 +399,18 @@
 #newGameShell .ng-device-screen>h2{margin-bottom:4px!important}
 #newGameShell .ng-device-screen .ng-era{margin-top:0!important}
 @media(max-width:700px){#newGameShell .ng-panel[data-tool="agenda"],#newGameShell .ng-panel[data-tool="map"],#newGameShell .ng-panel[data-tool="memories"],#newGameShell .ng-panel[data-tool="system"]{width:100%!important}}
+
+/* APPROVED MOCKUP A→Z v9 — final visual rhythm */
+#newGameShell .ng-top nav{gap:4px!important}
+#newGameShell .ng-top nav button{border-radius:50%!important}
+#newGameShell .ng-tool-glyph{font-size:14px!important;line-height:1!important}
+#newGameShell .ng-now>p{margin-bottom:9px!important}
+#newGameShell .ng-choices{gap:7px!important}
+#newGameShell .ng-choices button{font-size:12px!important;line-height:1.2!important;letter-spacing:.005em!important}
+#newGameShell .ng-panel-body{padding-top:clamp(54px,8vh,78px)!important}
+#newGameShell .ng-panel-body>h2,#newGameShell .ng-paper>h2,#newGameShell .ng-mapcard>h2{font-weight:400!important}
+#newGameShell .ng-status{letter-spacing:.02em}
+#newGameShell .ng-appgrid button span{opacity:.66}
+#newGameShell .ng-agenda-list article:last-child,#newGameShell .ng-memory article:last-child,#newGameShell .ng-place-list button:last-child{border-bottom:0}
+#newGameShell .ng-system-actions button:last-child{margin-top:12px;opacity:.7}
+@media(max-width:700px){#newGameShell .ng-top nav{gap:2px!important}#newGameShell .ng-top nav button{width:32px!important;height:32px!important;min-width:32px!important}#newGameShell .ng-tool-glyph{font-size:13px!important}#newGameShell .ng-panel-body{padding-top:62px!important}}
