@@ -202,3 +202,17 @@
 #newGameShell .ng-toast{border:1px solid rgba(255,255,255,.08)!important;box-shadow:0 10px 35px rgba(0,0,0,.22)!important}
 #newGameShell .ng-interrupt{backdrop-filter:blur(20px)!important}
 @media(min-width:701px){#newGameShell .ng-top nav button{width:34px!important;height:34px!important;min-width:34px!important}#newGameShell .ng-choices button{min-height:40px!important}}
+
+/* MOCKUP LOCK v10 — restrained luxury and scene dominance */
+#newGameShell .ng-id b{font-size:21px!important;opacity:.94!important}
+#newGameShell .ng-id span{font-size:8px!important;letter-spacing:.19em!important;opacity:.42!important}
+#newGameShell .ng-media>span{font-weight:400!important;text-shadow:0 4px 34px rgba(0,0,0,.72)!important}
+#newGameShell .ng-media>small{text-shadow:0 2px 18px rgba(0,0,0,.8)!important}
+#newGameShell .ng-now>p{text-transform:uppercase!important;opacity:.48!important}
+#newGameShell .ng-choices button{border-radius:9px!important;padding:10px 15px!important}
+#newGameShell .ng-choices button:hover,#newGameShell .ng-choices button.chosen{background:rgba(239,231,221,.94)!important;color:#211c19!important}
+#newGameShell .ng-media-shade{pointer-events:none!important}
+#newGameShell:not(.tool-open):not(.event-mode) .ng-media{transform:scale(1);transition:transform 8s ease}
+#newGameShell.event-mode .ng-media{transform:scale(1.012);transition:transform 2s ease}
+#newGameShell .ng-cinematic{z-index:12!important}
+@media(min-width:1400px){#newGameShell .ng-media>span{left:52px!important;bottom:190px!important;font-size:60px!important}#newGameShell .ng-media>small{left:54px!important;bottom:158px!important}#newGameShell .ng-now{left:52px!important;bottom:42px!important}#newGameShell .ng-top{left:52px!important;right:52px!important;top:34px!important}}
