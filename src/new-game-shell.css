@@ -974,3 +974,19 @@
  #newGameShell .ng-top .ng-id b{font-size:48px}
  #newGameShell .ng-choices button{min-height:54px}
 }
+
+/* Board QA: prevent UI collisions and preserve readable safe zones */
+#newGameShell .ng-top{pointer-events:none}
+#newGameShell .ng-top nav,#newGameShell .ng-top button,#newGameShell .ng-top .ng-id{pointer-events:auto}
+#newGameShell .ng-now{max-height:min(42vh,360px);overflow:auto;scrollbar-width:none}
+#newGameShell .ng-now::-webkit-scrollbar{display:none}
+#newGameShell .ng-panel-body{scrollbar-width:thin;scrollbar-color:#ffffff22 transparent}
+#newGameShell .ng-panel-body::-webkit-scrollbar{width:5px}
+#newGameShell .ng-panel-body::-webkit-scrollbar-thumb{background:#ffffff22;border-radius:10px}
+#newGameShell .ng-device-screen{scrollbar-width:none}
+#newGameShell .ng-device-screen::-webkit-scrollbar{display:none}
+@media(max-width:700px){
+ #newGameShell .ng-top .ng-id{max-width:48vw}
+ #newGameShell .ng-top .ng-id b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ #newGameShell .ng-now{max-height:46dvh}
+}
