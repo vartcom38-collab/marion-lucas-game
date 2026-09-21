@@ -469,3 +469,28 @@
 #newGameShell .ng-call-actions button{width:54px;height:54px;border-radius:50%;border:1px solid rgba(255,255,255,.18);background:rgba(115,20,20,.82);color:white;font-size:28px}
 #newGameShell .ng-share-photo{margin-top:9px;border:0;background:transparent;color:inherit;padding:0;font-size:9px;letter-spacing:.14em;text-transform:uppercase;opacity:.55}
 #newGameShell .ng-share-photo:hover{opacity:1}
+
+/* Approved cinematic mockup — presentation-grade main composition */
+.ng-shell{--glass:rgba(13,11,11,.42);--line:rgba(255,255,255,.14);--warm:#ead9d1}
+.ng-media{opacity:1;place-content:stretch;text-align:left;letter-spacing:0}
+.ng-media video,.ng-media img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.ng-media-shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(4,3,3,.34) 0%,transparent 30%,transparent 54%,rgba(5,4,4,.78) 100%),linear-gradient(90deg,rgba(5,4,4,.22),transparent 42%)}
+#ngSceneTitle{position:absolute;left:4.5vw;bottom:18vh;z-index:2;font:italic clamp(34px,4.2vw,66px)/.95 Georgia,serif;color:#fff;text-shadow:0 5px 30px #000;letter-spacing:-.025em}
+#ngSceneSub{position:absolute;left:4.7vw;bottom:14.3vh;z-index:2;margin:0;font:11px/1.4 Inter,system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.65)}
+.ng-top{left:4.5vw;right:4.5vw;top:4vh;z-index:12;align-items:center}
+.ng-top b{font:italic 28px/1 Georgia,serif}.ng-top>div span{font-size:9px;letter-spacing:.15em;text-transform:uppercase}
+.ng-top nav{gap:6px}.ng-top nav button{width:43px;height:43px;border-color:var(--line);background:var(--glass);font-size:15px;box-shadow:0 8px 30px #0004}.ng-top nav small{top:49px;font-size:8px;opacity:0;transition:.2s}.ng-top nav button:hover small{opacity:.65}
+.ng-now{left:4.5vw;bottom:4.2vh;transform:none;width:min(760px,76vw);text-align:left;z-index:11}
+.ng-now p{margin:0 0 10px;font-size:9px;letter-spacing:.2em;opacity:.56}
+.ng-choices{justify-content:flex-start;gap:8px}.ng-choices button{flex:0 1 auto;min-width:150px;max-width:240px;padding:12px 15px;border-radius:999px;background:rgba(11,9,9,.4);border-color:var(--line);font-size:12px;text-align:left;box-shadow:0 8px 28px #0003}
+.ng-choices button:hover,.ng-choices button.chosen{background:rgba(234,217,209,.94);color:#241d1c;transform:translateY(-1px)}
+.ng-panel{right:4.5vw;top:12vh;width:min(420px,88vw);max-height:78vh;border-radius:24px;padding:30px;background:rgba(10,9,9,.64)!important;border-color:var(--line);box-shadow:0 30px 100px #000a!important}
+.ng-panel[data-tool="phone"]{top:7vh;max-height:88vh}
+.ng-toast{top:auto;bottom:13vh;font-size:10px;letter-spacing:.04em}
+.ng-interrupt{right:4.5vw;top:14vh}
+@media(max-width:700px){
+ #ngSceneTitle{left:5vw;bottom:25vh;font-size:38px}#ngSceneSub{left:5.2vw;bottom:21.5vh;font-size:9px}
+ .ng-top{top:2.5vh;left:5vw;right:5vw}.ng-top nav{gap:4px}.ng-top nav button{width:38px;height:38px}.ng-top>div span{max-width:130px}
+ .ng-now{left:5vw;right:5vw;bottom:3vh;width:auto}.ng-choices{display:grid;grid-template-columns:1fr}.ng-choices button{width:100%;max-width:none;min-width:0;padding:11px 14px}
+ .ng-panel{left:3vw;right:3vw;top:10vh;width:auto;max-height:84vh;padding:24px}.ng-panel[data-tool="phone"]{top:3vh}
+}
