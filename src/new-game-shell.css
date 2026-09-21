@@ -229,3 +229,19 @@
 #newGameShell .ng-scene,#newGameShell .ng-media{width:100%!important;height:100%!important}
 #newGameShell .ng-scene{overflow:hidden!important}
 @media(max-width:700px){#newGameShell .ng-top{top:18px!important}#newGameShell .ng-id span{font-size:7px!important}#newGameShell .ng-media>span{font-size:32px!important;letter-spacing:-.035em!important}#newGameShell .ng-choices{gap:6px!important}#newGameShell .ng-choices button{min-height:43px!important;border-radius:9px!important}}
+
+/* MOCKUP LOCK v12 — composition fidelity, no extra chrome */
+#newGameShell .ng-id{transform:translateZ(0)}
+#newGameShell .ng-id b{line-height:.95!important}
+#newGameShell .ng-media>span{max-width:11ch!important}
+#newGameShell .ng-media>small{max-width:46ch!important;white-space:nowrap!important}
+#newGameShell .ng-top nav{filter:none!important}
+#newGameShell .ng-top nav button{overflow:visible!important}
+#newGameShell .ng-now{max-width:min(940px,calc(100vw - 64px))!important}
+#newGameShell .ng-choices button{flex-shrink:1!important}
+#newGameShell .ng-choices button.chosen{border-color:rgba(239,231,221,.9)!important}
+#newGameShell .ng-media-shade{z-index:1!important}
+#newGameShell .ng-media>video,#newGameShell .ng-media>img{z-index:0!important}
+#newGameShell .ng-media:before{z-index:2!important}
+#newGameShell .ng-media>span,#newGameShell .ng-media>small{position:absolute!important}
+@media(max-width:700px){#newGameShell .ng-now{max-width:none!important}#newGameShell .ng-media>span{max-width:90vw!important}#newGameShell .ng-media>small{max-width:86vw!important;overflow:hidden;text-overflow:ellipsis}}
