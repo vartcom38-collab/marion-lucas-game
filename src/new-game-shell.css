@@ -87,3 +87,21 @@
 #newGameShell .ng-panel{top:72px;right:var(--safe);bottom:30px;width:min(390px,calc(100vw - 32px));border-radius:26px;padding:22px;overflow:auto}
 #newGameShell .ng-toast{bottom:120px;border-radius:999px;background:rgba(10,10,11,.70);backdrop-filter:blur(14px)}
 @media(max-width:680px){#newGameShell .ng-scene-copy{bottom:190px}#newGameShell .ng-choices{display:grid;grid-template-columns:1fr;width:100%}#newGameShell .ng-choices button{width:100%}#newGameShell .ng-panel{left:12px;right:12px;top:64px;width:auto;bottom:12px}}
+
+/* MOCKUP LOCK v3 — validate the main gameplay screen before any other tool */
+#newGameShell .ng-top{top:24px!important;left:32px!important;right:32px!important}
+#newGameShell .ng-id b{font:400 24px/1 Georgia,serif!important;font-style:normal!important}
+#newGameShell .ng-id span{display:block;margin-top:10px;font-size:9px!important;letter-spacing:.16em;opacity:.5!important}
+#newGameShell .ng-top nav{position:absolute;right:0;top:0;gap:6px!important;opacity:.58}
+#newGameShell .ng-top nav button{width:36px!important;height:36px!important;min-width:36px!important}
+#newGameShell .ng-top nav small{display:none!important}
+#newGameShell .ng-media>span{left:32px!important;bottom:168px!important;font:400 clamp(30px,4.3vw,58px)/.98 Georgia,serif!important;max-width:600px;text-transform:none;letter-spacing:-.035em!important;text-shadow:0 3px 28px #000}
+#newGameShell .ng-media>small{left:34px!important;bottom:140px!important;font-size:10px!important;letter-spacing:.12em!important;opacity:.62!important;text-shadow:0 2px 16px #000}
+#newGameShell .ng-now{left:32px!important;right:32px!important;bottom:30px!important;transform:none!important;width:auto!important;text-align:left!important}
+#newGameShell .ng-now>p{margin:0 0 10px;font-size:9px;letter-spacing:.24em;opacity:.56;text-shadow:0 2px 16px #000}
+#newGameShell .ng-choices{justify-content:flex-start!important;flex-wrap:nowrap!important;gap:8px!important;max-width:920px!important;margin:0!important}
+#newGameShell .ng-choices button{min-width:0!important;max-width:300px!important;padding:12px 17px!important;border-radius:12px!important;background:rgba(12,11,11,.44)!important;border-color:rgba(255,255,255,.16)!important;box-shadow:0 8px 28px rgba(0,0,0,.18)!important}
+#newGameShell .ng-choices button:hover,#newGameShell .ng-choices button.chosen{background:rgba(238,228,218,.92)!important;color:#201b19!important}
+#newGameShell .ng-media-shade{background:linear-gradient(180deg,rgba(0,0,0,.28),transparent 26%,transparent 52%,rgba(0,0,0,.72))!important}
+#newGameShell .ng-panel{top:0!important;right:0!important;bottom:0!important;max-height:none!important;height:100vh!important;border-radius:0!important;border-top:0!important;border-right:0!important;border-bottom:0!important}
+@media(max-width:700px){#newGameShell .ng-top{left:18px!important;right:18px!important}#newGameShell .ng-media>span{left:18px!important;right:18px!important;bottom:245px!important;font-size:34px!important}#newGameShell .ng-media>small{left:20px!important;bottom:218px!important}#newGameShell .ng-now{left:14px!important;right:14px!important;bottom:18px!important}#newGameShell .ng-choices{display:grid!important;grid-template-columns:1fr!important}#newGameShell .ng-choices button{max-width:none!important;width:100%!important}}
