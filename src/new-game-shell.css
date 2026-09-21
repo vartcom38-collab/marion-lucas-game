@@ -353,3 +353,19 @@
 #newGameShell .badge[hidden]{display:none!important}
 #newGameShell .ng-panel[data-tool="system"] .ng-panel-body{max-width:440px;margin:0 auto}
 @media(max-width:700px){#newGameShell .ng-panel-body{padding-left:18px!important;padding-right:18px!important}#newGameShell .ng-device{width:100%}#newGameShell .ng-iphone{border-radius:28px}#newGameShell .ng-device-screen{border-radius:22px}}
+
+/* APPROVED MOCKUP A→Z v6 — immersive polish */
+#newGameShell{background:#080808!important}
+#newGameShell .ng-scene{isolation:isolate}
+#newGameShell .ng-media>video,#newGameShell .ng-media>img{width:100%!important;height:100%!important;object-fit:cover!important}
+#newGameShell .ng-media>img{user-select:none;-webkit-user-drag:none}
+#newGameShell .ng-media-shade{inset:0!important}
+#newGameShell .ng-top,#newGameShell .ng-now{z-index:6!important}
+#newGameShell.tool-open .ng-top,#newGameShell.tool-open .ng-now{opacity:.12!important;filter:blur(2px);transition:opacity .25s ease,filter .25s ease}
+#newGameShell:not(.tool-open) .ng-top,#newGameShell:not(.tool-open) .ng-now{filter:none;transition:opacity .3s ease,filter .3s ease}
+#newGameShell .ng-panel{z-index:20!important}
+#newGameShell .ng-close{position:sticky!important;top:18px!important;float:right;z-index:4}
+#newGameShell .ng-panel-body{overscroll-behavior:contain}
+#newGameShell .ng-choices button{transition:background .18s ease,color .18s ease,border-color .18s ease,transform .18s ease!important}
+#newGameShell .ng-top nav button{transition:background .18s ease,opacity .18s ease,transform .18s ease!important}
+@media(max-height:650px) and (min-width:701px){#newGameShell .ng-media>span{bottom:145px!important;font-size:44px!important}#newGameShell .ng-media>small{bottom:120px!important}#newGameShell .ng-now{bottom:20px!important}}
