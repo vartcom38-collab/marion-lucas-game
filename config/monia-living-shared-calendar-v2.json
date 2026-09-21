@@ -1,0 +1,79 @@
+{
+  "version": 2,
+  "status": "locked",
+  "purpose": "Living shared calendar for Marion, Dominic and their couple; generated automatically by MonIA from story, professional calendar, social circle, invitations and world events.",
+  "calendars": [
+    "Marion",
+    "Dominic",
+    "Couple"
+  ],
+  "eventTypes": {
+    "dominic_professional": [
+      "corrida",
+      "festival taurino",
+      "tentadero",
+      "travel",
+      "feria presentation",
+      "cartel presentation",
+      "taurine gala",
+      "pena taurina event",
+      "cultural presentation",
+      "press/media",
+      "club or association event"
+    ],
+    "couple_social": [
+      "wedding",
+      "birthday",
+      "dinner",
+      "party",
+      "friend gathering",
+      "holiday",
+      "trip",
+      "family event",
+      "opening",
+      "exhibition",
+      "gala",
+      "invitation"
+    ],
+    "marion_personal": [
+      "friend plan",
+      "family plan",
+      "appointment",
+      "personal project",
+      "travel",
+      "free time"
+    ]
+  },
+  "invitationFlow": {
+    "sources": [
+      "message",
+      "email",
+      "mail",
+      "phone",
+      "in-person"
+    ],
+    "archive": true,
+    "requiredStates": [
+      "pending",
+      "accepted",
+      "declined",
+      "tentative"
+    ],
+    "onReceipt": "MonIA checks Marion, Dominic and Couple calendars before surfacing contextual response choices.",
+    "conflicts": "Never silently accept. Surface availability/conflict and plausible options in gameplay.",
+    "examples": [
+      "Accepter",
+      "Refuser",
+      "Voir avec Dominic",
+      "Proposer une autre date"
+    ]
+  },
+  "autonomy": {
+    "autoPopulate": true,
+    "playerDoesNotMaintainCalendar": true,
+    "dominicSchedule": "Dominic's professional and personal commitments are generated/updated by the world director and remain autonomous.",
+    "gameplay": "Relevant upcoming events surface automatically in ordinary gameplay; opening Agenda is optional."
+  },
+  "researchRule": "Use researched taurine/social context as a plausibility library, but never invent a real historical appearance by Dominic unless supported by canon or evidence.",
+  "visibility": "Future commitments may be visible when Marion plausibly knows them; hidden surprises stay outside the calendar until revealed."
+}
