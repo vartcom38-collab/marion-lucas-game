@@ -899,3 +899,18 @@
 #newGameShell .ng-cinematic strong,#newGameShell .ng-cinematic span{text-shadow:0 3px 24px #000}
 #newGameShell .ng-cinematic strong{max-width:720px}
 @media(max-width:700px){#newGameShell .ng-top .ng-id:after{inset:-14px -18px -16px -14px}#newGameShell .ng-choices{gap:6px}}
+
+/* Board fidelity: mobile becomes full-screen cinematic, never a shrunken desktop */
+@media(max-width:700px){
+ #newGameShell .ng-top{top:max(14px,env(safe-area-inset-top));left:16px;right:16px}
+ #newGameShell .ng-top nav{gap:3px}
+ #newGameShell .ng-top nav button{width:34px;height:34px;padding:0}
+ #newGameShell .ng-now{width:auto!important;left:12px!important;right:12px!important;border-radius:14px}
+ #newGameShell .ng-choices{grid-template-columns:1fr!important}
+ #newGameShell .ng-choices button{width:100%;min-height:44px;text-align:left;padding:11px 13px}
+ #newGameShell .ng-panel:not([data-tool="phone"]){left:0!important;right:0!important;top:auto!important;bottom:0!important;width:100%!important;max-width:none!important;max-height:88dvh!important;border-radius:22px 22px 0 0!important;border-left:0;border-right:0;border-bottom:0}
+ #newGameShell .ng-panel:not([data-tool="phone"]) .ng-panel-body{max-height:86dvh;overflow:auto;padding-bottom:max(24px,env(safe-area-inset-bottom))}
+ #newGameShell .ng-panel[data-tool="map"] .ng-map{height:40dvh!important}
+ #newGameShell .ng-panel[data-tool="memories"] .ng-memory{grid-template-columns:1fr 1fr!important}
+ #newGameShell .ng-cinematic{padding-left:18px;padding-right:18px;padding-bottom:max(34px,env(safe-area-inset-bottom))}
+}
