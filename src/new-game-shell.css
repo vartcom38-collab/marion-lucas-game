@@ -1029,3 +1029,19 @@
  #newGameShell.tool-open .ng-scene:after{background:linear-gradient(180deg,transparent 22%,rgba(0,0,0,.4))}
  #newGameShell .ng-panel:not([data-tool="phone"]){box-shadow:0 -24px 70px #0008,0 1px 0 #ffffff12 inset}
 }
+
+/* Approved board continuity: scene text reads like film captions, not app cards */
+#newGameShell .ng-media #ngSceneTitle,#newGameShell .ng-media #ngSceneSub{text-shadow:0 2px 16px #000c}
+#newGameShell .ng-media #ngSceneTitle{letter-spacing:.01em}
+#newGameShell .ng-media #ngSceneSub{opacity:.78}
+#newGameShell .ng-now-copy>span{display:block;max-width:720px;line-height:1.35}
+#newGameShell .ng-now-copy>p{margin-top:5px;opacity:.72}
+#newGameShell .ng-cinematic small{opacity:.75}
+#newGameShell .ng-cinematic strong{max-width:900px}
+#newGameShell .ng-cinematic span{line-height:1.5}
+@media(max-width:700px){
+ #newGameShell .ng-media #ngSceneTitle{font-size:11px}
+ #newGameShell .ng-media #ngSceneSub{font-size:9px}
+ #newGameShell .ng-now-copy>span{font-size:14px}
+ #newGameShell .ng-now-copy>p{font-size:11px}
+}
