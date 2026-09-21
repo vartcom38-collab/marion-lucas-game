@@ -1067,3 +1067,18 @@
 #newGameShell .ng-map-filters button{border:1px solid #ffffff0d;background:#ffffff05;color:#bdb3b0;padding:7px 10px;border-radius:999px;font:8px Inter,system-ui,sans-serif}
 #newGameShell .ng-map-filters button.active{background:#e68ca0;border-color:#e68ca0;color:#24191b}
 #newGameShell [data-place-kind][hidden]{display:none!important}
+
+/* Approved visio board: controls read as an actual call, not generic buttons */
+#newGameShell .ng-video-call .ng-call-actions{display:flex;align-items:center;justify-content:center;gap:12px}
+#newGameShell .ng-video-call .ng-call-actions button{width:48px;height:48px;border-radius:50%;padding:0;display:grid;place-items:center;background:#ffffff16;border:1px solid #ffffff18;color:#fff}
+#newGameShell .ng-video-call .ng-call-actions button[data-end-call]{background:#d94f5d;border-color:#e86a75;font-size:24px}
+#newGameShell .ng-video-call .ng-call-actions button.off{background:#f0ece8;color:#2a2221}
+#newGameShell .ng-video-call .ng-inline{justify-content:center;flex-wrap:wrap}
+#newGameShell .ng-video-call [data-video-free]{border-style:dashed}
+#newGameShell .ng-chat-head{display:grid;grid-template-columns:40px 1fr auto;gap:10px;align-items:center;padding:4px 0 14px;border-bottom:1px solid #ffffff10}
+#newGameShell .ng-chat-head>button{width:34px;height:34px;border-radius:50%;padding:0}
+#newGameShell .ng-chat-head>div:nth-child(2){display:grid}
+#newGameShell .ng-chat-head small{font-size:9px;opacity:.55}
+#newGameShell .ng-chat-actions{display:flex!important;gap:6px}
+#newGameShell .ng-chat-actions button{width:34px;height:34px;border-radius:50%;padding:0}
+#newGameShell .ng-chat p small{display:block;margin-top:4px;font-size:8px;opacity:.45}
