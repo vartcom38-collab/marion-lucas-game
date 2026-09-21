@@ -828,3 +828,19 @@
 .ng-worldhint{line-height:1.45}
 .ng-rule{line-height:1.5}
 @media(max-width:700px){.ng-shell button{min-height:42px}.ng-top nav button{min-height:36px}.ng-close{min-width:42px;min-height:42px}.ng-choices button{min-height:46px}}
+
+/* Reference-board visual QA: prevent old dashboard language leaking into live shell */
+#newGameShell .card,#newGameShell .panel,#newGameShell .widget{box-shadow:none}
+#newGameShell h1,#newGameShell h2,#newGameShell h3{margin-block-start:0}
+#newGameShell .ng-panel-body>h2{font:500 27px/1.05 Inter,system-ui,sans-serif}
+#newGameShell .ng-panel-body>em{display:block;margin-bottom:5px;font:8px/1 Inter,system-ui,sans-serif;letter-spacing:.18em;opacity:.42}
+#newGameShell .ng-panel-body>p:first-of-type{margin-top:6px}
+#newGameShell .ng-panel-body button{letter-spacing:0}
+#newGameShell .ng-panel-body article{color:#eee8e5}
+#newGameShell .ng-panel-body small{color:#d2c8c5}
+#newGameShell .ng-device{filter:drop-shadow(0 28px 42px #0008)}
+#newGameShell .ng-iphone{border-color:#34302f}
+#newGameShell .ng-device-screen{background:linear-gradient(180deg,#111 0,#0b0b0c 100%)}
+#newGameShell .ng-panel[data-tool="phone"]{background:transparent!important;border:0!important;box-shadow:none!important;backdrop-filter:none!important}
+#newGameShell .ng-panel[data-tool="phone"]>.ng-close{position:absolute;right:-3px;top:-3px;z-index:20;background:#0c0b0bc7;border:1px solid #ffffff14;backdrop-filter:blur(10px)}
+@media(max-width:700px){#newGameShell .ng-panel[data-tool="phone"]>.ng-close{right:8px;top:8px}}
