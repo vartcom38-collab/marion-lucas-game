@@ -1060,3 +1060,10 @@
 #newGameShell .ng-memory-tabs button{border:0;background:transparent;color:#a9a09e;padding:6px 9px;border-radius:999px;font:9px Inter,system-ui,sans-serif}
 #newGameShell .ng-memory-tabs button.active{background:#e68ca0;color:#24191b}
 #newGameShell .ng-memory article[hidden]{display:none!important}
+
+/* Real map filters replace decorative category text */
+#newGameShell .ng-panel[data-tool="map"] .ng-mapcard:before{content:none!important;display:none!important}
+#newGameShell .ng-map-filters{display:flex;gap:5px;flex-wrap:wrap;margin:4px 0 14px}
+#newGameShell .ng-map-filters button{border:1px solid #ffffff0d;background:#ffffff05;color:#bdb3b0;padding:7px 10px;border-radius:999px;font:8px Inter,system-ui,sans-serif}
+#newGameShell .ng-map-filters button.active{background:#e68ca0;border-color:#e68ca0;color:#24191b}
+#newGameShell [data-place-kind][hidden]{display:none!important}
