@@ -635,3 +635,13 @@
 .ng-panel[data-tool="map"] .ng-map{height:430px}
 .ng-panel[data-tool="memories"]{width:min(760px,55vw)}
 @media(max-width:700px){.ng-now{width:auto}.ng-now-copy b{font-size:15px}.ng-now-copy span,.ng-now-copy p{font-size:10px!important}.ng-top .ng-id b{font-size:27px}.ng-panel[data-tool="agenda"],.ng-panel[data-tool="map"],.ng-panel[data-tool="memories"]{width:auto;top:9vh}.ng-panel[data-tool="map"] .ng-map{height:44vh}}
+
+/* Strict final-board styling: phone + utility screens */
+.ng-panel[data-tool="phone"] .ng-device-screen>h2{margin:10px 0 16px;font:22px/1.1 Inter,system-ui,sans-serif;font-weight:600}
+.ng-panel[data-tool="phone"] .ng-appgrid button b{display:grid;place-content:center;width:44px;height:44px;margin:auto;border-radius:12px;background:linear-gradient(145deg,#ef91a4,#c95f79);font:20px system-ui}.ng-panel[data-tool="phone"] .ng-appgrid button:nth-child(2) b{background:linear-gradient(145deg,#62a56d,#2c7040)}.ng-panel[data-tool="phone"] .ng-appgrid button:nth-child(3) b{background:linear-gradient(145deg,#8fa1ba,#59697d)}.ng-panel[data-tool="phone"] .ng-appgrid button:nth-child(4) b{background:linear-gradient(145deg,#f4c86f,#d66b79)}
+.ng-panel[data-tool="phone"] .ng-appgrid button span{font-size:9px;opacity:.9}
+.ng-panel[data-tool="agenda"] .ng-paper>h2{font-size:28px}.ng-panel[data-tool="agenda"] .ng-agenda-list{padding-left:0}.ng-panel[data-tool="agenda"] .ng-agenda-list:before{display:none}.ng-panel[data-tool="agenda"] .ng-agenda-list article:before{display:none}.ng-panel[data-tool="agenda"] .ng-agenda-list article{grid-template-columns:64px 1fr!important;border-bottom:1px solid #ffffff0d!important;border-radius:0!important;padding:12px 4px!important}
+.ng-panel[data-tool="map"] .ng-map{background:linear-gradient(rgba(20,24,28,.28),rgba(20,24,28,.28)),repeating-linear-gradient(28deg,#24282b 0 2px,#1b1e21 2px 34px);border-radius:8px}
+.ng-panel[data-tool="map"] .ng-place-list{grid-template-columns:1fr 1fr}.ng-panel[data-tool="map"] .ng-place-list button{min-height:62px}
+.ng-panel[data-tool="memories"] .ng-memory{grid-template-columns:repeat(3,1fr)}.ng-panel[data-tool="memories"] .ng-memory article,.ng-panel[data-tool="memories"] .ng-memory article:first-child{grid-column:auto;min-height:135px;border-radius:8px!important}
+@media(max-width:700px){.ng-panel[data-tool="map"] .ng-place-list{grid-template-columns:1fr}.ng-panel[data-tool="memories"] .ng-memory{grid-template-columns:1fr 1fr}}
