@@ -216,3 +216,16 @@
 #newGameShell.event-mode .ng-media{transform:scale(1.012);transition:transform 2s ease}
 #newGameShell .ng-cinematic{z-index:12!important}
 @media(min-width:1400px){#newGameShell .ng-media>span{left:52px!important;bottom:190px!important;font-size:60px!important}#newGameShell .ng-media>small{left:54px!important;bottom:158px!important}#newGameShell .ng-now{left:52px!important;bottom:42px!important}#newGameShell .ng-top{left:52px!important;right:52px!important;top:34px!important}}
+
+/* MOCKUP LOCK v11 — final hierarchy cleanup */
+#newGameShell .ng-top{mix-blend-mode:normal!important}
+#newGameShell .ng-id span{white-space:nowrap}
+#newGameShell .ng-media>span{margin:0!important;padding:0!important}
+#newGameShell .ng-media>small{margin:0!important;padding:0!important}
+#newGameShell .ng-now>p{line-height:1!important}
+#newGameShell .ng-choices{align-items:stretch!important}
+#newGameShell .ng-choices button{display:flex!important;align-items:center!important;justify-content:flex-start!important}
+#newGameShell .ng-panel[hidden],#newGameShell .ng-cinematic[hidden],#newGameShell .ng-interrupt[hidden],#newGameShell .ng-toast[hidden]{display:none!important}
+#newGameShell .ng-scene,#newGameShell .ng-media{width:100%!important;height:100%!important}
+#newGameShell .ng-scene{overflow:hidden!important}
+@media(max-width:700px){#newGameShell .ng-top{top:18px!important}#newGameShell .ng-id span{font-size:7px!important}#newGameShell .ng-media>span{font-size:32px!important;letter-spacing:-.035em!important}#newGameShell .ng-choices{gap:6px!important}#newGameShell .ng-choices button{min-height:43px!important;border-radius:9px!important}}
