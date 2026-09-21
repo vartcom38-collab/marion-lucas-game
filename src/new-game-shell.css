@@ -645,3 +645,13 @@
 .ng-panel[data-tool="map"] .ng-place-list{grid-template-columns:1fr 1fr}.ng-panel[data-tool="map"] .ng-place-list button{min-height:62px}
 .ng-panel[data-tool="memories"] .ng-memory{grid-template-columns:repeat(3,1fr)}.ng-panel[data-tool="memories"] .ng-memory article,.ng-panel[data-tool="memories"] .ng-memory article:first-child{grid-column:auto;min-height:135px;border-radius:8px!important}
 @media(max-width:700px){.ng-panel[data-tool="map"] .ng-place-list{grid-template-columns:1fr}.ng-panel[data-tool="memories"] .ng-memory{grid-template-columns:1fr 1fr}}
+
+/* Reference board: conversation screen */
+.ng-panel[data-tool="phone"] .ng-chat{display:flex;flex-direction:column;gap:9px;min-height:420px;padding:14px 0 18px}
+.ng-panel[data-tool="phone"] .ng-chat p{display:flex;align-items:flex-end;gap:7px;width:82%;font-size:0;opacity:1}
+.ng-panel[data-tool="phone"] .ng-chat p:before{content:"";flex:0 0 28px;width:28px;height:28px;border-radius:50%;background:linear-gradient(145deg,#80665e,#3a302d);box-shadow:inset 0 0 0 1px #ffffff16}
+.ng-panel[data-tool="phone"] .ng-chat p.me{align-self:flex-end;justify-content:flex-end}.ng-panel[data-tool="phone"] .ng-chat p.me:before{display:none}
+.ng-panel[data-tool="phone"] .ng-chat p span{display:block;max-width:100%;padding:10px 12px;border-radius:14px 14px 14px 4px;background:#28282d;font-size:12px;line-height:1.35}.ng-panel[data-tool="phone"] .ng-chat p.me span{border-radius:14px 14px 4px 14px;background:#e78ca0;color:#24191b}
+.ng-panel[data-tool="phone"] .ng-inline{margin-top:auto}.ng-panel[data-tool="phone"] .ng-inline button{width:100%;border-radius:12px}
+.ng-panel[data-tool="phone"] .ng-replies{margin-top:auto;padding-top:10px;border-top:1px solid #ffffff0c}
+.ng-panel[data-tool="phone"] .ng-replies:after{content:"MonIA fait vivre la suite selon cette partie.";display:block;margin-top:7px;text-align:center;font-size:8px;opacity:.3}
