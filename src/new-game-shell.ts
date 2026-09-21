@@ -15,11 +15,13 @@ function mount(){
  <header class="ng-top"><div class="ng-id"><b>Marion</b><span>Nîmes · Mai 1998 · <i id="ngTime">${state.time}</i></span></div><nav>
  <button data-tool="phone">☎<small>Téléphone</small><i class="badge">${game.phoneUnread||1}</i></button>
  <button data-tool="agenda">▦<small>Agenda</small></button><button data-tool="map">⌖<small>Carte</small></button><button data-tool="memories">✦<small>Souvenirs</small></button></nav></header>
- <div class="ng-toast" hidden></div><section class="ng-now"><p>QU’EST-CE QUE TU FAIS MAINTENANT ?</p><div class="ng-choices" id="ngChoices"></div></section>
+ <div class="ng-toast" hidden></div><div class="ng-interrupt" hidden></div><section class="ng-now"><p>QU’EST-CE QUE TU FAIS MAINTENANT ?</p><div class="ng-choices" id="ngChoices"></div></section>
  <aside class="ng-panel" hidden><button class="ng-close">×</button><div class="ng-panel-body"></div></aside>`;
  app.appendChild(root);
  const panel=root.querySelector('.ng-panel') as HTMLElement,body=root.querySelector('.ng-panel-body') as HTMLElement,toast=root.querySelector('.ng-toast') as HTMLElement;
+ const interrupt=root.querySelector('.ng-interrupt') as HTMLElement;
  const say=(x:string)=>{toast.textContent=x;toast.hidden=false;setTimeout(()=>toast.hidden=true,1800)};
+ const incoming=(name:string)=>{interrupt.hidden=false;interrupt.innerHTML='<small>APPEL ENTRANT</small><strong>'+name+'</strong><span>Le monde peut venir jusqu’à toi.</span><div><button data-answer>Décrocher</button><button data-later>Plus tard</button></div>';interrupt.querySelector('[data-answer]')?.addEventListener('click',()=>{interrupt.hidden=true;state.tool='phone';state.phoneView='call';persist();body.innerHTML='<em>APPEL EN COURS</em><h2>'+name+'</h2><div class="ng-callface"><span>VIDÉO / VOIX DU PERSONNAGE</span></div><div class="ng-inline"><button data-tone="listen">Écouter</button><button data-tone="tease">Le taquiner</button><button data-tone="ask">Poser une question</button></div>';panel.hidden=false;body.querySelectorAll('[data-tone]').forEach(b=>b.addEventListener('click',()=>{state.memories.unshift('Un appel avec '+name+' · '+(b as HTMLElement).textContent);persist();say('MonIA retient la manière dont tu as vécu cet appel.')}))});interrupt.querySelector('[data-later]')?.addEventListener('click',()=>{interrupt.hidden=true;state.memories.unshift('Tu as laissé sonner '+name+'.');persist();say(name+' continue sa vie, même sans réponse.')})};
  const open=(tool:Tool)=>{state.tool=tool;persist();renderPanel()};
  const choices=root.querySelector('#ngChoices') as HTMLElement;
  const choiceSets:any={
@@ -38,7 +40,7 @@ function mount(){
   else if(intent==='leave'){state.beat='outside';state.place='Centre-ville';state.time='09:46';say('Marion sort. Aucun écran de chargement : la vie continue.');}
   else if(intent==='centre'){state.place='Centre-ville';state.time='10:02';say('Tu vas vers le centre.');}
   else if(intent==='arena'){state.place='Arènes';state.time='10:06';state.beat='encounter';say('Quelqu’un attire ton attention dans la foule…');}
-  else if(intent==='look'||intent==='smile'||intent==='continue'){state.metDominic=true;state.memories.unshift(intent==='continue'?'Une première rencontre à peine esquissée.':'Un premier échange de regards près des Arènes.');state.beat='outside';say('Le monde retient ce moment. Dominic reste libre de sa réaction.');}
+  else if(intent==='look'||intent==='smile'||intent==='continue'){state.metDominic=true;state.memories.unshift(intent==='continue'?'Une première rencontre à peine esquissée.':'Un premier échange de regards près des Arènes.');state.beat='outside';say('Le monde retient ce moment. Dominic reste libre de sa réaction.');setTimeout(()=>incoming('Dominic'),2200);}
   (root.querySelector('#ngTime') as HTMLElement).textContent=state.time;persist();renderChoices();window.dispatchEvent(new CustomEvent('marion:player-intent',{detail:{intent,place:state.place,beat:state.beat}}));
  };
  function renderPanel(){if(!state.tool){panel.hidden=true;return}panel.hidden=false;
