@@ -161,3 +161,19 @@
 #newGameShell .ng-cinematic strong{font-family:Georgia,serif!important;font-weight:400!important;letter-spacing:-.035em!important}
 @media(min-width:900px){#newGameShell .ng-choices button{flex:0 1 auto!important}#newGameShell .ng-now{max-width:940px!important}}
 @media(max-width:700px){#newGameShell .ng-media>span{width:auto!important;line-height:1!important}#newGameShell .ng-choices button{max-width:none!important;font-size:13px!important}#newGameShell .ng-now>p{font-size:8px!important}}
+
+/* MOCKUP LOCK v7 — editorial spacing and invisible chrome */
+#newGameShell .ng-top{pointer-events:none!important}
+#newGameShell .ng-top nav{pointer-events:auto!important}
+#newGameShell .ng-id{pointer-events:none!important}
+#newGameShell .ng-id b{font-family:Georgia,serif!important;font-weight:400!important}
+#newGameShell .ng-top nav button{transition:opacity .2s ease,transform .2s ease,background .2s ease!important}
+#newGameShell .ng-media>span{z-index:3!important;text-wrap:balance}
+#newGameShell .ng-media>small{z-index:3!important}
+#newGameShell .ng-now>p{font-weight:500!important;letter-spacing:.26em!important}
+#newGameShell .ng-choices button{white-space:normal!important;text-wrap:balance!important}
+#newGameShell .ng-choices button:focus-visible,#newGameShell .ng-top nav button:focus-visible{outline:1px solid rgba(255,255,255,.8)!important;outline-offset:3px!important}
+#newGameShell .ng-panel{z-index:20!important}
+#newGameShell .ng-close{position:sticky!important;top:0!important;z-index:3!important}
+@media(min-width:1200px){#newGameShell .ng-media>span{font-size:56px!important;bottom:184px!important}#newGameShell .ng-media>small{bottom:154px!important}#newGameShell .ng-now{bottom:38px!important}#newGameShell .ng-choices{gap:9px!important}}
+@media(max-height:700px) and (min-width:701px){#newGameShell .ng-media>span{bottom:148px!important;font-size:42px!important}#newGameShell .ng-media>small{bottom:124px!important}#newGameShell .ng-now{bottom:22px!important}}
