@@ -885,3 +885,17 @@
 #newGameShell .ng-memory article{cursor:default}
 #newGameShell .ng-panel .ng-close{z-index:30}
 @media(max-width:700px){#newGameShell .ng-panel:not([data-tool="phone"]) .ng-panel-body{padding:22px}#newGameShell .ng-paper>h2,#newGameShell .ng-mapcard>h2{font-size:24px}}
+
+/* Board polish: scene readability stays cinematic over bright/dark footage */
+#newGameShell .ng-top .ng-id,#newGameShell .ng-top nav,#newGameShell .ng-now{isolation:isolate}
+#newGameShell .ng-top .ng-id:after{content:"";position:absolute;z-index:-1;inset:-22px -34px -24px -26px;background:radial-gradient(ellipse at 30% 45%,#0008,transparent 68%);filter:blur(10px);pointer-events:none}
+#newGameShell .ng-top .ng-id{position:relative}
+#newGameShell .ng-now-copy{text-shadow:0 2px 14px #000b}
+#newGameShell .ng-choices button{line-height:1.25}
+#newGameShell .ng-choices button:not(:first-child){color:#f2ecea}
+#newGameShell .ng-top nav button{color:#f1e9e6;text-shadow:0 1px 7px #000}
+#newGameShell .ng-panel:not([data-tool="phone"]) .ng-close{box-shadow:0 5px 18px #0005}
+#newGameShell .ng-cinematic{z-index:8}
+#newGameShell .ng-cinematic strong,#newGameShell .ng-cinematic span{text-shadow:0 3px 24px #000}
+#newGameShell .ng-cinematic strong{max-width:720px}
+@media(max-width:700px){#newGameShell .ng-top .ng-id:after{inset:-14px -18px -16px -14px}#newGameShell .ng-choices{gap:6px}}
