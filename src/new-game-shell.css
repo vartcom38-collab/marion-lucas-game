@@ -1053,3 +1053,10 @@
 #newGameShell .ng-view-tabs button.active{background:#e68ca0;color:#24191b}
 #newGameShell .ng-agenda-list[data-view="week"] article{min-height:48px}
 #newGameShell .ng-agenda-list[data-view="month"] article{min-height:40px;opacity:.9}
+
+/* Real memory filters replace decorative pseudo-tabs */
+#newGameShell .ng-memory:before{content:none!important;display:none!important}
+#newGameShell .ng-memory-tabs{display:flex;gap:5px;flex-wrap:wrap;margin:10px 0 16px;padding-bottom:10px;border-bottom:1px solid #ffffff12}
+#newGameShell .ng-memory-tabs button{border:0;background:transparent;color:#a9a09e;padding:6px 9px;border-radius:999px;font:9px Inter,system-ui,sans-serif}
+#newGameShell .ng-memory-tabs button.active{background:#e68ca0;color:#24191b}
+#newGameShell .ng-memory article[hidden]{display:none!important}
