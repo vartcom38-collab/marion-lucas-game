@@ -564,3 +564,24 @@
 .ng-toast{z-index:40;border-color:rgba(255,255,255,.1);background:rgba(9,8,8,.52);box-shadow:0 12px 50px #0008}
 @media(min-width:1000px){.ng-top nav small{display:none}.ng-top nav button{width:38px;height:38px}.ng-tool-glyph{font-size:14px}.ng-panel{width:min(440px,34vw)}}
 @media(max-width:700px){.ng-top nav{padding:2px}.ng-top nav button{width:36px;height:36px}.ng-top .ng-id span{font-size:8px}.ng-now p{margin-bottom:8px}.ng-choices{gap:6px}.ng-choices button{font-size:11px;border-radius:14px}.ng-scene:before{box-shadow:inset 0 0 70px rgba(0,0,0,.32)}}
+
+/* Full mockup continuity — phone becomes a real diegetic object */
+.ng-panel[data-tool="phone"]{right:4vw;width:min(370px,88vw);padding:0;border:0!important;overflow:visible;background:transparent!important}
+.ng-panel[data-tool="phone"]>.ng-close{right:-8px;top:-8px;background:rgba(8,7,7,.72);box-shadow:0 8px 24px #0008}
+.ng-panel[data-tool="phone"] .ng-device{width:330px;max-width:calc(100vw - 42px);margin:0 auto;padding:9px;border-radius:42px;background:#090909;border:1px solid rgba(255,255,255,.14);box-shadow:0 45px 110px #000e,inset 0 0 0 2px #ffffff05}
+.ng-panel[data-tool="phone"] .ng-device:before{content:"";display:block;width:82px;height:19px;margin:0 auto -22px;position:relative;z-index:3;border-radius:0 0 14px 14px;background:#090909}
+.ng-panel[data-tool="phone"] .ng-device-screen{min-height:570px;max-height:76vh;overflow:auto;padding:30px 16px 18px;border-radius:34px;background:linear-gradient(165deg,#1e1d20,#101012 55%,#181518);box-shadow:inset 0 0 0 1px #ffffff0b;color:#fff}
+.ng-panel[data-tool="phone"] .ng-device-screen::-webkit-scrollbar{width:0}
+.ng-panel[data-tool="phone"] .ng-appgrid{margin-top:18px;grid-template-columns:repeat(3,1fr);gap:12px}
+.ng-panel[data-tool="phone"] .ng-appgrid button{min-height:76px;padding:9px 5px;border:0!important;border-radius:20px;background:linear-gradient(145deg,#ffffff12,#ffffff05)!important;box-shadow:inset 0 1px #ffffff10}
+.ng-panel[data-tool="phone"] .ng-thread{margin-top:16px;padding:13px!important;border-radius:16px!important;background:#ffffff07!important}
+.ng-panel[data-tool="phone"] .ng-chat{padding-top:12px}
+.ng-panel[data-tool="phone"] .ng-replies button{background:#ffffff08}
+.ng-panel[data-tool="phone"] .ng-call-stage{min-height:500px}
+.ng-panel[data-tool="phone"] .ng-call-stage video.ng-call-media,.ng-panel[data-tool="phone"] .ng-call-media{height:500px;min-height:500px}
+@media(max-width:700px){
+ .ng-panel[data-tool="phone"]{left:0;right:0;top:0;bottom:0;max-height:none;width:auto;padding:0;display:grid;place-content:center}
+ .ng-panel[data-tool="phone"] .ng-device{width:min(350px,92vw);max-width:none}
+ .ng-panel[data-tool="phone"] .ng-device-screen{min-height:min(650px,82vh);max-height:82vh}
+ .ng-panel[data-tool="phone"]>.ng-close{right:4vw;top:3vh;position:fixed;float:none}
+}
