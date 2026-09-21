@@ -844,3 +844,12 @@
 #newGameShell .ng-panel[data-tool="phone"]{background:transparent!important;border:0!important;box-shadow:none!important;backdrop-filter:none!important}
 #newGameShell .ng-panel[data-tool="phone"]>.ng-close{position:absolute;right:-3px;top:-3px;z-index:20;background:#0c0b0bc7;border:1px solid #ffffff14;backdrop-filter:blur(10px)}
 @media(max-width:700px){#newGameShell .ng-panel[data-tool="phone"]>.ng-close{right:8px;top:8px}}
+
+/* Approved phone object — final physical proportions */
+#newGameShell .ng-panel[data-tool="phone"]{width:min(390px,94vw)!important;top:50%!important;right:5vw!important;bottom:auto!important;left:auto!important;max-height:none!important;transform:translateY(-50%);overflow:visible!important}
+#newGameShell .ng-panel[data-tool="phone"] .ng-device{position:relative;margin:auto;padding:9px;border-radius:39px;background:linear-gradient(145deg,#3a3736,#0a0909 42%,#272423);box-shadow:inset 0 0 0 1px #ffffff18,0 34px 80px #000a}
+#newGameShell .ng-panel[data-tool="phone"] .ng-device:before{content:"";position:absolute;z-index:8;left:50%;top:15px;transform:translateX(-50%);width:82px;height:20px;border-radius:999px;background:#050505;box-shadow:inset 0 0 0 1px #ffffff08}
+#newGameShell .ng-panel[data-tool="phone"] .ng-device-screen{border-radius:31px;padding-top:38px;overflow:auto}
+#newGameShell .ng-panel[data-tool="phone"] .ng-status{position:absolute;z-index:9;left:28px;right:25px;top:19px;pointer-events:none}
+#newGameShell .ng-panel[data-tool="phone"] .ng-status span:last-child{max-width:86px;overflow:hidden;white-space:nowrap}
+@media(max-width:700px){#newGameShell .ng-panel[data-tool="phone"]{position:fixed!important;left:50%!important;right:auto!important;top:50%!important;width:min(370px,96vw)!important;transform:translate(-50%,-50%)!important}#newGameShell .ng-panel[data-tool="phone"] .ng-device{max-height:94dvh}#newGameShell .ng-panel[data-tool="phone"] .ng-device-screen{max-height:92dvh}}
