@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "name": "MonIA Torero Life Continuity Engine",
+  "principle": "A professional taurine date is never an isolated calendar block. It creates a causally coherent travel, recovery, social and couple timeline.",
+  "calendar_layers": ["Marion", "Dominic", "Couple"],
+  "professional_event": {
+    "phases": ["previous_location","travel_or_early_arrival","hotel_checkin","preparation","plaza_arrival","corrida","post_corrida","meal_or_obligation","hotel_or_departure","next_city_or_recovery"],
+    "post_corrida_variables": ["finish_time","injury_or_care","press_or_social_obligation","meal","fatigue","distance_to_next_city","next_commitment_time","transport","relationship_state","marion_presence"],
+    "travel_rule": "Compute plausible departure, journey and arrival windows before exposing the next activity. Never teleport Dominic or Marion between cities.",
+    "back_to_back_rule": "If another professional date follows quickly, reserve post-event recovery, changing, food, road time, hotel arrival and minimum preparation time before the next date.",
+    "free_gap_rule": "If the next commitment is distant, generate plausible free-time opportunities rather than forced travel: stay in town, rest, visit, eat out, see friends, attend another corrida, spend time with Marion, or return home."
+  },
+  "marion": {
+    "may_accompany": true,
+    "never_automatic": true,
+    "constraints": ["relationship_stage","her_calendar","invitation_or_shared_plan","distance","duration","prior_choice","fatigue","family_or_work_obligation"],
+    "experience": ["hotel","road_trip","meal","waiting","plaza_backstage_when_plausible","attend_corrida","free_day_in_city","return_home_alone","join_later"]
+  },
+  "historical_cartel_contract": {
+    "dominic_is_fictional_insertion": true,
+    "exclude_as_template_or_companion": ["El Juli"],
+    "other_toreros": "Select historically active, era-appropriate toreros supported by researched cartel evidence for the year and plausible feria tier.",
+    "do_not_invent_historical_appearance": true,
+    "source_required_for_specific_real_cartel_claim": true
+  },
+  "agenda_visibility": {
+    "before_meeting": "Marion only",
+    "early_relationship": "Only Dominic dates he plausibly shares or Marion learns",
+    "established_relationship": "Known Dominic dates plus shared plans",
+    "shared_home": "Marion, Dominic and Couple calendars, while surprises and unknown professional changes remain hidden"
+  },
+  "runtime_events": [
+    "professional_commitment_known",
+    "travel_plan_created",
+    "hotel_arrival",
+    "post_corrida_resolution",
+    "next_city_departure",
+    "free_day_opportunity",
+    "marion_accompany_decision",
+    "schedule_conflict",
+    "calendar_update"
+  ]
+}
