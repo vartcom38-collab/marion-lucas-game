@@ -145,3 +145,19 @@
 #newGameShell .ng-media-shade{background:linear-gradient(180deg,rgba(0,0,0,.26) 0%,rgba(0,0,0,.015) 28%,rgba(0,0,0,.02) 56%,rgba(0,0,0,.78) 100%)!important}
 #newGameShell .ng-scene:after{box-shadow:inset 0 0 170px rgba(0,0,0,.16)!important}
 @media(min-width:1100px){#newGameShell .ng-top{left:42px!important;right:42px!important;top:30px!important}#newGameShell .ng-media>span{left:42px!important;bottom:178px!important}#newGameShell .ng-media>small{left:44px!important;bottom:151px!important}#newGameShell .ng-now{left:42px!important;right:42px!important;bottom:34px!important}}
+
+/* MOCKUP LOCK v6 — final main-screen proportion pass */
+#newGameShell .ng-media>span{width:min(560px,70vw)!important;letter-spacing:-.045em!important;line-height:.96!important}
+#newGameShell .ng-media>small{letter-spacing:.18em!important}
+#newGameShell .ng-top nav button{border-radius:11px!important}
+#newGameShell .ng-tool-glyph{transform:translateY(-.5px)}
+#newGameShell .ng-now{pointer-events:none!important}
+#newGameShell .ng-choices{pointer-events:auto!important}
+#newGameShell .ng-choices button{font-size:12.5px!important;letter-spacing:.005em!important;max-width:280px!important}
+#newGameShell .ng-choices button:before{width:3px!important;height:3px!important;margin-right:8px!important;opacity:.38!important}
+#newGameShell .ng-toast{font-size:11px!important;letter-spacing:.02em!important}
+#newGameShell.event-mode .ng-top,#newGameShell.event-mode .ng-now{opacity:0!important;transition:opacity .3s ease!important}
+#newGameShell .ng-cinematic small{letter-spacing:.22em!important;font-size:9px!important}
+#newGameShell .ng-cinematic strong{font-family:Georgia,serif!important;font-weight:400!important;letter-spacing:-.035em!important}
+@media(min-width:900px){#newGameShell .ng-choices button{flex:0 1 auto!important}#newGameShell .ng-now{max-width:940px!important}}
+@media(max-width:700px){#newGameShell .ng-media>span{width:auto!important;line-height:1!important}#newGameShell .ng-choices button{max-width:none!important;font-size:13px!important}#newGameShell .ng-now>p{font-size:8px!important}}
