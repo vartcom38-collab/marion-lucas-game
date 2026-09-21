@@ -21,7 +21,7 @@ function mount(){
  <header class="ng-top"><div class="ng-id"><b>Marion</b><span>Nîmes · JOUR <i id="ngDay">${state.day}</i> · <i id="ngYear">${state.year}</i> · <i id="ngTime">${state.time}</i></span></div><nav>
  <button data-tool="phone" aria-label="Téléphone"><span class="ng-tool-glyph">☎</span><small>Téléphone</small><i class="badge">${state.marineUnread}</i></button>
  <button data-tool="agenda" aria-label="Agenda"><span class="ng-tool-glyph">▦</span><small>Agenda</small></button><button data-tool="map" aria-label="Carte"><span class="ng-tool-glyph">⌖</span><small>Carte</small></button><button data-tool="memories" aria-label="Souvenirs"><span class="ng-tool-glyph">✦</span><small>Souvenirs</small></button><button data-system="menu" aria-label="Menu"><span class="ng-tool-glyph">☰</span><small>Menu</small></button></nav></header>
- <div class="ng-toast" hidden></div><div class="ng-interrupt" hidden></div><section class="ng-now"><p>QU’EST-CE QUE TU FAIS MAINTENANT ?</p><div class="ng-choices" id="ngChoices"></div></section>
+ <div class="ng-toast" hidden></div><div class="ng-interrupt" hidden></div><section class="ng-now"><div class="ng-now-copy"><b>Marion</b><span>Une nouvelle journée commence…</span><p>Qu’est-ce que tu veux faire ?</p></div><div class="ng-choices" id="ngChoices"></div></section>
  <aside class="ng-panel" hidden><button class="ng-close">×</button><div class="ng-panel-body"></div></aside>`;
  app.appendChild(root);
  const panel=root.querySelector('.ng-panel') as HTMLElement,body=root.querySelector('.ng-panel-body') as HTMLElement,toast=root.querySelector('.ng-toast') as HTMLElement;
