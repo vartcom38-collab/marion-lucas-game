@@ -813,3 +813,18 @@
 .ng-cinematic:not([hidden]){animation:ngCinemaIn .42s ease both}
 @keyframes ngCinemaIn{from{opacity:0}to{opacity:1}}
 @media(prefers-reduced-motion:reduce){.ng-panel,.ng-cinematic:not([hidden]){animation:none!important}.ng-shell .ng-scene,.ng-shell .ng-now{transition:none!important}}
+
+/* Final-board accessibility + tactile states without adding HUD */
+.ng-shell button{cursor:pointer;-webkit-tap-highlight-color:transparent}
+.ng-shell button:active{transform:scale(.975)}
+.ng-choices button:active{transform:translateY(1px) scale(.99)}
+.ng-panel button:focus-visible,.ng-system-actions button:focus-visible{outline:2px solid #ed93a7;outline-offset:2px}
+.ng-panel[hidden],.ng-cinematic[hidden]{display:none!important}
+.ng-close{display:grid!important;place-content:center;min-width:34px;min-height:34px}
+.ng-close:focus-visible{border-radius:50%}
+.ng-device-screen{scrollbar-width:none}.ng-device-screen::-webkit-scrollbar{display:none}
+.ng-panel-body{scrollbar-width:thin;scrollbar-color:#ffffff18 transparent}
+.ng-panel-body::-webkit-scrollbar{width:5px}.ng-panel-body::-webkit-scrollbar-thumb{background:#ffffff18;border-radius:999px}
+.ng-worldhint{line-height:1.45}
+.ng-rule{line-height:1.5}
+@media(max-width:700px){.ng-shell button{min-height:42px}.ng-top nav button{min-height:36px}.ng-close{min-width:42px;min-height:42px}.ng-choices button{min-height:46px}}
