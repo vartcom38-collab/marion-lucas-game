@@ -383,3 +383,19 @@
 #newGameShell .ng-close{color:rgba(247,241,234,.72)!important}
 #newGameShell .ng-device-screen h2{font-size:28px!important}
 @media(max-width:700px){#newGameShell .ng-cinematic{padding:0 18px 94px!important}#newGameShell .ng-cinematic strong{font-size:35px!important;max-width:90vw}}
+
+/* APPROVED MOCKUP A→Z v8 — remove the last dashboard feel */
+#newGameShell .ng-panel[data-tool="phone"]{background:rgba(7,7,8,.88)!important}
+#newGameShell .ng-panel[data-tool="agenda"],#newGameShell .ng-panel[data-tool="map"],#newGameShell .ng-panel[data-tool="memories"]{width:min(520px,92vw)!important}
+#newGameShell .ng-panel[data-tool="system"]{width:min(460px,92vw)!important}
+#newGameShell .ng-panel-body>em{color:#d8c7b2}
+#newGameShell .ng-panel-body>h2{color:#f2ebe2}
+#newGameShell .ng-agenda-list article,#newGameShell .ng-memory article,#newGameShell .ng-place-list button{transition:opacity .18s ease}
+#newGameShell .ng-agenda-list article:hover,#newGameShell .ng-memory article:hover,#newGameShell .ng-place-list button:hover{opacity:.82}
+#newGameShell .ng-mapcard>em{font-style:normal;font-size:9px;letter-spacing:.2em;opacity:.46}
+#newGameShell .ng-mapcard>h2{margin:8px 0 0}
+#newGameShell .ng-paper>em{font-style:normal;font-size:9px;letter-spacing:.2em;opacity:.46}
+#newGameShell .ng-paper>h2{font:400 34px/1 Georgia,serif;letter-spacing:-.035em;margin:8px 0 18px}
+#newGameShell .ng-device-screen>h2{margin-bottom:4px!important}
+#newGameShell .ng-device-screen .ng-era{margin-top:0!important}
+@media(max-width:700px){#newGameShell .ng-panel[data-tool="agenda"],#newGameShell .ng-panel[data-tool="map"],#newGameShell .ng-panel[data-tool="memories"],#newGameShell .ng-panel[data-tool="system"]{width:100%!important}}
