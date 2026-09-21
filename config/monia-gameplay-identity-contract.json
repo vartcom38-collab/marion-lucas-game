@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "status": "locked",
+  "purpose": "Every playable asset belongs to one causal gameplay graph. Media and UI remain visually separate but are never logically independent.",
+  "required_ids": [
+    "runId",
+    "sceneId",
+    "mediaId",
+    "choiceId",
+    "consequenceId"
+  ],
+  "scene_contract": {
+    "sceneId": "stable identity of the current playable situation",
+    "mediaId": "clean image/video rendered for that scene",
+    "choices": "each choice references sceneId and source mediaId",
+    "consequence": "references the selected choiceId and source sceneId",
+    "resume": "next scene references consequenceId and may reuse a captured continuity frame"
+  },
+  "invariants": [
+    "No playable media without sceneId and mediaId.",
+    "No choice without source sceneId.",
+    "No consequence without source choiceId.",
+    "A clean video never contains gameplay UI, but its mediaId binds it to the overlay.",
+    "Character, location, chronology, wardrobe and relationship context travel with the scene identity.",
+    "Branch generation must preserve continuity from the exact source scene/media whenever appropriate."
+  ]
+}
