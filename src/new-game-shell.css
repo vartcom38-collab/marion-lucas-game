@@ -1045,3 +1045,11 @@
  #newGameShell .ng-now-copy>span{font-size:14px}
  #newGameShell .ng-now-copy>p{font-size:11px}
 }
+
+/* Real agenda controls replace the old decorative pseudo-tabs */
+#newGameShell .ng-panel[data-tool="agenda"] .ng-paper:before{content:none!important;display:none!important}
+#newGameShell .ng-view-tabs{display:flex;gap:5px;width:max-content;margin:5px 0 16px;padding:3px;border:1px solid #ffffff0d;border-radius:9px;background:#ffffff06}
+#newGameShell .ng-view-tabs button{border:0;background:transparent;color:#a99f9c;padding:6px 9px;border-radius:6px;font:9px Inter,system-ui,sans-serif}
+#newGameShell .ng-view-tabs button.active{background:#e68ca0;color:#24191b}
+#newGameShell .ng-agenda-list[data-view="week"] article{min-height:48px}
+#newGameShell .ng-agenda-list[data-view="month"] article{min-height:40px;opacity:.9}
