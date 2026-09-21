@@ -61,7 +61,7 @@ function mount(){
  const choiceSets:any={
  morning:[['marine','Répondre à Marine'],['prepare','Finir de te préparer'],['leave','Sortir maintenant']],
  ready:[['agenda','Regarder ce qui est prévu'],['leave','Partir maintenant'],['wait','Prendre encore quelques minutes']],
- outside:[['centre','Aller vers le centre'],['arena','Passer par les Arènes'],['marine','Retrouver Marine']],
+ outside:[['walk','Continuer à marcher'],['coffee','T’arrêter boire quelque chose'],['marine','Retrouver Marine']],
  encounter:[['look','Soutenir son regard'],['smile','Lui sourire'],['continue','Continuer ton chemin']],
  afterMeet:[['number','Échanger vos numéros'],['marine','Rejoindre Marine'],['leaveMeet','Le laisser repartir']],
  later:[['day','Continuer ta journée'],['phone','Regarder ton téléphone'],['agenda','Voir ce qui est prévu']],
@@ -95,6 +95,8 @@ function mount(){
   else if(intent==='agenda'){open('agenda');}
   else if(intent==='wait'){state.time='09:41';say('Le temps passe. Les autres continuent leur journée.');}
   else if(intent==='leave'){state.beat='outside';state.place='Centre-ville';state.time='09:46';setScene('NÎMES · EXTÉRIEUR','Marion vient de quitter son appartement.');eventBeat('DÉPLACEMENT','Marion sort.','La ville continue autour d’elle.',()=>{emit('travel',{destination:'Centre-ville',source:'choice'});window.dispatchEvent(new CustomEvent('monia:world-opportunity',{detail:{...identity(),trajectory:'leave-home',hidden:true}}));renderChoices()});}
+  else if(intent==='walk'){state.time='10:02';eventBeat('DÉPLACEMENT','Marion continue dans Nîmes.','Tu avances sans savoir ce que la ville va mettre sur ton chemin.',()=>{emit('travel_intent',{intent:'walk',from:state.place,source:'choice'});window.dispatchEvent(new CustomEvent('monia:world-opportunity',{detail:{...identity(),trajectory:'walk',movementIntent:'continue-walking',hidden:true}}));renderChoices()});}
+  else if(intent==='coffee'){state.time='10:05';eventBeat('DÉPLACEMENT','Marion cherche où s’arrêter.','Tu choisis de boire quelque chose. Le lieu précis et ce qui s’y passe appartiennent au monde.',()=>{emit('travel_intent',{intent:'coffee',from:state.place,source:'choice'});window.dispatchEvent(new CustomEvent('monia:world-opportunity',{detail:{...identity(),trajectory:'outing',movementIntent:'find-a-drink',hidden:true}}));renderChoices()});}
   else if(intent==='echo'){say('Marion reprend naturellement un détail de votre dernier appel.');state.memories.unshift('Une private joke est devenue un petit rituel.');}
   else if(intent==='centre'){state.place='Centre-ville';state.time='10:02';setScene('NÎMES · CENTRE-VILLE','Marion rejoint le centre.');eventBeat('DÉPLACEMENT','Vers le centre-ville.','Tu choisis où aller, pas ce qui va s’y produire.',()=>{emit('travel',{destination:'Centre-ville',source:'choice'});window.dispatchEvent(new CustomEvent('monia:world-opportunity',{detail:{...identity(),trajectory:'centre',hidden:true}}));renderChoices()});}
   else if(intent==='arena'){state.place='Arènes';state.time='10:06';state.beat='outside';setScene('NÎMES · PRÈS DES ARÈNES','La foule continue de vivre autour de Marion.');say('Tu passes par les Arènes. Rien ne garantit ce qui va s’y produire.');window.dispatchEvent(new CustomEvent('monia:world-opportunity',{detail:{...identity(),trajectory:'arena',hidden:true}}));}
