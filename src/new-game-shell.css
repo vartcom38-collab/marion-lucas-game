@@ -799,3 +799,17 @@
 .ng-panel[data-tool="memories"] .ng-memory article:hover{transform:translateY(-3px) scale(1.01)}
 .ng-panel[data-tool="memories"] .ng-rule{max-width:520px}
 @media(max-width:700px){.ng-panel[data-tool="memories"] .ng-memory{grid-template-columns:1fr 1fr!important}.ng-panel[data-tool="memories"] .ng-memory article{min-height:140px!important}.ng-panel[data-tool="memories"] .ng-memory article b{font-size:12px}}
+
+/* Cohesion pass: transitions between gameplay and tools */
+.ng-panel{animation:ngPanelIn .22s cubic-bezier(.2,.8,.2,1) both;transform-origin:90% 10%}
+@keyframes ngPanelIn{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:none}}
+.ng-shell.tool-open .ng-now{opacity:.14;transform:translateY(10px);pointer-events:none;transition:opacity .18s ease,transform .18s ease}
+.ng-shell.tool-open .ng-top .ng-id{opacity:.28;transition:opacity .18s ease}
+.ng-shell.tool-open .ng-scene{filter:saturate(.86) brightness(.72);transform:scale(1.006);transition:filter .24s ease,transform .4s ease}
+.ng-shell:not(.tool-open) .ng-scene{filter:none;transform:none;transition:filter .24s ease,transform .4s ease}
+.ng-shell:not(.tool-open) .ng-now{transition:opacity .22s ease,transform .22s ease}
+.ng-panel[data-tool="phone"]{transform-origin:90% 30%}
+.ng-panel[data-tool="agenda"],.ng-panel[data-tool="map"],.ng-panel[data-tool="memories"]{transform-origin:80% 15%}
+.ng-cinematic:not([hidden]){animation:ngCinemaIn .42s ease both}
+@keyframes ngCinemaIn{from{opacity:0}to{opacity:1}}
+@media(prefers-reduced-motion:reduce){.ng-panel,.ng-cinematic:not([hidden]){animation:none!important}.ng-shell .ng-scene,.ng-shell .ng-now{transition:none!important}}
