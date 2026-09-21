@@ -664,3 +664,13 @@
 .ng-memory:before{content:"Tous   ·   Photos   ·   Vidéos   ·   Lieux   ·   Moments";grid-column:1/-1;padding:9px 12px;border-bottom:1px solid #ffffff12;font-size:9px;word-spacing:10px;opacity:.68}
 .ng-panel[data-tool="memories"]> .ng-close,.ng-panel[data-tool="agenda"]> .ng-close,.ng-panel[data-tool="map"]> .ng-close{background:#ffffff0b}
 @media(max-width:700px){.ng-panel[data-tool="agenda"]:after,.ng-panel[data-tool="map"]:after,.ng-panel[data-tool="memories"]:after{margin-left:-24px;margin-right:-24px}.ng-memory:before{word-spacing:3px;font-size:8px}}
+
+/* Final-board polish: cinematic consequence / passage-of-time presentation */
+.event-mode .ng-scene:after{background:linear-gradient(180deg,rgba(0,0,0,.18),transparent 38%,rgba(0,0,0,.74))}
+.ng-cinematic{justify-content:flex-end;align-items:flex-start;padding:0 5vw 8vh;background:linear-gradient(180deg,transparent 32%,rgba(4,3,3,.18) 54%,rgba(4,3,3,.78) 100%)}
+.ng-cinematic small{padding:6px 9px;border:1px solid #ffffff20;border-radius:999px;background:#0005;font-size:8px;letter-spacing:.2em}
+.ng-cinematic strong{margin-top:12px;font:500 clamp(30px,4vw,58px)/1.04 Inter,system-ui,sans-serif;letter-spacing:-.045em;max-width:820px}
+.ng-cinematic span{font-size:12px;line-height:1.45;max-width:560px;opacity:.72}
+.event-mode .ng-id{opacity:.12}.event-mode .ng-media{transform:scale(1.012)}
+.ng-timejump{left:auto;right:4.5vw;bottom:4vh;padding:8px 11px;border:1px solid #ffffff12;border-radius:999px;background:#0004;backdrop-filter:blur(10px)}
+@media(max-width:700px){.ng-cinematic{padding:0 5vw 8vh}.ng-cinematic strong{font-size:32px}.ng-cinematic span{font-size:11px}.ng-timejump{display:none}}
