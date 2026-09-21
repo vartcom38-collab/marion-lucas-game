@@ -177,3 +177,17 @@
 #newGameShell .ng-close{position:sticky!important;top:0!important;z-index:3!important}
 @media(min-width:1200px){#newGameShell .ng-media>span{font-size:56px!important;bottom:184px!important}#newGameShell .ng-media>small{bottom:154px!important}#newGameShell .ng-now{bottom:38px!important}#newGameShell .ng-choices{gap:9px!important}}
 @media(max-height:700px) and (min-width:701px){#newGameShell .ng-media>span{bottom:148px!important;font-size:42px!important}#newGameShell .ng-media>small{bottom:124px!important}#newGameShell .ng-now{bottom:22px!important}}
+
+/* MOCKUP LOCK v8 — premium cinematic finish */
+#newGameShell .ng-media{position:absolute!important;inset:0!important}
+#newGameShell .ng-media video,#newGameShell .ng-media img{position:absolute!important;inset:0!important;display:block;object-position:center center}
+#newGameShell .ng-media video[hidden],#newGameShell .ng-media img[hidden]{display:none!important}
+#newGameShell .ng-media:before{content:"";position:absolute;z-index:2;inset:0;pointer-events:none;background:linear-gradient(90deg,rgba(0,0,0,.16),transparent 42%),linear-gradient(0deg,rgba(0,0,0,.18),transparent 42%)}
+#newGameShell .ng-id span i{font-style:normal!important}
+#newGameShell .ng-top nav button small{display:none!important}
+#newGameShell .ng-now{transition:opacity .25s ease,transform .25s ease!important}
+#newGameShell.tool-open .ng-now{opacity:.22!important;transform:translateY(6px)!important;pointer-events:none!important}
+#newGameShell.tool-open .ng-media-shade{background:linear-gradient(90deg,rgba(0,0,0,.16),rgba(0,0,0,.24) 55%,rgba(0,0,0,.64))!important}
+#newGameShell .ng-panel{background:linear-gradient(180deg,rgba(15,14,14,.88),rgba(9,9,10,.94))!important;backdrop-filter:blur(28px) saturate(1.08)!important;border-left:1px solid rgba(255,255,255,.1)!important}
+#newGameShell .ng-close{width:34px!important;height:34px!important;border-radius:50%!important;background:rgba(255,255,255,.07)!important;border:1px solid rgba(255,255,255,.1)!important;color:#fff!important}
+@media(min-width:701px){#newGameShell .ng-panel{width:min(420px,38vw)!important;padding:28px!important}}
