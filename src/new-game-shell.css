@@ -258,3 +258,23 @@
 #newGameShell .ng-top nav button:active{transform:scale(.96)!important}
 #newGameShell .ng-choices button:active{transform:translateY(0) scale(.985)!important}
 @media(max-width:700px){#newGameShell{--edge-x:16px;--edge-bottom:18px}#newGameShell .ng-media>span{left:var(--edge-x)!important;right:var(--edge-x)!important}#newGameShell .ng-media>small{left:calc(var(--edge-x) + 2px)!important}#newGameShell .ng-choices button{max-width:none!important}}
+
+/* APPROVED MOCKUP A→Z — shared visual language for every overlay */
+#newGameShell .ng-panel-body>em,#newGameShell .ng-device-screen>em{display:block;font-style:normal;font-size:9px;letter-spacing:.2em;text-transform:uppercase;opacity:.48;margin-bottom:8px}
+#newGameShell .ng-panel-body>h2,#newGameShell .ng-device-screen>h2{font:400 34px/1 Georgia,serif;letter-spacing:-.035em;margin:0 0 18px}
+#newGameShell .ng-rule{font-size:11px;line-height:1.55;opacity:.55}
+#newGameShell .ng-inline{display:flex;gap:7px;flex-wrap:wrap;margin-top:14px}
+#newGameShell .ng-inline button{border:1px solid rgba(255,255,255,.11);background:rgba(255,255,255,.055);color:inherit;border-radius:10px;padding:10px 13px}
+#newGameShell .ng-mapcard h2{font:400 34px/1 Georgia,serif;letter-spacing:-.035em}
+#newGameShell .ng-map{position:relative;min-height:300px;margin:20px 0;border-radius:20px;overflow:hidden;background:radial-gradient(circle at 48% 45%,rgba(218,199,169,.18),transparent 34%),linear-gradient(145deg,#26231f,#121314);border:1px solid rgba(255,255,255,.08)}
+#newGameShell .ng-map:before,#newGameShell .ng-map:after{content:"";position:absolute;inset:-20%;border:1px solid rgba(230,215,192,.13);transform:rotate(18deg)}
+#newGameShell .ng-map:after{transform:rotate(-29deg) translateY(18%)}
+#newGameShell .ng-map .pin{position:absolute;z-index:2;border:0;background:none;color:#f1e8dc;display:grid;justify-items:center;gap:3px}
+#newGameShell .ng-map .pin i{font-size:17px!important;text-shadow:0 3px 10px #000}
+#newGameShell .ng-map .pin small{font-size:9px;text-shadow:0 2px 8px #000}
+#newGameShell .ng-memory{display:grid;gap:9px;margin-top:18px}
+#newGameShell .ng-memory article{padding:15px 0;border-bottom:1px solid rgba(255,255,255,.09)}
+#newGameShell .ng-memory b,#newGameShell .ng-memory span{display:block}
+#newGameShell .ng-memory b{font:400 17px/1.2 Georgia,serif}
+#newGameShell .ng-memory span{font-size:10px;opacity:.46;margin-top:5px}
+#newGameShell .ng-timejump{display:none!important}
