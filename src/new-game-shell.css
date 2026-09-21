@@ -245,3 +245,16 @@
 #newGameShell .ng-media:before{z-index:2!important}
 #newGameShell .ng-media>span,#newGameShell .ng-media>small{position:absolute!important}
 @media(max-width:700px){#newGameShell .ng-now{max-width:none!important}#newGameShell .ng-media>span{max-width:90vw!important}#newGameShell .ng-media>small{max-width:86vw!important;overflow:hidden;text-overflow:ellipsis}}
+
+/* MOCKUP LOCK v13 — cinematic safe zones */
+#newGameShell{--edge-x:clamp(18px,3.1vw,52px);--edge-bottom:clamp(24px,5.1vh,44px)}
+#newGameShell .ng-top{left:var(--edge-x)!important;right:var(--edge-x)!important}
+#newGameShell .ng-media>span{left:var(--edge-x)!important}
+#newGameShell .ng-media>small{left:calc(var(--edge-x) + 2px)!important}
+#newGameShell .ng-now{left:var(--edge-x)!important;right:var(--edge-x)!important;bottom:var(--edge-bottom)!important}
+#newGameShell .ng-choices{max-width:880px!important}
+#newGameShell .ng-choices button{min-width:0!important;max-width:270px!important}
+#newGameShell .ng-top nav button,#newGameShell .ng-choices button{-webkit-tap-highlight-color:transparent}
+#newGameShell .ng-top nav button:active{transform:scale(.96)!important}
+#newGameShell .ng-choices button:active{transform:translateY(0) scale(.985)!important}
+@media(max-width:700px){#newGameShell{--edge-x:16px;--edge-bottom:18px}#newGameShell .ng-media>span{left:var(--edge-x)!important;right:var(--edge-x)!important}#newGameShell .ng-media>small{left:calc(var(--edge-x) + 2px)!important}#newGameShell .ng-choices button{max-width:none!important}}
