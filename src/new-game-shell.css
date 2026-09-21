@@ -513,3 +513,27 @@
 .ng-call-stage{position:relative;min-height:390px;border-radius:22px;overflow:hidden;background:radial-gradient(circle at 50% 30%,#49403b,#151313 70%);box-shadow:inset 0 0 0 1px #ffffff10}.ng-call-media{min-height:390px;width:100%;display:grid;place-content:center;text-align:center}.ng-call-stage video.ng-call-media{height:390px;object-fit:cover}.ng-call-name{position:absolute;left:18px;bottom:16px;display:grid;text-shadow:0 2px 12px #000}.ng-call-name b{font:24px Georgia,serif}.ng-call-name span{font-size:9px;opacity:.6}.ng-call-actions{display:flex;justify-content:center;margin-top:14px}.ng-call-actions button{width:52px;height:52px;border-radius:50%;border:1px solid #ffffff18;background:#6e3035;color:#fff;font-size:25px}
 .ng-system-actions{display:grid;gap:8px}.ng-system-actions button{padding:13px 15px;border:1px solid var(--line);border-radius:14px;background:#ffffff08;color:#fff;text-align:left}
 @media(max-width:700px){.ng-map{height:42vh}.ng-gallery{grid-template-columns:1fr 1fr}.ng-call-stage,.ng-call-media,.ng-call-stage video.ng-call-media{min-height:52vh;height:52vh}}
+
+/* Mockup polish — transitions, hierarchy and touch behavior */
+.ng-shell,.ng-panel,.ng-now,.ng-top{isolation:isolate}
+.ng-panel{animation:panelIn .28s cubic-bezier(.2,.75,.25,1)}
+@keyframes panelIn{from{opacity:0;transform:translateX(18px) scale(.985)}to{opacity:1;transform:none}}
+.ng-panel .ng-close{z-index:4;width:34px;height:34px;border-radius:50%;display:grid;place-content:center;background:#ffffff08;border:1px solid #ffffff10;font-size:19px}
+.ng-panel .ng-close:hover{background:#ffffff14}
+.ng-choices button,.ng-top nav button,.ng-panel button{-webkit-tap-highlight-color:transparent;cursor:pointer}
+.ng-choices button:active,.ng-panel button:active{transform:scale(.985)}
+.ng-now:before{content:"";position:absolute;left:-2vw;right:-8vw;bottom:-5vh;height:20vh;z-index:-1;background:radial-gradient(ellipse at 20% 100%,rgba(0,0,0,.5),transparent 68%);pointer-events:none}
+.tool-open .ng-now{opacity:.22;filter:blur(1px);transition:.25s}.tool-open .ng-top nav{opacity:.5;transition:.25s}.tool-open .ng-scene{transform:scale(1.008);transition:transform .6s ease}
+.ng-panel article:last-child{border-bottom:0}
+.ng-panel::-webkit-scrollbar{width:5px}.ng-panel::-webkit-scrollbar-thumb{background:#ffffff1f;border-radius:9px}
+.ng-cinematic{z-index:15;padding-left:4.5vw;padding-bottom:7vh}.ng-cinematic strong{font-size:clamp(38px,5.2vw,72px);letter-spacing:-.035em}.ng-cinematic span{max-width:620px}
+.ng-interrupt{border-color:var(--line);background:rgba(10,8,8,.62);box-shadow:0 30px 100px #000a}.ng-interrupt strong{font-style:italic}
+@media(max-width:700px){
+ .ng-top .ng-id b{font-size:24px}.ng-top nav button:nth-child(4){display:none}
+ .tool-open .ng-now{opacity:0;pointer-events:none}
+ .ng-panel{animation:panelUp .28s cubic-bezier(.2,.75,.25,1)}
+ @keyframes panelUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+ .ng-panel .ng-close{position:sticky;float:right;top:0;background:rgba(15,13,13,.75);backdrop-filter:blur(12px)}
+ .ng-cinematic{padding:7vh 5vw}.ng-interrupt{left:5vw;right:5vw;top:auto;bottom:5vh;width:auto}
+}
+@media(prefers-reduced-motion:reduce){.ng-panel,.ng-cinematic,.ng-interrupt{animation:none!important}.ng-scene,.ng-media,.ng-choices button{transition:none!important}}
