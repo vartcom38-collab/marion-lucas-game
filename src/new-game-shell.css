@@ -338,3 +338,18 @@
 #newGameShell .ng-close{border-color:rgba(255,255,255,.09)!important;background:rgba(255,255,255,.035)!important}
 #newGameShell.tool-open .ng-scene:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent 40%,rgba(0,0,0,.26));pointer-events:none}
 @media(max-width:700px){#newGameShell .ng-panel{width:100%!important;max-width:none!important}#newGameShell.tool-open .ng-scene:after{background:rgba(0,0,0,.18)}}
+
+/* APPROVED MOCKUP A→Z v5 — final interaction consistency */
+#newGameShell button{font:inherit}
+#newGameShell button:focus-visible{outline:1px solid rgba(242,232,218,.72)!important;outline-offset:3px}
+#newGameShell .ng-panel button,#newGameShell .ng-top button,#newGameShell .ng-choices button{cursor:pointer}
+#newGameShell .ng-panel-body{padding-bottom:max(28px,env(safe-area-inset-bottom))}
+#newGameShell .ng-top{padding-top:env(safe-area-inset-top)}
+#newGameShell .ng-now{padding-bottom:env(safe-area-inset-bottom)}
+#newGameShell .ng-gallery-empty,#newGameShell .ng-empty-gallery{grid-column:1/-1;padding:30px 0;border-top:1px solid rgba(255,255,255,.08);border-bottom:1px solid rgba(255,255,255,.08)}
+#newGameShell .ng-gallery-empty b,#newGameShell .ng-empty-gallery b{font:400 18px/1.15 Georgia,serif}
+#newGameShell .ng-gallery-empty span,#newGameShell .ng-empty-gallery span{display:block;margin-top:7px;font-size:10px;line-height:1.45;opacity:.46}
+#newGameShell .ng-era{margin:-10px 0 0;font-size:9px;letter-spacing:.12em;text-transform:uppercase;opacity:.36}
+#newGameShell .badge[hidden]{display:none!important}
+#newGameShell .ng-panel[data-tool="system"] .ng-panel-body{max-width:440px;margin:0 auto}
+@media(max-width:700px){#newGameShell .ng-panel-body{padding-left:18px!important;padding-right:18px!important}#newGameShell .ng-device{width:100%}#newGameShell .ng-iphone{border-radius:28px}#newGameShell .ng-device-screen{border-radius:22px}}
