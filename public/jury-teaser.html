@@ -1,0 +1,16 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Marion & Dominic — Gameplay Teaser</title><style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;font-family:Arial,sans-serif;color:#fff}video{position:absolute;width:100%;height:100%;object-fit:cover}.shade{position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.58),transparent 58%);pointer-events:none}#ui{position:absolute;inset:0;padding:7vh 6vw;display:flex;align-items:flex-end}.card{max-width:560px;text-shadow:0 2px 18px #000}.eyebrow{font-size:14px;letter-spacing:.18em;opacity:.72;margin-bottom:14px}.title{font-family:Georgia,serif;font-size:clamp(34px,5vw,72px);line-height:.95}.sub{margin-top:14px;font-size:18px;opacity:.88}.choice{margin:8px 0;padding:11px 15px;border:1px solid rgba(255,255,255,.35);border-radius:20px;background:rgba(12,12,12,.35);width:max-content;max-width:100%;font-size:17px}.choice.sel{background:rgba(255,255,255,.92);color:#111;text-shadow:none}.call{padding:22px;border-radius:28px;background:rgba(10,10,10,.58);backdrop-filter:blur(14px)}.caller{font-family:Georgia,serif;font-size:38px}.micro{font-size:16px;letter-spacing:.08em}.end{align-self:center;text-align:center;margin:auto}.end .title{font-size:clamp(42px,7vw,92px)}#skip{position:absolute;right:18px;bottom:18px;opacity:.35;font-size:11px}
+</style></head><body>
+<video id="v" autoplay playsinline src="https://pikaso.cdnpk.net/private/production/5504649737/a2cc11f9-9904-48ed-922a-298416e43a45-0.mp4?token=exp=1790294400~hmac=d19ea32015c141f6e8f0b37532ba682eb7c9a74771318f21c1527c4d3cf3ca44"></video><div class="shade"></div><div id="ui"></div><div id="skip">GAMEPLAY TEASER</div>
+<script>
+const ui=document.getElementById('ui'),v=document.getElementById('v');
+const beats=[
+[0,3,()=>'<div class="card"><div class="title">MARION & DOMINIC</div><div class="sub">Vivez sa vie. Écrivez votre histoire.</div></div>'],
+[3,8,()=>'<div class="card"><div class="eyebrow">QUE FAIT MARION ?</div><div class="choice">Répondre à Marine</div><div class="choice">Finir de se préparer</div><div class="choice sel">Sortir maintenant →</div></div>'],
+[8,13,()=>'<div class="card micro">VOTRE CHOIX DEVIENT IMMÉDIATEMENT SON ACTION</div>'],
+[13,19,()=>'<div class="card"><div class="eyebrow">LE MONDE CONTINUE SANS VOUS</div><div class="sub">Dominic vous remarque. Vous ne l’avez pas déclenché.</div></div>'],
+[19,25,()=>'<div class="card call"><div class="eyebrow">APPEL ENTRANT</div><div class="caller">Dominic</div><div class="choice sel">Décrocher</div><div class="choice">Plus tard</div></div>'],
+[25,29,()=>'<div class="card"><div class="eyebrow">MONIA SE SOUVIENT</div><div class="sub">Vos interactions peuvent changer la suite.</div></div>'],
+[29,33,()=>'<div class="end"><div class="title">MARION & DOMINIC</div><div class="sub">UN FILM VIVANT À JOUER</div></div>']];
+let last=-1;function draw(){let t=v.currentTime,i=beats.findIndex(b=>t>=b[0]&&t<b[1]);if(i!==last){last=i;ui.innerHTML=i>=0?beats[i][2]():''}requestAnimationFrame(draw)}draw();
+</script></body></html>
