@@ -8,7 +8,7 @@ type DemoState={tool:Tool,phoneView:'home'|'messages'|'call',selected:string|nul
 const SAVE='marion-lucas-save-v4';
 const UI='marion-ui-prototype-v1';
 const load=():DemoState=>{try{return {...{tool:null,phoneView:'home',selected:null,place:'Chez Marion',time:'09:12',memories:[],beat:'morning',metDominic:false,year:1998,hasDominicNumber:false,contactStage:0,day:1,marineUnread:1,marineReplies:[],gallery:[],messages:[],appointmentStates:{},invitations:[]},...JSON.parse(localStorage.getItem(UI)||'{}')}}catch{return {tool:null,phoneView:'home',selected:null,place:'Chez Marion',time:'09:12',memories:[],beat:'morning',metDominic:false,year:1998,hasDominicNumber:false,contactStage:0,day:1,marineUnread:1,marineReplies:[],gallery:[],messages:[],appointmentStates:{},invitations:[]}}};
-const state=load();state.gallery=Array.isArray(state.gallery)?state.gallery:[],messages:[],appointmentStates:{},invitations:[]; const persist=()=>localStorage.setItem(UI,JSON.stringify(state));
+const state=load();state.gallery=Array.isArray(state.gallery)?state.gallery:[];state.messages=Array.isArray(state.messages)?state.messages:[];state.appointmentStates=state.appointmentStates||{};state.invitations=Array.isArray(state.invitations)?state.invitations:[]; const persist=()=>localStorage.setItem(UI,JSON.stringify(state));
 function mount(){
  const app=document.getElementById('app');if(!app)return;document.getElementById('newGameShell')?.remove();
  const old=[...app.children] as HTMLElement[];old.forEach(x=>x.style.display='none');
