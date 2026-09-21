@@ -929,3 +929,16 @@
 #newGameShell .ng-device-screen button,#newGameShell .ng-panel button{user-select:none}
 #newGameShell .ng-scene video,#newGameShell .ng-scene img{user-select:none;-webkit-user-drag:none}
 @media(hover:none){#newGameShell .ng-top nav{opacity:1}}
+
+/* Final board pass: cinematic consequence feels like part of the film */
+#newGameShell.event-mode .ng-top nav,#newGameShell.event-mode .ng-now{opacity:0!important;pointer-events:none}
+#newGameShell.event-mode .ng-top .ng-id{opacity:.08!important}
+#newGameShell.event-mode .ng-scene:before{background:linear-gradient(180deg,rgba(0,0,0,.12),transparent 42%,rgba(0,0,0,.4))}
+#newGameShell .ng-cinematic{pointer-events:none}
+#newGameShell .ng-cinematic small{width:max-content;text-transform:uppercase}
+#newGameShell .ng-cinematic strong{font-family:Georgia,serif;font-weight:400;letter-spacing:-.035em}
+#newGameShell .ng-cinematic span{max-width:520px;color:#eee7e4}
+#newGameShell .ng-timejump{font:8px Inter,system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#eee7e4}
+#newGameShell.event-mode .ng-media video,#newGameShell.event-mode .ng-media img{animation:ngFilmPush 8s ease-out both}
+@keyframes ngFilmPush{from{transform:scale(1)}to{transform:scale(1.025)}}
+@media(prefers-reduced-motion:reduce){#newGameShell.event-mode .ng-media video,#newGameShell.event-mode .ng-media img{animation:none}}
