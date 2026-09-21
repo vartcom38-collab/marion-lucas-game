@@ -11,7 +11,7 @@ function mount(){
  const old=[...app.children] as HTMLElement[];old.forEach(x=>x.style.display='none');
  let game:any={};try{game=JSON.parse(localStorage.getItem(SAVE)||'{}')}catch{}
  const root=document.createElement('div');root.id='newGameShell';root.className='ng-shell';
- root.innerHTML=`<div class="ng-scene"><div class="ng-media"><span id="ngSceneTitle">MARION · SCÈNE DE VIE</span><small id="ngSceneSub">média canonique connecté ensuite par MonIA</small></div><div class="ng-cinematic" hidden><small></small><strong></strong><span></span></div></div>
+ root.innerHTML=`<div class="ng-scene"><div class="ng-media"><video id="ngSceneVideo" playsinline muted loop hidden></video><img id="ngSceneImage" alt="" hidden><div class="ng-media-shade"></div><span id="ngSceneTitle">MARION · SCÈNE DE VIE</span><small id="ngSceneSub">média canonique connecté ensuite par MonIA</small></div><div class="ng-cinematic" hidden><small></small><strong></strong><span></span></div></div>
  <header class="ng-top"><div class="ng-id"><b>Marion</b><span>Nîmes · JOUR <i id="ngDay">${state.day}</i> · <i id="ngYear">${state.year}</i> · <i id="ngTime">${state.time}</i></span></div><nav>
  <button data-tool="phone">☎<small>Téléphone</small><i class="badge">${game.phoneUnread||1}</i></button>
  <button data-tool="agenda">▦<small>Agenda</small></button><button data-tool="map">⌖<small>Carte</small></button><button data-tool="memories">✦<small>Souvenirs</small></button></nav></header>
@@ -22,6 +22,9 @@ function mount(){
  const interrupt=root.querySelector('.ng-interrupt') as HTMLElement;
  const cinematic=root.querySelector('.ng-cinematic') as HTMLElement;
  const sceneTitle=root.querySelector('#ngSceneTitle') as HTMLElement,sceneSub=root.querySelector('#ngSceneSub') as HTMLElement;
+ const sceneVideo=root.querySelector('#ngSceneVideo') as HTMLVideoElement,sceneImage=root.querySelector('#ngSceneImage') as HTMLImageElement;
+ const setMedia=(media:any)=>{if(!media)return;const src=typeof media==='string'?media:media.src||media.url;if(!src)return;const type=(typeof media==='object'&&media.type)||(/\.(mp4|webm)(\?|$)/i.test(src)?'video':'image');sceneVideo.pause();sceneVideo.hidden=true;sceneImage.hidden=true;if(type==='video'){sceneVideo.src=src;sceneVideo.hidden=false;sceneVideo.play().catch(()=>{})}else{sceneImage.src=src;sceneImage.hidden=false}};
+ const syncRuntimeMedia=()=>{const r=runtime();setMedia(r.scene?.media||r.media||r.currentMedia)};
  const setScene=(title:string,sub:string)=>{sceneTitle.textContent=title;sceneSub.textContent=sub};
  const eventBeat=(kicker:string,title:string,sub:string,after?:()=>void)=>{state.tool=null;panel.hidden=true;root.classList.add('event-mode');choices.classList.add('waiting');cinematic.hidden=false;(cinematic.querySelector('small') as HTMLElement).textContent=kicker;(cinematic.querySelector('strong') as HTMLElement).textContent=title;(cinematic.querySelector('span') as HTMLElement).textContent=sub;setTimeout(()=>{cinematic.hidden=true;root.classList.remove('event-mode');choices.classList.remove('waiting');after?.()},1800)};
  const say=(x:string)=>{toast.textContent=x;toast.hidden=false;setTimeout(()=>toast.hidden=true,1800)};
@@ -82,8 +85,9 @@ function mount(){
  root.querySelectorAll('[data-tool]').forEach(x=>x.addEventListener('click',()=>open((x as HTMLElement).dataset.tool as Tool)));
  root.querySelector('.ng-close')?.addEventListener('click',()=>{state.tool=null;persist();renderPanel()});
  const dev=document.createElement('button');dev.className='ng-timejump';dev.textContent='APERÇU DES ANNÉES ›';dev.onclick=()=>{state.year=state.year===1998?2003:state.year===2003?2010:state.year===2010?2016:1998;(root.querySelector('#ngYear') as HTMLElement).textContent=String(state.year);persist();say('Le monde et les outils évoluent avec l’époque : '+state.year);if(state.tool==='phone')renderPanel()};root.appendChild(dev);
- root.addEventListener('ng:refresh',()=>{renderChoices();renderPanel()});
- window.addEventListener('monia:scene',((e:CustomEvent)=>{const d=e.detail||{};if(d.title)setScene(d.title,d.subtitle||'');if(d.time){state.time=d.time;(root.querySelector('#ngTime') as HTMLElement).textContent=state.time}if(d.place)state.place=d.place;persist()}) as EventListener);
+ root.addEventListener('ng:refresh',()=>{syncRuntimeMedia();renderChoices();renderPanel()});
+ window.addEventListener('monia:scene',((e:CustomEvent)=>{const d=e.detail||{};if(d.title)setScene(d.title,d.subtitle||'');if(d.media)setMedia(d.media);if(d.time){state.time=d.time;(root.querySelector('#ngTime') as HTMLElement).textContent=state.time}if(d.place)state.place=d.place;persist()}) as EventListener);
+ syncRuntimeMedia();
  renderChoices();
  renderPanel();
 }
