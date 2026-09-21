@@ -765,3 +765,14 @@
 .ng-choices{gap:8px}.ng-choices button{border-radius:8px;border-color:#ffffff16;background:rgba(25,22,22,.78);backdrop-filter:blur(8px)}.ng-choices button:first-child{background:linear-gradient(135deg,#ef9aae,#d97890);border-color:#f6b2c0;color:#24191b}
 .ng-choices button:focus-visible,.ng-top button:focus-visible{outline:2px solid #f0a0b2;outline-offset:2px}
 @media(max-width:700px){.ng-top .ng-id b{font-size:31px}.ng-top .ng-id span{font-size:8px}.ng-now-copy b{font-size:15px}.ng-now-copy span,.ng-now-copy p{font-size:10px!important}}
+
+/* Agenda board: day/week/month header and timeline language without changing game data */
+.ng-panel[data-tool="agenda"] .ng-paper:before{content:"Jour    Semaine    Mois";display:block;width:max-content;margin:5px 0 16px;padding:7px 9px;border-radius:8px;background:#ffffff06;border:1px solid #ffffff0d;font:9px Inter,system-ui,sans-serif;word-spacing:13px;color:#ddd3d0}
+.ng-panel[data-tool="agenda"] .ng-paper:after{content:"";position:absolute;left:30px;right:30px;top:92px;height:1px;background:linear-gradient(90deg,#e68ca0 0 42px,#ffffff0d 42px)}
+.ng-panel[data-tool="agenda"] .ng-paper{position:relative}
+.ng-panel[data-tool="agenda"] .ng-agenda-list{position:relative;margin-top:4px}
+.ng-panel[data-tool="agenda"] .ng-agenda-list:before{content:"";position:absolute;left:63px;top:0;bottom:0;width:1px;background:#ffffff0b}
+.ng-panel[data-tool="agenda"] .ng-agenda-list article{position:relative;min-height:58px}
+.ng-panel[data-tool="agenda"] .ng-agenda-list article:before{content:"";position:absolute;left:59px;top:24px;width:8px;height:8px;border-radius:50%;background:#e68ca0;box-shadow:0 0 0 4px #171313}
+.ng-panel[data-tool="agenda"] .ng-agenda-list article>*:first-child{font-variant-numeric:tabular-nums;color:#cfc5c2}
+.ng-panel[data-tool="agenda"] .ng-agenda-list article>*:nth-child(2){padding-left:13px}
