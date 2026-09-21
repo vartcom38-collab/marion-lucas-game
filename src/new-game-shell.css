@@ -739,3 +739,16 @@
 .ng-panel[data-tool="phone"] .ng-device-screen>h2{margin-top:5px}
 .ng-panel[data-tool="phone"] .ng-thread{display:grid;grid-template-columns:1fr auto;gap:2px 10px;margin-top:14px;padding:12px;border-top:1px solid #ffffff0d;border-bottom:1px solid #ffffff0d;background:#ffffff02}
 .ng-panel[data-tool="phone"] .ng-thread b{font-size:12px}.ng-panel[data-tool="phone"] .ng-thread span{grid-column:1;font-size:10px;opacity:.55}.ng-panel[data-tool="phone"] .ng-thread small{grid-column:2;grid-row:1/3;align-self:center;font-size:8px;opacity:.35}
+
+/* Approved visio board: video is the experience, controls float over it */
+.ng-panel[data-tool="phone"] .ng-call{position:relative;display:flex;flex-direction:column;min-height:620px;margin:-18px;border-radius:28px;overflow:hidden;background:radial-gradient(circle at 50% 28%,#5b514d 0,#272321 42%,#090909 100%)}
+.ng-panel[data-tool="phone"] .ng-call>em{position:absolute;z-index:4;left:18px;top:22px;font-size:8px;letter-spacing:.15em;opacity:.58}
+.ng-panel[data-tool="phone"] .ng-call-stage{position:relative;display:flex;flex:1;min-height:500px}
+.ng-panel[data-tool="phone"] .ng-call-media{position:absolute;inset:0;display:grid;place-content:center;text-align:center;background:linear-gradient(180deg,#0000 55%,#0009),radial-gradient(circle at 50% 35%,#75635c 0 12%,#4a3d38 13% 24%,#1e1917 25% 48%,#0c0b0a 70%)}
+.ng-panel[data-tool="phone"] .ng-call-media span{font:500 30px/1 Georgia,serif;text-shadow:0 3px 20px #000}.ng-panel[data-tool="phone"] .ng-call-media small{margin-top:7px;font-size:9px;opacity:.58}
+.ng-panel[data-tool="phone"] .ng-call-name{position:absolute;z-index:3;left:18px;top:46px;display:grid}.ng-panel[data-tool="phone"] .ng-call-name b{font-size:17px}.ng-panel[data-tool="phone"] .ng-call-name span{font-size:9px;opacity:.52}
+.ng-panel[data-tool="phone"] .ng-call .ng-inline{position:absolute;z-index:5;left:50%;bottom:22px;transform:translateX(-50%);display:flex;justify-content:center;gap:9px;width:max-content;margin:0;padding:9px;border-radius:999px;background:#0909099c;backdrop-filter:blur(14px)}
+.ng-panel[data-tool="phone"] .ng-call .ng-inline button{width:auto;min-width:54px;min-height:44px;padding:8px 12px;border-radius:999px;background:#ffffff16}
+.ng-panel[data-tool="phone"] .ng-call .ng-inline button:last-child{background:#d94f5d;color:#fff}
+.ng-panel[data-tool="phone"] .ng-call .ng-worldhint{position:absolute;z-index:4;left:18px;right:18px;bottom:88px;margin:0;text-align:center;color:#fff;opacity:.48}
+@media(max-width:700px){.ng-panel[data-tool="phone"] .ng-call{min-height:78dvh}.ng-panel[data-tool="phone"] .ng-call-stage{min-height:70dvh}.ng-panel[data-tool="phone"] .ng-call .ng-inline{max-width:90%;flex-wrap:wrap}}
