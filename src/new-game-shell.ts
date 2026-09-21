@@ -17,10 +17,10 @@ function mount(){
  const old=[...app.children] as HTMLElement[];old.forEach(x=>x.style.display='none');
  let game:any={};try{game=JSON.parse(localStorage.getItem(SAVE)||'{}')}catch{}
  const root=document.createElement('div');root.id='newGameShell';root.className='ng-shell';
- root.innerHTML=`<div class="ng-scene"><div class="ng-media"><video id="ngSceneVideo" playsinline muted loop hidden></video><img id="ngSceneImage" alt="" hidden><div class="ng-media-shade"></div><span id="ngSceneTitle">MARION · SCÈNE DE VIE</span><small id="ngSceneSub">média canonique connecté ensuite par MonIA</small></div><div class="ng-cinematic" hidden><small></small><strong></strong><span></span></div></div>
+ root.innerHTML=`<div class="ng-scene"><div class="ng-media"><video id="ngSceneVideo" playsinline muted loop hidden></video><img id="ngSceneImage" alt="" hidden><div class="ng-media-shade"></div><span id="ngSceneTitle">Chez Marion</span><small id="ngSceneSub">Nîmes · un matin de mai 1998</small></div><div class="ng-cinematic" hidden><small></small><strong></strong><span></span></div></div>
  <header class="ng-top"><div class="ng-id"><b>Marion</b><span>Nîmes · JOUR <i id="ngDay">${state.day}</i> · <i id="ngYear">${state.year}</i> · <i id="ngTime">${state.time}</i></span></div><nav>
- <button data-tool="phone">☎<small>Téléphone</small><i class="badge">${state.marineUnread}</i></button>
- <button data-tool="agenda">▦<small>Agenda</small></button><button data-tool="map">⌖<small>Carte</small></button><button data-tool="memories">✦<small>Souvenirs</small></button><button data-system="menu">☰<small>Menu</small></button></nav></header>
+ <button data-tool="phone" aria-label="Téléphone"><span class="ng-tool-glyph">☎</span><small>Téléphone</small><i class="badge">${state.marineUnread}</i></button>
+ <button data-tool="agenda" aria-label="Agenda"><span class="ng-tool-glyph">▦</span><small>Agenda</small></button><button data-tool="map" aria-label="Carte"><span class="ng-tool-glyph">⌖</span><small>Carte</small></button><button data-tool="memories" aria-label="Souvenirs"><span class="ng-tool-glyph">✦</span><small>Souvenirs</small></button><button data-system="menu" aria-label="Menu"><span class="ng-tool-glyph">☰</span><small>Menu</small></button></nav></header>
  <div class="ng-toast" hidden></div><div class="ng-interrupt" hidden></div><section class="ng-now"><p>QU’EST-CE QUE TU FAIS MAINTENANT ?</p><div class="ng-choices" id="ngChoices"></div></section>
  <aside class="ng-panel" hidden><button class="ng-close">×</button><div class="ng-panel-body"></div></aside>`;
  app.appendChild(root);
