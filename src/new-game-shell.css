@@ -789,3 +789,13 @@
 .ng-panel[data-tool="map"] .ng-place-list button:before{content:"●";position:absolute;left:13px;top:50%;transform:translateY(-50%);color:#e8899e;font-size:12px;text-shadow:0 0 12px #e8899e88}
 .ng-panel[data-tool="map"] .ng-place-list button b{display:block;font-size:11px}.ng-panel[data-tool="map"] .ng-place-list button span{display:block;margin-top:3px;font-size:9px;opacity:.48}
 @media(max-width:700px){.ng-panel[data-tool="map"] .ng-mapcard:before{font-size:7px;word-spacing:3px}.ng-panel[data-tool="map"] .ng-map{height:46dvh!important}}
+
+/* Memories board: visual life journal instead of dashboard cards */
+.ng-panel[data-tool="memories"] .ng-memory{gap:8px}
+.ng-panel[data-tool="memories"] .ng-memory article{position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;padding:14px!important;background:linear-gradient(180deg,transparent 20%,#080707d9 100%),radial-gradient(circle at 30% 25%,#75635c 0,#403633 34%,#181413 72%)!important;border:1px solid #ffffff10!important;box-shadow:0 10px 28px #0003}
+.ng-panel[data-tool="memories"] .ng-memory article:nth-of-type(3n+1){min-height:180px}.ng-panel[data-tool="memories"] .ng-memory article:nth-of-type(3n+2){min-height:145px}.ng-panel[data-tool="memories"] .ng-memory article:nth-of-type(3n){min-height:165px}
+.ng-panel[data-tool="memories"] .ng-memory article:before{content:"SOUVENIR";position:absolute;left:12px;top:11px;padding:4px 6px;border-radius:999px;background:#09080875;border:1px solid #ffffff12;font:7px Inter,sans-serif;letter-spacing:.14em;opacity:.68}
+.ng-panel[data-tool="memories"] .ng-memory article b{position:relative;z-index:2;font:500 14px/1.15 Georgia,serif}.ng-panel[data-tool="memories"] .ng-memory article span,.ng-panel[data-tool="memories"] .ng-memory article small{position:relative;z-index:2;font-size:9px;opacity:.62}
+.ng-panel[data-tool="memories"] .ng-memory article:hover{transform:translateY(-3px) scale(1.01)}
+.ng-panel[data-tool="memories"] .ng-rule{max-width:520px}
+@media(max-width:700px){.ng-panel[data-tool="memories"] .ng-memory{grid-template-columns:1fr 1fr!important}.ng-panel[data-tool="memories"] .ng-memory article{min-height:140px!important}.ng-panel[data-tool="memories"] .ng-memory article b{font-size:12px}}
