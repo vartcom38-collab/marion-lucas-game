@@ -853,3 +853,20 @@
 #newGameShell .ng-panel[data-tool="phone"] .ng-status{position:absolute;z-index:9;left:28px;right:25px;top:19px;pointer-events:none}
 #newGameShell .ng-panel[data-tool="phone"] .ng-status span:last-child{max-width:86px;overflow:hidden;white-space:nowrap}
 @media(max-width:700px){#newGameShell .ng-panel[data-tool="phone"]{position:fixed!important;left:50%!important;right:auto!important;top:50%!important;width:min(370px,96vw)!important;transform:translate(-50%,-50%)!important}#newGameShell .ng-panel[data-tool="phone"] .ng-device{max-height:94dvh}#newGameShell .ng-panel[data-tool="phone"] .ng-device-screen{max-height:92dvh}}
+
+/* Final mockup parity: desktop composition and cinematic depth */
+@media(min-width:1051px){
+ #newGameShell .ng-top{top:4vh}
+ #newGameShell .ng-top .ng-id{max-width:300px}
+ #newGameShell .ng-top nav{margin-top:4px}
+ #newGameShell .ng-now{max-width:920px}
+ #newGameShell .ng-now-copy{max-width:540px}
+ #newGameShell .ng-choices{align-items:stretch}
+ #newGameShell .ng-choices button{padding-inline:18px}
+}
+#newGameShell .ng-scene:before{content:"";position:absolute;z-index:1;inset:0;pointer-events:none;background:radial-gradient(circle at 54% 39%,transparent 0 30%,rgba(0,0,0,.05) 55%,rgba(0,0,0,.28) 100%)}
+#newGameShell .ng-top,#newGameShell .ng-now,#newGameShell .ng-panel{z-index:10}
+#newGameShell .ng-now:before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(120deg,#ffffff0b,transparent 28%,transparent 72%,#ffffff05)}
+#newGameShell .ng-now>*{position:relative;z-index:1}
+#newGameShell .ng-top nav button,#newGameShell .ng-choices button,#newGameShell .ng-panel button{transition:background .16s ease,border-color .16s ease,transform .16s ease,opacity .16s ease}
+#newGameShell .ng-top nav button:active,#newGameShell .ng-panel button:active{opacity:.8}
