@@ -712,3 +712,19 @@
  .ng-panel[data-tool="phone"] .ng-device-screen{max-height:86dvh;min-height:78dvh}
  .ng-memory:before{overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 }
+
+/* Board fidelity: finishing details for visual hierarchy */
+.ng-shell button{font-family:Inter,system-ui,sans-serif}
+.ng-top .ng-id b,.ng-now-copy b{color:#fff;text-shadow:0 3px 24px #000b}
+.ng-now-copy span{color:#f5f0ee}.ng-now-copy p{color:#d8d0cd}
+.ng-choices button{box-shadow:inset 0 1px rgba(255,255,255,.04),0 7px 22px #0003}.ng-choices button:first-child{box-shadow:inset 0 1px #ffffff4d,0 8px 24px #d76f861f}
+.ng-panel-body>em,.ng-mapcard>em,.ng-paper>em{text-transform:uppercase}
+.ng-panel-body>h2,.ng-mapcard>h2,.ng-paper>h2{letter-spacing:-.025em}
+.ng-panel .ng-close{color:#e8dfdc}.ng-panel .ng-close:after{content:"";position:absolute;inset:-7px}
+.ng-device-screen{overscroll-behavior:contain}.ng-device-screen button{touch-action:manipulation}
+.ng-appgrid button{transition:transform .16s ease,background .16s ease}.ng-appgrid button:hover{transform:translateY(-2px)}
+.ng-place-list button,.ng-agenda-list article,.ng-memory article{transition:background .16s ease,border-color .16s ease,transform .16s ease}
+.ng-place-list button:hover,.ng-memory article:hover{transform:translateY(-2px);border-color:#ffffff1d!important}
+.ng-cinematic small,.ng-rule,.ng-worldhint{font-family:Inter,system-ui,sans-serif}
+.ng-media-shade{z-index:1}.ng-media video,.ng-media img{z-index:0}.ng-media #ngSceneTitle,.ng-media #ngSceneSub{z-index:2}
+@media(hover:none){.ng-appgrid button:hover,.ng-place-list button:hover,.ng-memory article:hover{transform:none}}
