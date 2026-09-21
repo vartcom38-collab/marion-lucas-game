@@ -870,3 +870,18 @@
 #newGameShell .ng-now>*{position:relative;z-index:1}
 #newGameShell .ng-top nav button,#newGameShell .ng-choices button,#newGameShell .ng-panel button{transition:background .16s ease,border-color .16s ease,transform .16s ease,opacity .16s ease}
 #newGameShell .ng-top nav button:active,#newGameShell .ng-panel button:active{opacity:.8}
+
+/* Final reference-board consistency: typography, spacing, film-first panels */
+#newGameShell{font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+#newGameShell .ng-panel:not([data-tool="phone"]){background:linear-gradient(145deg,rgba(20,17,17,.88),rgba(8,7,7,.94));border:1px solid #ffffff14;box-shadow:0 28px 80px #0009;backdrop-filter:blur(24px)}
+#newGameShell .ng-panel:not([data-tool="phone"]) .ng-panel-body{padding:30px}
+#newGameShell .ng-panel-body>h2{margin-bottom:16px}
+#newGameShell .ng-panel-body>em{color:#e79aab}
+#newGameShell .ng-paper>h2,#newGameShell .ng-mapcard>h2{font:500 28px/1.05 Inter,system-ui,sans-serif;letter-spacing:-.035em}
+#newGameShell .ng-paper>em,#newGameShell .ng-mapcard>em{color:#e79aab}
+#newGameShell .ng-rule{padding-top:10px;border-top:1px solid #ffffff0b;font-size:9px;opacity:.46}
+#newGameShell .ng-place-list,#newGameShell .ng-agenda-list,#newGameShell .ng-memory{margin-top:14px}
+#newGameShell .ng-place-list button{border-radius:9px}
+#newGameShell .ng-memory article{cursor:default}
+#newGameShell .ng-panel .ng-close{z-index:30}
+@media(max-width:700px){#newGameShell .ng-panel:not([data-tool="phone"]) .ng-panel-body{padding:22px}#newGameShell .ng-paper>h2,#newGameShell .ng-mapcard>h2{font-size:24px}}
