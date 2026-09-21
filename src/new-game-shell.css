@@ -655,3 +655,12 @@
 .ng-panel[data-tool="phone"] .ng-inline{margin-top:auto}.ng-panel[data-tool="phone"] .ng-inline button{width:100%;border-radius:12px}
 .ng-panel[data-tool="phone"] .ng-replies{margin-top:auto;padding-top:10px;border-top:1px solid #ffffff0c}
 .ng-panel[data-tool="phone"] .ng-replies:after{content:"MonIA fait vivre la suite selon cette partie.";display:block;margin-top:7px;text-align:center;font-size:8px;opacity:.3}
+
+/* Reference-board pass: utility navigation feels like one coherent game */
+.ng-panel[data-tool="agenda"]:after,.ng-panel[data-tool="map"]:after,.ng-panel[data-tool="memories"]:after{content:"";position:sticky;display:block;left:0;right:0;bottom:-30px;height:52px;margin:18px -30px -30px;background:linear-gradient(180deg,rgba(12,10,10,.4),rgba(8,7,7,.92));border-top:1px solid #ffffff0c;pointer-events:none}
+.ng-panel[data-tool="agenda"] .ng-paper,.ng-panel[data-tool="map"] .ng-mapcard{padding-bottom:4px}
+.ng-agenda-list article:hover{background:#ffffff05!important}.ng-agenda-list article b{font-family:Inter,system-ui,sans-serif;font-size:12px;font-weight:500}.ng-agenda-list article small{font-size:10px;opacity:.75}.ng-agenda-list article span{font-size:10px}
+.ng-mapcard .ng-rule{margin-top:14px}.ng-map .pin i{color:#ee8198;font-size:22px}.ng-map .pin small{font-size:10px}.ng-map .pin:focus small,.ng-map .pin:hover small{background:#e7899d;color:#21191a}
+.ng-memory:before{content:"Tous   ·   Photos   ·   Vidéos   ·   Lieux   ·   Moments";grid-column:1/-1;padding:9px 12px;border-bottom:1px solid #ffffff12;font-size:9px;word-spacing:10px;opacity:.68}
+.ng-panel[data-tool="memories"]> .ng-close,.ng-panel[data-tool="agenda"]> .ng-close,.ng-panel[data-tool="map"]> .ng-close{background:#ffffff0b}
+@media(max-width:700px){.ng-panel[data-tool="agenda"]:after,.ng-panel[data-tool="map"]:after,.ng-panel[data-tool="memories"]:after{margin-left:-24px;margin-right:-24px}.ng-memory:before{word-spacing:3px;font-size:8px}}
