@@ -369,3 +369,17 @@
 #newGameShell .ng-choices button{transition:background .18s ease,color .18s ease,border-color .18s ease,transform .18s ease!important}
 #newGameShell .ng-top nav button{transition:background .18s ease,opacity .18s ease,transform .18s ease!important}
 @media(max-height:650px) and (min-width:701px){#newGameShell .ng-media>span{bottom:145px!important;font-size:44px!important}#newGameShell .ng-media>small{bottom:120px!important}#newGameShell .ng-now{bottom:20px!important}}
+
+/* APPROVED MOCKUP A→Z v7 — typography and cinematic beat parity */
+#newGameShell .ng-cinematic{position:absolute!important;inset:0!important;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-end;padding:0 var(--edge-x) clamp(92px,14vh,150px)!important;color:#f4eee6}
+#newGameShell .ng-cinematic[hidden]{display:none!important}
+#newGameShell .ng-cinematic small{font-size:9px;letter-spacing:.24em;text-transform:uppercase;opacity:.5;margin-bottom:10px}
+#newGameShell .ng-cinematic strong{font:400 clamp(31px,4.2vw,58px)/.98 Georgia,serif;letter-spacing:-.04em;max-width:12ch}
+#newGameShell .ng-cinematic span{display:block;margin-top:11px;max-width:52ch;font-size:11px;line-height:1.45;opacity:.64}
+#newGameShell.event-mode .ng-media>span,#newGameShell.event-mode .ng-media>small{opacity:0!important}
+#newGameShell.event-mode .ng-now{opacity:0!important;pointer-events:none!important}
+#newGameShell .ng-panel-body h2,#newGameShell .ng-mapcard h2{text-wrap:balance}
+#newGameShell .ng-panel-body{color:rgba(247,241,234,.94)}
+#newGameShell .ng-close{color:rgba(247,241,234,.72)!important}
+#newGameShell .ng-device-screen h2{font-size:28px!important}
+@media(max-width:700px){#newGameShell .ng-cinematic{padding:0 18px 94px!important}#newGameShell .ng-cinematic strong{font-size:35px!important;max-width:90vw}}
