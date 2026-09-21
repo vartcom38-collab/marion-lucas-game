@@ -606,3 +606,20 @@
 .ng-voice-call .ng-inline{justify-content:center}.ng-voice-call .ng-inline button{border-radius:999px;font-size:10px}
 .ng-call-actions button{transition:.18s}.ng-call-actions button:hover{transform:scale(1.06)}.ng-call-actions button:active{transform:scale(.94)}
 @media(max-width:700px){.ng-call{min-height:72vh}.ng-video-call .ng-call-stage{min-height:62vh}.ng-video-call .ng-replies{bottom:72px}.ng-voice-call .ng-call-stage{min-height:55vh}}
+
+/* Reference-board convergence: scene choices become a premium cinematic card */
+.ng-now{padding:18px 18px 16px;border:1px solid rgba(255,255,255,.22);border-radius:18px;background:linear-gradient(120deg,rgba(8,7,7,.58),rgba(12,10,10,.34));backdrop-filter:blur(14px);box-shadow:0 24px 70px #0006}
+.ng-now:before{display:none}.ng-now p{font-size:12px;letter-spacing:.02em;text-transform:none;opacity:.9;margin:0 0 13px;font-weight:400}
+.ng-choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.ng-choices button{width:100%;max-width:none;min-width:0;padding:14px 16px;border-radius:9px;background:rgba(17,15,15,.7);border:1px solid rgba(255,255,255,.22);font-size:12px;text-align:center}
+.ng-choices button:first-child{background:linear-gradient(135deg,#ee8fa2,#e77d92);border-color:#f4a5b5;color:#24191b}
+.ng-choices button:hover{background:#f0d9dc;color:#21191a}
+#ngSceneTitle{bottom:22vh}#ngSceneSub{bottom:18.6vh}
+.ng-top nav{background:rgba(8,7,7,.38);border-color:rgba(255,255,255,.13)}
+.ng-panel{border-radius:14px!important;border-color:rgba(255,255,255,.24)!important}
+.ng-mapcard>h2,.ng-paper>h2,.ng-panel-body>h2{font-style:normal}
+@media(max-width:700px){
+ .ng-now{padding:13px;border-radius:15px}.ng-now p{font-size:11px}
+ .ng-choices{grid-template-columns:1fr}.ng-choices button{padding:11px 13px;text-align:left}
+ #ngSceneTitle{bottom:35vh}#ngSceneSub{bottom:31.5vh}
+}
