@@ -1004,3 +1004,16 @@
 @media(prefers-reduced-motion:reduce){
  #newGameShell *,#newGameShell *:before,#newGameShell *:after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important;animation-iteration-count:1!important}
 }
+
+/* Approved mockup: make phone feel like a real foreground object */
+#newGameShell .ng-panel[data-tool="phone"]{perspective:1200px}
+#newGameShell .ng-panel[data-tool="phone"] .ng-device{transform-origin:center center;box-shadow:0 34px 90px #000a,0 8px 28px #0009,inset 0 0 0 1px #ffffff13}
+#newGameShell .ng-panel[data-tool="phone"] .ng-device-screen{overscroll-behavior:contain}
+#newGameShell .ng-panel[data-tool="phone"] .ng-status{position:sticky;top:0;z-index:3}
+#newGameShell .ng-panel[data-tool="phone"] h2{letter-spacing:-.035em}
+#newGameShell .ng-panel[data-tool="phone"] .ng-appgrid button{border-radius:17px}
+#newGameShell .ng-panel[data-tool="phone"] .ng-thread{border-radius:15px}
+@media(min-width:701px){
+ #newGameShell.tool-open .ng-panel[data-tool="phone"] .ng-device{animation:ngPhoneLift .26s cubic-bezier(.2,.8,.2,1) both}
+ @keyframes ngPhoneLift{from{opacity:0;transform:translateY(22px) scale(.97) rotateX(2deg)}to{opacity:1;transform:translateY(0) scale(1) rotateX(0)}}
+}
