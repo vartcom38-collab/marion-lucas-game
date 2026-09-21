@@ -66,3 +66,24 @@
 #newGameShell .ng-panel{border:1px solid rgba(255,255,255,.12);box-shadow:0 24px 80px rgba(0,0,0,.48);background:rgba(13,12,13,.82)}
 #newGameShell .ng-paper{background:linear-gradient(145deg,#eee5d2,#d9c9aa);color:#30271d;border-radius:4px;box-shadow:0 28px 70px rgba(0,0,0,.42);padding:30px 28px;transform:rotate(-.25deg)}
 .ng-calendar-filters{display:flex;gap:7px;margin:8px 0 20px}.ng-calendar-filters span{font-size:10px;letter-spacing:.08em;padding:6px 9px;border:1px solid currentColor;border-radius:999px;opacity:.6}
+
+/* Gameplay facade v2 — approved mockup direction */
+#newGameShell{--safe:clamp(16px,3vw,42px);background:#050505}
+#newGameShell .ng-scene{inset:0!important;border-radius:0!important}
+#newGameShell .ng-scene video,#newGameShell .ng-scene img{width:100%;height:100%;object-fit:cover}
+#newGameShell .ng-media-shade{background:linear-gradient(180deg,rgba(0,0,0,.34) 0%,transparent 24%,transparent 55%,rgba(0,0,0,.68) 100%)}
+#newGameShell .ng-top{left:var(--safe);right:var(--safe);top:18px;padding:0!important;align-items:flex-start}
+#newGameShell .ng-top-info{opacity:.78;font-size:10px;letter-spacing:.12em;text-transform:uppercase}
+#newGameShell .ng-tools{gap:7px}
+#newGameShell .ng-tools button{width:38px;height:38px;min-width:38px;padding:0;border-radius:50%;background:rgba(8,8,9,.30);border:1px solid rgba(255,255,255,.14);backdrop-filter:blur(12px);font-size:0}
+#newGameShell .ng-tools button::first-letter{font-size:14px}
+#newGameShell .ng-scene-copy{left:var(--safe);right:auto;bottom:clamp(150px,21vh,230px);max-width:560px}
+#newGameShell .ng-scene-copy h1,#newGameShell .ng-scene-title{font-family:Georgia,serif;font-weight:400;letter-spacing:-.02em;font-size:clamp(26px,4vw,48px);line-height:1.02}
+#newGameShell .ng-scene-copy p{max-width:460px;font-size:13px;line-height:1.55;opacity:.76}
+#newGameShell .ng-choice-wrap{left:var(--safe);right:var(--safe);bottom:clamp(24px,5vh,52px)}
+#newGameShell .ng-question{font-size:9px;letter-spacing:.22em;opacity:.55;margin-bottom:11px;text-align:left}
+#newGameShell .ng-choices{margin:0;max-width:900px;display:flex;flex-wrap:wrap;gap:8px}
+#newGameShell .ng-choices button{min-height:44px;padding:11px 18px;border-radius:999px;text-align:left;font-size:13px;background:rgba(8,8,9,.40)}
+#newGameShell .ng-panel{top:72px;right:var(--safe);bottom:30px;width:min(390px,calc(100vw - 32px));border-radius:26px;padding:22px;overflow:auto}
+#newGameShell .ng-toast{bottom:120px;border-radius:999px;background:rgba(10,10,11,.70);backdrop-filter:blur(14px)}
+@media(max-width:680px){#newGameShell .ng-scene-copy{bottom:190px}#newGameShell .ng-choices{display:grid;grid-template-columns:1fr;width:100%}#newGameShell .ng-choices button{width:100%}#newGameShell .ng-panel{left:12px;right:12px;top:64px;width:auto;bottom:12px}}
