@@ -776,3 +776,16 @@
 .ng-panel[data-tool="agenda"] .ng-agenda-list article:before{content:"";position:absolute;left:59px;top:24px;width:8px;height:8px;border-radius:50%;background:#e68ca0;box-shadow:0 0 0 4px #171313}
 .ng-panel[data-tool="agenda"] .ng-agenda-list article>*:first-child{font-variant-numeric:tabular-nums;color:#cfc5c2}
 .ng-panel[data-tool="agenda"] .ng-agenda-list article>*:nth-child(2){padding-left:13px}
+
+/* Map board: full dark Nîmes travel surface with floating destination cards */
+.ng-panel[data-tool="map"] .ng-mapcard{position:relative}
+.ng-panel[data-tool="map"] .ng-mapcard:before{content:"Tous   Vie quotidienne   Sorties   Rendez-vous";display:block;width:max-content;max-width:100%;overflow:hidden;margin:4px 0 14px;padding:7px 10px;border:1px solid #ffffff0d;border-radius:999px;background:#ffffff05;font:8px Inter,system-ui,sans-serif;word-spacing:8px;white-space:nowrap;color:#d9cfcc}
+.ng-panel[data-tool="map"] .ng-map{position:relative;overflow:hidden;border:1px solid #ffffff0d;box-shadow:inset 0 0 70px #0008}
+.ng-panel[data-tool="map"] .ng-map:before,.ng-panel[data-tool="map"] .ng-map:after{content:"";position:absolute;pointer-events:none;opacity:.2}
+.ng-panel[data-tool="map"] .ng-map:before{inset:-15%;background:repeating-linear-gradient(27deg,transparent 0 31px,#b9afa91b 32px 34px,transparent 35px 67px),repeating-linear-gradient(122deg,transparent 0 46px,#b9afa914 47px 49px,transparent 50px 88px);transform:rotate(-4deg)}
+.ng-panel[data-tool="map"] .ng-map:after{width:130px;height:130px;left:43%;top:34%;border:1px solid #ffffff18;border-radius:48% 52% 43% 57%;box-shadow:0 0 0 24px #ffffff05,0 0 0 54px #ffffff03}
+.ng-panel[data-tool="map"] .ng-map .pin{z-index:2}
+.ng-panel[data-tool="map"] .ng-place-list button{position:relative;padding-left:32px;text-align:left}
+.ng-panel[data-tool="map"] .ng-place-list button:before{content:"●";position:absolute;left:13px;top:50%;transform:translateY(-50%);color:#e8899e;font-size:12px;text-shadow:0 0 12px #e8899e88}
+.ng-panel[data-tool="map"] .ng-place-list button b{display:block;font-size:11px}.ng-panel[data-tool="map"] .ng-place-list button span{display:block;margin-top:3px;font-size:9px;opacity:.48}
+@media(max-width:700px){.ng-panel[data-tool="map"] .ng-mapcard:before{font-size:7px;word-spacing:3px}.ng-panel[data-tool="map"] .ng-map{height:46dvh!important}}
