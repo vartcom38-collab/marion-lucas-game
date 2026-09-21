@@ -1,0 +1,85 @@
+{
+  "version": "gameplay-teaser-overlay-v1",
+  "masterCreation": "cpfE4dz0eP",
+  "principles": [
+    "film remains visible",
+    "UI appears contextually",
+    "no loading screen",
+    "no relationship score",
+    "Dominic remains autonomous"
+  ],
+  "timeline": [
+    {
+      "time": "00:00-00:03",
+      "overlay": {
+        "type": "title",
+        "text": [
+          "MARION & DOMINIC",
+          "VIVEZ SA VIE. ÉCRIVEZ VOTRE HISTOIRE."
+        ]
+      }
+    },
+    {
+      "time": "00:03-00:08",
+      "overlay": {
+        "type": "choices",
+        "eyebrow": "QUE FAIT MARION ?",
+        "items": [
+          "Répondre à Marine",
+          "Finir de se préparer",
+          "Sortir maintenant"
+        ],
+        "selected": "Sortir maintenant"
+      }
+    },
+    {
+      "time": "00:08-00:13",
+      "overlay": {
+        "type": "micro",
+        "text": "VOTRE CHOIX DEVIENT IMMÉDIATEMENT SON ACTION"
+      }
+    },
+    {
+      "time": "00:13-00:19",
+      "overlay": {
+        "type": "world",
+        "text": [
+          "LE MONDE CONTINUE SANS VOUS",
+          "Dominic vous remarque. Vous ne l’avez pas déclenché."
+        ]
+      }
+    },
+    {
+      "time": "00:19-00:25",
+      "overlay": {
+        "type": "incoming-call",
+        "caller": "Dominic",
+        "actions": [
+          "Décrocher",
+          "Plus tard"
+        ],
+        "selected": "Décrocher"
+      }
+    },
+    {
+      "time": "00:25-00:29",
+      "overlay": {
+        "type": "memory",
+        "text": [
+          "MonIA se souvient",
+          "Vos interactions peuvent changer la suite."
+        ]
+      }
+    },
+    {
+      "time": "00:29-00:32",
+      "overlay": {
+        "type": "endcard",
+        "text": [
+          "MARION & DOMINIC",
+          "UN FILM VIVANT À JOUER"
+        ]
+      }
+    }
+  ]
+}
