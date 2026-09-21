@@ -11,7 +11,7 @@ function mount(){
  const old=[...app.children] as HTMLElement[];old.forEach(x=>x.style.display='none');
  let game:any={};try{game=JSON.parse(localStorage.getItem(SAVE)||'{}')}catch{}
  const root=document.createElement('div');root.id='newGameShell';root.className='ng-shell';
- root.innerHTML=`<div class="ng-scene"><div class="ng-media"><span>MARION · SCÈNE DE VIE</span><small>média canonique connecté ensuite par MonIA</small></div></div>
+ root.innerHTML=`<div class="ng-scene"><div class="ng-media"><span id="ngSceneTitle">MARION · SCÈNE DE VIE</span><small id="ngSceneSub">média canonique connecté ensuite par MonIA</small></div><div class="ng-cinematic" hidden><small></small><strong></strong><span></span></div></div>
  <header class="ng-top"><div class="ng-id"><b>Marion</b><span>Nîmes · <i id="ngYear">${state.year}</i> · <i id="ngTime">${state.time}</i></span></div><nav>
  <button data-tool="phone">☎<small>Téléphone</small><i class="badge">${game.phoneUnread||1}</i></button>
  <button data-tool="agenda">▦<small>Agenda</small></button><button data-tool="map">⌖<small>Carte</small></button><button data-tool="memories">✦<small>Souvenirs</small></button></nav></header>
@@ -20,6 +20,10 @@ function mount(){
  app.appendChild(root);
  const panel=root.querySelector('.ng-panel') as HTMLElement,body=root.querySelector('.ng-panel-body') as HTMLElement,toast=root.querySelector('.ng-toast') as HTMLElement;
  const interrupt=root.querySelector('.ng-interrupt') as HTMLElement;
+ const cinematic=root.querySelector('.ng-cinematic') as HTMLElement;
+ const sceneTitle=root.querySelector('#ngSceneTitle') as HTMLElement,sceneSub=root.querySelector('#ngSceneSub') as HTMLElement;
+ const setScene=(title:string,sub:string)=>{sceneTitle.textContent=title;sceneSub.textContent=sub};
+ const eventBeat=(kicker:string,title:string,sub:string,after?:()=>void)=>{root.classList.add('event-mode');cinematic.hidden=false;(cinematic.querySelector('small') as HTMLElement).textContent=kicker;(cinematic.querySelector('strong') as HTMLElement).textContent=title;(cinematic.querySelector('span') as HTMLElement).textContent=sub;setTimeout(()=>{cinematic.hidden=true;root.classList.remove('event-mode');after?.()},1800)};
  const say=(x:string)=>{toast.textContent=x;toast.hidden=false;setTimeout(()=>toast.hidden=true,1800)};
  const incoming=(name:string)=>{interrupt.hidden=false;interrupt.innerHTML='<small>APPEL ENTRANT</small><strong>'+name+'</strong><span>Le monde peut venir jusqu’à toi.</span><div><button data-answer>Décrocher</button><button data-later>Plus tard</button></div>';interrupt.querySelector('[data-answer]')?.addEventListener('click',()=>{interrupt.hidden=true;state.tool='phone';state.phoneView='call';persist();body.innerHTML='<em>APPEL EN COURS</em><h2>'+name+'</h2><div class="ng-callface"><span>VIDÉO / VOIX DU PERSONNAGE</span></div><div class="ng-inline"><button data-tone="listen">Écouter</button><button data-tone="tease">Le taquiner</button><button data-tone="ask">Poser une question</button></div>';panel.hidden=false;body.querySelectorAll('[data-tone]').forEach(b=>b.addEventListener('click',()=>{state.memories.unshift('Un appel avec '+name+' · '+(b as HTMLElement).textContent);persist();say('MonIA retient la manière dont tu as vécu cet appel.')}))});interrupt.querySelector('[data-later]')?.addEventListener('click',()=>{interrupt.hidden=true;state.memories.unshift('Tu as laissé sonner '+name+'.');persist();say(name+' continue sa vie, même sans réponse.')})};
  const open=(tool:Tool)=>{state.tool=tool;persist();renderPanel()};
@@ -38,11 +42,11 @@ function mount(){
   else if(intent==='prepare'){state.beat='ready';state.time='09:28';say('Marion termine de se préparer.');}
   else if(intent==='agenda'){open('agenda');}
   else if(intent==='wait'){state.time='09:41';say('Le temps passe. Les autres continuent leur journée.');}
-  else if(intent==='leave'){state.beat='outside';state.place='Centre-ville';state.time='09:46';say('Marion sort. Aucun écran de chargement : la vie continue.');}
+  else if(intent==='leave'){state.beat='outside';state.place='Centre-ville';state.time='09:46';setScene('NÎMES · EXTÉRIEUR','Marion vient de quitter son appartement.');eventBeat('CONSÉQUENCE','Marion sort.','Le choix devient immédiatement une action.');}
   else if(intent==='echo'){say('Marion reprend naturellement un détail de votre dernier appel.');state.memories.unshift('Une private joke est devenue un petit rituel.');}
   else if(intent==='centre'){state.place='Centre-ville';state.time='10:02';say('Tu vas vers le centre.');}
-  else if(intent==='arena'){state.place='Arènes';state.time='10:06';state.beat='encounter';say('Quelqu’un attire ton attention dans la foule…');}
-  else if(intent==='look'||intent==='smile'||intent==='continue'){state.metDominic=true;state.memories.unshift(intent==='continue'?'Une première rencontre à peine esquissée.':'Un premier échange de regards près des Arènes.');state.beat='outside';say('Le monde retient ce moment. Dominic reste libre de sa réaction.');setTimeout(()=>incoming('Dominic'),2200);}
+  else if(intent==='arena'){state.place='Arènes';state.time='10:06';state.beat='encounter';setScene('NÎMES · PRÈS DES ARÈNES','La foule continue de vivre autour de Marion.');eventBeat('ÉVÉNEMENT DU MONDE','Quelqu’un attire ton attention…','Tu ne l’as pas déclenché.',()=>renderChoices());}
+  else if(intent==='look'||intent==='smile'||intent==='continue'){state.metDominic=true;setScene('PREMIÈRE RENCONTRE','Dominic existe dans la scène indépendamment de tes choix.');state.memories.unshift(intent==='continue'?'Une première rencontre à peine esquissée.':'Un premier échange de regards près des Arènes.');state.beat='outside';say('Le monde retient ce moment. Dominic reste libre de sa réaction.');setTimeout(()=>incoming('Dominic'),2200);}
   (root.querySelector('#ngTime') as HTMLElement).textContent=state.time;persist();renderChoices();window.dispatchEvent(new CustomEvent('marion:player-intent',{detail:{intent,place:state.place,beat:state.beat}}));
  };
  function renderPanel(){if(!state.tool){panel.hidden=true;return}panel.hidden=false;
