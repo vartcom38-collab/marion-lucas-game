@@ -191,3 +191,14 @@
 #newGameShell .ng-panel{background:linear-gradient(180deg,rgba(15,14,14,.88),rgba(9,9,10,.94))!important;backdrop-filter:blur(28px) saturate(1.08)!important;border-left:1px solid rgba(255,255,255,.1)!important}
 #newGameShell .ng-close{width:34px!important;height:34px!important;border-radius:50%!important;background:rgba(255,255,255,.07)!important;border:1px solid rgba(255,255,255,.1)!important;color:#fff!important}
 @media(min-width:701px){#newGameShell .ng-panel{width:min(420px,38vw)!important;padding:28px!important}}
+
+/* MOCKUP LOCK v9 — reduce every remaining web-app cue */
+#newGameShell .ng-top nav button{box-shadow:none!important;background:rgba(12,11,11,.16)!important;border-color:rgba(255,255,255,.10)!important}
+#newGameShell .ng-top nav button:hover{box-shadow:0 8px 28px rgba(0,0,0,.18)!important}
+#newGameShell .ng-choices button{box-shadow:none!important;border-color:rgba(255,255,255,.11)!important;background:rgba(10,9,9,.38)!important}
+#newGameShell .ng-choices button:hover{box-shadow:0 8px 30px rgba(0,0,0,.18)!important}
+#newGameShell .ng-media>span,#newGameShell .ng-id b{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+#newGameShell .ng-media>small,#newGameShell .ng-id span,#newGameShell .ng-now>p{-webkit-font-smoothing:antialiased}
+#newGameShell .ng-toast{border:1px solid rgba(255,255,255,.08)!important;box-shadow:0 10px 35px rgba(0,0,0,.22)!important}
+#newGameShell .ng-interrupt{backdrop-filter:blur(20px)!important}
+@media(min-width:701px){#newGameShell .ng-top nav button{width:34px!important;height:34px!important;min-width:34px!important}#newGameShell .ng-choices button{min-height:40px!important}}
