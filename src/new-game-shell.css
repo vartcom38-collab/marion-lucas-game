@@ -451,3 +451,21 @@
  #newGameShell .ng-device-screen{min-height:calc(100dvh - 105px)}
 }
 @supports(height:100dvh){#newGameShell,#newGameShell .ng-scene,#newGameShell .ng-panel{height:100dvh!important}}
+
+/* APPROVED MOCKUP A→Z v12 — phone interaction states */
+#newGameShell .ng-contact-list{display:grid;gap:1px;margin-top:20px;border-top:1px solid rgba(255,255,255,.08)}
+#newGameShell .ng-contact-list>button,#newGameShell .ng-contact-list>article{display:flex;width:100%;align-items:center;justify-content:space-between;gap:18px;padding:17px 2px;border:0;border-bottom:1px solid rgba(255,255,255,.08);background:transparent;color:inherit;text-align:left}
+#newGameShell .ng-contact-list b{font:400 21px/1.1 Georgia,serif}
+#newGameShell .ng-contact-list span{font-size:10px;letter-spacing:.08em;opacity:.48}
+#newGameShell .ng-call{min-height:min(680px,calc(100dvh - 110px));display:flex;flex-direction:column}
+#newGameShell .ng-call-stage{position:relative;flex:1;min-height:430px;margin-top:16px;border-radius:28px;overflow:hidden;background:radial-gradient(circle at 50% 35%,rgba(255,255,255,.08),rgba(255,255,255,.015) 46%,rgba(0,0,0,.35))}
+#newGameShell .ng-call-media{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+#newGameShell .ng-call-media>span{font:400 clamp(34px,5vw,58px)/1 Georgia,serif}
+#newGameShell .ng-call-media>small{margin-top:10px;font-size:9px;letter-spacing:.2em;text-transform:uppercase;opacity:.45}
+#newGameShell .ng-call-name{position:absolute;left:20px;bottom:18px;display:flex;flex-direction:column}
+#newGameShell .ng-call-name b{font:400 22px/1 Georgia,serif}
+#newGameShell .ng-call-name span{font-size:9px;letter-spacing:.16em;text-transform:uppercase;opacity:.5;margin-top:5px}
+#newGameShell .ng-call-actions{display:flex;justify-content:center;padding:18px 0 2px}
+#newGameShell .ng-call-actions button{width:54px;height:54px;border-radius:50%;border:1px solid rgba(255,255,255,.18);background:rgba(115,20,20,.82);color:white;font-size:28px}
+#newGameShell .ng-share-photo{margin-top:9px;border:0;background:transparent;color:inherit;padding:0;font-size:9px;letter-spacing:.14em;text-transform:uppercase;opacity:.55}
+#newGameShell .ng-share-photo:hover{opacity:1}
