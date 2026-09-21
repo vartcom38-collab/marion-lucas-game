@@ -1,0 +1,65 @@
+{
+  "version": 1,
+  "status": "locked",
+  "principle": "The player chooses Marion's ordinary intentions. MonIA schedules world events independently from destination buttons.",
+  "anti_pattern": [
+    "arena => Dominic",
+    "Marine => fixed encounter",
+    "coffee => fixed encounter",
+    "same trigger on replay"
+  ],
+  "encounter_model": {
+    "eligibility": [
+      "chronology",
+      "Dominic real schedule/state",
+      "Marion location trajectory",
+      "time window",
+      "crowd/world conditions",
+      "prior memories",
+      "relationship state",
+      "branch history"
+    ],
+    "hidden_selection": [
+      "stable run seed",
+      "compatibility score",
+      "anti-repetition",
+      "causal plausibility",
+      "surprise budget"
+    ],
+    "outcomes": [
+      "no encounter",
+      "Dominic notices Marion only",
+      "Marion notices Dominic only",
+      "mutual glance",
+      "brief incidental contact",
+      "conversation",
+      "interrupted encounter",
+      "missed encounter"
+    ],
+    "examples": [
+      "Marion joins Marine and crowd movement brings her near Dominic.",
+      "Marion gets coffee while Dominic is nearby; either may notice the other.",
+      "Crowd jostles Marion while Dominic is drinking coffee.",
+      "A plausible pre-corrida logistical trajectory creates proximity near transport/activity areas.",
+      "They cross paths without speaking.",
+      "Dominic notices Marion and remembers her before Marion knows who he is."
+    ]
+  },
+  "player_contract": {
+    "choices": "Describe only what Marion can intentionally decide now.",
+    "forbidden_spoilers": "Never label a choice with the hidden encounter or promised consequence.",
+    "locations": "A destination changes opportunity space, never guarantees an event.",
+    "cinematics": "Triggered by the world director only after hidden event resolution."
+  },
+  "realism": {
+    "required_context": [
+      "May 1998 chronology",
+      "Nîmes geography",
+      "daily rhythms",
+      "Feria/corrida context when applicable",
+      "period communication",
+      "character autonomy"
+    ],
+    "rule": "Research/context enriches possible situations, but generated events must remain compatible with canon and current save."
+  }
+}
