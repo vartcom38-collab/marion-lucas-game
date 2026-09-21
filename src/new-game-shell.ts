@@ -1,10 +1,10 @@
 import './new-game-shell.css';
 
 type Tool='phone'|'agenda'|'map'|'memories'|null;
-type DemoState={tool:Tool,phoneView:'home'|'messages'|'call',selected:string|null,place:string,time:string,memories:string[],beat:string,metDominic:boolean,year:number,hasDominicNumber:boolean,contactStage:number};
+type DemoState={tool:Tool,phoneView:'home'|'messages'|'call',selected:string|null,place:string,time:string,memories:string[],beat:string,metDominic:boolean,year:number,hasDominicNumber:boolean,contactStage:number,day:number};
 const SAVE='marion-lucas-save-v4';
 const UI='marion-ui-prototype-v1';
-const load=():DemoState=>{try{return {...{tool:null,phoneView:'home',selected:null,place:'Chez Marion',time:'09:12',memories:[],beat:'morning',metDominic:false,year:1998,hasDominicNumber:false,contactStage:0},...JSON.parse(localStorage.getItem(UI)||'{}')}}catch{return {tool:null,phoneView:'home',selected:null,place:'Chez Marion',time:'09:12',memories:[]}}};
+const load=():DemoState=>{try{return {...{tool:null,phoneView:'home',selected:null,place:'Chez Marion',time:'09:12',memories:[],beat:'morning',metDominic:false,year:1998,hasDominicNumber:false,contactStage:0,day:1},...JSON.parse(localStorage.getItem(UI)||'{}')}}catch{return {tool:null,phoneView:'home',selected:null,place:'Chez Marion',time:'09:12',memories:[]}}};
 const state=load(); const persist=()=>localStorage.setItem(UI,JSON.stringify(state));
 function mount(){
  const app=document.getElementById('app');if(!app)return;document.getElementById('newGameShell')?.remove();
@@ -12,7 +12,7 @@ function mount(){
  let game:any={};try{game=JSON.parse(localStorage.getItem(SAVE)||'{}')}catch{}
  const root=document.createElement('div');root.id='newGameShell';root.className='ng-shell';
  root.innerHTML=`<div class="ng-scene"><div class="ng-media"><span id="ngSceneTitle">MARION · SCÈNE DE VIE</span><small id="ngSceneSub">média canonique connecté ensuite par MonIA</small></div><div class="ng-cinematic" hidden><small></small><strong></strong><span></span></div></div>
- <header class="ng-top"><div class="ng-id"><b>Marion</b><span>Nîmes · <i id="ngYear">${state.year}</i> · <i id="ngTime">${state.time}</i></span></div><nav>
+ <header class="ng-top"><div class="ng-id"><b>Marion</b><span>Nîmes · JOUR <i id="ngDay">${state.day}</i> · <i id="ngYear">${state.year}</i> · <i id="ngTime">${state.time}</i></span></div><nav>
  <button data-tool="phone">☎<small>Téléphone</small><i class="badge">${game.phoneUnread||1}</i></button>
  <button data-tool="agenda">▦<small>Agenda</small></button><button data-tool="map">⌖<small>Carte</small></button><button data-tool="memories">✦<small>Souvenirs</small></button></nav></header>
  <div class="ng-toast" hidden></div><div class="ng-interrupt" hidden></div><section class="ng-now"><p>QU’EST-CE QUE TU FAIS MAINTENANT ?</p><div class="ng-choices" id="ngChoices"></div></section>
@@ -34,7 +34,7 @@ function mount(){
  morning:[['marine','Répondre à Marine'],['prepare','Finir de te préparer'],['leave','Sortir maintenant']],
  ready:[['agenda','Regarder ce qui est prévu'],['leave','Partir maintenant'],['wait','Prendre encore quelques minutes']],
  outside:[['centre','Aller vers le centre'],['arena','Passer par les Arènes'],['marine','Retrouver Marine']],
- encounter:[['look','Soutenir son regard'],['smile','Lui sourire'],['continue','Continuer ton chemin']],\n afterMeet:[['number','Échanger vos numéros'],['marine','Rejoindre Marine'],['leaveMeet','Le laisser repartir']],\n later:[['day','Continuer ta journée'],['phone','Regarder ton téléphone'],['agenda','Voir ce qui est prévu']]
+ encounter:[['look','Soutenir son regard'],['smile','Lui sourire'],['continue','Continuer ton chemin']],\n afterMeet:[['number','Échanger vos numéros'],['marine','Rejoindre Marine'],['leaveMeet','Le laisser repartir']],\n later:[['day','Continuer ta journée'],['phone','Regarder ton téléphone'],['agenda','Voir ce qui est prévu']],\n evening:[['home','Rentrer chez toi'],['stay','Rester encore un peu'],['phone','Regarder ton téléphone']],\n night:[['sleep','Aller dormir'],['memory','Repenser à la journée'],['phone','Regarder ton téléphone']],\n day2:[['agenda','Voir ta journée'],['phone','Regarder ton téléphone'],['outside2','Commencer la journée']]
  };
  const renderChoices=()=>{let set=[...(choiceSets[state.beat]||choiceSets.morning)];if(state.metDominic&&hasTease()&&state.beat==='outside')set.unshift(['echo','Reprendre votre petite blague']);choices.innerHTML=set.map((x:any)=>'<button data-dynamic="'+x[0]+'">'+x[1]+'</button>').join('');choices.querySelectorAll('[data-dynamic]').forEach(b=>b.addEventListener('click',()=>act((b as HTMLElement).dataset.dynamic!)))};
  const act=(intent:string)=>{
@@ -50,9 +50,14 @@ function mount(){
   else if(intent==='look'||intent==='smile'||intent==='continue'){state.metDominic=true;setScene('PREMIÈRE RENCONTRE','Dominic existe dans la scène indépendamment de tes choix.');state.memories.unshift(intent==='continue'?'Une première rencontre à peine esquissée.':'Un premier échange de regards près des Arènes.');state.beat='afterMeet';eventBeat('RENCONTRE','Le moment passe.','Tu peux ouvrir une porte, pas décider de ce qu’il fera ensuite.',()=>renderChoices());}
   else if(intent==='number'){state.hasDominicNumber=true;state.contactStage=1;state.beat='later';state.time='10:24';state.memories.unshift('Marion et Dominic ont échangé leurs numéros.');eventBeat('UN PETIT DÉTAIL','Vos numéros sont échangés.','Puis chacun reprend sa journée.',()=>{renderChoices();setTimeout(()=>worldInitiative(),2600)});}
   else if(intent==='leaveMeet'){state.beat='later';state.time='10:20';eventBeat('LE MONDE CONTINUE','Dominic repart.','Cette rencontre existe même si Marion ne la poursuit pas.',()=>renderChoices());}
-  else if(intent==='day'){state.time='12:18';say('La journée avance. Les personnages aussi.');if(state.hasDominicNumber)setTimeout(()=>worldInitiative(),1600);}
+  else if(intent==='day'){if(state.time<'18:00'){state.time='18:42';state.beat='evening';say('La journée avance. Les personnages aussi.');if(state.hasDominicNumber)setTimeout(()=>worldInitiative(),1600)}else{state.beat='evening';} }
+  else if(intent==='home'){state.place='Chez Marion';state.time='22:16';state.beat='night';setScene('CHEZ MARION · SOIR','La journée existe maintenant dans ta mémoire.');eventBeat('FIN DE JOURNÉE','Marion rentre chez elle.','Ce qui a eu lieu aujourd’hui restera vrai demain.',()=>renderChoices());}
+  else if(intent==='stay'){state.time='21:03';say('Tu restes encore un peu. Le temps ne t’attend pas.');}
+  else if(intent==='memory'){open('memories');}
+  else if(intent==='sleep'){state.day+=1;state.time='08:37';state.place='Chez Marion';state.beat='day2';state.tool=null;setScene('CHEZ MARION · MATIN','Une nouvelle journée commence à partir de ce que tu as vécu.');state.memories.unshift('Jour '+(state.day-1)+' terminé.');eventBeat('JOUR '+state.day,'Le lendemain matin.','Rien n’a été remis à zéro.',()=>renderChoices());}
+  else if(intent==='outside2'){state.place='Nîmes';state.time='09:10';state.beat='later';setScene('NÎMES · NOUVELLE JOURNÉE','Les engagements et relations continuent.');say('Tu reprends ta vie là où elle en est.');}
   else if(intent==='phone'){open('phone');}
-  (root.querySelector('#ngTime') as HTMLElement).textContent=state.time;persist();renderChoices();window.dispatchEvent(new CustomEvent('marion:player-intent',{detail:{intent,place:state.place,beat:state.beat}}));
+  (root.querySelector('#ngTime') as HTMLElement).textContent=state.time;(root.querySelector('#ngDay') as HTMLElement).textContent=String(state.day);persist();renderChoices();window.dispatchEvent(new CustomEvent('marion:player-intent',{detail:{intent,place:state.place,beat:state.beat}}));
  };
  function renderPanel(){if(!state.tool){panel.hidden=true;return}panel.hidden=false;
   if(state.tool==='phone'){const era=state.year<2001?'APPELS · SMS':state.year<2008?'SMS · CONTACTS · APPELS':state.year<2014?'SMARTPHONE · PHOTOS · MESSAGES':'MESSAGES · PHOTOS · VISIO'; body.innerHTML=`<em>TÉLÉPHONE · ${state.year}</em><h2>Téléphone</h2><p class="ng-era">${era}</p><div class="ng-tabs"><button data-phone="messages">Messages</button><button data-phone="call">Appels</button><button>Contacts</button></div><article class="ng-thread" data-phone="messages"><b>Marine</b><span>Tu es où ?</span><small>maintenant</small></article><article><b>Dominic</b><span>${state.hasDominicNumber?'Dans vos contacts':state.metDominic?'Rencontré aujourd’hui · aucun numéro':'Vous ne vous connaissez pas encore.'}</span></article>`;}
