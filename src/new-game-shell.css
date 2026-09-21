@@ -990,3 +990,17 @@
  #newGameShell .ng-top .ng-id b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
  #newGameShell .ng-now{max-height:46dvh}
 }
+
+/* Approved board finishing pass: coherent focus/accessibility without visible HUD */
+#newGameShell button:focus{outline:none}
+#newGameShell button:focus-visible{outline:1px solid #f2b1bf;outline-offset:2px}
+#newGameShell .ng-choices button:first-child:focus-visible{outline-color:#ffd4dc}
+#newGameShell .ng-top nav button:focus-visible{outline-offset:3px}
+#newGameShell .ng-panel .ng-close{transition:background .16s ease,transform .16s ease}
+#newGameShell .ng-panel .ng-close:active{transform:scale(.92)}
+#newGameShell .ng-rule{line-height:1.45}
+#newGameShell .ng-thread span,#newGameShell .ng-contact-list span{line-height:1.35}
+#newGameShell .ng-status{font-variant-numeric:tabular-nums}
+@media(prefers-reduced-motion:reduce){
+ #newGameShell *,#newGameShell *:before,#newGameShell *:after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important;animation-iteration-count:1!important}
+}
