@@ -305,3 +305,21 @@
 #newGameShell .ng-gallery b,#newGameShell .ng-gallery figcaption{display:block;font-size:11px;margin-top:7px;font-weight:500}
 #newGameShell .ng-gallery small{font-size:9px;opacity:.42}
 @media(max-width:700px){#newGameShell .ng-device-screen{min-height:560px}#newGameShell .ng-agenda-list article{grid-template-columns:72px 1fr}#newGameShell .ng-gallery{grid-template-columns:repeat(2,1fr)}}
+
+/* APPROVED MOCKUP A→Z v3 — conversations, system and cinematic transitions */
+#newGameShell .ng-chat{display:flex;flex-direction:column;gap:9px;margin:20px 0}
+#newGameShell .ng-chat p{align-self:flex-start;margin:0;max-width:78%;font-size:10px;opacity:.55}
+#newGameShell .ng-chat p span{display:block;margin-top:4px;padding:10px 13px;border-radius:14px 14px 14px 4px;background:rgba(255,255,255,.075);font-size:13px;line-height:1.35;opacity:1}
+#newGameShell .ng-chat p.me{align-self:flex-end;text-align:right}
+#newGameShell .ng-chat p.me span{border-radius:14px 14px 4px 14px;background:rgba(226,214,196,.9);color:#211d19}
+#newGameShell .ng-replies{display:grid;gap:7px;margin-top:18px}
+#newGameShell .ng-replies button{padding:11px 13px;text-align:left;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.045);color:inherit}
+#newGameShell .ng-system-actions{display:grid;gap:8px;margin-top:22px}
+#newGameShell .ng-system-actions button{padding:13px 14px;text-align:left;border-radius:10px;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.04);color:inherit}
+#newGameShell .ng-system-actions button:hover,#newGameShell .ng-replies button:hover,#newGameShell .ng-inline button:hover{background:rgba(235,226,214,.92);color:#211d19}
+#newGameShell .ng-cinematic{background:rgba(8,7,7,.3)!important;backdrop-filter:blur(4px)}
+#newGameShell .ng-cinematic>*{animation:ngReveal .5s cubic-bezier(.2,.7,.2,1) both}
+#newGameShell .ng-interrupt{background:rgba(8,7,7,.52)!important}
+#newGameShell .ng-toast{font-size:11px!important;letter-spacing:.01em!important;background:rgba(14,13,13,.7)!important;backdrop-filter:blur(14px)}
+@keyframes ngReveal{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){#newGameShell *,#newGameShell *:before,#newGameShell *:after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
