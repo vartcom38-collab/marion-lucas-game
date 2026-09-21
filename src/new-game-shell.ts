@@ -126,6 +126,6 @@ window.addEventListener('monia:consequence',((e:CustomEvent)=>{const d=e.detail|
  renderChoices();
  renderPanel();
 }
-window.addEventListener('DOMContentLoaded',()=>setTimeout(mount,80));setTimeout(mount,600);
+window.addEventListener('DOMContentLoaded',()=>setTimeout(mount,80));setTimeout(mount,600);window.addEventListener('marion:new-game-shell',()=>{localStorage.removeItem(UI);mount()});
 
 window.addEventListener('monia:gameplay-state',()=>{const r=document.getElementById('newGameShell');if(r){const e=new Event('ng:refresh');r.dispatchEvent(e)}});
