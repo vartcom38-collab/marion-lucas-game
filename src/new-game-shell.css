@@ -57,3 +57,12 @@
 
 .ng-agenda-list{display:grid;gap:0}.ng-agenda-list article{position:relative;padding:18px 4px 20px 0!important;border-bottom:1px solid rgba(67,52,38,.15)!important}.ng-agenda-list article>small{font-family:ui-monospace,monospace;font-size:10px;letter-spacing:.08em;opacity:.55}.ng-agenda-list article>b,.ng-agenda-list article>span{display:block}.ng-agenda-list article>b{font-family:Georgia,serif;font-size:18px;margin-top:5px}.ng-agenda-list article>span{font-size:12px;opacity:.58;margin-top:4px}
 .ng-place-list{display:grid;gap:7px;margin:14px 0}.ng-place-list button{text-align:left;border:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.18);color:inherit;border-radius:13px;padding:12px 14px}.ng-place-list b,.ng-place-list span{display:block}.ng-place-list span{font-size:11px;opacity:.55;margin-top:3px}.ng-place-list button:hover{background:rgba(255,255,255,.07)}.ng-map .pin i{font-style:normal;font-size:11px}.ng-map .p0{left:18%;top:62%}.ng-map .p1{left:48%;top:45%}.ng-map .p2{left:67%;top:28%}.ng-map .p3{left:34%;top:20%}.ng-map .p4{left:77%;top:66%}.ng-map .p5{left:55%;top:76%}
+
+/* Cinematic mockup convergence */
+#newGameShell .ng-top{background:linear-gradient(180deg,rgba(4,4,5,.62),transparent);border:0;backdrop-filter:none}
+#newGameShell .ng-scene-title{max-width:560px;text-shadow:0 3px 24px #000}
+#newGameShell .ng-choices{max-width:760px;margin-inline:auto}
+#newGameShell .ng-choices button{background:rgba(13,12,12,.48);border:1px solid rgba(255,255,255,.16);backdrop-filter:blur(14px);box-shadow:0 10px 40px rgba(0,0,0,.22)}
+#newGameShell .ng-panel{border:1px solid rgba(255,255,255,.12);box-shadow:0 24px 80px rgba(0,0,0,.48);background:rgba(13,12,13,.82)}
+#newGameShell .ng-paper{background:linear-gradient(145deg,#eee5d2,#d9c9aa);color:#30271d;border-radius:4px;box-shadow:0 28px 70px rgba(0,0,0,.42);padding:30px 28px;transform:rotate(-.25deg)}
+.ng-calendar-filters{display:flex;gap:7px;margin:8px 0 20px}.ng-calendar-filters span{font-size:10px;letter-spacing:.08em;padding:6px 9px;border:1px solid currentColor;border-radius:999px;opacity:.6}
