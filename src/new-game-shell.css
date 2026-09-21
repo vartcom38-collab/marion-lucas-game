@@ -323,3 +323,18 @@
 #newGameShell .ng-toast{font-size:11px!important;letter-spacing:.01em!important;background:rgba(14,13,13,.7)!important;backdrop-filter:blur(14px)}
 @keyframes ngReveal{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 @media(prefers-reduced-motion:reduce){#newGameShell *,#newGameShell *:before,#newGameShell *:after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+/* APPROVED MOCKUP A→Z v4 — map/list continuity and overlay finish */
+#newGameShell .ng-place-list{display:grid;gap:0;margin-top:10px}
+#newGameShell .ng-place-list button{display:grid;gap:4px;width:100%;padding:14px 2px;text-align:left;border:0;border-bottom:1px solid rgba(255,255,255,.08);background:none;color:inherit}
+#newGameShell .ng-place-list button b{font:400 17px/1.1 Georgia,serif}
+#newGameShell .ng-place-list button span{font-size:10px;opacity:.45}
+#newGameShell .ng-place-list button:hover b{transform:translateX(3px)}
+#newGameShell .ng-place-list button b{transition:transform .18s ease}
+#newGameShell .ng-worldhint{margin-top:18px;padding:12px 0;border-top:1px solid rgba(255,255,255,.08);font-size:10px;line-height:1.5;opacity:.48}
+#newGameShell .ng-panel{background:linear-gradient(145deg,rgba(18,17,16,.94),rgba(9,9,10,.96))!important;box-shadow:-28px 0 70px rgba(0,0,0,.28)!important}
+#newGameShell .ng-panel-body{height:100%;overflow:auto;scrollbar-width:none}
+#newGameShell .ng-panel-body::-webkit-scrollbar{display:none}
+#newGameShell .ng-close{border-color:rgba(255,255,255,.09)!important;background:rgba(255,255,255,.035)!important}
+#newGameShell.tool-open .ng-scene:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent 40%,rgba(0,0,0,.26));pointer-events:none}
+@media(max-width:700px){#newGameShell .ng-panel{width:100%!important;max-width:none!important}#newGameShell.tool-open .ng-scene:after{background:rgba(0,0,0,.18)}}
