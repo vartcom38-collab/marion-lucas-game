@@ -414,3 +414,19 @@
 #newGameShell .ng-agenda-list article:last-child,#newGameShell .ng-memory article:last-child,#newGameShell .ng-place-list button:last-child{border-bottom:0}
 #newGameShell .ng-system-actions button:last-child{margin-top:12px;opacity:.7}
 @media(max-width:700px){#newGameShell .ng-top nav{gap:2px!important}#newGameShell .ng-top nav button{width:32px!important;height:32px!important;min-width:32px!important}#newGameShell .ng-tool-glyph{font-size:13px!important}#newGameShell .ng-panel-body{padding-top:62px!important}}
+
+/* APPROVED MOCKUP A→Z v10 — presentation-grade final shell */
+#newGameShell .ng-media{background:#090909!important}
+#newGameShell .ng-media>video,#newGameShell .ng-media>img{transition:opacity .35s ease}
+#newGameShell .ng-id,#newGameShell .ng-top nav,#newGameShell .ng-now{will-change:opacity}
+#newGameShell .ng-id b{letter-spacing:-.025em!important}
+#newGameShell .ng-tool-glyph{opacity:.78}
+#newGameShell .ng-top nav button:hover .ng-tool-glyph{opacity:1}
+#newGameShell .ng-choices button{backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+#newGameShell .ng-panel{backdrop-filter:blur(26px);-webkit-backdrop-filter:blur(26px)}
+#newGameShell .ng-device-screen{box-shadow:inset 0 1px rgba(255,255,255,.045)}
+#newGameShell .ng-chat p span,#newGameShell .ng-replies button{backdrop-filter:blur(8px)}
+#newGameShell .ng-map{box-shadow:inset 0 0 60px rgba(0,0,0,.32)}
+#newGameShell .ng-toast{max-width:min(420px,calc(100vw - 32px))!important}
+#newGameShell .ng-interrupt{z-index:30!important}
+@media(max-width:700px){#newGameShell .ng-id b{font-size:19px!important}#newGameShell .ng-now>p{font-size:8px!important;letter-spacing:.2em!important}#newGameShell .ng-choices button{font-size:12px!important}}
