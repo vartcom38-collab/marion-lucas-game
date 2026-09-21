@@ -623,3 +623,15 @@
  .ng-choices{grid-template-columns:1fr}.ng-choices button{padding:11px 13px;text-align:left}
  #ngSceneTitle{bottom:35vh}#ngSceneSub{bottom:31.5vh}
 }
+
+/* Exact approved-board composition pass */
+.ng-now{width:min(930px,90vw);padding:18px;border-radius:16px;background:rgba(9,8,8,.52);border:1px solid rgba(255,255,255,.38);backdrop-filter:blur(12px)}
+.ng-now-copy{display:grid;gap:3px;margin-bottom:14px}.ng-now-copy b{font:18px/1.1 Georgia,serif}.ng-now-copy span{font-size:12px;opacity:.86}.ng-now-copy p{margin:0!important;font-size:12px!important;opacity:.86!important}
+.ng-choices{grid-template-columns:repeat(3,1fr)}.ng-choices button{min-height:50px;font-size:13px}
+.ng-top .ng-id{background:none;padding:0}.ng-top .ng-id b{font:italic 44px/1 Georgia,serif}.ng-top .ng-id span{font-size:10px;margin-top:8px}
+#ngSceneTitle,#ngSceneSub{display:none}
+.ng-panel[data-tool="agenda"],.ng-panel[data-tool="map"],.ng-panel[data-tool="memories"]{width:min(680px,48vw);top:8vh;max-height:84vh}
+.ng-panel[data-tool="agenda"] .ng-agenda-list article{display:grid;grid-template-columns:70px 1fr;align-items:center}
+.ng-panel[data-tool="map"] .ng-map{height:430px}
+.ng-panel[data-tool="memories"]{width:min(760px,55vw)}
+@media(max-width:700px){.ng-now{width:auto}.ng-now-copy b{font-size:15px}.ng-now-copy span,.ng-now-copy p{font-size:10px!important}.ng-top .ng-id b{font-size:27px}.ng-panel[data-tool="agenda"],.ng-panel[data-tool="map"],.ng-panel[data-tool="memories"]{width:auto;top:9vh}.ng-panel[data-tool="map"] .ng-map{height:44vh}}
