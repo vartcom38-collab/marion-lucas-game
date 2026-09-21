@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "status": "locked",
+  "rule": "The story world follows its historical chronology. Marion's player phone is a deliberately timeless modern gameplay device available in every story year.",
+  "features": [
+    "messages",
+    "voice calls",
+    "video calls",
+    "photo messages",
+    "camera",
+    "persistent gallery",
+    "received photos",
+    "saved scene memories"
+  ],
+  "photo_contract": {
+    "photoId": "required",
+    "sceneId": "required",
+    "mediaId": "source/generated media",
+    "storyDate": "in-world date, not device technology date",
+    "source": [
+      "Marion",
+      "Dominic",
+      "friend",
+      "world-event"
+    ],
+    "visibility": "gallery assets persist with the save",
+    "reuse": "photos can be attached to later messages, memories and callbacks"
+  },
+  "generation": {
+    "principle": "Generate or capture photos from meaningful lived moments, not every scene.",
+    "identity": "must preserve canonical characters and current scene continuity",
+    "surprise": "photos may also arrive autonomously from characters when causally plausible"
+  }
+}
