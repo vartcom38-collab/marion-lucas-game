@@ -90,11 +90,26 @@ jobs:
           password = os.environ['INFOMANIAK_FTP_PASSWORD'].rstrip('\r\n')
           local_root = Path('dist')
 
-          ftp = ftplib.FTP_TLS(timeout=45)
-          ftp.connect(host, 21)
-          ftp.login(user, password)
-          ftp.prot_p()
-          ftp.set_pasv(True)
+          ftp = None
+          last_connect_error = None
+          for connect_attempt in range(1, 5):
+              try:
+                  ftp = ftplib.FTP_TLS(timeout=45)
+                  ftp.connect(host, 21)
+                  ftp.login(user, password)
+                  ftp.prot_p()
+                  ftp.set_pasv(True)
+                  break
+              except OSError as exc:
+                  last_connect_error = exc
+                  try:
+                      ftp.close()
+                  except Exception:
+                      pass
+                  ftp = None
+                  time.sleep(connect_attempt * 8)
+          if ftp is None:
+              raise RuntimeError(f'Unable to reach Infomaniak FTPES after retries: {last_connect_error}')
           remote_root = '/'
 
           def ensure_remote_dir(path: str):
