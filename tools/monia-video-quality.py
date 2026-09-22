@@ -75,7 +75,11 @@ def inspect(path: Path):
     duration=float(p.get('duration') or 0)
     width=int(p.get('width') or 0); height=int(p.get('height') or 0)
     if duration < 1.2: reasons.append('candidate duration below 1.2s')
-    if width < 360 or height < 640: reasons.append('candidate resolution below minimum portrait review target')
+    short_side=min(width,height); long_side=max(width,height)
+    if short_side < 360 or long_side < 640:
+        reasons.append('candidate resolution below minimum review target (short side 360px, long side 640px)')
+    if width <= 0 or height <= 0:
+        reasons.append('invalid video dimensions')
     if duration > 90: warnings.append('candidate unusually long for a gameplay cinematic')
 
     black=filter_report(path,'blackdetect=d=0.45:pix_th=0.10')
@@ -98,7 +102,7 @@ def inspect(path: Path):
         'reasons':reasons,
         'warnings':warnings,
         'automaticScope':[
-            'container readability','duration','minimum resolution','extended black frames','extended frozen frames'
+            'container readability','duration','orientation-aware minimum resolution','extended black frames','extended frozen frames'
         ],
         'notAutomaticallyJudged':[
             'Lucas identity','facial resemblance','age continuity','tattoos or scars','micro-expression realism','voice identity','lip synchronization'
