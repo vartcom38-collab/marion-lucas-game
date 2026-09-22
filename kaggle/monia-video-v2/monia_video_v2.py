@@ -27,6 +27,12 @@ def decode_repo_b64(path: str) -> bytes:
     return base64.b64decode(payload)
 
 def find_job() -> dict:
+    embedded = globals().get("MONIA_EMBEDDED_JOB_B64")
+    if embedded:
+        try:
+            return json.loads(base64.b64decode(embedded).decode("utf-8"))
+        except Exception as exc:
+            raise RuntimeError(f"Invalid embedded MonIA V2 job: {exc}")
     candidates = [
         Path("/kaggle/working/job-v2.json"),
         Path("/kaggle/src/job-v2.json"),
