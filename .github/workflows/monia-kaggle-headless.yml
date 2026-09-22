@@ -143,6 +143,7 @@ jobs:
           kaggle kernels output "$KERNEL" -p "$OUT" -o
           ACTUAL_JOB_ID="$(python -c "import json; print(json.load(open('$OUT/job.json'))['id'])")"
           echo "Requested job id: $MONIA_JOB_ID; actual bundled job id: $ACTUAL_JOB_ID"
+          echo "MONIA_ACTUAL_JOB_ID=$ACTUAL_JOB_ID" >> "$GITHUB_ENV"
           SRC="$OUT/monia-studio/$ACTUAL_JOB_ID"
           test -f "$SRC/result.json"
           DEST="public/resources/monia/candidates/$ACTUAL_JOB_ID"
