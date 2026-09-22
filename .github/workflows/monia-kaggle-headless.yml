@@ -198,15 +198,22 @@ jobs:
           DEST="public/resources/monia/candidates/$ACTUAL"
           CLIP="$(python -c "import json; d=json.load(open('$DEST/result.json')); print(d['clips'][0])")"
           python tools/monia-video-quality.py "$DEST/$CLIP" > "$DEST/technical-quality.json" || true
+          ACTOR_COUNT="$(python -c "import json; j=json.load(open('.kaggle-worker/job.json')); print(len(j.get('characters',[])))")"
           REF=""
-          if python -c "import json; j=json.load(open('.kaggle-worker/job.json')); raise SystemExit(0 if any(str(x.get('id','')).lower() in {'lucas','dominic'} for x in j.get('characters',[])) else 1)"; then
-            REF="public/resources/monia/canon/lucas/reference.jpg"
-          elif [ -f "public/resources/photo.png" ]; then
-            REF="public/resources/photo.png"
+          if [ "$ACTOR_COUNT" -eq 1 ]; then
+            if python -c "import json; j=json.load(open('.kaggle-worker/job.json')); x=str((j.get('characters') or [{}])[0].get('id','')).lower(); raise SystemExit(0 if x in {'lucas','dominic'} else 1)"; then
+              REF="public/resources/monia/canon/lucas/reference.jpg"
+            elif [ -f "public/resources/photo.png" ]; then
+              REF="public/resources/photo.png"
+            fi
+            FACE_ARGS=()
+            [ -n "$REF" ] && FACE_ARGS=(--reference "$REF")
+            python tools/monia-face-consistency.py "$DEST/$CLIP" "${FACE_ARGS[@]}" > "$DEST/identity-quality.json" || true
+          else
+            # A single-reference face score is unsafe for shared shots: the largest detected face may be the other actor.
+            # Keep temporal/presence preflight only and force semantic review of every canonical actor.
+            python tools/monia-face-consistency.py "$DEST/$CLIP" > "$DEST/identity-quality.json" || true
           fi
-          FACE_ARGS=()
-          [ -n "$REF" ] && FACE_ARGS=(--reference "$REF")
-          python tools/monia-face-consistency.py "$DEST/$CLIP" "${FACE_ARGS[@]}" > "$DEST/identity-quality.json" || true
           ffmpeg -y -v error -sseof -0.08 -i "$DEST/$CLIP" -frames:v 1 -q:v 2 "$DEST/continuity-last-frame.jpg"
           python - <<'PY'
           import json, os
@@ -220,7 +227,8 @@ jobs:
             'version':3,'jobId':actual,
             'technicalPass':tech.get('status')=='pass',
             'identityBackendAvailable':ident.get('available') is True,
-            'identityScore':ident.get('identityScore'),
+            'multiActorShot':len(json.loads(Path('.kaggle-worker/job.json').read_text()).get('characters',[]))>1,
+            'identityScore':None if len(json.loads(Path('.kaggle-worker/job.json').read_text()).get('characters',[]))>1 else ident.get('identityScore'),
             'temporalIdentityScore':ident.get('temporalIdentityScore'),
             'facePresenceRate':ident.get('facePresenceRate'),
             'autoReject':tech.get('status')=='reject' or ident.get('autoReject') is True,
