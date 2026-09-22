@@ -31,6 +31,15 @@ jobs:
           cp kaggle/monia-video-v2/monia_video_v2.py .kaggle-v2-dominic/monia_video_v2.py
           cp kaggle/monia-video-v2/kernel-metadata.json .kaggle-v2-dominic/kernel-metadata.json
           cp "$JOB_PATH" .kaggle-v2-dominic/job-v2.json
+          python - <<'PY'
+          import base64, pathlib
+          job = pathlib.Path('.kaggle-v2-dominic/job-v2.json').read_bytes()
+          payload = base64.b64encode(job).decode('ascii')
+          script = pathlib.Path('.kaggle-v2-dominic/monia_video_v2.py')
+          original = script.read_text(encoding='utf-8')
+          script.write_text(f'MONIA_EMBEDDED_JOB_B64 = {payload!r}\n' + original, encoding='utf-8')
+          print('Embedded Dominic V2 job into Kaggle script')
+          PY
 
       - name: Install Kaggle CLI
         run: python -m pip install --upgrade kaggle
