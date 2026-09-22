@@ -1,0 +1,15 @@
+{
+  "jobId": "marion-apartment-v3-002",
+  "state": "candidate",
+  "candidateOnly": true,
+  "narrativeAuthority": false,
+  "router": "ltx",
+  "selectionMode": "surprise-auto",
+  "continuity": [
+    "canonical-pack"
+  ],
+  "clips": [
+    "shot-01.mp4"
+  ],
+  "shotCount": 1
+}
