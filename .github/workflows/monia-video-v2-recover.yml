@@ -1,0 +1,73 @@
+name: MonIA Video V2 — Recover Existing Candidate
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/monia-video-v2-recover.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout V2 branch
+        uses: actions/checkout@v5
+        with:
+          ref: monia-video-v2
+          fetch-depth: 0
+
+      - name: Install Kaggle CLI
+        run: python -m pip install --upgrade kaggle
+
+      - name: Download already-generated V2 output
+        env:
+          KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT=/tmp/monia-v2-recover
+          rm -rf "$OUT"
+          mkdir -p "$OUT"
+          kaggle kernels output marionbolomey/monia-video-v2-worker -p "$OUT" -o
+          SRC="$OUT/monia-video-v2/lucas-motion-proof-v1"
+          test -f "$SRC/candidate-01.mp4"
+          test -f "$SRC/result.json"
+          DEST="public/resources/monia-v2/candidates/lucas-motion-proof-v1"
+          mkdir -p "$DEST"
+          cp "$SRC/candidate-01.mp4" "$DEST/candidate-01.mp4"
+          cp "$SRC/result.json" "$DEST/result.json"
+          cp "$SRC/job.json" "$DEST/job.json"
+          echo "Existing V2 candidate recovered; no generation requested."
+
+      - name: Validate recovered candidate
+        run: |
+          python - <<'PY'
+          import json, pathlib
+          p=pathlib.Path('public/resources/monia-v2/candidates/lucas-motion-proof-v1')
+          d=json.loads((p/'result.json').read_text())
+          assert d['generator']=='monia-video-v2'
+          assert d['candidateOnly'] is True
+          assert d['publishToGame'] is False
+          assert (p/'candidate-01.mp4').stat().st_size > 0
+          print('Recovered candidate OK:', (p/'candidate-01.mp4').stat().st_size, 'bytes')
+          PY
+
+      - name: Commit recovered candidate safely
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/resources/monia-v2/candidates/lucas-motion-proof-v1
+          if git diff --cached --quiet; then
+            echo "Candidate already present."
+            exit 0
+          fi
+          git commit -m "Recover MonIA Video V2 Lucas candidate"
+          git pull --rebase origin monia-video-v2
+          git push origin HEAD:monia-video-v2
