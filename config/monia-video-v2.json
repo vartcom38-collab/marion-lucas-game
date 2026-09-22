@@ -1,14 +1,21 @@
 {
-  "version": 1,
+  "version": 2,
   "name": "MonIA Video V2",
   "enabled": true,
   "parallelToLegacy": true,
   "paidProvidersAllowed": false,
   "candidateOnly": true,
+  "sourceReusePolicy": {
+    "allowExistingVideoAsGenerationInput": false,
+    "allowExistingVideoFramesAsFinalScene": false,
+    "allowCanonicalStillForIdentity": true,
+    "allowVideoForMotionAnalysisOnly": true,
+    "mustCreateNewScene": true
+  },
   "engine": {
     "id": "ltx-diffusers-i2v",
     "model": "Lightricks/LTX-Video",
-    "mode": "image-to-video",
+    "mode": "identity-reference-to-new-video",
     "torchDtype": "float16",
     "cpuOffload": true
   },
@@ -17,13 +24,14 @@
     "height": 768,
     "frames": 49,
     "fps": 12,
-    "steps": 8,
-    "seed": 260922
+    "steps": 10,
+    "seed": 260923
   },
   "outputRoot": "public/resources/monia-v2/candidates",
   "identityPolicy": {
     "referenceRequired": true,
     "promptOnlyCharacters": false,
-    "referenceConfig": "config/monia-reference-packs.json"
+    "referenceConfig": "config/monia-reference-packs.json",
+    "referencePurpose": "identity-only"
   }
 }
