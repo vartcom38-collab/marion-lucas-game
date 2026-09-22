@@ -3,6 +3,7 @@
   "jobId": "marion-apartment-living-v2-001",
   "technicalPass": true,
   "identityBackendAvailable": false,
+  "multiActorShot": false,
   "identityScore": null,
   "temporalIdentityScore": null,
   "facePresenceRate": null,
