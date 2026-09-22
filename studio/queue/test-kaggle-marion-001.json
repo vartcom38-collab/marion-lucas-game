@@ -1,12 +1,12 @@
 {
-  "id": "marion-apartment-wan22-001",
+  "id": "marion-apartment-wan22-002-t4fit",
   "state": "queued",
   "createdAt": "2026-09-22T21:30:00+02:00",
   "source": "monia-video-orchestrator-v3",
   "candidateOnly": true,
   "narrativeAuthority": false,
   "sceneFamily": "apartment-morning-living-v3-real-action",
-  "signature": "MONIA_WAN22_MARION_LIVING_EXTERNAL_CAMERA",
+  "signature": "MONIA_WAN22_T4_MEMORY_FIT",
   "primaryCharacter": "marion",
   "prompt": "Photorealistic cinematic lived scene in Marion's Nimes apartment, May 1998. The supplied approved Marion reference is absolute identity authority. EXTERNAL INVISIBLE CAMERA ONLY: Marion never holds, touches, operates or looks into the camera; no selfie, no phone camera, no extended filming arm. Marion begins seated with her white mug, hears a small sound from the balcony, naturally turns her head, places the mug on the table, shifts her weight and rises from the sofa, taking a natural step toward the balcony. Preserve the exact same recognizable Marion, face, eyes, skin, hair, age, cream knit sweater, grey trousers, apartment geometry and warm morning light. This must be a living physical action, not an animated photograph. No dialogue.",
   "negativePrompt": "selfie, handheld camera by character, character holding camera, character touching camera, arm extended toward lens, phone filming, vlog, direct eye contact with lens, POV selfie, static portrait, animated still, frozen body, identity drift, different woman, face morphing, eye deformation, facial jitter, plastic skin, age change, mouth warping, extra fingers, hand deformation, mug deformation, object drift, camera orbit, zoom, pan, modern objects, subtitles, watermark, UI",
@@ -45,13 +45,13 @@
     "provider": "kaggle",
     "router": "wan2.2-ti2v-5b",
     "backend": "wan2.2-ti2v-5b",
-    "width": 768,
-    "height": 448,
-    "frames": 49,
-    "steps": 20,
+    "width": 512,
+    "height": 320,
+    "frames": 33,
+    "steps": 12,
     "fps": 12,
-    "seconds": 4,
-    "seed": 221001,
+    "seconds": 3,
+    "seed": 221002,
     "shotCount": 1,
     "shotCharacters": [
       "marion"
@@ -63,7 +63,7 @@
       null
     ],
     "shotPrompts": [
-      "WAN 2.2 PHOTOREALISTIC LIVING SCENE, EXTERNAL CINEMATIC CAMERA. Preserve the supplied Marion identity exactly. Marion never holds, touches, operates or looks into the camera. She starts seated naturally with the white mug, notices a sound toward the balcony, turns her head and upper body naturally, lowers the mug onto the table and begins to rise from the sofa. Realistic human body mechanics, weight shift, hands and gaze. Preserve face, eyes, skin, hair, cream knit sweater, grey trousers, sofa, plants, table, apartment geometry and warm morning light. No speech, no selfie, no vlog, no animated photograph."
+      "WAN 2.2 MEMORY-FIT MOTION PROOF, external cinematic camera. Preserve Marion identity and apartment. Marion never holds or looks into the camera. She starts seated with the white mug, hears a sound toward the balcony, turns her head and torso naturally, then lowers the mug toward the table. Real human weight and arm motion. No selfie, no vlog, no static animated photograph."
     ]
   },
   "qualityPolicy": {
@@ -79,6 +79,6 @@
     "previousValidatedFrameUrl": null
   },
   "output": {
-    "candidatePath": "public/resources/monia/candidates/marion-apartment-wan22-001/"
+    "candidatePath": "public/resources/monia/candidates/marion-apartment-wan22-002-t4fit/"
   }
 }
