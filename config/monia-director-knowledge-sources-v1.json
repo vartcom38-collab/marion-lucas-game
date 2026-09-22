@@ -1,0 +1,41 @@
+{
+  "version":"1.0",
+  "title":"MonIA Director Knowledge Sources",
+  "purpose":"Registry of canonical and idea resources the hidden director must consult before inventing long-horizon events.",
+  "rules":[
+    "Canon beats generation: never contradict an explicit canonical rule.",
+    "Ideas are possibility pools, not guaranteed milestones.",
+    "Major life events emerge from chronology, relationship state, health/life context, schedules and prior choices; they are never direct player buttons.",
+    "Keep source provenance on every proposed event so an idea can be traced back to its resource.",
+    "Do not silently promote an old or contradictory note to canon."
+  ],
+  "projectResources":[
+    {"id":"master-document","kind":"canonical-source","locator":"Marion_Lucas_Document_Maitre.docx","topics":["vision","characters","relationship","career","long-life","marriage","pregnancy","children","finca","travel","cinematics"]},
+    {"id":"master-skeleton","kind":"canonical-runtime","locator":"config/monia-master-game-skeleton-v2.json","topics":["daily-life","world-state","events","video-runtime","multi-year"]},
+    {"id":"day1","kind":"canonical-runtime","locator":"config/monia-day1-playable-skeleton-v2.json","topics":["day1","first-encounter","daily-loop"]},
+    {"id":"story-graph","kind":"legacy-authored-seed","locator":"config/monia-playable-story-graph-v1.json","topics":["scenes","choices","consequences","notifications"]},
+    {"id":"dominic-reference-bank","kind":"identity","locator":"config/lucas-reference-bank.json","topics":["Dominic","identity"]},
+    {"id":"dominic-video-bank","kind":"identity-video","locator":"config/lucas-video-bank.json","topics":["Dominic","movement","video"]},
+    {"id":"dominic-multiview","kind":"identity","locator":"config/dominic-multiview-canon-v2.json","topics":["Dominic","face","angles"]},
+    {"id":"dominic-direct-pack","kind":"identity","locator":"config/dominic-direct-reference-pack-v3.json","topics":["Dominic","generation"]},
+    {"id":"dominic-router","kind":"generation","locator":"config/monia-dominic-generation-router-v1.json","topics":["Dominic","generation-router"]}
+  ],
+  "knownLongHorizonIdeaPool":[
+    {"id":"relationship-approach","topics":["first encounter","rapprochement","couple","daily life","conflicts","reconciliation"]},
+    {"id":"dominic-career","topics":["tauromachie","contracts","training","travel","agent/apoderado","cuadrilla","family","press","injuries","success","media pressure"]},
+    {"id":"engagement","rule":"Dominic may initiate a proposal autonomously when hidden conditions make it plausible; never expose a proposal button."},
+    {"id":"marriage","topics":["engagement","preparation","wedding","dressing","family","home"],"rule":"Emergent progression, not a forced milestone."},
+    {"id":"pregnancy","topics":["planned pregnancy","surprise pregnancy","natural signs","family"],"rule":"May be planned or surprising according to game rules; signs appear naturally."},
+    {"id":"pregnancy-loss","topics":["miscarriage"],"rule":"Sensitive major life event; never a direct player choice and never inserted merely for drama."},
+    {"id":"children","topics":["children","family","parenthood"],"rule":"Conditional long-term life state."},
+    {"id":"homes","topics":["houses","decoration","moving"]},
+    {"id":"finca","topics":["Spain","purchase","renovation","decoration","toros bravos breeding"],"rule":"Possible shared long-term project."},
+    {"id":"travel","topics":["Spain","France","Mexico","career travel","couple travel"]},
+    {"id":"later-life","topics":["aging","45-50","finca","toros bravos"],"rule":"Possible later transition toward finca/breeding life."}
+  ],
+  "directorRetrievalContract":{
+    "beforeSceneProposal":["read current WorldState","identify relevant topics/time horizon","retrieve matching canonical resources","retrieve matching idea resources","filter by chronology and causal eligibility","check contradictions","attach sourceIds to candidate","only then score candidate"],
+    "candidateMetadata":["sourceIds","canonLevel","timeHorizon","eligibilityReasons","blockingReasons","continuityRequirements"],
+    "never":"Treat marriage, pregnancy, children, injury or other major event as a random surprise disconnected from accumulated state."
+  }
+}
