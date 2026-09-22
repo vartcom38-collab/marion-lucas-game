@@ -93,6 +93,10 @@ export const selectBestReviewCandidate=(job:VideoJob)=>{
 export const approveCandidate=(job:VideoJob,candidateId:string)=>{
  const c=job.candidates.find(x=>x.id===candidateId);if(!c||c.state!=='human-review'||!c.url)return null;
  c.state='approved';
+ if(job.continuity?.candidateSourceId===c.id&&job.continuity?.candidateLastFrameUrl){
+  job.continuity={...job.continuity,previousValidatedFrameUrl:job.continuity.candidateLastFrameUrl,sourceCandidateId:c.id,candidateLastFrameUrl:null,candidateSourceId:null};
+  window.dispatchEvent(new CustomEvent('monia:video-continuity-frame',{detail:{jobId:job.id,candidateId:c.id,url:job.continuity.previousValidatedFrameUrl,validated:true}}));
+ }
  window.dispatchEvent(new CustomEvent('monia:video-approved',{detail:{jobId:job.id,candidate:c,continuity:job.continuity}}));
  return c;
 };
