@@ -38,6 +38,18 @@ def find_job() -> dict:
             return json.loads(p.read_text(encoding="utf-8"))
     return fetch_json(f"{RAW}/.monia-render-queue-v2/lucas-motion-proof-v1.json")
 
+def save_image_bytes(raw: bytes, target: Path) -> bool:
+    try:
+        img = Image.open(io.BytesIO(raw))
+        img.load()
+        img = img.convert("RGB")
+        target.parent.mkdir(parents=True, exist_ok=True)
+        img.save(target, "JPEG", quality=95)
+        return True
+    except Exception as exc:
+        print("Skipping invalid identity ref:", target.name, repr(exc))
+        return False
+
 job = find_job()
 assert job.get("generator") == "monia-video-v2"
 assert job.get("candidateOnly") is True
@@ -68,23 +80,33 @@ job_dir.mkdir(parents=True, exist_ok=True)
 
 ref_path = job_dir / f"{character}-reference.jpg"
 priority = character_cfg.get("priorityImages") or []
+reference_source = None
 
-if priority:
-    raw = decode_repo_b64(priority[0])
-    img = Image.open(io.BytesIO(raw)).convert("RGB")
-    img.save(ref_path, "JPEG", quality=95)
-else:
+for idx, ref in enumerate(priority, start=1):
+    try:
+        raw = decode_repo_b64(ref)
+        if save_image_bytes(raw, ref_path):
+            reference_source = f"priority:{idx}"
+            print("Using canonical priority ref", idx)
+            break
+    except Exception as exc:
+        print("Priority ref failed:", idx, repr(exc))
+
+if reference_source is None:
     fallback = character_cfg.get("fallbackImage")
     if not fallback:
         raise RuntimeError(f"No canonical reference available for {character}")
     r = requests.get(fallback, timeout=120)
     r.raise_for_status()
-    img = Image.open(io.BytesIO(r.content)).convert("RGB")
-    img.save(ref_path, "JPEG", quality=95)
+    if not save_image_bytes(r.content, ref_path):
+        raise RuntimeError(f"Fallback canonical reference is invalid for {character}")
+    reference_source = "fallback"
+    print("Using fallback canonical reference")
 
 g = dict(cfg.get("defaults") or {})
 g.update(job.get("generation") or {})
 
+print("Loading model:", cfg["engine"]["model"])
 pipe = LTXImageToVideoPipeline.from_pretrained(
     cfg["engine"]["model"],
     torch_dtype=torch.float16
@@ -119,6 +141,7 @@ result = {
     "narrativeAuthority": False,
     "publishToGame": False,
     "character": character,
+    "referenceSource": reference_source,
     "clip": clip_name,
     "settings": g,
 }
