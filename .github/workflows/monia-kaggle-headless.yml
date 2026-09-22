@@ -141,16 +141,20 @@ jobs:
           rm -rf "$OUT"
           mkdir -p "$OUT"
           kaggle kernels output "$KERNEL" -p "$OUT" -o
-          SRC="$OUT/monia-studio/$MONIA_JOB_ID"
+          ACTUAL_JOB_ID="$(python -c "import json; print(json.load(open('$OUT/job.json'))['id'])")"
+          echo "Requested job id: $MONIA_JOB_ID; actual bundled job id: $ACTUAL_JOB_ID"
+          SRC="$OUT/monia-studio/$ACTUAL_JOB_ID"
           test -f "$SRC/result.json"
-          DEST="public/resources/monia/candidates/$MONIA_JOB_ID"
+          DEST="public/resources/monia/candidates/$ACTUAL_JOB_ID"
+          export MONIA_ACTUAL_JOB_ID="$ACTUAL_JOB_ID"
           mkdir -p "$DEST"
           cp "$SRC/result.json" "$DEST/result.json"
           python - <<'PY'
           import json, os, shutil
           from pathlib import Path
-          src=Path('/tmp/monia-kaggle-output/monia-studio')/os.environ['MONIA_JOB_ID']
-          dest=Path('public/resources/monia/candidates')/os.environ['MONIA_JOB_ID']
+          actual=os.environ.get('MONIA_ACTUAL_JOB_ID') or os.environ['MONIA_JOB_ID']
+          src=Path('/tmp/monia-kaggle-output/monia-studio')/actual
+          dest=Path('public/resources/monia/candidates')/actual
           data=json.loads((src/'result.json').read_text(encoding='utf-8'))
           clips=data.get('clips') or []
           assert 1 <= len(clips) <= 6
