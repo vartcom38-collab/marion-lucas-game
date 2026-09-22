@@ -1,7 +1,7 @@
 {
-  "id": "marion-apartment-v3-001",
+  "id": "marion-apartment-v3-002",
   "state": "queued",
-  "createdAt": "2026-09-22T15:52:00+02:00",
+  "createdAt": "2026-09-22T20:07:00+02:00",
   "source": "monia-video-orchestrator-v3",
   "candidateOnly": true,
   "narrativeAuthority": false,
@@ -44,12 +44,12 @@
     "router": "auto-v3",
     "backend": "kaggle-ltx",
     "width": 768,
-    "height": 432,
+    "height": 448,
     "frames": 49,
     "steps": 12,
     "fps": 12,
     "seconds": 4,
-    "seed": 220928,
+    "seed": 220929,
     "shotCount": 1,
     "shotCharacters": [
       "marion"
@@ -77,6 +77,6 @@
     "previousValidatedFrameUrl": null
   },
   "output": {
-    "candidatePath": "public/resources/monia/candidates/marion-apartment-v3-001/"
+    "candidatePath": "public/resources/monia/candidates/marion-apartment-v3-002/"
   }
 }
