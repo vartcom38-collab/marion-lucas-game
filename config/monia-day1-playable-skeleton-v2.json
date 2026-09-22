@@ -1,0 +1,239 @@
+{
+  "version": "2.0",
+  "authority": "day-1-canonical-playable-skeleton",
+  "dateContext": "May 1998 · Nîmes",
+  "startTime": "09:12",
+  "endRule": "Day 1 ends only after Marion reaches a night/sleep resolution.",
+  "design": "Every block is lived as video beats. Times are windows, not forced cuts. The director advances clock according to actual actions.",
+  "invariants": [
+    "Dominic is unknown at 09:12.",
+    "Dominic cannot be contacted before the encounter establishes a plausible contact path.",
+    "The first encounter occurs during Day 1, never at game launch.",
+    "The exact encounter situation is hidden and selected from eligible variants.",
+    "After the encounter, Day 1 continues normally; Dominic does not consume the whole day.",
+    "All choices preserve current outfit and prior consequences.",
+    "Phone interruptions may happen over ordinary scenes."
+  ],
+  "phases": [
+    {
+      "id": "D1_MORNING_HOME",
+      "window": "09:12-10:00",
+      "location": "Chez Marion",
+      "beats": [
+        "wake/living apartment beat",
+        "Marine notification opportunity",
+        "getting-ready beat",
+        "dressing decision if needed",
+        "leave/wait/phone/agenda decision"
+      ],
+      "video": [
+        "single-Marion cinematic",
+        "environmental inserts"
+      ],
+      "exit": [
+        "leave home",
+        "morning delay"
+      ]
+    },
+    {
+      "id": "D1_MORNING_CITY",
+      "window": "09:35-12:00",
+      "location": "Nîmes · dynamic",
+      "beats": [
+        "walk/travel",
+        "ordinary errand/café possibility",
+        "Marine meet possibility",
+        "city interruption",
+        "hidden encounter eligibility grows"
+      ],
+      "video": [
+        "POV-Marion",
+        "cinematic-single-character",
+        "environmental"
+      ],
+      "director": "If Dominic has not yet been encountered, keep ordinary life credible while moving toward one eligible encounter context."
+    },
+    {
+      "id": "D1_FIRST_ENCOUNTER",
+      "window": "10:00-15:30",
+      "location": "selected from current plausible route",
+      "mandatoryBy": "15:30",
+      "hidden": true,
+      "variants": [
+        "crossing while Marion is moving through the city",
+        "café/terrace adjacency",
+        "social overlap connected to Marine",
+        "small practical interruption/accidental proximity"
+      ],
+      "forbidden": [
+        "Dominic appears from nowhere",
+        "player chooses 'meet Dominic'",
+        "instant romance exposition",
+        "automatic phone-number exchange"
+      ],
+      "beats": [
+        "visual awareness",
+        "natural proximity",
+        "first exchange if context permits",
+        "player reaction beat",
+        "Dominic autonomous response",
+        "separation or brief continuation"
+      ],
+      "writes": [
+        "metDominic=true",
+        "firstEncounterMemory",
+        "firstImpressionMarion",
+        "firstImpressionDominic(hidden)",
+        "encounterContext"
+      ],
+      "video": [
+        "cinematic-two-character",
+        "over-shoulder",
+        "POV-Marion"
+      ],
+      "exit": [
+        "separate",
+        "continue briefly",
+        "social continuation"
+      ],
+      "contact": "Number/contact exchange is conditional, never guaranteed."
+    },
+    {
+      "id": "D1_MIDDAY",
+      "window": "12:00-14:30",
+      "location": "state-derived",
+      "beats": [
+        "meal/travel/social/ordinary activity",
+        "Marine conversation can react to what Marion knows",
+        "encounter consequences remain subtle",
+        "phone only reflects contacts actually obtained"
+      ],
+      "video": [
+        "cinematic",
+        "environmental"
+      ],
+      "exit": [
+        "afternoon activity"
+      ]
+    },
+    {
+      "id": "D1_AFTERNOON",
+      "window": "14:00-18:30",
+      "location": "state-derived",
+      "beats": [
+        "ordinary plans",
+        "optional social beat",
+        "possible second Dominic crossing only if plausible",
+        "messages/calls from known contacts",
+        "free time/travel"
+      ],
+      "rule": "A second Dominic beat is not guaranteed and must follow schedules/location/contact plausibility.",
+      "exit": [
+        "evening transition"
+      ]
+    },
+    {
+      "id": "D1_EVENING",
+      "window": "18:00-22:30",
+      "location": "state-derived",
+      "beats": [
+        "return/change outfit possibility",
+        "dinner/social/home alternatives",
+        "autonomous calls/messages",
+        "Dominic follow-up only if causally possible",
+        "quiet lived beats"
+      ],
+      "video": [
+        "cinematic-two-character when participants exist",
+        "cinematic-single-character",
+        "phone overlay"
+      ],
+      "exit": [
+        "stay out",
+        "return home",
+        "night event"
+      ]
+    },
+    {
+      "id": "D1_NIGHT",
+      "window": "21:30-01:30",
+      "location": "state-derived",
+      "beats": [
+        "late conversation/visio only if contact relationship permits",
+        "home wind-down",
+        "memory consolidation",
+        "tomorrow commitments",
+        "sleep"
+      ],
+      "video": [
+        "low-motion cinematic",
+        "phone/visio when eligible"
+      ],
+      "exit": [
+        "D2_MORNING"
+      ],
+      "writes": [
+        "day1Summary",
+        "unresolvedThreads",
+        "scheduledDay2Events",
+        "relationshipSnapshot",
+        "outfitHistory",
+        "locationHistory"
+      ]
+    }
+  ],
+  "encounterResolver": {
+    "trigger": "Before 15:30, once Marion is outside and at least one plausible encounter context is eligible.",
+    "score": [
+      "route overlap",
+      "time plausibility",
+      "Dominic hidden schedule",
+      "Marion current action",
+      "Marine/social context",
+      "recent pacing",
+      "variant novelty"
+    ],
+    "fallback": "If player remains home unusually long, do not teleport Dominic inside. Create a believable reason/opportunity for Marion to leave or shift the encounter later within Day 1.",
+    "replay": "Seed changes context/timing/dialogue/camera but not the invariant that the Day-1 encounter happens."
+  },
+  "choiceModel": {
+    "visible": "2-4 natural Marion intentions at a dramatic or practical beat.",
+    "examples": [
+      "continue what she is doing",
+      "engage",
+      "hold back",
+      "change plan",
+      "answer/ignore interruption"
+    ],
+    "hidden": "Never show relationship points, encounter probabilities, future spoilers or Dominic's hidden intentions.",
+    "freeform": "Supported in conversations/calls when runtime can resolve it safely."
+  },
+  "videoPlan": {
+    "sceneBeatSeconds": "4-12",
+    "prefetchDepth": 3,
+    "continuityToken": [
+      "character identities",
+      "outfits",
+      "location",
+      "time/light",
+      "props",
+      "body positions",
+      "emotional temperature",
+      "previous final frame"
+    ],
+    "branchRule": "At a decision beat, freeze narrative progression rather than visibly freezing a face; use a natural hold/cutaway/ambient loop while choice UI appears.",
+    "candidatePolicy": "Generate multiple candidates when needed; only approved/cached media can enter the player."
+  },
+  "day2Handoff": {
+    "id": "D2_MORNING",
+    "rule": "No reset. Start from the exact consequences of Day 1.",
+    "possibleDifferences": [
+      "Dominic number exists or does not",
+      "Dominic may have sent/followed up or not",
+      "Marine knows different details",
+      "different promises/plans",
+      "different outfit/laundry state",
+      "different unresolved emotional impressions"
+    ]
+  }
+}
