@@ -33,7 +33,7 @@
     "provider": "kaggle",
     "router": "ltx",
     "width": 768,
-    "height": 432,
+    "height": 448,
     "frames": 121,
     "steps": 8,
     "fps": 12,
