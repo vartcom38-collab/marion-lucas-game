@@ -200,6 +200,7 @@ jobs:
             echo "Candidates unchanged; nothing to commit."
           else
             git commit -m "MonIA candidate package ${MONIA_ACTUAL_JOB_ID:-$MONIA_JOB_ID}"
+            git pull --rebase origin main
             git push origin HEAD:main
           fi
 
