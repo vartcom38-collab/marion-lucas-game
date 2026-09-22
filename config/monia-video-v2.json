@@ -1,10 +1,19 @@
 {
-  "version": 2,
+  "version": 3,
   "name": "MonIA Video V2",
   "enabled": true,
   "parallelToLegacy": true,
   "paidProvidersAllowed": false,
   "candidateOnly": true,
+  "canonicalNames": {
+    "dominic": "Dominic"
+  },
+  "characterAliases": {
+    "dominic": {
+      "canonicalName": "Dominic",
+      "legacyReferenceKey": "lucas"
+    }
+  },
   "sourceReusePolicy": {
     "allowExistingVideoAsGenerationInput": false,
     "allowExistingVideoFramesAsFinalScene": false,
@@ -25,7 +34,7 @@
     "frames": 49,
     "fps": 12,
     "steps": 10,
-    "seed": 260923
+    "seed": 260924
   },
   "outputRoot": "public/resources/monia-v2/candidates",
   "identityPolicy": {
