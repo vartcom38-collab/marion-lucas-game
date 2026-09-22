@@ -1,30 +1,39 @@
 {
-  "id": "marion-apartment-living-v2-001",
+  "id": "marion-apartment-v3-001",
   "state": "queued",
-  "createdAt": "2026-09-22T13:45:00+02:00",
-  "source": "monia-native-image-to-video",
+  "createdAt": "2026-09-22T15:52:00+02:00",
+  "source": "monia-video-orchestrator-v3",
   "candidateOnly": true,
   "narrativeAuthority": false,
-  "sceneFamily": "apartment-morning-living",
-  "signature": "MONIA_MARION_APARTMENT_LIVING_V2_FACE_LOCK",
+  "sceneFamily": "apartment-morning-living-v3",
+  "signature": "MONIA_V3_MARION_CANON_CONTINUITY_QA",
   "primaryCharacter": "marion",
-  "prompt": "Animate the supplied approved Marion apartment master as an ultra-stable photorealistic living plate. SOURCE IMAGE IS ABSOLUTE PIXEL-LEVEL IDENTITY AUTHORITY. Preserve Marion's face, especially both eyes, eyelids, iris position, pupils, brows, nose, mouth, mole, skin texture and facial proportions. Face stability outranks motion. Marion remains seated holding her coffee. No facial performance.",
-  "negativePrompt": "identity drift, face morphing, eye drift, wandering eyes, crossed eyes, asymmetrical eyes, iris deformation, pupil deformation, eyelid warping, unnatural blink, repeated blinking, gaze jump, facial jitter, face flicker, mouth drift, lip movement, teeth, different woman, beautification, age change, skin smoothing, hand deformation, extra fingers, mug deformation, object drift, new objects, camera movement, zoom, pan, orbit, reframing, dialogue, lip sync, exaggerated acting, text changes, subtitles, watermark, UI",
+  "prompt": "Photorealistic cinematic living moment in Marion's Nimes apartment, May 1998. The supplied approved Marion reference is absolute identity authority. Preserve the exact same recognizable woman, facial proportions, eyes, mole, skin texture, hair, age and cream knit wardrobe. Marion is seated naturally with her white mug in warm morning light. Human micro-motion only: breathing, tiny gaze adjustment, subtle finger settling. Stable face and natural eyes outrank motion. Locked intimate camera, no dialogue.",
+  "negativePrompt": "identity drift, different woman, face morphing, eye deformation, crossed eyes, iris drift, facial jitter, plastic skin, beautification, age change, mouth warping, lip sync, extra fingers, hand deformation, mug deformation, object drift, camera orbit, zoom, pan, modern objects, subtitles, watermark, UI",
   "characters": [
     {
       "id": "marion",
       "identityMode": "canonical-image-strict",
       "canonRef": "https://cdn.openart.ai/openart-uploads/production/attachment-transfers/20f4695a631aec334010eacc4c21c17cc0be959070b4d2c5eeafdce55c564573.png",
-      "wardrobe": "exact clothing from source image; do not alter"
+      "wardrobe": "cream knit sweater and grey trousers from approved source; preserve exactly"
     }
   ],
+  "staging": {
+    "marion": {
+      "screenSide": "center-left",
+      "posture": "seated naturally, relaxed torso",
+      "gazeTarget": "mug then slight natural forward glance",
+      "gesture": "tiny finger settling on mug",
+      "emotion": "quiet ordinary morning",
+      "distance": "medium close living-space framing"
+    }
+  },
   "motion": {
     "referenceId": "approved-marion-apartment-master-2026-09-22",
     "tags": [
       "micro-motion",
-      "breathing-only",
-      "eyes-held-stable",
-      "locked-gaze",
+      "natural-breathing",
+      "stable-eyes",
       "locked-camera",
       "face-priority"
     ],
@@ -32,14 +41,15 @@
   },
   "generation": {
     "provider": "kaggle",
-    "router": "ltx",
+    "router": "auto-v3",
+    "backend": "kaggle-ltx",
     "width": 768,
-    "height": 448,
+    "height": 432,
     "frames": 49,
-    "steps": 16,
+    "steps": 12,
     "fps": 12,
     "seconds": 4,
-    "seed": 220927,
+    "seed": 220928,
     "shotCount": 1,
     "shotCharacters": [
       "marion"
@@ -51,10 +61,22 @@
       null
     ],
     "shotPrompts": [
-      "SHOT 1 — MARION APARTMENT MORNING — FACE-LOCK V2 TEST. Treat the supplied approved Marion image as literal pixel-level identity authority. Marion must remain the exact same recognizable woman. LOCK THE FACE: preserve exact eye shape, iris/pupil geometry and direction, eyelids, eyebrows, nose, lips, cheek mole, jaw and skin texture frame-to-frame. Keep her gaze essentially fixed. NO BLINKS in this test. NO mouth movement. NO head turn. Motion budget goes to torso breathing and a nearly imperceptible shoulder/finger settling only. Exact cream knit clothing, mug, sofa, plants, apartment and warm light. CAMERA ABSOLUTELY LOCKED. Identity and temporal facial stability outrank visible motion."
+      "V3 SINGLE-ACTOR IDENTITY TEST. Animate the approved Marion apartment reference as a photorealistic living shot. Exact Marion identity is mandatory. Preserve face, eyes, skin, hair, cream knit clothing, white mug, sofa, plants, room geometry and warm morning light. Natural breathing and tiny hand/gaze micro-motion only. No speech. Locked camera. Temporal facial stability outranks visible motion."
     ]
   },
+  "qualityPolicy": {
+    "policy": "config/monia-generation-quality.json",
+    "failClosed": true,
+    "humanApprovalBeforeLive": true,
+    "minIdentityScore": 0.94,
+    "minTemporalIdentity": 0.92,
+    "requireTrueVideo": true
+  },
+  "continuity": {
+    "candidateFrameQuarantinedUntilApproval": true,
+    "previousValidatedFrameUrl": null
+  },
   "output": {
-    "candidatePath": "public/resources/monia/candidates/marion-apartment-living-v2-001/"
+    "candidatePath": "public/resources/monia/candidates/marion-apartment-v3-001/"
   }
 }
