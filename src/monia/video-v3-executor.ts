@@ -37,7 +37,7 @@ async function waitForCandidate(job:VideoJob,c:VideoCandidate){
   const body=await r.json().catch(()=>null);
   if(!r.ok||!body?.ok)continue;
   if(body.state==='candidate'&&Array.isArray(body.clips)&&body.clips.length){
-   const safe=body.candidateOnly===true&&body.narrativeAuthority===true;
+   const safe=body.candidateOnly===true&&body.narrativeAuthorityDisabled===true;
    const result=body.result||{};const q=body.quality||null;
    const technicalPass=safe&&result.state==='candidate'&&q?.technicalPass!==false;
    const identity=q?.identityScore;const temporal=q?.temporalIdentityScore;
@@ -48,8 +48,8 @@ async function waitForCandidate(job:VideoJob,c:VideoCandidate){
    const rejections=[...(q?.reasons||[]),...(!safe?['candidate safety flags invalid']:[])];
    registerCandidateResult(job,{candidateId:c.id,url:body.clips[0],technicalPass,qualityPass,score:typeof identity==='number'?identity:undefined,rejections});
    if(body.continuityLastFrame){
-    job.continuity={...job.continuity,previousValidatedFrameUrl:body.continuityLastFrame,sourceCandidateId:c.id};
-    window.dispatchEvent(new CustomEvent('monia:video-continuity-frame',{detail:{jobId:job.id,candidateId:c.id,url:body.continuityLastFrame}}));
+    job.continuity={...job.continuity,candidateLastFrameUrl:body.continuityLastFrame,candidateSourceId:c.id};
+    window.dispatchEvent(new CustomEvent('monia:video-candidate-continuity-frame',{detail:{jobId:job.id,candidateId:c.id,url:body.continuityLastFrame}}));
    }
    emit({jobId:job.id,candidateId:c.id,state:'candidate-ready',detail:body.clips[0],updatedAt:Date.now()});
    const review=selectBestReviewCandidate(job);
