@@ -1,60 +1,59 @@
 {
-  "id": "test-kaggle-marion-001",
+  "id": "marion-apartment-living-001",
   "state": "queued",
-  "createdAt": "2026-09-07T22:32:00+02:00",
-  "source": "new-game-opening-generation",
+  "createdAt": "2026-09-22T13:45:00+02:00",
+  "source": "monia-native-image-to-video",
   "candidateOnly": true,
   "narrativeAuthority": false,
-  "sceneFamily": "opening-intro",
-  "signature": "MONIA_NEW_GAME_OPENING_V1",
+  "sceneFamily": "apartment-morning-living",
+  "signature": "MONIA_MARION_APARTMENT_LIVING_V1",
   "primaryCharacter": "marion",
-  "prompt": "Premium photorealistic cinematic opening for the game Marion & Lucas. Romantic life-simulation mood, elegant natural light, subtle suspense, realistic body language and micro-expressions. Opening atmosphere only: no future-story reveal, no subtitles, no watermark, no UI, no slideshow.",
-  "negativePrompt": "identity drift, face morphing, wrong person, distorted face, duplicate person, extra limbs, text, subtitles, watermark, UI, slideshow, photo zoom, portrait framing, vertical video, exaggerated acting, kiss, wedding, children, spoiler",
+  "prompt": "Animate the supplied approved Marion apartment master as a photorealistic living gameplay plate. The source image is absolute identity, wardrobe, prop, lighting and composition authority. Marion remains seated with her coffee. Identity stability is more important than motion.",
+  "negativePrompt": "identity drift, face morphing, different woman, beautification, age change, eye drift, mouth drift, teeth change, hand deformation, extra fingers, mug deformation, object drift, new objects, camera movement, zoom, pan, orbit, reframing, dialogue, lip sync, exaggerated acting, text changes, subtitles, watermark, UI",
   "characters": [
     {
       "id": "marion",
-      "identityMode": "canonical-image-fallback",
-      "canonRef": "https://raw.githubusercontent.com/vartcom38-collab/marion-lucas-game/main/public/resources/photo.png",
-      "wardrobe": "natural contemporary morning outfit, understated and elegant"
-    },
-    {
-      "id": "lucas",
-      "identityMode": "priority-image-pack",
-      "priorityImages": [
-        "https://raw.githubusercontent.com/vartcom38-collab/marion-lucas-game/main/assets/monia-atlas/lucas-priority-01.jpg.b64",
-        "https://raw.githubusercontent.com/vartcom38-collab/marion-lucas-game/main/assets/monia-atlas/lucas-priority-02.jpg.b64"
-      ],
-      "canonRef": "https://marion-lucas.marionbolomey.fr/resources/monia/canon/lucas/reference.jpg",
-      "wardrobe": "dark contemporary elegant outfit, understated and masculine"
+      "identityMode": "canonical-image-strict",
+      "canonRef": "https://cdn.openart.ai/openart-uploads/production/attachment-transfers/20f4695a631aec334010eacc4c21c17cc0be959070b4d2c5eeafdce55c564573.png",
+      "wardrobe": "exact clothing from source image; do not alter"
     }
   ],
   "motion": {
-    "referenceId": "opening-prototype+latest-lucas-video",
-    "tags": ["natural-motion", "micro-expression", "cinematic-landscape", "opening-suspense"],
-    "copyIdentity": false
+    "referenceId": "approved-marion-apartment-master-2026-09-22",
+    "tags": [
+      "micro-motion",
+      "natural-breathing",
+      "subtle-blinks",
+      "locked-camera",
+      "living-gameplay-plate"
+    ],
+    "copyIdentity": true
   },
   "generation": {
     "provider": "kaggle",
     "router": "ltx",
     "width": 768,
     "height": 432,
-    "frames": 49,
+    "frames": 121,
     "steps": 8,
     "fps": 12,
-    "seconds": 4.0,
-    "seed": 240911,
-    "shotCount": 4,
-    "shotCharacters": ["marion", "lucas", "marion", null],
-    "shotReferenceIndex": [0, 0, 0, null],
-    "shotImages": [null, null, null, "https://raw.githubusercontent.com/vartcom38-collab/marion-lucas-game/main/public/resources/appartement-nimes.png"],
+    "seconds": 10,
+    "seed": 220926,
+    "shotCount": 1,
+    "shotCharacters": [
+      "marion"
+    ],
+    "shotReferenceIndex": [
+      0
+    ],
+    "shotImages": [
+      null
+    ],
     "shotPrompts": [
-      "SHOT 1 — NEW GAME OPENING. Marion alone in Nîmes in warm early-morning light. Preserve Marion identity from her canonical image reference. She is 20, natural and believable, walking or pausing for a second as if a new chapter is beginning. Gentle breeze in hair, tiny glance upward, subtle hopeful expression, cinematic shallow depth of field, restrained camera movement. No dialogue, no text, no story reveal.",
-      "SHOT 2 — LUCAS SUSPENSE. Lucas alone somewhere else. Use the new priority Lucas photo pack as face and appearance authority, with the latest Lucas video only for presence and micro-expression. Preserve his exact recognizable face, dark hair, strong gaze, jaw, stubble and visible tattoo details supported by the references. Ignore any text or graphic overlays from reference images. Calm, intense, private presence, subtle shift of gaze, restrained almost-smile, realistic breathing. Do not show Marion, no dialogue, no text, no future-story reveal.",
-      "SHOT 3 — FIRST CONNECTION WITHOUT SPOILER. Marion in a natural intimate morning moment. Her attention is caught by a subtle phone vibration or light just outside the main focus; she gives a tiny curious reaction. Preserve Marion identity from the same canonical image reference used in shot 1. Keep the phone/interface visually minimal and unreadable. No visible message content, no dialogue, no reveal, no exaggerated reaction. Premium cinematic realism.",
-      "SHOT 4 — ARRIVAL INTO GAMEPLAY. Use the supplied apartment image as the visual authority. Create a gentle cinematic settling shot of Marion’s Nîmes apartment in morning light: subtle curtain or plant movement, soft light drift, tiny camera push, realistic lived-in atmosphere. No person required, no text, no UI. End on a stable composition suitable to dissolve seamlessly into the playable apartment."
+      "SHOT 1 — MARION APARTMENT MORNING, LIVING GAMEPLAY PLATE. Use the supplied approved Marion apartment image as literal visual and identity authority. Keep the exact same recognizable woman, face geometry, eyes, nose, mouth, cheek mole, hair, body proportions, cream knit clothing, coffee mug, sofa, apartment, plants and warm morning light. Marion stays seated holding the mug. MICRO-MOTION ONLY: gentle natural breathing, two or three subtle blinks across the shot, tiny eye-focus changes, minute head and shoulder settling, one tiny natural finger adjustment on the mug. Almost imperceptible hair and knit-fabric movement; plants and sunlight may shift extremely subtly. CAMERA LOCKED: no zoom, pan, orbit, dolly, reframing or lens change. No speech and no deliberate lip movement. Do not beautify, redesign, age, de-age or morph Marion. End visually close to the starting pose for a natural loop. Identity stability is the highest priority."
     ]
   },
   "output": {
-    "candidatePath": "public/resources/monia/candidates/test-kaggle-marion-001/"
+    "candidatePath": "public/resources/monia/candidates/marion-apartment-living-001/"
   }
 }
