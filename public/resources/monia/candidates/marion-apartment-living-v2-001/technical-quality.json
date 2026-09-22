@@ -1,5 +1,5 @@
 {
-  "status": "reject",
+  "status": "pass",
   "technical": {
     "ok": true,
     "duration": 4.083,
@@ -10,14 +10,12 @@
     "audioChannels": 0,
     "sampleRate": 0
   },
-  "reasons": [
-    "candidate resolution below minimum portrait review target"
-  ],
+  "reasons": [],
   "warnings": [],
   "automaticScope": [
     "container readability",
     "duration",
-    "minimum resolution",
+    "orientation-aware minimum resolution",
     "extended black frames",
     "extended frozen frames"
   ],
