@@ -21,10 +21,19 @@ async function waitForCandidate(job:VideoJob,c:VideoCandidate){
   if(!r.ok||!body?.ok)continue;
   if(body.state==='candidate'&&Array.isArray(body.clips)&&body.clips.length){
    const safe=body.candidateOnly===true&&body.narrativeAuthority===true;
-   const result=body.result||{};
-   const technicalPass=safe&&result.state==='candidate';
-   // Existing Kaggle worker proves technical candidate status only. Identity/temporal scores are not fabricated.
-   registerCandidateResult(job,{candidateId:c.id,url:body.clips[0],technicalPass,qualityPass:undefined,rejections:technicalPass?[]:['candidate safety flags invalid']});
+   const result=body.result||{};const q=body.quality||null;
+   const technicalPass=safe&&result.state==='candidate'&&q?.technicalPass!==false;
+   const identity=q?.identityScore;const temporal=q?.temporalIdentityScore;
+   const measuredPass=typeof identity==='number'&&typeof temporal==='number'
+     ? identity>=Number(job.qualityGate.minimumIdentityScore||.94)&&temporal>=Number(job.qualityGate.minimumTemporalIdentityScore||.92)
+     : undefined;
+   const qualityPass=q?.autoReject===true?false:measuredPass;
+   const rejections=[...(q?.reasons||[]),...(!safe?['candidate safety flags invalid']:[])];
+   registerCandidateResult(job,{candidateId:c.id,url:body.clips[0],technicalPass,qualityPass,score:typeof identity==='number'?identity:undefined,rejections});
+   if(body.continuityLastFrame){
+    job.continuity={...job.continuity,previousValidatedFrameUrl:body.continuityLastFrame,sourceCandidateId:c.id};
+    window.dispatchEvent(new CustomEvent('monia:video-continuity-frame',{detail:{jobId:job.id,candidateId:c.id,url:body.continuityLastFrame}}));
+   }
    emit({jobId:job.id,candidateId:c.id,state:'candidate-ready',detail:body.clips[0],updatedAt:Date.now()});
    const review=selectBestReviewCandidate(job);
    if(review)emit({jobId:job.id,candidateId:review.id,state:'review',detail:review.url,updatedAt:Date.now()});
