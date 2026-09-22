@@ -59,7 +59,7 @@ function mount(){
  const identity=()=>{const rt=runtime(),scene=rt.scene||{};return {runId:rt.runId||game.runId||game.seed||'local',sceneId:scene.id||rt.sceneId||state.sceneId||('day-'+state.day+'-'+state.beat),mediaId:scene.mediaId||rt.mediaId||state.mediaId||null,locationId:scene.locationId||state.place,day:state.day,year:state.year,beat:state.beat}};
  const emitChoice=(intent:string,choice:any={})=>{const ids=identity();state.sceneId=ids.sceneId;state.mediaId=ids.mediaId;state.lastChoiceId=choice?.id||choice?.choiceId||intent;persist();emit(intent,{...ids,choiceId:state.lastChoiceId,choice,sourceMediaId:ids.mediaId});window.dispatchEvent(new CustomEvent('monia:choice-selected',{detail:{...ids,choiceId:choice?.id||choice?.choiceId||intent,intent}}))};
  const choiceSets:any={
- morning:[['marine','Répondre à Marine'],['prepare','Finir de te préparer'],['leave','Sortir maintenant']],
+ morning:[['marine','Répondre à Marine'],['prepare','Finir de te préparer'],['dress','Choisir ta tenue']],
  ready:[['agenda','Regarder ce qui est prévu'],['leave','Partir maintenant'],['wait','Prendre encore quelques minutes']],
  outside:[['walk','Continuer à marcher'],['coffee','T’arrêter boire quelque chose'],['marine','Retrouver Marine']],
  encounter:[['look','Soutenir son regard'],['smile','Lui sourire'],['continue','Continuer ton chemin']],
@@ -91,6 +91,7 @@ function mount(){
    if(state.beat==='morning'){state.tool='phone';state.phoneView='messages';persist();renderPanel();setTimeout(()=>openMarineChat(true),0)}
    else{state.tool=null;panel.hidden=true;root.classList.remove('tool-open');state.place='Centre-ville';state.time='10:18';state.beat=state.metDominic?'later':'outside';setScene('NÎMES · AVEC MARINE','Tu rejoins réellement Marine dans le centre-ville.');eventBeat('RETROUVER MARINE','Marion retrouve Marine.','La journée continue sans annoncer ce qui peut arriver.',()=>{window.dispatchEvent(new CustomEvent('monia:world-opportunity',{detail:{...identity(),trajectory:'join-marine',hidden:true}}));renderChoices()})}
   }
+  else if(intent==='dress'){const rt=runtime();const outfits=Array.isArray(rt.outfits)&&rt.outfits.length?rt.outfits:[{id:'casual-cream',label:'Jean clair · haut crème'},{id:'summer-dress',label:'Robe légère'},{id:'dark-simple',label:'Tenue sombre · simple'}];choices.innerHTML=outfits.slice(0,3).map((o:any)=>'<button data-outfit="'+String(o.id)+'">'+String(o.label||o.name||o.id)+'</button>').join('');choices.querySelectorAll('[data-outfit]').forEach((b:any)=>b.addEventListener('click',()=>{const outfit=outfits.find((o:any)=>String(o.id)===String(b.dataset.outfit));(runtime().wardrobe||(runtime().wardrobe={})).currentOutfit=outfit;state.memories.unshift('Tenue choisie : '+String(outfit?.label||outfit?.name||outfit?.id));persist();emit('outfit_selected',{outfitId:outfit?.id,outfit,sceneId:identity().sceneId});window.dispatchEvent(new CustomEvent('monia:world-opportunity',{detail:{...identity(),trajectory:'wardrobe-continuity',outfit,hidden:true}}));state.beat='ready';state.time='09:28';say('Marion est prête.');renderChoices()}));}
   else if(intent==='prepare'){state.beat='ready';state.time='09:28';say('Marion termine de se préparer.');}
   else if(intent==='agenda'){open('agenda');}
   else if(intent==='wait'){state.time='09:41';say('Le temps passe. Les autres continuent leur journée.');}
