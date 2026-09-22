@@ -1,0 +1,288 @@
+{
+  "version": "1.0",
+  "mode": "test-first-then-variable-runs",
+  "principle": "The player chooses Marion's intention. The graph resolves the scene, media, consequences and next available intentions. Hidden world events never appear as spoilers in choice labels.",
+  "identity_chain": [
+    "runId",
+    "sceneId",
+    "mediaId",
+    "choiceId",
+    "consequenceId",
+    "nextSceneId"
+  ],
+  "run_rules": {
+    "test_run": "A controlled long playable path used to validate every mechanic and visual transition.",
+    "new_run": "A new seed selects compatible scene variants, topics, timing, encounters and media so a replay is not the same game.",
+    "anti_repeat": [
+      "recent scene variants",
+      "recent conversation topics",
+      "recent media",
+      "recent hidden events"
+    ],
+    "convergence": "Branches may reconverge at life anchors, but retain memories and consequences from the path taken."
+  },
+  "notification_system": {
+    "channels": [
+      "sms",
+      "call",
+      "video-call",
+      "agenda",
+      "world-event"
+    ],
+    "presentation": "Notifications appear over the current scene; opening them is optional unless the event is urgent.",
+    "examples": [
+      "Marine sends a message while Marion is preparing",
+      "A later Dominic message appears only after his contact exists",
+      "Calls can arrive while another ordinary scene is happening"
+    ]
+  },
+  "scene_contract": {
+    "required": [
+      "id",
+      "timeWindow",
+      "locationContext",
+      "entryConditions",
+      "mediaVariants",
+      "playerIntents",
+      "hiddenWorldOpportunities",
+      "memoryWrites",
+      "exitRules"
+    ],
+    "choice_contract": [
+      "id",
+      "label",
+      "intent",
+      "nextCandidates",
+      "effects"
+    ],
+    "media_contract": [
+      "id",
+      "kind",
+      "status",
+      "canonicalSubjects",
+      "location",
+      "era",
+      "sceneId"
+    ]
+  },
+  "first_day_graph": [
+    {
+      "id": "D1_MORNING_HOME",
+      "mediaVariants": [
+        "home_prepare_A",
+        "home_prepare_B",
+        "home_prepare_C"
+      ],
+      "intents": [
+        [
+          "reply_marine",
+          "Répondre à Marine",
+          "D1_MARINE_THREAD"
+        ],
+        [
+          "finish_getting_ready",
+          "Finir de te préparer",
+          "D1_READY"
+        ],
+        [
+          "leave_now",
+          "Sortir maintenant",
+          "D1_OUTSIDE"
+        ]
+      ]
+    },
+    {
+      "id": "D1_MARINE_THREAD",
+      "intents": [
+        [
+          "reply_dynamic",
+          "Répondre selon la conversation",
+          "D1_READY_OR_DELAY"
+        ],
+        [
+          "call_marine",
+          "Appeler Marine",
+          "D1_MARINE_CALL"
+        ],
+        [
+          "close_phone",
+          "Revenir à ce que tu faisais",
+          "D1_MORNING_HOME"
+        ]
+      ]
+    },
+    {
+      "id": "D1_READY",
+      "mediaVariants": [
+        "home_ready_A",
+        "home_ready_B"
+      ],
+      "intents": [
+        [
+          "check_agenda",
+          "Regarder ce qui est prévu",
+          "D1_AGENDA"
+        ],
+        [
+          "leave",
+          "Partir",
+          "D1_OUTSIDE"
+        ],
+        [
+          "wait",
+          "Prendre encore quelques minutes",
+          "D1_HOME_BEAT"
+        ]
+      ]
+    },
+    {
+      "id": "D1_OUTSIDE",
+      "mediaVariants": [
+        "nimes_walk_A",
+        "nimes_walk_B",
+        "nimes_walk_C"
+      ],
+      "intents": [
+        [
+          "walk",
+          "Continuer à marcher",
+          "D1_WORLD_RESOLVE"
+        ],
+        [
+          "coffee",
+          "T’arrêter boire quelque chose",
+          "D1_WORLD_RESOLVE"
+        ],
+        [
+          "meet_marine",
+          "Retrouver Marine",
+          "D1_MARINE_MEET"
+        ]
+      ]
+    },
+    {
+      "id": "D1_WORLD_RESOLVE",
+      "hidden": true,
+      "resolution": "MonIA selects a plausible next scene from chronology, location, schedules, seed, memory and anti-repetition. Dominic encounter is possible, never guaranteed.",
+      "nextCandidates": [
+        "D1_ORDINARY_CITY",
+        "D1_CAFE",
+        "D1_ENCOUNTER",
+        "D1_MARINE_MEET"
+      ]
+    },
+    {
+      "id": "D1_ENCOUNTER",
+      "entryConditions": [
+        "hidden director selected encounter"
+      ],
+      "mediaVariants": [
+        "dominic_first_encounter_A",
+        "dominic_first_encounter_B"
+      ],
+      "intents": [
+        [
+          "look",
+          "Soutenir son regard",
+          "D1_ENCOUNTER_AFTER"
+        ],
+        [
+          "smile",
+          "Lui sourire",
+          "D1_ENCOUNTER_AFTER"
+        ],
+        [
+          "continue",
+          "Continuer ton chemin",
+          "D1_ENCOUNTER_AFTER"
+        ]
+      ]
+    },
+    {
+      "id": "D1_ENCOUNTER_AFTER",
+      "resolution": "Consequences depend on reaction and Dominic autonomy. Number exchange is not guaranteed.",
+      "nextCandidates": [
+        "D1_NUMBER_EXCHANGE",
+        "D1_SEPARATE",
+        "D1_MARINE_MEET"
+      ]
+    },
+    {
+      "id": "D1_NUMBER_EXCHANGE",
+      "effects": [
+        "hasDominicNumber=true"
+      ],
+      "nextCandidates": [
+        "D1_LATER"
+      ]
+    },
+    {
+      "id": "D1_LATER",
+      "resolution": "Continue ordinary life; notifications and conversations can interrupt naturally.",
+      "nextCandidates": [
+        "D1_AFTERNOON",
+        "D1_EVENING"
+      ]
+    },
+    {
+      "id": "D1_EVENING",
+      "intents": [
+        [
+          "home",
+          "Rentrer chez toi",
+          "D1_HOME_NIGHT"
+        ],
+        [
+          "stay",
+          "Rester encore un peu",
+          "D1_EVENING_WORLD"
+        ],
+        [
+          "phone",
+          "Regarder ton téléphone",
+          "PHONE"
+        ]
+      ]
+    },
+    {
+      "id": "D1_HOME_NIGHT",
+      "nextCandidates": [
+        "D1_NIGHT",
+        "D2_MORNING"
+      ]
+    },
+    {
+      "id": "D2_MORNING",
+      "resolution": "Start from persistent state, not a reset. Agenda, messages, relationship and memories alter available branches."
+    }
+  ],
+  "long_horizon": {
+    "structure": [
+      "day graph",
+      "week continuity",
+      "month arcs",
+      "year eras"
+    ],
+    "generation_strategy": "Prebuild reusable scene/media pools plus authored life anchors. Do not pre-render every combinatorial path. MonIA composes compatible prepared assets and can generate missing variants ahead of release.",
+    "life_anchors": "Major events are hidden-world outcomes and chronology anchors, never direct player buttons.",
+    "replay_variation": [
+      "seeded scene variants",
+      "different encounter timing",
+      "different conversation subjects",
+      "different invitations and interruptions",
+      "different Dominic schedule/world availability",
+      "different consequence candidates"
+    ]
+  },
+  "production_pipeline": [
+    "define graph node",
+    "attach canonical visual references",
+    "prepare/generate clean media variants",
+    "QA identity/location/era",
+    "mark media approved",
+    "connect node choices",
+    "test consequence persistence",
+    "deploy",
+    "replay with alternate seed"
+  ]
+}
