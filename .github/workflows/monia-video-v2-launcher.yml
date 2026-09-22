@@ -1,0 +1,137 @@
+name: MonIA Video V2 — Safe Launcher
+
+on:
+  workflow_dispatch:
+    inputs:
+      job_path:
+        description: "V2 job JSON path"
+        required: false
+        default: ".monia-render-queue-v2/lucas-motion-proof-v1.json"
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/monia-video-v2-launcher.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  launch-isolated-v2:
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    steps:
+      - name: Checkout isolated V2 branch
+        uses: actions/checkout@v5
+        with:
+          ref: monia-video-v2
+
+      - name: Prepare isolated Kaggle bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          JOB_PATH="${{ inputs.job_path || '.monia-render-queue-v2/lucas-motion-proof-v1.json' }}"
+          test -f "$JOB_PATH"
+          mkdir -p .kaggle-v2
+          cp kaggle/monia-video-v2/monia_video_v2.py .kaggle-v2/monia_video_v2.py
+          cp kaggle/monia-video-v2/kernel-metadata.json .kaggle-v2/kernel-metadata.json
+          cp "$JOB_PATH" .kaggle-v2/job-v2.json
+          echo "V2 bundle prepared from $JOB_PATH"
+
+      - name: Install Kaggle CLI
+        run: python -m pip install --upgrade kaggle
+
+      - name: Validate Kaggle authentication
+        env:
+          KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "${KAGGLE_API_TOKEN:-}" ]; then
+            echo "KAGGLE_API_TOKEN is missing"
+            exit 2
+          fi
+          kaggle config view >/dev/null
+
+      - name: Submit isolated V2 worker
+        env:
+          KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+        run: kaggle kernels push -p .kaggle-v2
+
+      - name: Wait for V2 completion
+        env:
+          KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          KERNEL="marionbolomey/monia-video-v2-worker"
+          for attempt in $(seq 1 70); do
+            STATUS="$(kaggle kernels status "$KERNEL" 2>&1 || true)"
+            echo "[$attempt/70] $STATUS"
+            if echo "$STATUS" | grep -Eqi 'complete|completed'; then exit 0; fi
+            if echo "$STATUS" | grep -Eqi 'error|failed|cancelled|canceled'; then
+              kaggle kernels logs "$KERNEL" || true
+              exit 1
+            fi
+            sleep 60
+          done
+          echo "Timed out waiting for V2."
+          exit 1
+
+      - name: Download V2 candidate
+        env:
+          KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT=/tmp/monia-v2-output
+          rm -rf "$OUT"
+          mkdir -p "$OUT"
+          kaggle kernels output marionbolomey/monia-video-v2-worker -p "$OUT" -o
+
+          JOB_ID="$(python - <<'PY'
+          import json
+          print(json.load(open('.kaggle-v2/job-v2.json'))['id'])
+          PY
+          )"
+          SRC="$OUT/monia-video-v2/$JOB_ID"
+          test -f "$SRC/result.json"
+          test -f "$SRC/candidate-01.mp4"
+
+          DEST="public/resources/monia-v2/candidates/$JOB_ID"
+          mkdir -p "$DEST"
+          cp "$SRC/result.json" "$DEST/result.json"
+          cp "$SRC/job.json" "$DEST/job.json"
+          cp "$SRC/candidate-01.mp4" "$DEST/candidate-01.mp4"
+
+      - name: Verify V2 isolation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import glob, json
+          files=glob.glob('public/resources/monia-v2/candidates/*/result.json')
+          assert files, "No V2 result"
+          d=json.load(open(files[-1]))
+          assert d["generator"]=="monia-video-v2"
+          assert d["candidateOnly"] is True
+          assert d["narrativeAuthority"] is False
+          assert d["publishToGame"] is False
+          print("Isolation OK:", d["jobId"])
+          PY
+
+      - name: Commit candidate to V2 branch only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/resources/monia-v2/candidates
+          if git diff --cached --quiet; then
+            echo "No V2 candidate changes."
+          else
+            git commit -m "MonIA Video V2 candidate"
+            git push origin HEAD:monia-video-v2
+          fi
+
+      - name: Confirm legacy untouched
+        run: echo "V2 ran in isolation; no legacy generator or live manifest was changed."
