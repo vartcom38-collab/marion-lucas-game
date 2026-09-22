@@ -278,7 +278,7 @@ jobs:
           local_root = Path('public/resources/monia/candidates') / actual
           host = os.environ['INFOMANIAK_FTP_HOST'].strip().replace('ftpes://','').replace('ftps://','').replace('ftp://','').rstrip('/')
           user = os.environ['INFOMANIAK_FTP_USER'].strip()
-          password = os.environ['INFOMANIAK_FTP_PASSWORD'].replace('\\r','').replace('\\n','')
+          password = os.environ['INFOMANIAK_FTP_PASSWORD'].rstrip('\r\n')
           if not host or not user or not password:
               raise RuntimeError('Infomaniak FTP credentials are missing')
 
