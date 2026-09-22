@@ -199,7 +199,7 @@ jobs:
           CLIP="$(python -c "import json; d=json.load(open('$DEST/result.json')); print(d['clips'][0])")"
           python tools/monia-video-quality.py "$DEST/$CLIP" > "$DEST/technical-quality.json" || true
           REF=""
-          if python -c "import json; j=json.load(open('.kaggle-worker/job.json')); raise SystemExit(0 if any(str(x.get('id','')).lower()=='lucas' for x in j.get('characters',[])) else 1)"; then
+          if python -c "import json; j=json.load(open('.kaggle-worker/job.json')); raise SystemExit(0 if any(str(x.get('id','')).lower() in {'lucas','dominic'} for x in j.get('characters',[])) else 1)"; then
             REF="public/resources/monia/canon/lucas/reference.jpg"
           elif [ -f "public/resources/photo.png" ]; then
             REF="public/resources/photo.png"
