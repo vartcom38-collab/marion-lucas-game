@@ -13,7 +13,7 @@
     "cpuOffload": true
   },
   "defaults": {
-    "width": 432,
+    "width": 448,
     "height": 768,
     "frames": 49,
     "fps": 12,
