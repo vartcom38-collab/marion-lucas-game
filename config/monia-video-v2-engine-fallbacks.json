@@ -1,0 +1,26 @@
+{
+  "strategyVersion": 1,
+  "primary": {
+    "id": "ltx-diffusers-i2v",
+    "model": "Lightricks/LTX-Video",
+    "reason": "Current isolated V2 proof engine"
+  },
+  "fallbackOrder": [
+    {
+      "id": "wan2.1-i2v",
+      "status": "prepared-not-enabled",
+      "reason": "Use if LTX proves too heavy or identity-unstable on Kaggle T4"
+    },
+    {
+      "id": "cogvideox-i2v",
+      "status": "prepared-not-enabled",
+      "reason": "Second open-source fallback if Wan is unsuitable"
+    }
+  ],
+  "rules": {
+    "neverTouchLegacy": true,
+    "neverAutoPublish": true,
+    "candidateOnly": true,
+    "changeEngineWithoutChangingJobContract": true
+  }
+}

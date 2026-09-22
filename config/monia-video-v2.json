@@ -1,0 +1,46 @@
+{
+  "version": 3,
+  "name": "MonIA Video V2",
+  "enabled": true,
+  "parallelToLegacy": true,
+  "paidProvidersAllowed": false,
+  "candidateOnly": true,
+  "canonicalNames": {
+    "dominic": "Dominic"
+  },
+  "characterAliases": {
+    "dominic": {
+      "canonicalName": "Dominic",
+      "legacyReferenceKey": "lucas"
+    }
+  },
+  "sourceReusePolicy": {
+    "allowExistingVideoAsGenerationInput": false,
+    "allowExistingVideoFramesAsFinalScene": false,
+    "allowCanonicalStillForIdentity": true,
+    "allowVideoForMotionAnalysisOnly": true,
+    "mustCreateNewScene": true
+  },
+  "engine": {
+    "id": "ltx-diffusers-i2v",
+    "model": "Lightricks/LTX-Video",
+    "mode": "identity-reference-to-new-video",
+    "torchDtype": "float16",
+    "cpuOffload": true
+  },
+  "defaults": {
+    "width": 448,
+    "height": 768,
+    "frames": 49,
+    "fps": 12,
+    "steps": 10,
+    "seed": 260924
+  },
+  "outputRoot": "public/resources/monia-v2/candidates",
+  "identityPolicy": {
+    "referenceRequired": true,
+    "promptOnlyCharacters": false,
+    "referenceConfig": "config/monia-reference-packs.json",
+    "referencePurpose": "identity-only"
+  }
+}

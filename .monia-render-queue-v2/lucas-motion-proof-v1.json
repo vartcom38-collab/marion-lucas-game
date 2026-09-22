@@ -1,0 +1,20 @@
+{
+  "id": "lucas-motion-proof-v1",
+  "generator": "monia-video-v2",
+  "enabled": true,
+  "candidateOnly": true,
+  "narrativeAuthority": false,
+  "publishToGame": false,
+  "character": "lucas",
+  "purpose": "Validate canonical Lucas identity preservation in the isolated MonIA Video V2 generator.",
+  "prompt": "Vertical realistic smartphone-cinematic portrait of the exact same man from the reference image. He remains seated and calm, breathes naturally, makes a tiny natural head movement, blinks once, and shifts his gaze slightly toward the camera. Preserve exact face geometry, eyes, nose, mouth, jaw, hair, stubble and skin tone. Natural human micro-expression, realistic skin texture, subtle breathing, no dramatic acting, no camera orbit, no identity change.",
+  "negativePrompt": "different person, identity drift, face morphing, deformed face, extra fingers, distorted hands, tattoos, scars, heavy beauty filter, plastic skin, exaggerated smile, talking, lip sync, text, logo, watermark, camera orbit, fast motion, surreal motion",
+  "generation": {
+    "width": 448,
+    "height": 768,
+    "frames": 49,
+    "fps": 12,
+    "steps": 8,
+    "seed": 260922
+  }
+}

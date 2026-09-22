@@ -1,0 +1,26 @@
+{
+  "jobId": "dominic-new-scene-proof-v3",
+  "generator": "monia-video-v2",
+  "engine": "ltx-diffusers-i2v",
+  "model": "Lightricks/LTX-Video",
+  "state": "candidate",
+  "candidateOnly": true,
+  "narrativeAuthority": false,
+  "publishToGame": false,
+  "character": "dominic",
+  "canonicalName": "Dominic",
+  "referenceCharacterKey": "lucas",
+  "sourceReuseForbidden": true,
+  "sourceVideoUsed": false,
+  "sceneNoveltyRequired": true,
+  "referenceSource": "fallback",
+  "clip": "candidate-01.mp4",
+  "settings": {
+    "width": 448,
+    "height": 768,
+    "frames": 49,
+    "fps": 12,
+    "steps": 10,
+    "seed": 260924
+  }
+}

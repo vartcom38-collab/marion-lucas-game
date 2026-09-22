@@ -1,0 +1,177 @@
+# MonIA Video V2 — isolated Kaggle GPU worker
+import base64
+import io
+import json
+import os
+from pathlib import Path
+
+import requests
+
+REPO = "vartcom38-collab/marion-lucas-game"
+BRANCH = os.environ.get("MONIA_V2_BRANCH", "monia-video-v2")
+RAW = f"https://raw.githubusercontent.com/{REPO}/{BRANCH}"
+WORK = Path("/kaggle/working/monia-video-v2")
+WORK.mkdir(parents=True, exist_ok=True)
+
+def fetch_text(url: str) -> str:
+    r = requests.get(url, timeout=120)
+    r.raise_for_status()
+    return r.text
+
+def fetch_json(url: str):
+    return json.loads(fetch_text(url))
+
+def decode_repo_b64(path: str) -> bytes:
+    payload = "".join(fetch_text(f"{RAW}/{path}").split())
+    payload += "=" * (-len(payload) % 4)
+    return base64.b64decode(payload)
+
+def find_job() -> dict:
+    embedded = globals().get("MONIA_EMBEDDED_JOB_B64")
+    if embedded:
+        try:
+            return json.loads(base64.b64decode(embedded).decode("utf-8"))
+        except Exception as exc:
+            raise RuntimeError(f"Invalid embedded MonIA V2 job: {exc}")
+    candidates = [
+        Path("/kaggle/working/job-v2.json"),
+        Path("/kaggle/src/job-v2.json"),
+        Path(__file__).resolve().parent / "job-v2.json",
+        Path("job-v2.json"),
+        Path("/kaggle/working/job.json"),
+        Path("/kaggle/src/job.json"),
+        Path(__file__).resolve().parent / "job.json",
+        Path("job.json"),
+    ]
+    for p in candidates:
+        if p.exists():
+            return json.loads(p.read_text(encoding="utf-8"))
+    return fetch_json(f"{RAW}/.monia-render-queue-v2/lucas-motion-proof-v1.json")
+
+def save_image_bytes(raw: bytes, target: Path) -> bool:
+    try:
+        img = Image.open(io.BytesIO(raw))
+        img.load()
+        img = img.convert("RGB")
+        target.parent.mkdir(parents=True, exist_ok=True)
+        img.save(target, "JPEG", quality=95)
+        return True
+    except Exception as exc:
+        print("Skipping invalid identity ref:", target.name, repr(exc))
+        return False
+
+job = find_job()
+assert job.get("generator") == "monia-video-v2"
+assert job.get("candidateOnly") is True
+assert job.get("narrativeAuthority") is False
+assert job.get("publishToGame") is False
+assert job.get("sourceReuseForbidden") is True, "V2 requires sourceReuseForbidden=true"
+
+cfg = fetch_json(f"{RAW}/config/monia-video-v2.json")
+refs_cfg = fetch_json(f"{RAW}/config/monia-reference-packs.json")
+character = job["character"]
+reference_character_key = job.get("referenceCharacterKey") or character
+character_cfg = refs_cfg["characters"][reference_character_key]
+video_cfg = character_cfg.get("video") or {}
+if video_cfg:
+    print("Existing character video metadata is available for motion analysis only; it will NOT be loaded as generation input.")
+
+# Dependencies are installed inside the Kaggle run so the V2 stays self-contained.
+os.system('python -m pip -q install -U "diffusers>=0.35.0" transformers accelerate safetensors imageio[ffmpeg] av huggingface_hub ftfy "pillow==11.3.0"')
+
+import torch
+from PIL import Image
+from diffusers import LTXImageToVideoPipeline
+from diffusers.utils import export_to_video, load_image
+
+if not torch.cuda.is_available():
+    raise RuntimeError("MonIA Video V2 requires a Kaggle GPU")
+
+print("GPU:", torch.cuda.get_device_name(0))
+print("Job:", job["id"], "Character:", character, "Reference key:", reference_character_key)
+
+job_dir = WORK / job["id"]
+job_dir.mkdir(parents=True, exist_ok=True)
+
+ref_path = job_dir / f"{character}-reference.jpg"
+priority = character_cfg.get("priorityImages") or []
+reference_source = None
+
+for idx, ref in enumerate(priority, start=1):
+    try:
+        raw = decode_repo_b64(ref)
+        if save_image_bytes(raw, ref_path):
+            reference_source = f"priority:{idx}"
+            print("Using canonical priority ref", idx)
+            break
+    except Exception as exc:
+        print("Priority ref failed:", idx, repr(exc))
+
+if reference_source is None:
+    fallback = character_cfg.get("fallbackImage")
+    if not fallback:
+        raise RuntimeError(f"No canonical reference available for {character}")
+    r = requests.get(fallback, timeout=120)
+    r.raise_for_status()
+    if not save_image_bytes(r.content, ref_path):
+        raise RuntimeError(f"Fallback canonical reference is invalid for {character}")
+    reference_source = "fallback"
+    print("Using fallback canonical reference")
+
+g = dict(cfg.get("defaults") or {})
+g.update(job.get("generation") or {})
+
+print("Loading model:", cfg["engine"]["model"])
+pipe = LTXImageToVideoPipeline.from_pretrained(
+    cfg["engine"]["model"],
+    torch_dtype=torch.float16
+)
+pipe.enable_model_cpu_offload()
+
+source = load_image(str(ref_path))
+generator = torch.Generator(device="cpu").manual_seed(int(g["seed"]))
+
+frames = pipe(
+    image=source,
+    prompt=job["prompt"],
+    negative_prompt=job.get("negativePrompt"),
+    width=int(g["width"]),
+    height=int(g["height"]),
+    num_frames=int(g["frames"]),
+    num_inference_steps=int(g["steps"]),
+    generator=generator,
+).frames[0]
+
+clip_name = "candidate-01.mp4"
+clip_path = job_dir / clip_name
+export_to_video(frames, str(clip_path), fps=int(g["fps"]))
+
+result = {
+    "jobId": job["id"],
+    "generator": "monia-video-v2",
+    "engine": cfg["engine"]["id"],
+    "model": cfg["engine"]["model"],
+    "state": "candidate",
+    "candidateOnly": True,
+    "narrativeAuthority": False,
+    "publishToGame": False,
+    "character": character,
+    "canonicalName": job.get("canonicalName") or character,
+    "referenceCharacterKey": reference_character_key,
+    "sourceReuseForbidden": True,
+    "sourceVideoUsed": False,
+    "sceneNoveltyRequired": bool((job.get("sceneNovelty") or {}).get("mustBeNew")),
+    "referenceSource": reference_source,
+    "clip": clip_name,
+    "settings": g,
+}
+(job_dir / "result.json").write_text(
+    json.dumps(result, ensure_ascii=False, indent=2),
+    encoding="utf-8"
+)
+(job_dir / "job.json").write_text(
+    json.dumps(job, ensure_ascii=False, indent=2),
+    encoding="utf-8"
+)
+
+print("MONIA_V2_OK", clip_path)

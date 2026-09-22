@@ -1,0 +1,25 @@
+{
+  "id": "lucas-new-scene-proof-v2",
+  "generator": "monia-video-v2",
+  "enabled": true,
+  "candidateOnly": true,
+  "narrativeAuthority": false,
+  "publishToGame": false,
+  "character": "lucas",
+  "sourceReuseForbidden": true,
+  "purpose": "Prove that MonIA V2 creates a genuinely new Lucas scene using references only for identity.",
+  "sceneNovelty": {
+    "mustBeNew": true,
+    "description": "Lucas alone in a quiet hotel room at night after returning from an event; this shot must not reproduce any source clip, source background, source camera angle or source action."
+  },
+  "prompt": "Create a completely new vertical cinematic scene featuring the exact same canonical man as the identity reference, but in a NEW environment and NEW action. Nighttime hotel room in Madrid, warm bedside lamp, dark window behind him, realistic lived-in room. Lucas stands near the window wearing a simple dark charcoal t-shirt. He slowly rolls one shoulder as if tired, exhales, glances down at something off-camera, then looks toward the camera with a subtle tired half-smile. Natural breathing, tiny weight shift, realistic human posture, restrained micro-expression. Camera is handheld but nearly still, medium close shot, cinematic realism, natural skin texture. Preserve exact face geometry, hair, eyes, nose, mouth, jaw, stubble and skin tone from the identity reference. The identity reference is ONLY for who he is; do NOT recreate its background, pose, framing or action.",
+  "negativePrompt": "copy of source video, same source background, same source pose, same source camera angle, reused footage, duplicated motion, different person, identity drift, face morphing, deformed face, tattoos, scars, beauty filter, plastic skin, exaggerated acting, talking, lip sync, text, logo, watermark, camera orbit, surreal motion",
+  "generation": {
+    "width": 448,
+    "height": 768,
+    "frames": 49,
+    "fps": 12,
+    "steps": 10,
+    "seed": 260923
+  }
+}

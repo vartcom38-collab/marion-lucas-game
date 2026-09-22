@@ -1,0 +1,21 @@
+{
+  "jobId": "lucas-motion-proof-v1",
+  "generator": "monia-video-v2",
+  "engine": "ltx-diffusers-i2v",
+  "model": "Lightricks/LTX-Video",
+  "state": "candidate",
+  "candidateOnly": true,
+  "narrativeAuthority": false,
+  "publishToGame": false,
+  "character": "lucas",
+  "referenceSource": "fallback",
+  "clip": "candidate-01.mp4",
+  "settings": {
+    "width": 448,
+    "height": 768,
+    "frames": 49,
+    "fps": 12,
+    "steps": 8,
+    "seed": 260922
+  }
+}
