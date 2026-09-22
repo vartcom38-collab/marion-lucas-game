@@ -46,7 +46,9 @@
       "playerIntents",
       "hiddenWorldOpportunities",
       "memoryWrites",
-      "exitRules"
+      "exitRules",
+      "sceneCopy",
+      "outfitContinuity"
     ],
     "choice_contract": [
       "id",
@@ -62,7 +64,8 @@
       "canonicalSubjects",
       "location",
       "era",
-      "sceneId"
+      "sceneId",
+      "outfitId"
     ]
   },
   "first_day_graph": [
@@ -89,6 +92,32 @@
           "Sortir maintenant",
           "D1_OUTSIDE"
         ]
+      ],
+      "timeWindow": "09:12-09:45",
+      "locationContext": "Chez Marion, Nîmes",
+      "entryConditions": [
+        "new run",
+        "day=1",
+        "year=1998"
+      ],
+      "sceneCopy": {
+        "title": "Chez Marion",
+        "subtitle": "Nîmes · un matin de mai 1998",
+        "narration": "Une nouvelle journée commence…",
+        "question": "Qu’est-ce que tu veux faire ?"
+      },
+      "outfitContinuity": "currentOutfitId is null until Marion chooses an outfit; once selected it is inherited by every compatible following scene and media request.",
+      "memoryWrites": [
+        "opening scene entered",
+        "Marine notification may be seen or ignored"
+      ],
+      "hiddenWorldOpportunities": [
+        "Marine can interrupt with a message while Marion is preparing"
+      ],
+      "exitRules": [
+        "reply_marine keeps Marion at home unless conversation changes plans",
+        "finish_getting_ready leads to D1_READY",
+        "wardrobe selection leads to D1_READY with outfitId persisted"
       ]
     },
     {
@@ -133,6 +162,75 @@
           "Prendre encore quelques minutes",
           "D1_HOME_BEAT"
         ]
+      ],
+      "timeWindow": "09:28-09:46",
+      "locationContext": "Chez Marion, Nîmes",
+      "entryConditions": [
+        "D1_MORNING_HOME resolved"
+      ],
+      "sceneCopy": {
+        "title": "Chez Marion",
+        "subtitle": "Nîmes · Marion est presque prête",
+        "narration": "La matinée avance.",
+        "question": "Et maintenant ?"
+      },
+      "outfitContinuity": "inherit currentOutfitId",
+      "memoryWrites": [
+        "preparation completed"
+      ],
+      "hiddenWorldOpportunities": [
+        "Marine conversation can continue",
+        "known agenda can become time-sensitive"
+      ],
+      "exitRules": [
+        "leave transitions to D1_OUTSIDE",
+        "wait advances clock without freezing world"
+      ]
+    },
+    {
+      "id": "D1_HOME_BEAT",
+      "timeWindow": "09:35-10:00",
+      "locationContext": "Chez Marion, Nîmes",
+      "entryConditions": [
+        "player chose to wait"
+      ],
+      "mediaVariants": [
+        "home_wait_A",
+        "home_wait_B"
+      ],
+      "sceneCopy": {
+        "title": "Chez Marion",
+        "subtitle": "Le temps passe doucement",
+        "narration": "Tu prends encore quelques minutes. Dehors, les autres continuent leur journée.",
+        "question": "Tu fais quoi ensuite ?"
+      },
+      "outfitContinuity": "inherit currentOutfitId",
+      "playerIntents": [
+        [
+          "leave",
+          "Partir",
+          "D1_OUTSIDE"
+        ],
+        [
+          "reply_marine",
+          "Regarder le message de Marine",
+          "D1_MARINE_THREAD"
+        ],
+        [
+          "check_agenda",
+          "Regarder ce qui est prévu",
+          "D1_AGENDA"
+        ]
+      ],
+      "hiddenWorldOpportunities": [
+        "new message",
+        "agenda pressure"
+      ],
+      "memoryWrites": [
+        "waited at home"
+      ],
+      "exitRules": [
+        "clock must advance"
       ]
     },
     {
@@ -158,6 +256,30 @@
           "Retrouver Marine",
           "D1_MARINE_MEET"
         ]
+      ],
+      "timeWindow": "09:46-10:30",
+      "locationContext": "Centre de Nîmes",
+      "entryConditions": [
+        "Marion left home"
+      ],
+      "sceneCopy": {
+        "title": "Nîmes",
+        "subtitle": "Mai 1998 · la ville est déjà éveillée",
+        "narration": "Tu viens de sortir. Rien ne t’annonce encore ce que la matinée va devenir.",
+        "question": "Qu’est-ce que tu fais ?"
+      },
+      "outfitContinuity": "inherit currentOutfitId in all Marion media",
+      "memoryWrites": [
+        "left home with current outfit"
+      ],
+      "hiddenWorldOpportunities": [
+        "ordinary city beat",
+        "Marine",
+        "cafe",
+        "Dominic encounter candidate only"
+      ],
+      "exitRules": [
+        "movement choices resolve through D1_WORLD_RESOLVE unless a known appointment is explicitly followed"
       ]
     },
     {
