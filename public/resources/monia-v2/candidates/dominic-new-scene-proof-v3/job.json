@@ -1,0 +1,27 @@
+{
+  "id": "dominic-new-scene-proof-v3",
+  "generator": "monia-video-v2",
+  "enabled": true,
+  "candidateOnly": true,
+  "narrativeAuthority": false,
+  "publishToGame": false,
+  "character": "dominic",
+  "referenceCharacterKey": "lucas",
+  "canonicalName": "Dominic",
+  "sourceReuseForbidden": true,
+  "purpose": "Generate a genuinely new Dominic scene using the historical Lucas reference pack only as identity authority.",
+  "sceneNovelty": {
+    "mustBeNew": true,
+    "description": "Dominic alone in a quiet hotel room at night after returning from an event; entirely new environment, action, framing and motion."
+  },
+  "prompt": "Create a completely new vertical cinematic scene featuring Dominic, matching the canonical identity reference exactly but performing a NEW action in a NEW environment. Nighttime hotel room in Madrid, warm bedside lamp, dark window behind him, realistic lived-in room. Dominic stands near the window wearing a simple dark charcoal t-shirt. He slowly rolls one shoulder as if tired, exhales, glances down at something off-camera, then looks toward the camera with a subtle tired half-smile. Natural breathing, tiny weight shift, realistic human posture, restrained micro-expression. Camera nearly still, medium close shot, cinematic realism, natural skin texture. Preserve exact face geometry, hair, eyes, nose, mouth, jaw, stubble and skin tone from the identity reference. The reference is ONLY for identity; do NOT recreate its background, pose, framing, action, or any source video.",
+  "negativePrompt": "copy of source video, same source background, same source pose, same source camera angle, reused footage, duplicated motion, different person, identity drift, face morphing, deformed face, tattoos, scars, beauty filter, plastic skin, exaggerated acting, talking, lip sync, text, logo, watermark, camera orbit, surreal motion",
+  "generation": {
+    "width": 448,
+    "height": 768,
+    "frames": 49,
+    "fps": 12,
+    "steps": 10,
+    "seed": 260924
+  }
+}
