@@ -5,6 +5,7 @@ export type VideoRequestV3={
  story:{day:number;time:string;phase:string;location?:string};
  characters:Array<{name:string;outfitId?:string|null;canonicalIdentityRequired:boolean}>;
  cameraCandidates:string[];durationTargetSeconds:[number,number];
+ staging?:{characters:Array<{name:string;screenSide?:string;posture?:string;gazeTarget?:string;gesture?:string;emotion?:string;distance?:string}>;interaction?:string};
  continuity:{token:any;location?:string;outfitMarion?:string|null;outfitDominic?:string|null};
  quality:{candidateOnly:boolean;requireIdentity:boolean;requireEyeStability:boolean;requireTemporalStability:boolean;requireWardrobeContinuity:boolean};
  prefetch:string[];
@@ -54,7 +55,8 @@ export const buildVideoJob=(r:VideoRequestV3,w:MoniaWorldState):VideoJob=>{
  const camera=r.cameraCandidates[0]||'cinematic';
  const backends=chooseVideoBackends(r);
  const base=`v3-${slug(r.sceneId)}-${slug(r.beatId)}-${w.clock.dayIndex}-${w.clock.time.replace(':','')}`;
- const prompt=`Photorealistic lived-life continuous video in ${r.story.location||'Nîmes'}. ${names} are the canonical people from bound identity references. Camera grammar: ${camera}. Natural human micro-movements, stable facial anatomy and gaze, physically plausible posture, coherent light/environment, exact wardrobe and identity continuity. One interactive story beat, never a montage, slideshow, advertisement or stylized clip.`;
+ const staging=(r.staging?.characters||[]).map(x=>`${x.name}: screen=${x.screenSide||'preserve'}, posture=${x.posture||'natural'}, gaze=${x.gazeTarget||'contextual'}, gesture=${x.gesture||'subtle'}, emotion=${x.emotion||'contextual'}, distance=${x.distance||'contextual'}`).join(' | ');
+ const prompt=`Photorealistic lived-life continuous video in ${r.story.location||'Nîmes'}. ${names} are the canonical people from bound identity references. Camera grammar: ${camera}. Blocking authority: ${staging||'natural lived blocking'}. Interaction authority: ${r.staging?.interaction||'natural independent body language'}. Natural human micro-movements, stable facial anatomy and gaze, physically plausible posture, coherent light/environment, exact wardrobe and identity continuity. One interactive story beat, never a montage, slideshow, advertisement or stylized clip.`;
  const candidates:VideoCandidate[]=backends.filter(x=>x!=='validated-cache').slice(0,2).map((backend,i)=>({id:`${base}-c${i+1}`,backend,state:'planned',purpose:'primary',rejections:[]}));
  const prefetch=(r.prefetch||[]).slice(0,3).map((branchId,i)=>({id:`${base}-prefetch-${i+1}`,branchId,priority:i+1,candidateOnly:true,narrativeAuthority:false,continuity:r.continuity,status:'planned'}));
  return {
@@ -62,7 +64,7 @@ export const buildVideoJob=(r:VideoRequestV3,w:MoniaWorldState):VideoJob=>{
   primaryCharacter:identity(r.characters[0]?.name||'Marion'),characters:r.characters.map(characterPack),
   prompt,
   negativePrompt:'identity drift, different person, face morphing, facial jitter, eye drift, crossed eyes, asymmetric eyes, malformed iris, malformed pupils, eyelid warping, gaze jump, repeated blink, plastic skin, mouth deformation, bad teeth, hand deformation, extra fingers, body morphing, wardrobe change, hairstyle change, temporal flicker, camera jump, text, captions, logo, watermark, illustration, CGI look',
-  generation:{router:'auto-v3',backendOrder:backends,selectionMode:'quality-first',candidateCount:candidates.length,width:768,height:432,frames:49,steps:12,fps:12,seed:w.seed,cameraCandidates:r.cameraCandidates},
+  generation:{staging:r.staging||null,router:'auto-v3',backendOrder:backends,selectionMode:'quality-first',candidateCount:candidates.length,width:768,height:432,frames:49,steps:12,fps:12,seed:w.seed,cameraCandidates:r.cameraCandidates},
   qualityGate:{required:true,policy:'config/monia-generation-quality.json',humanApprovalBeforeLive:true,failClosed:true,checks:qualityChecks(r),minimumIdentityScore:.94,minimumTemporalIdentityScore:.92},
   continuity:r.continuity,candidates,prefetch
  };
