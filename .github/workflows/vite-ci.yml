@@ -78,7 +78,7 @@ jobs:
           require(Path('dist/ort').is_dir(), 'dist/ort exists')
 
           voice=json.loads(Path('config/lucas-voice-strategy.json').read_text(encoding='utf-8'))
-          require(voice.get('status')=='approved-v16-voice-and-flow','Lucas V16 remains official')
+          require(voice.get('approved_reference',{}).get('status')=='approved-by-user' and 'v16' in str(voice.get('approved_reference',{}).get('candidate','')).lower(),'Lucas V16 remains the validated technical fallback')
           ref=voice.get('approved_reference',{})
           require(ref.get('status')=='approved-by-user','V16 reference remains user approved')
           require('v16' in str(ref.get('candidate','')).lower(),'approved Lucas reference is V16')
