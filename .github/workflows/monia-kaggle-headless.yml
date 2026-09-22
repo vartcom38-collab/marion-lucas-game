@@ -257,5 +257,34 @@ jobs:
             git push origin HEAD:main
           fi
 
+      - name: Publish candidate package to Infomaniak
+        env:
+          FTP_HOST: ${{ secrets.FTP_HOST }}
+          FTP_USER: ${{ secrets.FTP_USER }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          ACTUAL="${MONIA_ACTUAL_JOB_ID:-$MONIA_JOB_ID}"
+          LOCAL="public/resources/monia/candidates/$ACTUAL"
+          test -f "$LOCAL/result.json"
+          test -f "$LOCAL/quality-v3.json"
+          test -f "$LOCAL/shot-01.mp4"
+          if [ -z "${FTP_HOST:-}" ] || [ -z "${FTP_USER:-}" ] || [ -z "${FTP_PASSWORD:-}" ]; then
+            echo "Infomaniak FTP secrets are missing."
+            exit 2
+          fi
+          sudo apt-get update -qq
+          sudo apt-get install -y lftp
+          lftp -u "$FTP_USER","$FTP_PASSWORD" "$FTP_HOST" <<EOF
+          set ftp:ssl-force true
+          set ftp:ssl-protect-data true
+          set ssl:verify-certificate no
+          mkdir -p resources/monia/candidates/$ACTUAL
+          mirror -R --verbose --only-newer "$LOCAL/" "resources/monia/candidates/$ACTUAL/"
+          bye
+          EOF
+          echo "Published candidate package: $ACTUAL"
+
       - name: Note
-        run: echo "MonIA candidates collected for $MONIA_JOB_ID. No approved/live manifest is modified automatically."
+        run: echo "MonIA candidate $MONIA_JOB_ID generated, QA-preflighted, committed and published. No approved/live manifest is modified automatically."
