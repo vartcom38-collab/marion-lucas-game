@@ -2,6 +2,12 @@
 
 Objectif : construire le futur moteur vidéo gratuit de MonIA sans toucher au générateur actuel.
 
+## Nom canonique
+
+Le personnage masculin principal s'appelle désormais **Dominic**.
+
+Les anciens identifiants techniques contenant `lucas` sont conservés uniquement comme compatibilité avec les références historiques déjà présentes dans le dépôt. Ils ne doivent plus être utilisés comme nom de personnage dans les nouveaux jobs, prompts ou sorties.
+
 ## Isolation
 
 Ce V2 utilise exclusivement :
@@ -9,34 +15,25 @@ Ce V2 utilise exclusivement :
 - `kaggle/monia-video-v2/`
 - `config/monia-video-v2.json`
 - `public/resources/monia-v2/candidates/`
-- `.github/workflows/monia-video-v2-kaggle.yml`
 
-Le pipeline historique n'est ni appelé ni modifié.
+Le pipeline historique n'est ni remplacé ni utilisé comme source vidéo.
 
-## Phase 1
+## Règle de génération
 
-Test d'identité simple :
-- 1 personnage canonique ;
-- image de référence obligatoire ;
-- 4 secondes environ ;
-- mouvement naturel léger ;
-- aucune voix ;
-- aucune publication automatique dans le jeu.
+Les anciennes vidéos servent seulement de références de mouvement, présence et micro-expressions. Elles ne doivent jamais être utilisées comme vidéo source ou comme scène finale.
 
-Le moteur GPU de départ est LTX-Video via Diffusers, uniquement comme moteur open source sous l'orchestration MonIA V2. Il pourra être remplacé ensuite sans changer le contrat de job.
-
-## Contrat de job
-
-Exemple : `.monia-render-queue-v2/lucas-motion-proof-v1.json`.
-
-Le worker ne génère que des candidats. Il ne modifie jamais les manifests live et ne remplace aucune cinématique existante.
+Une génération V2 doit créer une **nouvelle scène** avec :
+- identité canonique de Dominic ;
+- nouveau décor ;
+- nouvelle action ;
+- nouveau cadrage ;
+- aucun recyclage de footage existant.
 
 ## Validation
 
-Un test est considéré réussi seulement si :
-1. le visage reste reconnaissable ;
+Un test est réussi seulement si :
+1. Dominic reste reconnaissable ;
 2. le mouvement est naturel ;
-3. la vidéo est lisible ;
-4. le résultat est écrit dans `public/resources/monia-v2/candidates/<jobId>/`.
-
-Ensuite seulement on ajoute : plans multiples, duo, visio, voix et lip-sync.
+3. la scène est réellement nouvelle ;
+4. aucune vidéo existante n'a servi d'entrée au rendu ;
+5. le résultat reste candidat et n'est pas publié automatiquement dans le jeu.
