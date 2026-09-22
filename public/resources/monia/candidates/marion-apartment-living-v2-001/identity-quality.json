@@ -1,0 +1,1 @@
+{"available": false, "backend": "none", "reason": "InsightFace/OpenCV non disponible. Aucun score d’identité n’est inventé; validation humaine requise.", "identityScore": null, "temporalIdentityScore": null, "facePresenceRate": null, "autoReject": false}

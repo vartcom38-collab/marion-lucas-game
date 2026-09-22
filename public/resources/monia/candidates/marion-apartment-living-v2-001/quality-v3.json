@@ -1,0 +1,16 @@
+{
+  "version": 3,
+  "jobId": "marion-apartment-living-v2-001",
+  "technicalPass": false,
+  "identityBackendAvailable": false,
+  "identityScore": null,
+  "temporalIdentityScore": null,
+  "facePresenceRate": null,
+  "autoReject": true,
+  "reasons": [
+    "candidate resolution below minimum portrait review target"
+  ],
+  "humanApprovalRequired": true,
+  "continuityLastFrame": "continuity-last-frame.jpg",
+  "note": "Automatic checks may reject obvious failures. They never auto-publish a candidate."
+}
