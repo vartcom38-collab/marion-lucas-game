@@ -89,6 +89,13 @@ jobs:
           user = os.environ['INFOMANIAK_FTP_USER'].strip()
           password = os.environ['INFOMANIAK_FTP_PASSWORD'].rstrip('\r\n')
           local_root = Path('dist')
+          # Production deploy is code/config-first. Large generated media are immutable
+          # and published by their dedicated generation workflows; re-uploading them
+          # on every code push is slow and can stall FTPES for many minutes.
+          skip_roots = (
+              'resources/monia/candidates/',
+              'resources/monia/generated/',
+          )
 
           ftp = None
           last_connect_error = None
@@ -175,7 +182,8 @@ jobs:
               remote_dir = remote_dir_for(local_dir)
               for filename in files:
                   local_path = local_dir / filename
-                  if local_path in entrypoints:
+                  rel = local_path.relative_to(local_root).as_posix()
+                  if local_path in entrypoints or any(rel.startswith(prefix) for prefix in skip_roots):
                       continue
                   upload_verified(local_path, remote_dir)
 
