@@ -3,6 +3,9 @@ import {registerCandidateResult,selectBestReviewCandidate,type VideoJob,type Vid
 const API='/api/monia-kaggle-dispatch.php';
 const ACTIVE='monia-video-v3-active';
 const STATUS='/api/monia-video-status.php';
+const PREFETCH_REV='monia-video-v3-prefetch-revision';
+let primaryBusy=false;
+const prefetchQueue:Array<{parentJobId:string;id:string;branchId:string;priority:number;continuity:any;revision:string}>=[];
 export type V3Execution={jobId:string;state:'queued'|'dispatching'|'generating'|'candidate-ready'|'regenerating'|'review'|'failed';candidateId?:string;detail?:string;updatedAt:number};
 
 function emit(s:V3Execution){try{sessionStorage.setItem(ACTIVE,JSON.stringify(s))}catch{};window.dispatchEvent(new CustomEvent('monia:video-v3-state',{detail:s}))}
@@ -69,10 +72,17 @@ async function dispatch(job:VideoJob,c:VideoCandidate,attempt=0,previousReasons:
  c.state='generating';emit({jobId:job.id,candidateId:c.id,state:'generating',detail:String(body.state||'queued'),updatedAt:Date.now()});
  return waitForCandidate(job,c);
 }
+async function drainPrefetch(){
+ if(primaryBusy||!prefetchQueue.length)return;
+ const item=prefetchQueue.sort((a,b)=>a.priority-b.priority).shift()!;
+ const current=sessionStorage.getItem(PREFETCH_REV)||'';
+ if(item.revision!==current)return void drainPrefetch();
+ window.dispatchEvent(new CustomEvent('monia:video-prefetch-ready',{detail:item}));
+}
 export async function executeVideoV3Job(job:VideoJob){
  const candidates=job.candidates.filter(c=>c.backend!=='validated-cache');
  if(!candidates.length)throw new Error('No generation candidate available');
- emit({jobId:job.id,state:'queued',updatedAt:Date.now()});
+ primaryBusy=true;emit({jobId:job.id,state:'queued',updatedAt:Date.now()});
  let last:unknown;let previousReasons:string[]=[];
  for(let i=0;i<candidates.length;i++){
   const c=candidates[i];
@@ -82,14 +92,23 @@ export async function executeVideoV3Job(job:VideoJob){
    if(c.state==='quality-rejected'||c.state==='technical-rejected'){
     previousReasons=[...c.rejections];last=new Error(previousReasons.join('; ')||'candidate rejected');continue;
    }
-   return result;
+   primaryBusy=false;void drainPrefetch();return result;
   }catch(e){
    last=e;c.state='technical-rejected';c.rejections.push(e instanceof Error?e.message:String(e));previousReasons=[...c.rejections];
   }
  }
  const detail=last instanceof Error?last.message:String(last||'all candidates rejected');
- emit({jobId:job.id,state:'failed',detail,updatedAt:Date.now()});throw last;
+ primaryBusy=false;void drainPrefetch();emit({jobId:job.id,state:'failed',detail,updatedAt:Date.now()});throw last;
 }
 export function installVideoV3Executor(){
+ window.addEventListener('monia:video-prefetch-planned',((e:CustomEvent)=>{
+  const d=e.detail||{};if(!d.id||!d.branchId)return;
+  const revision=String(d.continuity?.token||d.parentJobId||Date.now());
+  sessionStorage.setItem(PREFETCH_REV,revision);
+  // Keep only the highest-priority likely branch for free GPU economy; stale revisions are discarded.
+  prefetchQueue.splice(0,prefetchQueue.length,{parentJobId:String(d.parentJobId),id:String(d.id),branchId:String(d.branchId),priority:Number(d.priority||1),continuity:d.continuity||{},revision});
+  void drainPrefetch();
+ }) as EventListener);
+ window.addEventListener('monia:video-approved',(()=>{void drainPrefetch()}) as EventListener);
  window.addEventListener('monia:video-job-ready',((e:CustomEvent)=>{const job=e.detail?.job as VideoJob|undefined;if(!job)return;void executeVideoV3Job(job).catch(err=>console.error('[MonIA Video V3]',err))}) as EventListener);
 }
