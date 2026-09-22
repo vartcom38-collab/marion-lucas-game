@@ -1,20 +1,47 @@
-import type {VideoJob,VideoCandidate} from '../monia-video-orchestrator';
+import {registerCandidateResult,selectBestReviewCandidate,type VideoJob,type VideoCandidate} from '../monia-video-orchestrator';
 
 const API='/api/monia-kaggle-dispatch.php';
 const ACTIVE='monia-video-v3-active';
+const STATUS='/api/monia-video-status.php';
 export type V3Execution={jobId:string;state:'queued'|'dispatching'|'generating'|'candidate-ready'|'review'|'failed';candidateId?:string;detail?:string;updatedAt:number};
 
 function emit(s:V3Execution){try{sessionStorage.setItem(ACTIVE,JSON.stringify(s))}catch{};window.dispatchEvent(new CustomEvent('monia:video-v3-state',{detail:s}))}
 function gpuPayload(job:VideoJob,c:VideoCandidate){
  return {...job,id:c.id,candidates:undefined,prefetch:undefined,generation:{...job.generation,selectedBackend:c.backend,candidateCount:1},candidateOnly:true,narrativeAuthority:false};
 }
+
+const sleep=(ms:number)=>new Promise(r=>setTimeout(r,ms));
+async function waitForCandidate(job:VideoJob,c:VideoCandidate){
+ for(let attempt=0;attempt<180;attempt++){
+  await sleep(attempt<12?5000:15000);
+  const r=await fetch(`${STATUS}?id=${encodeURIComponent(c.id)}&t=${Date.now()}`,{cache:'no-store',credentials:'same-origin'}).catch(()=>null);
+  if(!r)continue;
+  if(r.status===202)continue;
+  const body=await r.json().catch(()=>null);
+  if(!r.ok||!body?.ok)continue;
+  if(body.state==='candidate'&&Array.isArray(body.clips)&&body.clips.length){
+   const safe=body.candidateOnly===true&&body.narrativeAuthority===true;
+   const result=body.result||{};
+   const technicalPass=safe&&result.state==='candidate';
+   // Existing Kaggle worker proves technical candidate status only. Identity/temporal scores are not fabricated.
+   registerCandidateResult(job,{candidateId:c.id,url:body.clips[0],technicalPass,qualityPass:undefined,rejections:technicalPass?[]:['candidate safety flags invalid']});
+   emit({jobId:job.id,candidateId:c.id,state:'candidate-ready',detail:body.clips[0],updatedAt:Date.now()});
+   const review=selectBestReviewCandidate(job);
+   if(review)emit({jobId:job.id,candidateId:review.id,state:'review',detail:review.url,updatedAt:Date.now()});
+   window.dispatchEvent(new CustomEvent('monia:video-review-required',{detail:{job,candidate:review||c,clips:body.clips,qualityPolicy:job.qualityGate}}));
+   return body;
+  }
+ }
+ throw new Error('candidate polling timeout');
+}
+
 async function dispatch(job:VideoJob,c:VideoCandidate){
  c.state='queued';emit({jobId:job.id,candidateId:c.id,state:'dispatching',updatedAt:Date.now()});
  const res=await fetch(API,{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json'},body:JSON.stringify({job:gpuPayload(job,c)})});
  const body=await res.json().catch(()=>({}));
  if(!res.ok||body?.ok!==true)throw new Error(body?.error||`dispatch HTTP ${res.status}`);
  c.state='generating';emit({jobId:job.id,candidateId:c.id,state:'generating',detail:String(body.state||'queued'),updatedAt:Date.now()});
- return body;
+ return waitForCandidate(job,c);
 }
 export async function executeVideoV3Job(job:VideoJob){
  const candidates=job.candidates.filter(c=>c.backend!=='validated-cache');
