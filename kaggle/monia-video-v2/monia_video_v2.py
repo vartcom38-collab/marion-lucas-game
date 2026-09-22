@@ -55,11 +55,15 @@ assert job.get("generator") == "monia-video-v2"
 assert job.get("candidateOnly") is True
 assert job.get("narrativeAuthority") is False
 assert job.get("publishToGame") is False
+assert job.get("sourceReuseForbidden") is True, "V2 requires sourceReuseForbidden=true"
 
 cfg = fetch_json(f"{RAW}/config/monia-video-v2.json")
 refs_cfg = fetch_json(f"{RAW}/config/monia-reference-packs.json")
 character = job["character"]
 character_cfg = refs_cfg["characters"][character]
+video_cfg = character_cfg.get("video") or {}
+if video_cfg:
+    print("Existing character video metadata is available for motion analysis only; it will NOT be loaded as generation input.")
 
 # Dependencies are installed inside the Kaggle run so the V2 stays self-contained.
 os.system('python -m pip -q install -U "diffusers>=0.35.0" transformers accelerate safetensors imageio[ffmpeg] av huggingface_hub ftfy "pillow==11.3.0"')
@@ -141,6 +145,9 @@ result = {
     "narrativeAuthority": False,
     "publishToGame": False,
     "character": character,
+    "sourceReuseForbidden": True,
+    "sourceVideoUsed": False,
+    "sceneNoveltyRequired": bool((job.get("sceneNovelty") or {}).get("mustBeNew")),
     "referenceSource": reference_source,
     "clip": clip_name,
     "settings": g,
