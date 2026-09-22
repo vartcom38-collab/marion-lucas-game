@@ -29,8 +29,12 @@ def decode_repo_b64(path: str) -> bytes:
 def find_job() -> dict:
     candidates = [
         Path("/kaggle/working/job-v2.json"),
+        Path("/kaggle/src/job-v2.json"),
+        Path(__file__).resolve().parent / "job-v2.json",
         Path("job-v2.json"),
         Path("/kaggle/working/job.json"),
+        Path("/kaggle/src/job.json"),
+        Path(__file__).resolve().parent / "job.json",
         Path("job.json"),
     ]
     for p in candidates:
