@@ -172,9 +172,10 @@ jobs:
           python - <<'PY'
           import json, os
           from pathlib import Path
-          p=Path('public/resources/monia/candidates')/os.environ['MONIA_JOB_ID']/'result.json'
+          actual=os.environ.get('MONIA_ACTUAL_JOB_ID') or os.environ['MONIA_JOB_ID']
+          p=Path('public/resources/monia/candidates')/actual/'result.json'
           data=json.loads(p.read_text(encoding='utf-8'))
-          assert data.get('jobId') == os.environ['MONIA_JOB_ID']
+          assert data.get('jobId') == actual
           assert data.get('state') == 'candidate'
           assert data.get('candidateOnly') is True
           assert data.get('narrativeAuthority') is False
@@ -192,12 +193,12 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          DEST="public/resources/monia/candidates/$MONIA_JOB_ID"
+          DEST="public/resources/monia/candidates/${MONIA_ACTUAL_JOB_ID:-$MONIA_JOB_ID}"
           git add "$DEST"
           if git diff --cached --quiet; then
             echo "Candidates unchanged; nothing to commit."
           else
-            git commit -m "MonIA candidate package $MONIA_JOB_ID"
+            git commit -m "MonIA candidate package ${MONIA_ACTUAL_JOB_ID:-$MONIA_JOB_ID}"
             git push origin HEAD:main
           fi
 
