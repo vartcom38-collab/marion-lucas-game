@@ -1,15 +1,15 @@
 {
-  "id": "marion-apartment-living-001",
+  "id": "marion-apartment-living-v2-001",
   "state": "queued",
   "createdAt": "2026-09-22T13:45:00+02:00",
   "source": "monia-native-image-to-video",
   "candidateOnly": true,
   "narrativeAuthority": false,
   "sceneFamily": "apartment-morning-living",
-  "signature": "MONIA_MARION_APARTMENT_LIVING_V1",
+  "signature": "MONIA_MARION_APARTMENT_LIVING_V2_FACE_LOCK",
   "primaryCharacter": "marion",
-  "prompt": "Animate the supplied approved Marion apartment master as a photorealistic living gameplay plate. The source image is absolute identity, wardrobe, prop, lighting and composition authority. Marion remains seated with her coffee. Identity stability is more important than motion.",
-  "negativePrompt": "identity drift, face morphing, different woman, beautification, age change, eye drift, mouth drift, teeth change, hand deformation, extra fingers, mug deformation, object drift, new objects, camera movement, zoom, pan, orbit, reframing, dialogue, lip sync, exaggerated acting, text changes, subtitles, watermark, UI",
+  "prompt": "Animate the supplied approved Marion apartment master as an ultra-stable photorealistic living plate. SOURCE IMAGE IS ABSOLUTE PIXEL-LEVEL IDENTITY AUTHORITY. Preserve Marion's face, especially both eyes, eyelids, iris position, pupils, brows, nose, mouth, mole, skin texture and facial proportions. Face stability outranks motion. Marion remains seated holding her coffee. No facial performance.",
+  "negativePrompt": "identity drift, face morphing, eye drift, wandering eyes, crossed eyes, asymmetrical eyes, iris deformation, pupil deformation, eyelid warping, unnatural blink, repeated blinking, gaze jump, facial jitter, face flicker, mouth drift, lip movement, teeth, different woman, beautification, age change, skin smoothing, hand deformation, extra fingers, mug deformation, object drift, new objects, camera movement, zoom, pan, orbit, reframing, dialogue, lip sync, exaggerated acting, text changes, subtitles, watermark, UI",
   "characters": [
     {
       "id": "marion",
@@ -22,10 +22,11 @@
     "referenceId": "approved-marion-apartment-master-2026-09-22",
     "tags": [
       "micro-motion",
-      "natural-breathing",
-      "subtle-blinks",
+      "breathing-only",
+      "eyes-held-stable",
+      "locked-gaze",
       "locked-camera",
-      "living-gameplay-plate"
+      "face-priority"
     ],
     "copyIdentity": true
   },
@@ -34,11 +35,11 @@
     "router": "ltx",
     "width": 768,
     "height": 448,
-    "frames": 121,
-    "steps": 8,
+    "frames": 49,
+    "steps": 16,
     "fps": 12,
-    "seconds": 10,
-    "seed": 220926,
+    "seconds": 4,
+    "seed": 220927,
     "shotCount": 1,
     "shotCharacters": [
       "marion"
@@ -50,10 +51,10 @@
       null
     ],
     "shotPrompts": [
-      "SHOT 1 — MARION APARTMENT MORNING, LIVING GAMEPLAY PLATE. Use the supplied approved Marion apartment image as literal visual and identity authority. Keep the exact same recognizable woman, face geometry, eyes, nose, mouth, cheek mole, hair, body proportions, cream knit clothing, coffee mug, sofa, apartment, plants and warm morning light. Marion stays seated holding the mug. MICRO-MOTION ONLY: gentle natural breathing, two or three subtle blinks across the shot, tiny eye-focus changes, minute head and shoulder settling, one tiny natural finger adjustment on the mug. Almost imperceptible hair and knit-fabric movement; plants and sunlight may shift extremely subtly. CAMERA LOCKED: no zoom, pan, orbit, dolly, reframing or lens change. No speech and no deliberate lip movement. Do not beautify, redesign, age, de-age or morph Marion. End visually close to the starting pose for a natural loop. Identity stability is the highest priority."
+      "SHOT 1 — MARION APARTMENT MORNING — FACE-LOCK V2 TEST. Treat the supplied approved Marion image as literal pixel-level identity authority. Marion must remain the exact same recognizable woman. LOCK THE FACE: preserve exact eye shape, iris/pupil geometry and direction, eyelids, eyebrows, nose, lips, cheek mole, jaw and skin texture frame-to-frame. Keep her gaze essentially fixed. NO BLINKS in this test. NO mouth movement. NO head turn. Motion budget goes to torso breathing and a nearly imperceptible shoulder/finger settling only. Exact cream knit clothing, mug, sofa, plants, apartment and warm light. CAMERA ABSOLUTELY LOCKED. Identity and temporal facial stability outrank visible motion."
     ]
   },
   "output": {
-    "candidatePath": "public/resources/monia/candidates/marion-apartment-living-001/"
+    "candidatePath": "public/resources/monia/candidates/marion-apartment-living-v2-001/"
   }
 }
