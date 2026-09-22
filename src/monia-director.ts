@@ -5,6 +5,7 @@ export type DirectorCandidate={
  sceneId:string; label:string; minMinute:number; maxMinute:number;
  requiresOutside?:boolean; requiresMetDominic?:boolean; forbidsMetDominic?:boolean;
  participants:string[]; camera:string[]; durationMinutes:[number,number]; baseWeight:number;
+ staging?:Record<string,{screenSide?:'left'|'center'|'right';posture?:string;gazeTarget?:string;gesture?:string;emotion?:string;distance?:string}>;
 };
 export type DirectorDecision={candidate:DirectorCandidate;score:number;reason:string;prefetch:string[]};
 
@@ -15,7 +16,7 @@ const DAY1:DirectorCandidate[]=[
 {id:'home-life',kind:'ordinary',sceneId:'D1_MORNING_HOME',label:'Continuer la matinée chez Marion',minMinute:552,maxMinute:650,participants:['Marion'],camera:['cinematic-single-character','environmental'],durationMinutes:[6,18],baseWeight:8},
 {id:'city-walk',kind:'ordinary',sceneId:'D1_MORNING_CITY',label:'Vivre un moment ordinaire en ville',minMinute:575,maxMinute:900,requiresOutside:true,participants:['Marion'],camera:['POV-Marion','cinematic-single-character','environmental'],durationMinutes:[5,20],baseWeight:10},
 {id:'marine-social',kind:'social',sceneId:'D1_MARINE_MEET',label:'Croiser ou retrouver Marine',minMinute:590,maxMinute:1120,requiresOutside:true,participants:['Marion','Marine'],camera:['cinematic-two-character','over-shoulder'],durationMinutes:[10,35],baseWeight:5},
-{id:'dominic-first',kind:'encounter',sceneId:'D1_FIRST_ENCOUNTER',label:'Première rencontre avec Dominic',minMinute:600,maxMinute:930,requiresOutside:true,forbidsMetDominic:true,participants:['Marion','Dominic'],camera:['cinematic-two-character','over-shoulder','POV-Marion'],durationMinutes:[5,20],baseWeight:2},
+{id:'dominic-first',kind:'encounter',sceneId:'D1_FIRST_ENCOUNTER',label:'Première rencontre avec Dominic',minMinute:600,maxMinute:930,requiresOutside:true,forbidsMetDominic:true,participants:['Marion','Dominic'],camera:['cinematic-two-character','over-shoulder','POV-Marion'],durationMinutes:[5,20],baseWeight:2,staging:{Marion:{screenSide:'left',posture:'natural, slightly reserved',gazeTarget:'Dominic then briefly away',gesture:'small restrained hand movement',emotion:'curious, alert, not instantly romantic',distance:'social conversational distance'},Dominic:{screenSide:'right',posture:'relaxed upright presence',gazeTarget:'Marion with natural breaks',gesture:'minimal confident micro-gestures',emotion:'attentive, intrigued, composed',distance:'social conversational distance'}}},
 {id:'post-encounter-life',kind:'ordinary',sceneId:'D1_AFTERNOON',label:'Continuer la journée après la rencontre',minMinute:720,maxMinute:1110,requiresOutside:true,requiresMetDominic:true,participants:['Marion'],camera:['cinematic-single-character','environmental'],durationMinutes:[10,30],baseWeight:9},
 {id:'evening',kind:'transition',sceneId:'D1_EVENING',label:'Entrer dans la soirée',minMinute:1080,maxMinute:1350,participants:['Marion'],camera:['cinematic-single-character','environmental'],durationMinutes:[10,30],baseWeight:10},
 {id:'night',kind:'night',sceneId:'D1_NIGHT',label:'Finir la journée',minMinute:1290,maxMinute:1439,participants:['Marion'],camera:['cinematic-single-character'],durationMinutes:[10,30],baseWeight:10}
@@ -67,6 +68,7 @@ export const buildVideoRequest=(w:MoniaWorldState,d:DirectorDecision)=>({
  story:{day:w.clock.dayIndex,time:w.clock.time,phase:w.clock.phase,location:w.marion.location},
  characters:d.candidate.participants.map(name=>({name,outfitId:name==='Marion'?w.marion.outfitId:w.dominic.outfitId,canonicalIdentityRequired:true})),
  cameraCandidates:d.candidate.camera,durationTargetSeconds:[4,12],
+ staging:{characters:d.candidate.participants.map(name=>({name,...(d.candidate.staging?.[name]||{posture:'natural lived posture',gazeTarget:'contextual',gesture:'subtle natural micro-movement',emotion:'contextual'})})),interaction:d.candidate.participants.length>1?'preserve believable interpersonal distance, eyelines and independent body language':'natural solo lived action'},
  continuity:{token:w.runtime.continuityToken||null,location:w.marion.location,outfitMarion:w.marion.outfitId,outfitDominic:w.dominic.outfitId},
  quality:{candidateOnly:true,requireIdentity:true,requireEyeStability:true,requireTemporalStability:true,requireWardrobeContinuity:true},
  prefetch:d.prefetch
