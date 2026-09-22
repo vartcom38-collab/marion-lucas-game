@@ -52,19 +52,20 @@ const qualityChecks=(r:VideoRequestV3)=>[
 
 export const buildVideoJob=(r:VideoRequestV3,w:MoniaWorldState):VideoJob=>{
  const names=r.characters.map(x=>x.name).join(' and ');
- const camera=r.cameraCandidates[0]||'cinematic';
+ const requestedCamera=r.cameraCandidates[0]||'cinematic';
+ const camera=/front|visio|selfie|handheld-by-character/i.test(requestedCamera)?'external cinematic observer camera; nobody holds, touches or looks into the camera':requestedCamera;
  const backends=chooseVideoBackends(r);
  const base=`v3-${slug(r.sceneId)}-${slug(r.beatId)}-${w.clock.dayIndex}-${w.clock.time.replace(':','')}`;
  const staging=(r.staging?.characters||[]).map(x=>`${x.name}: screen=${x.screenSide||'preserve'}, posture=${x.posture||'natural'}, gaze=${x.gazeTarget||'contextual'}, gesture=${x.gesture||'subtle'}, emotion=${x.emotion||'contextual'}, distance=${x.distance||'contextual'}`).join(' | ');
- const prompt=`Photorealistic lived-life continuous video in ${r.story.location||'Nîmes'}. ${names} are the canonical people from bound identity references. Camera grammar: ${camera}. Blocking authority: ${staging||'natural lived blocking'}. Interaction authority: ${r.staging?.interaction||'natural independent body language'}. Natural human micro-movements, stable facial anatomy and gaze, physically plausible posture, coherent light/environment, exact wardrobe and identity continuity. One interactive story beat, never a montage, slideshow, advertisement or stylized clip.`;
+ const prompt=`Photorealistic lived-life continuous video in ${r.story.location||'Nîmes'}. ${names} are the canonical people from bound identity references. Camera grammar: ${camera}. Blocking authority: ${staging||'natural lived blocking'}. Interaction authority: ${r.staging?.interaction||'natural independent body language'}. Natural full-body lived action with meaningful pose change and interaction with the environment, stable facial anatomy and gaze, physically plausible posture, coherent light/environment, exact wardrobe and identity continuity. The camera is an external invisible observer: no character holds the camera, no selfie, no phone-as-camera, no direct-to-lens performance. One interactive story beat, never a montage, slideshow, advertisement, stylized clip or animated still.`;
  const candidates:VideoCandidate[]=backends.filter(x=>x!=='validated-cache').slice(0,2).map((backend,i)=>({id:`${base}-c${i+1}`,backend,state:'planned',purpose:'primary',rejections:[]}));
  const prefetch=(r.prefetch||[]).slice(0,3).map((branchId,i)=>({id:`${base}-prefetch-${i+1}`,branchId,priority:i+1,candidateOnly:true,narrativeAuthority:false,continuity:r.continuity,status:'planned'}));
  return {
   id:base,candidateOnly:true,narrativeAuthority:false,schemaVersion:3,sourceRequest:r,
   primaryCharacter:identity(r.characters[0]?.name||'Marion'),characters:r.characters.map(characterPack),
   prompt,
-  negativePrompt:'identity drift, different person, face morphing, facial jitter, eye drift, crossed eyes, asymmetric eyes, malformed iris, malformed pupils, eyelid warping, gaze jump, repeated blink, plastic skin, mouth deformation, bad teeth, hand deformation, extra fingers, body morphing, wardrobe change, hairstyle change, temporal flicker, camera jump, text, captions, logo, watermark, illustration, CGI look',
-  generation:{staging:r.staging||null,router:'auto-v3',backendOrder:backends,selectionMode:'quality-first',candidateCount:candidates.length,width:768,height:432,frames:49,steps:12,fps:12,seed:w.seed,cameraCandidates:r.cameraCandidates},
+  negativePrompt:'identity drift, different person, face morphing, facial jitter, eye drift, crossed eyes, asymmetric eyes, malformed iris, malformed pupils, eyelid warping, gaze jump, repeated blink, plastic skin, mouth deformation, bad teeth, hand deformation, extra fingers, body morphing, wardrobe change, hairstyle change, temporal flicker, camera jump, selfie, character holding camera, arm extended toward camera, phone filming, direct-to-lens vlog, static pose, animated still, text, captions, logo, watermark, illustration, CGI look',
+  generation:{staging:r.staging||null,router:'auto-v3',backendOrder:backends,selectionMode:'quality-first',candidateCount:candidates.length,width:768,height:448,frames:49,steps:12,fps:12,seed:w.seed,cameraCandidates:r.cameraCandidates},
   qualityGate:{required:true,policy:'config/monia-generation-quality.json',humanApprovalBeforeLive:true,failClosed:true,checks:qualityChecks(r),minimumIdentityScore:.94,minimumTemporalIdentityScore:.92},
   continuity:r.continuity,candidates,prefetch
  };
