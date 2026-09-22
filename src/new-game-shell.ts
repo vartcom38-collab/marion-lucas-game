@@ -1,5 +1,5 @@
 import './new-game-shell.css';
-import {bridgeLegacyState,loadWorldState,saveWorldState,writeWorldEvent} from './monia-world-state';
+import {bridgeLegacyState,loadWorldState,saveWorldState,syncLegacyFromWorld,writeWorldEvent} from './monia-world-state';
 import {applyDirectorDecision,buildVideoRequest,directNextBeat} from './monia-director';
 import {handleVideoRequest} from './monia-video-orchestrator';
 import {installVideoV3Executor} from './monia/video-v3-executor';
@@ -147,7 +147,7 @@ window.addEventListener('monia:consequence',((e:CustomEvent)=>{const d=e.detail|
 }
 window.addEventListener('DOMContentLoaded',()=>setTimeout(mount,80));setTimeout(mount,600);window.addEventListener('marion:new-game-shell',()=>{resetNewGameState();mount()});
 
-window.addEventListener('monia:world-write',((e:CustomEvent)=>{writeWorldEvent(worldState,e.detail||{type:'runtime'});bridgeLegacyState(worldState,state);saveWorldState(worldState)}) as EventListener);
+window.addEventListener('monia:world-write',((e:CustomEvent)=>{writeWorldEvent(worldState,e.detail||{type:'runtime'});syncLegacyFromWorld(state,worldState);saveWorldState(worldState)}) as EventListener);
 window.addEventListener('monia:director-next',(()=>{bridgeLegacyState(worldState,state);const decision=directNextBeat(worldState);applyDirectorDecision(worldState,decision);saveWorldState(worldState);window.dispatchEvent(new CustomEvent('monia:director-decision',{detail:decision}));window.dispatchEvent(new CustomEvent('monia:video-request-v3',{detail:buildVideoRequest(worldState,decision)}))}) as EventListener);
 window.addEventListener('monia:video-request-v3',((e:CustomEvent)=>{bridgeLegacyState(worldState,state);handleVideoRequest(e.detail,worldState)}) as EventListener);
 window.addEventListener('monia:gameplay-state',()=>{bridgeLegacyState(worldState,state);saveWorldState(worldState);const r=document.getElementById('newGameShell');if(r){const e=new Event('ng:refresh');r.dispatchEvent(e)}});
