@@ -1,0 +1,281 @@
+{
+  "version": "2.0",
+  "title": "MARION & DOMINIC — Master Game Skeleton",
+  "authority": "canonical-gameplay-architecture",
+  "corePromise": "Every story day is lived. The primary experience is continuous photorealistic interactive video driven by persistent world state; phone, agenda, dressing, memories and spontaneous visio are diegetic layers around it.",
+  "nonNegotiables": [
+    "Start in Nîmes in May 1998 with Marion living an ordinary morning before Dominic enters her life.",
+    "Dominic is autonomous and is never summoned by a player button.",
+    "Day 1 contains a Dominic encounter in the day, but its exact timing, place and circumstances are resolved by the hidden director from plausible situations.",
+    "Every calendar day exists and advances through morning, midday, afternoon, evening and night; quiet days are still lived rather than skipped by default.",
+    "Video is the primary gameplay surface, not decoration. Marion may be visible on camera; scenes may show Marion and Dominic together.",
+    "Choices appear at natural dramatic beats and update persistent state rather than merely selecting a pre-rendered branch.",
+    "Phone/messages/calls/visio/agenda/dressing/memories can interrupt or overlay the current lived scene.",
+    "Outfit, age, appearance, relationships, promises, conflicts, locations and memories persist into later generated scenes.",
+    "Replay must vary while chronology, causality and canon remain coherent.",
+    "No generated media becomes live solely because generation succeeded; identity and visual quality gates are mandatory."
+  ],
+  "timeModel": {
+    "start": {
+      "city": "Nîmes",
+      "month": 5,
+      "year": 1998,
+      "dayIndex": 1,
+      "time": "09:12"
+    },
+    "dayPhases": [
+      "morning",
+      "midday",
+      "afternoon",
+      "evening",
+      "night"
+    ],
+    "rule": "Actions consume story time. NPC schedules and hidden events advance while Marion acts, waits, travels, ignores a call or sleeps.",
+    "sleep": "Night resolution closes the day, writes memories/consequences, advances calendar, schedules pending world events and prepares likely next-day media."
+  },
+  "worldState": {
+    "clock": [
+      "storyDate",
+      "storyTime",
+      "dayIndex",
+      "phase",
+      "season",
+      "era"
+    ],
+    "marion": [
+      "location",
+      "activity",
+      "currentOutfitId",
+      "appearanceState",
+      "energy",
+      "mood",
+      "knowledge",
+      "commitments",
+      "inventory",
+      "phoneState"
+    ],
+    "dominic": [
+      "met",
+      "contactStage",
+      "locationHidden",
+      "scheduleHidden",
+      "activityHidden",
+      "currentOutfitId",
+      "appearanceState",
+      "moodHidden",
+      "intentionsHidden",
+      "relationshipToMarion",
+      "knowledgeOfMarion",
+      "availabilityHidden"
+    ],
+    "relationships": "Per pair: familiarity, trust, attraction, affection, tension, conflict, intimacy, commitments, boundaries, unresolvedTopics. Values influence possibilities but never expose gamey meters in the main UI.",
+    "continuity": [
+      "memories",
+      "promises",
+      "lies",
+      "arguments",
+      "sharedEvents",
+      "photos",
+      "messages",
+      "calls",
+      "invitations",
+      "calendarEvents",
+      "outfitHistory",
+      "locationHistory"
+    ],
+    "future": [
+      "scheduledEvents",
+      "conditionalEvents",
+      "hiddenOpportunities",
+      "longArcFlags",
+      "lifeState"
+    ]
+  },
+  "dayLoop": [
+    {
+      "id": "WAKE",
+      "purpose": "Enter the exact persistent state inherited from the previous night."
+    },
+    {
+      "id": "LIVE",
+      "purpose": "Play continuous video beats of ordinary life and active story events."
+    },
+    {
+      "id": "INTERRUPT",
+      "purpose": "Allow autonomous SMS, calls, visio, invitations and world events without stopping the world."
+    },
+    {
+      "id": "DECIDE",
+      "purpose": "At natural beats, expose a small set of intentions plus contextual/freeform interaction where supported."
+    },
+    {
+      "id": "RESOLVE",
+      "purpose": "Update time, memories, relationships, schedules and hidden consequences."
+    },
+    {
+      "id": "DIRECT",
+      "purpose": "Hidden director chooses the next plausible beat from state, schedules, canon, anti-repeat and run seed."
+    },
+    {
+      "id": "PREFETCH",
+      "purpose": "Prepare likely video continuations before the current segment ends."
+    },
+    {
+      "id": "NIGHT",
+      "purpose": "Resolve the day and seed tomorrow without resetting state."
+    }
+  ],
+  "narrativeScale": {
+    "day": "Dense lived timeline with ordinary beats, encounters, communications, travel, choices and surprises.",
+    "week": "Schedules, recurring habits, unresolved conversations, invitations and consequences.",
+    "month": "Relationship evolution, social arcs, changing routines, seasonal events and medium-term consequences.",
+    "year": "Era progression, birthdays, work/life changes and major relationship/life possibilities.",
+    "multiYear": "Dating/couple/marriage/pregnancy/children and other life states are conditional outcomes, never forced menu milestones."
+  },
+  "eventSystem": {
+    "classes": [
+      "ordinary",
+      "scheduled",
+      "conditional",
+      "autonomous-npc",
+      "relationship",
+      "social",
+      "surprise",
+      "life-anchor"
+    ],
+    "eligibility": "An event is eligible only when chronology, location, participant availability, knowledge, memories, relationship state and exclusions all agree.",
+    "selection": "Hidden director scores eligible events for plausibility, continuity, pacing, novelty and character autonomy; player never sees hidden candidate lists.",
+    "antiRepeat": [
+      "recent scene family",
+      "recent dialogue topic",
+      "recent location beat",
+      "recent interruption type",
+      "recent camera grammar"
+    ]
+  },
+  "day1": {
+    "fixedTruths": [
+      "Marion begins at home in Nîmes in May 1998.",
+      "Marine can contact Marion during the morning.",
+      "Dominic is not known/contactable at launch.",
+      "Marion lives her morning and leaves/acts according to player choices.",
+      "Marion encounters Dominic during Day 1, but not on launch and not via a Dominic button."
+    ],
+    "variable": [
+      "exact encounter time",
+      "exact encounter location",
+      "what Marion is doing",
+      "what Dominic is doing",
+      "whether Marine is present/relevant",
+      "camera grammar",
+      "first words/reaction",
+      "how long encounter lasts",
+      "whether contact details are exchanged immediately or later"
+    ],
+    "afterEncounter": "Ordinary life continues. Dominic becomes an autonomous world actor; future contact depends on what actually happened."
+  },
+  "videoRuntime": {
+    "unit": "beat",
+    "beatLengthTargetSeconds": "4-12",
+    "scene": "A scene is a continuity chain of beats sharing location/time/wardrobe/emotional context.",
+    "directorInput": [
+      "worldState snapshot",
+      "eligible event",
+      "canonical identities",
+      "wardrobe",
+      "location",
+      "dialogue/action intent",
+      "previous final frame/continuity token",
+      "camera grammar"
+    ],
+    "directorOutput": [
+      "shot plan",
+      "character blocking",
+      "dialogue",
+      "emotion constraints",
+      "camera",
+      "duration",
+      "branch beat",
+      "continuity contract"
+    ],
+    "cameraGrammars": [
+      "cinematic-two-character",
+      "cinematic-single-character",
+      "POV-Marion",
+      "over-shoulder",
+      "environmental",
+      "front-camera-visio"
+    ],
+    "prefetch": "While beat A plays, generate/cache the most plausible continuations B/C/D. Choice selects an already-ready continuation when possible; unused clips can be retained only if continuity-compatible.",
+    "qualityGate": [
+      "canonical face identity",
+      "eyes/iris/pupils",
+      "temporal face stability",
+      "hands when visible",
+      "wardrobe",
+      "body identity",
+      "lip-sync when speaking",
+      "location continuity",
+      "lighting continuity",
+      "camera contract",
+      "no text/watermark/artifacts"
+    ],
+    "failure": "Reject candidate, retry with adjusted motion/camera/model/seed; never silently publish a failed identity candidate.",
+    "statusFlow": [
+      "requested",
+      "generating",
+      "candidate",
+      "quality-rejected",
+      "human-review",
+      "approved",
+      "cached",
+      "live"
+    ]
+  },
+  "uiContract": {
+    "principle": "Video owns the screen. Interface appears only when useful and should feel diegetic/minimal.",
+    "main": "Full-screen video with discreet time/place context; no permanent heavy HUD.",
+    "choices": "Appear at natural pause/beat, then recede.",
+    "phone": "Overlay/physical-device experience for messages, calls, gallery and spontaneous incoming visio.",
+    "visio": "Front-camera grammar, direct gaze, phone itself invisible unless the shot intentionally shows Marion holding it.",
+    "dressing": "Player chooses available outfit; selection writes currentOutfitId and becomes mandatory continuity for generated media.",
+    "agenda": "Shows what Marion knows, not omniscient hidden NPC schedules.",
+    "memories": "Player-facing traces of lived events; hidden causal memory remains richer."
+  },
+  "directorRules": [
+    "Never expose hidden future events in choice wording.",
+    "Never teleport Dominic into a scene because the player wants him there.",
+    "NPCs can be busy, late, unavailable, elsewhere or acting independently.",
+    "Choices express Marion's intention; outcomes depend on world state and other characters.",
+    "Quiet beats are allowed and necessary for realism.",
+    "Major events can reconverge structurally but must retain path-specific memories and consequences.",
+    "Generate only what must be seen; preserve deep state separately from video."
+  ],
+  "implementation": {
+    "runtimeModules": [
+      "WorldStateStore",
+      "CalendarClock",
+      "NPCScheduler",
+      "EventEligibilityEngine",
+      "HiddenDirector",
+      "ScenePlanner",
+      "VideoOrchestrator",
+      "ContinuityManager",
+      "QualityGate",
+      "MediaCache",
+      "InteractiveVideoPlayer",
+      "DiegeticUI",
+      "MemoryEngine"
+    ],
+    "migration": "Keep current new-game-shell logic as functional source material, but rebuild presentation against the validated visual mockup. Existing story graph becomes Day-1 authored seed content under this master skeleton.",
+    "nextMilestones": [
+      "M1: canonical schema + persistent world state + exact day clock",
+      "M2: Day 1 complete playable graph from 09:12 through sleep, with encounter resolved during the day",
+      "M3: interactive video player capable of seamless beat chaining and prefetch",
+      "M4: MonIA Video Engine V3 adapter + candidate/quality/cache lifecycle",
+      "M5: autonomous NPC scheduler + interruptions",
+      "M6: week/month/year generators constrained by authored canon and persistent consequences",
+      "M7: rebuild screens pixel-close to the original validated mockup"
+    ]
+  }
+}
