@@ -60,7 +60,8 @@ assert job.get("sourceReuseForbidden") is True, "V2 requires sourceReuseForbidde
 cfg = fetch_json(f"{RAW}/config/monia-video-v2.json")
 refs_cfg = fetch_json(f"{RAW}/config/monia-reference-packs.json")
 character = job["character"]
-character_cfg = refs_cfg["characters"][character]
+reference_character_key = job.get("referenceCharacterKey") or character
+character_cfg = refs_cfg["characters"][reference_character_key]
 video_cfg = character_cfg.get("video") or {}
 if video_cfg:
     print("Existing character video metadata is available for motion analysis only; it will NOT be loaded as generation input.")
@@ -77,7 +78,7 @@ if not torch.cuda.is_available():
     raise RuntimeError("MonIA Video V2 requires a Kaggle GPU")
 
 print("GPU:", torch.cuda.get_device_name(0))
-print("Job:", job["id"], "Character:", character)
+print("Job:", job["id"], "Character:", character, "Reference key:", reference_character_key)
 
 job_dir = WORK / job["id"]
 job_dir.mkdir(parents=True, exist_ok=True)
@@ -145,6 +146,8 @@ result = {
     "narrativeAuthority": False,
     "publishToGame": False,
     "character": character,
+    "canonicalName": job.get("canonicalName") or character,
+    "referenceCharacterKey": reference_character_key,
     "sourceReuseForbidden": True,
     "sourceVideoUsed": False,
     "sceneNoveltyRequired": bool((job.get("sceneNovelty") or {}).get("mustBeNew")),
