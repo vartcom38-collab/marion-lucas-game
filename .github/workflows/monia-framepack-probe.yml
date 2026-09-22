@@ -1,0 +1,73 @@
+name: MonIA FramePack GPU Probe
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'notebooks/monia_framepack_kaggle.ipynb'
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - name: Prepare isolated FramePack kernel
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .framepack-worker
+          cp notebooks/monia_framepack_kaggle.ipynb .framepack-worker/monia_framepack_kaggle.ipynb
+          cat > .framepack-worker/kernel-metadata.json <<'JSON'
+          {
+            "id":"marionbolomey/monia-framepack-probe",
+            "title":"MonIA FramePack Probe",
+            "code_file":"monia_framepack_kaggle.ipynb",
+            "language":"python",
+            "kernel_type":"notebook",
+            "is_private":true,
+            "enable_gpu":true,
+            "enable_internet":true,
+            "machine_shape":"NvidiaTeslaT4",
+            "dataset_sources":[],
+            "competition_sources":[],
+            "kernel_sources":[],
+            "model_sources":[]
+          }
+          JSON
+      - name: Install Kaggle CLI
+        run: python -m pip install --upgrade kaggle
+      - name: Submit FramePack probe
+        env:
+          KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "${KAGGLE_API_TOKEN:-}"
+          kaggle kernels push -p .framepack-worker
+      - name: Wait for FramePack probe
+        env:
+          KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          KERNEL="marionbolomey/monia-framepack-probe"
+          for attempt in $(seq 1 25); do
+            STATUS="$(kaggle kernels status "$KERNEL" 2>&1 || true)"
+            echo "[$attempt/25] $STATUS"
+            if echo "$STATUS" | grep -Eqi 'complete|completed'; then exit 0; fi
+            if echo "$STATUS" | grep -Eqi 'error|failed|cancelled|canceled'; then
+              kaggle kernels logs "$KERNEL" || true
+              exit 1
+            fi
+            sleep 60
+          done
+          exit 1
+      - name: Print FramePack logs
+        if: always()
+        env:
+          KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+        run: kaggle kernels logs marionbolomey/monia-framepack-probe || true
