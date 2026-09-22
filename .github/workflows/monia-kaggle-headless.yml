@@ -259,9 +259,9 @@ jobs:
 
       - name: Publish candidate package to Infomaniak
         env:
-          FTP_HOST: ${{ secrets.FTP_HOST }}
-          FTP_USER: ${{ secrets.FTP_USER }}
-          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          INFOMANIAK_FTP_HOST: ${{ secrets.INFOMANIAK_FTP_HOST }}
+          INFOMANIAK_FTP_USER: ${{ secrets.INFOMANIAK_FTP_USER }}
+          INFOMANIAK_FTP_PASSWORD: ${{ secrets.INFOMANIAK_FTP_PASSWORD }}
         shell: bash
         run: |
           set -euo pipefail
@@ -270,13 +270,17 @@ jobs:
           test -f "$LOCAL/result.json"
           test -f "$LOCAL/quality-v3.json"
           test -f "$LOCAL/shot-01.mp4"
-          if [ -z "${FTP_HOST:-}" ] || [ -z "${FTP_USER:-}" ] || [ -z "${FTP_PASSWORD:-}" ]; then
+          if [ -z "${INFOMANIAK_FTP_HOST:-}" ] || [ -z "${INFOMANIAK_FTP_USER:-}" ] || [ -z "${INFOMANIAK_FTP_PASSWORD:-}" ]; then
             echo "Infomaniak FTP secrets are missing."
             exit 2
           fi
           sudo apt-get update -qq
           sudo apt-get install -y lftp
-          lftp -u "$FTP_USER","$FTP_PASSWORD" "$FTP_HOST" <<EOF
+          HOST="${INFOMANIAK_FTP_HOST#ftpes://}"
+          HOST="${HOST#ftps://}"
+          HOST="${HOST#ftp://}"
+          HOST="${HOST%/}"
+          lftp -u "$INFOMANIAK_FTP_USER","$INFOMANIAK_FTP_PASSWORD" "$HOST" <<EOF
           set ftp:ssl-force true
           set ftp:ssl-protect-data true
           set ssl:verify-certificate no
