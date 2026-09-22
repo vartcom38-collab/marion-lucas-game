@@ -188,6 +188,51 @@ jobs:
           print('MonIA candidate safety flags verified for', len(clips), 'clip(s).')
           PY
 
+      - name: Run V3 quality preflight and capture continuity frame
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg
+          ACTUAL="${MONIA_ACTUAL_JOB_ID:-$MONIA_JOB_ID}"
+          DEST="public/resources/monia/candidates/$ACTUAL"
+          CLIP="$(python -c "import json; d=json.load(open('$DEST/result.json')); print(d['clips'][0])")"
+          python tools/monia-video-quality.py "$DEST/$CLIP" > "$DEST/technical-quality.json" || true
+          REF=""
+          if python -c "import json; j=json.load(open('.kaggle-worker/job.json')); raise SystemExit(0 if any(str(x.get('id','')).lower()=='lucas' for x in j.get('characters',[])) else 1)"; then
+            REF="public/resources/monia/canon/lucas/reference.jpg"
+          elif [ -f "public/resources/photo.png" ]; then
+            REF="public/resources/photo.png"
+          fi
+          FACE_ARGS=()
+          [ -n "$REF" ] && FACE_ARGS=(--reference "$REF")
+          python tools/monia-face-consistency.py "$DEST/$CLIP" "${FACE_ARGS[@]}" > "$DEST/identity-quality.json" || true
+          ffmpeg -y -v error -sseof -0.08 -i "$DEST/$CLIP" -frames:v 1 -q:v 2 "$DEST/continuity-last-frame.jpg"
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          actual=os.environ.get('MONIA_ACTUAL_JOB_ID') or os.environ['MONIA_JOB_ID']
+          d=Path('public/resources/monia/candidates')/actual
+          tech=json.loads((d/'technical-quality.json').read_text())
+          ident=json.loads((d/'identity-quality.json').read_text())
+          reasons=list(tech.get('reasons') or [])+list(ident.get('reasons') or [])
+          report={
+            'version':3,'jobId':actual,
+            'technicalPass':tech.get('status')=='pass',
+            'identityBackendAvailable':ident.get('available') is True,
+            'identityScore':ident.get('identityScore'),
+            'temporalIdentityScore':ident.get('temporalIdentityScore'),
+            'facePresenceRate':ident.get('facePresenceRate'),
+            'autoReject':tech.get('status')=='reject' or ident.get('autoReject') is True,
+            'reasons':reasons,
+            'humanApprovalRequired':True,
+            'continuityLastFrame':'continuity-last-frame.jpg',
+            'note':'Automatic checks may reject obvious failures. They never auto-publish a candidate.'
+          }
+          (d/'quality-v3.json').write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf-8')
+          print(json.dumps(report,ensure_ascii=False,indent=2))
+          PY
+
       - name: Commit MonIA candidates to repository
         shell: bash
         run: |
