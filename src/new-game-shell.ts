@@ -1,4 +1,5 @@
 import './new-game-shell.css';
+import {bridgeLegacyState,loadWorldState,saveWorldState,writeWorldEvent} from './monia-world-state';
 
 type Tool='phone'|'agenda'|'memories'|null;
 type PhotoMemory={photoId:string,sceneId:string,mediaId:string|null,title:string,storyDate:string,src?:string,source:string};
@@ -10,8 +11,10 @@ const SAVE='marion-lucas-save-v4';
 const UI='marion-ui-prototype-v1';
 const load=():DemoState=>{try{return {...{tool:null,phoneView:'home',selected:null,place:'Chez Marion',time:'09:12',memories:[],beat:'morning',metDominic:false,year:1998,hasDominicNumber:false,contactStage:0,day:1,marineUnread:1,marineReplies:[],gallery:[],messages:[],appointmentStates:{},invitations:[],currentOutfitId:null,calendarEvents:[]},...JSON.parse(localStorage.getItem(UI)||'{}')}}catch{return {tool:null,phoneView:'home',selected:null,place:'Chez Marion',time:'09:12',memories:[],beat:'morning',metDominic:false,year:1998,hasDominicNumber:false,contactStage:0,day:1,marineUnread:1,marineReplies:[],gallery:[],messages:[],appointmentStates:{},invitations:[],currentOutfitId:null,calendarEvents:[]}}};
 const freshUI=():DemoState=>({tool:null,phoneView:'home',selected:null,place:'Chez Marion',time:'09:12',memories:[],beat:'morning',metDominic:false,year:1998,hasDominicNumber:false,contactStage:0,day:1,marineUnread:1,marineReplies:[],gallery:[],messages:[],appointmentStates:{},invitations:[],currentOutfitId:null,calendarEvents:[]});
-const state=load();state.gallery=Array.isArray(state.gallery)?state.gallery:[];state.messages=Array.isArray(state.messages)?state.messages:[];state.appointmentStates=state.appointmentStates||{};state.invitations=Array.isArray(state.invitations)?state.invitations:[];state.calendarEvents=Array.isArray(state.calendarEvents)?state.calendarEvents:[]; const persist=()=>localStorage.setItem(UI,JSON.stringify(state));
-const resetNewGameState=()=>{localStorage.removeItem(UI);localStorage.removeItem(SAVE);Object.keys(state).forEach(k=>delete (state as any)[k]);Object.assign(state,freshUI());persist()};
+const state=load();
+const worldState=bridgeLegacyState(loadWorldState(),state);saveWorldState(worldState);
+state.gallery=Array.isArray(state.gallery)?state.gallery:[];state.messages=Array.isArray(state.messages)?state.messages:[];state.appointmentStates=state.appointmentStates||{};state.invitations=Array.isArray(state.invitations)?state.invitations:[];state.calendarEvents=Array.isArray(state.calendarEvents)?state.calendarEvents:[]; const persist=()=>localStorage.setItem(UI,JSON.stringify(state));
+const resetNewGameState=()=>{localStorage.removeItem(UI);localStorage.removeItem(SAVE);localStorage.removeItem('monia-world-state-v2');Object.keys(state).forEach(k=>delete (state as any)[k]);Object.assign(state,freshUI());persist()};
 function mount(){
  const app=document.getElementById('app');if(!app)return;document.getElementById('newGameShell')?.remove();
  const old=[...app.children] as HTMLElement[];old.forEach(x=>x.style.display='none');
@@ -141,5 +144,6 @@ window.addEventListener('monia:consequence',((e:CustomEvent)=>{const d=e.detail|
 }
 window.addEventListener('DOMContentLoaded',()=>setTimeout(mount,80));setTimeout(mount,600);window.addEventListener('marion:new-game-shell',()=>{resetNewGameState();mount()});
 
-window.addEventListener('monia:gameplay-state',()=>{const r=document.getElementById('newGameShell');if(r){const e=new Event('ng:refresh');r.dispatchEvent(e)}});
+window.addEventListener('monia:world-write',((e:CustomEvent)=>{writeWorldEvent(worldState,e.detail||{type:'runtime'});bridgeLegacyState(worldState,state);saveWorldState(worldState)}) as EventListener);
+window.addEventListener('monia:gameplay-state',()=>{bridgeLegacyState(worldState,state);saveWorldState(worldState);const r=document.getElementById('newGameShell');if(r){const e=new Event('ng:refresh');r.dispatchEvent(e)}});
 window.addEventListener('pagehide',()=>{if(document.getElementById('newGameShell')){persist();try{localStorage.setItem(SAVE,JSON.stringify({...game,lastPlayedAt:Date.now(),uiState:state}))}catch{}}});
