@@ -1,0 +1,17 @@
+{
+  "version": 3,
+  "jobId": "marion-apartment-wan22-002-t4fit",
+  "technicalPass": false,
+  "identityBackendAvailable": false,
+  "multiActorShot": false,
+  "identityScore": null,
+  "temporalIdentityScore": null,
+  "facePresenceRate": null,
+  "autoReject": true,
+  "reasons": [
+    "candidate resolution below minimum review target (short side 360px, long side 640px)"
+  ],
+  "humanApprovalRequired": true,
+  "continuityLastFrame": "continuity-last-frame.jpg",
+  "note": "Automatic checks may reject obvious failures. They never auto-publish a candidate."
+}

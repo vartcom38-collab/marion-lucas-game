@@ -1,0 +1,15 @@
+{
+  "jobId": "marion-apartment-wan22-002-t4fit",
+  "state": "candidate",
+  "candidateOnly": true,
+  "narrativeAuthority": false,
+  "router": "wan2.2-ti2v-5b",
+  "selectionMode": "surprise-auto",
+  "continuity": [
+    "canonical-pack"
+  ],
+  "clips": [
+    "shot-01.mp4"
+  ],
+  "shotCount": 1
+}

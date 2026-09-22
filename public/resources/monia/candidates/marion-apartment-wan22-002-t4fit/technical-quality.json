@@ -1,0 +1,33 @@
+{
+  "status": "reject",
+  "technical": {
+    "ok": true,
+    "duration": 2.75,
+    "width": 512,
+    "height": 320,
+    "fps": "12/1",
+    "hasAudio": false,
+    "audioChannels": 0,
+    "sampleRate": 0
+  },
+  "reasons": [
+    "candidate resolution below minimum review target (short side 360px, long side 640px)"
+  ],
+  "warnings": [],
+  "automaticScope": [
+    "container readability",
+    "duration",
+    "orientation-aware minimum resolution",
+    "extended black frames",
+    "extended frozen frames"
+  ],
+  "notAutomaticallyJudged": [
+    "Lucas identity",
+    "facial resemblance",
+    "age continuity",
+    "tattoos or scars",
+    "micro-expression realism",
+    "voice identity",
+    "lip synchronization"
+  ]
+}
