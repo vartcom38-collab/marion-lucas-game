@@ -1,0 +1,110 @@
+name: MonIA Video V2 — Dominic New Scene
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/monia-video-v2-dominic.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  render-dominic-v2:
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    steps:
+      - name: Checkout isolated V2 branch
+        uses: actions/checkout@v5
+        with:
+          ref: monia-video-v2
+          fetch-depth: 0
+
+      - name: Prepare Dominic V2 Kaggle bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          JOB_PATH=".monia-render-queue-v2/dominic-new-scene-proof-v3.json"
+          test -f "$JOB_PATH"
+          mkdir -p .kaggle-v2-dominic
+          cp kaggle/monia-video-v2/monia_video_v2.py .kaggle-v2-dominic/monia_video_v2.py
+          cp kaggle/monia-video-v2/kernel-metadata.json .kaggle-v2-dominic/kernel-metadata.json
+          cp "$JOB_PATH" .kaggle-v2-dominic/job-v2.json
+
+      - name: Install Kaggle CLI
+        run: python -m pip install --upgrade kaggle
+
+      - name: Submit Dominic V2 worker
+        env:
+          KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "${KAGGLE_API_TOKEN:-}"
+          kaggle kernels push -p .kaggle-v2-dominic
+
+      - name: Wait for completion
+        env:
+          KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          KERNEL="marionbolomey/monia-video-v2-worker"
+          for attempt in $(seq 1 70); do
+            STATUS="$(kaggle kernels status "$KERNEL" 2>&1 || true)"
+            echo "[$attempt/70] $STATUS"
+            if echo "$STATUS" | grep -Eqi 'complete|completed'; then exit 0; fi
+            if echo "$STATUS" | grep -Eqi 'error|failed|cancelled|canceled'; then
+              kaggle kernels logs "$KERNEL" || true
+              exit 1
+            fi
+            sleep 60
+          done
+          exit 1
+
+      - name: Download Dominic V2 candidate
+        env:
+          KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT=/tmp/monia-v2-dominic
+          rm -rf "$OUT"
+          mkdir -p "$OUT"
+          kaggle kernels output marionbolomey/monia-video-v2-worker -p "$OUT" -o
+          SRC="$OUT/monia-video-v2/dominic-new-scene-proof-v3"
+          test -f "$SRC/candidate-01.mp4"
+          test -f "$SRC/result.json"
+          DEST="public/resources/monia-v2/candidates/dominic-new-scene-proof-v3"
+          mkdir -p "$DEST"
+          cp "$SRC/candidate-01.mp4" "$DEST/candidate-01.mp4"
+          cp "$SRC/result.json" "$DEST/result.json"
+          cp "$SRC/job.json" "$DEST/job.json"
+
+      - name: Validate Dominic result
+        run: |
+          python - <<'PY'
+          import json, pathlib
+          p=pathlib.Path('public/resources/monia-v2/candidates/dominic-new-scene-proof-v3')
+          d=json.loads((p/'result.json').read_text())
+          assert d['character']=='dominic'
+          assert d['canonicalName']=='Dominic'
+          assert d['sourceVideoUsed'] is False
+          assert d['sceneNoveltyRequired'] is True
+          assert d['publishToGame'] is False
+          assert (p/'candidate-01.mp4').stat().st_size > 0
+          print('Dominic V2 candidate validated')
+          PY
+
+      - name: Commit candidate safely to V2 branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/resources/monia-v2/candidates/dominic-new-scene-proof-v3
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Add Dominic new-scene V2 candidate"
+          git pull --rebase origin monia-video-v2
+          git push origin HEAD:monia-video-v2
