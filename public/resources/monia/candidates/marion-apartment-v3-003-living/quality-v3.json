@@ -1,0 +1,15 @@
+{
+  "version": 3,
+  "jobId": "marion-apartment-v3-003-living",
+  "technicalPass": true,
+  "identityBackendAvailable": false,
+  "multiActorShot": false,
+  "identityScore": null,
+  "temporalIdentityScore": null,
+  "facePresenceRate": null,
+  "autoReject": false,
+  "reasons": [],
+  "humanApprovalRequired": true,
+  "continuityLastFrame": "continuity-last-frame.jpg",
+  "note": "Automatic checks may reject obvious failures. They never auto-publish a candidate."
+}
