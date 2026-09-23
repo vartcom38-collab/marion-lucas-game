@@ -81,9 +81,8 @@ jobs:
           set +e
           mkdir -p status
           STATUS="$(kaggle kernels status marionbolomey/monia-framepack-probe 2>&1)"
-          LOGS="$(kaggle kernels logs marionbolomey/monia-framepack-probe 2>&1)"
+          kaggle kernels logs marionbolomey/monia-framepack-probe > /tmp/monia-framepack.log 2>&1 || true
           export STATUS_TEXT="$STATUS"
-          export LOG_TAIL="$LOGS"
           python - <<'PY'
           import json, os
           from datetime import datetime, timezone
@@ -95,7 +94,7 @@ jobs:
               "githubSha": os.environ.get("GITHUB_SHA"),
               "kaggleKernel": "marionbolomey/monia-framepack-probe",
               "status": os.environ.get("STATUS_TEXT", ""),
-              "logTail": os.environ.get("LOG_TAIL", "")[-12000:],
+              "logTail": (open("/tmp/monia-framepack.log", "r", encoding="utf-8", errors="replace").read()[-12000:] if os.path.exists("/tmp/monia-framepack.log") else ""),
           }
           with open("status/monia-framepack-latest.json", "w", encoding="utf-8") as fh:
               json.dump(payload, fh, ensure_ascii=False, indent=2)
