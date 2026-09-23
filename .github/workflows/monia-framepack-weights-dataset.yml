@@ -61,9 +61,9 @@ jobs:
           set -euo pipefail
           test -n "${KAGGLE_API_TOKEN:-}"
           if kaggle datasets files marionbolomey/monia-framepack-f1-weights >/dev/null 2>&1; then
-            kaggle datasets version -p framepack-weights -m "Refresh official FramePack F1 weights" --dir-mode zip
+            kaggle datasets version -p framepack-weights -m "Refresh official FramePack F1 weights" --dir-mode skip
           else
-            kaggle datasets create -p framepack-weights --dir-mode zip
+            kaggle datasets create -p framepack-weights --dir-mode skip
           fi
 
       - name: Verify dataset exists
@@ -72,11 +72,20 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          FILES="$(kaggle datasets files marionbolomey/monia-framepack-f1-weights)"
+          FILES=""
+          for attempt in $(seq 1 30); do
+            FILES="$(kaggle datasets files marionbolomey/monia-framepack-f1-weights 2>&1 || true)"
+            if echo "$FILES" | grep -q 'HunyuanVideo/' && echo "$FILES" | grep -q 'flux_redux_bfl/' && echo "$FILES" | grep -q 'FramePack_F1_I2V_HY_20250503/'; then
+              echo "Persistent dataset version is visible after $attempt checks"
+              break
+            fi
+            echo "[$attempt/30] waiting for Kaggle dataset version propagation"
+            sleep 20
+          done
           echo "$FILES" | head -100
-          echo "$FILES" | grep -q 'HunyuanVideo'
-          echo "$FILES" | grep -q 'flux_redux_bfl'
-          echo "$FILES" | grep -q 'FramePack_F1_I2V_HY_20250503'
+          echo "$FILES" | grep -q 'HunyuanVideo/'
+          echo "$FILES" | grep -q 'flux_redux_bfl/'
+          echo "$FILES" | grep -q 'FramePack_F1_I2V_HY_20250503/'
 
       - name: Persist dataset build status
         if: always()
