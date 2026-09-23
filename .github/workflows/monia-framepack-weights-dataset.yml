@@ -29,6 +29,16 @@ jobs:
           python - <<'PY'
           from huggingface_hub import snapshot_download
           snapshot_download(repo_id="lllyasviel/FramePack_F1_I2V_HY_20250503", local_dir="framepack-weights/FramePack_F1_I2V_HY_20250503")
+snapshot_download(
+    repo_id="hunyuanvideo-community/HunyuanVideo",
+    local_dir="framepack-weights/HunyuanVideo",
+    allow_patterns=["text_encoder/**","text_encoder_2/**","tokenizer/**","tokenizer_2/**","vae/**"]
+)
+snapshot_download(
+    repo_id="lllyasviel/flux_redux_bfl",
+    local_dir="framepack-weights/flux_redux_bfl",
+    allow_patterns=["feature_extractor/**","image_encoder/**"]
+)
           PY
           du -sh framepack-weights
 
