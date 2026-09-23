@@ -22,6 +22,8 @@ jobs:
           set -euo pipefail
           mkdir -p .framepack-worker
           cp notebooks/monia_framepack_kaggle.ipynb .framepack-worker/monia_framepack_kaggle.ipynb
+          base64 -d resources/monia/canon/marion/framepack-probe.b64 > .framepack-worker/marion-framepack-anchor.jpg
+          test -s .framepack-worker/marion-framepack-anchor.jpg
           cat > .framepack-worker/kernel-metadata.json <<'JSON'
           {
             "id":"marionbolomey/monia-framepack-probe",
