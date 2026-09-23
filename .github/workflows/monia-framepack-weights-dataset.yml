@@ -7,7 +7,7 @@ on:
       - '.github/workflows/monia-framepack-weights-dataset.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build-dataset:
@@ -69,4 +69,48 @@ jobs:
       - name: Verify dataset exists
         env:
           KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
-        run: kaggle datasets files marionbolomey/monia-framepack-f1-weights | head -50
+        shell: bash
+        run: |
+          set -euo pipefail
+          FILES="$(kaggle datasets files marionbolomey/monia-framepack-f1-weights)"
+          echo "$FILES" | head -100
+          echo "$FILES" | grep -q 'HunyuanVideo'
+          echo "$FILES" | grep -q 'flux_redux_bfl'
+          echo "$FILES" | grep -q 'FramePack_F1_I2V_HY_20250503'
+
+      - name: Persist dataset build status
+        if: always()
+        env:
+          KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+        shell: bash
+        run: |
+          set +e
+          mkdir -p status
+          FILES="$(kaggle datasets files marionbolomey/monia-framepack-f1-weights 2>&1)"
+          export DATASET_FILES="$FILES"
+          python - <<'PY'
+          import json, os
+          from datetime import datetime, timezone
+          files=os.environ.get("DATASET_FILES","")
+          payload={
+            "version":1,
+            "workflow":"monia-framepack-weights-dataset",
+            "updatedAt":datetime.now(timezone.utc).isoformat(),
+            "githubRunId":os.environ.get("GITHUB_RUN_ID"),
+            "githubSha":os.environ.get("GITHUB_SHA"),
+            "dataset":"marionbolomey/monia-framepack-f1-weights",
+            "hasFramePack":"FramePack_F1_I2V_HY_20250503" in files,
+            "hasHunyuan":"HunyuanVideo" in files,
+            "hasFluxRedux":"flux_redux_bfl" in files,
+            "filesTail":files[-12000:],
+          }
+          with open("status/monia-framepack-dataset-latest.json","w",encoding="utf-8") as fh:
+            json.dump(payload,fh,ensure_ascii=False,indent=2); fh.write("\n")
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add status/monia-framepack-dataset-latest.json
+          git diff --cached --quiet && exit 0
+          git commit -m "ci: persist latest FramePack dataset status"
+          git pull --rebase origin main
+          git push origin HEAD:main
