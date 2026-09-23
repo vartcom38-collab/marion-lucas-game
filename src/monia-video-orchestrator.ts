@@ -69,7 +69,8 @@ export const buildVideoJob=(r:VideoRequestV3,w:MoniaWorldState):VideoJob=>{
   prompt,
   negativePrompt:'identity drift, different person, face morphing, facial jitter, eye drift, crossed eyes, asymmetric eyes, malformed iris, malformed pupils, eyelid warping, gaze jump, repeated blink, plastic skin, mouth deformation, bad teeth, hand deformation, extra fingers, body morphing, wardrobe change, hairstyle change, temporal flicker, camera jump, selfie, character holding camera, arm extended toward camera, phone filming, direct-to-lens vlog, static pose, animated still, text, captions, logo, watermark, illustration, CGI look',
   generation:{staging:r.staging||null,shotGrammar:shot,durationTargetSeconds:duration,editingUnit:'cinematic-micro-shot',router:'auto-v3',backendOrder:backends,selectionMode:'quality-first',candidateCount:candidates.length,width:768,height:448,frames:49,steps:12,fps:12,seed:w.seed,cameraCandidates:r.cameraCandidates},
-  qualityGate:{required:true,policy:'config/monia-generation-quality.json',humanApprovalBeforeLive:true,failClosed:true,checks:qualityChecks(r),minimumIdentityScore:.94,minimumTemporalIdentityScore:.92},
+  qualityGate:{required:true,policy:'config/monia-generation-quality.json',
+      referenceLibraryRouter:'config/monia-reference-library-router-v1.json',humanApprovalBeforeLive:true,failClosed:true,checks:qualityChecks(r),minimumIdentityScore:.94,minimumTemporalIdentityScore:.92},
   continuity:r.continuity,candidates,prefetch
  };
 };
