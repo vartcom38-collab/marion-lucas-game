@@ -32,7 +32,7 @@ jobs:
             "enable_gpu":true,
             "enable_internet":true,
             "machine_shape":"NvidiaTeslaT4",
-            "dataset_sources":[],
+            "dataset_sources":["marionbolomey/monia-framepack-f1-weights"],
             "competition_sources":[],
             "kernel_sources":[],
             "model_sources":[]
