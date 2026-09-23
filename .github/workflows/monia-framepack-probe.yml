@@ -5,6 +5,7 @@ on:
   push:
     paths:
       - 'notebooks/monia_framepack_kaggle.ipynb'
+      - '.github/workflows/monia-framepack-probe.yml'
 
 permissions:
   contents: read
