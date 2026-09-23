@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "status": "active",
+  "purpose": "Single routing registry for MonIA's existing character reference library. This does not replace the banks; it tells GPU workers which canonical banks to consult and which assets must be materialized into worker-local storage.",
+  "principles": [
+    "Never reduce a character to one convenience image when canonical multi-reference material exists.",
+    "GitHub metadata selects references; private/persistent storage carries binaries.",
+    "Identity, motion, performance, wardrobe and scene anchors are separate reference roles.",
+    "A GPU dataset is an execution cache of MonIA references, never a new source of canon.",
+    "If a required binary is unavailable, fail closed instead of silently using a remote temporary URL or text-only reconstruction."
+  ],
+  "characters": {
+    "Marion": {
+      "banks": ["config/marion-multiview-canon.json", "config/marion-video-identity-qa.json"],
+      "requiredForIdentity": ["identity-board-A", "identity-board-B"],
+      "workerPolicy": {
+        "multiReferencePreferred": true,
+        "singleImageAllowedOnlyForMotionProbe": true,
+        "singleImageCannotApproveIdentity": true
+      }
+    },
+    "Dominic": {
+      "aliases": ["Lucas", "Lucas Castellano", "Dominic Castellano"],
+      "banks": [
+        "config/lucas-reference-bank.json",
+        "config/dominic-multiview-canon-v2.json",
+        "config/dominic-direct-reference-pack-v3.json",
+        "config/motion-reference-bank.json"
+      ],
+      "roles": {
+        "identity": ["canonical_identity", "identity-high", "face", "three-quarter", "front", "profile"],
+        "motion": ["canonical_motion", "canonical_full_body_motion", "body_movement", "walking", "gait", "gesture", "posture"],
+        "performance": ["canonical_performance", "speech_presence", "speech_rhythm", "gaze", "micro_expression"],
+        "privateHome": ["private_home", "relaxed_posture", "tattoos", "off_duty_wardrobe"]
+      },
+      "workerPolicy": {
+        "multiReferencePreferred": true,
+        "identityAndMotionMustBeSeparateWhenUseful": true,
+        "textOnlyReconstructionForbidden": true
+      }
+    }
+  },
+  "selection": {
+    "cinematicMicroShot": [
+      "select identity references for every visible canonical character",
+      "select motion/performance reference matching the single principal intention",
+      "select scene/pose anchor matching shot grammar",
+      "bind wardrobe/location/lighting from world continuity rather than source clip",
+      "materialize only selected binaries plus QA references into the GPU job"
+    ],
+    "visio": [
+      "use visio camera contract",
+      "select close face/gaze/micro-expression/performance references",
+      "do not reuse external cinematic camera references as camera authority"
+    ]
+  },
+  "storage": {
+    "master": "Infomaniak private MonIA reference storage",
+    "kaggle": "private versioned execution dataset/cache",
+    "colab": "Google Drive execution cache when used",
+    "forbiddenRuntimeDependency": ["temporary OpenArt URLs", "expiring attachment URLs", "prompt-only identity"]
+  }
+}
