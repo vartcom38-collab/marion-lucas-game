@@ -48,6 +48,23 @@ jobs:
           PY
           du -sh framepack-weights
 
+      - name: Persist Marion FramePack anchor
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p framepack-dataset/references
+          python - <<'PY'
+          import urllib.request
+          url='https://cdn.openart.ai/openart-uploads/production/attachment-transfers/20f4695a631aec334010eacc4c21c17cc0be959070b4d2c5eeafdce55c564573.png'
+          req=urllib.request.Request(url,headers={'User-Agent':'Mozilla/5.0'})
+          try:
+              with urllib.request.urlopen(req,timeout=60) as r, open('framepack-dataset/marion-framepack-anchor.png','wb') as f:
+                  f.write(r.read())
+          except Exception as e:
+              raise SystemExit(f'Marion anchor bootstrap failed; keep previous dataset version and retry from a durable source: {e}')
+          PY
+          test -s framepack-dataset/marion-framepack-anchor.png
+
       - name: Prepare private Kaggle dataset metadata
         run: |
           cat > framepack-weights/dataset-metadata.json <<'JSON'
