@@ -2,6 +2,9 @@ name: Build FramePack Persistent Weight Dataset
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/monia-framepack-weights-dataset.yml'
 
 permissions:
   contents: read
