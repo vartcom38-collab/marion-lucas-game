@@ -52,18 +52,18 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p framepack-dataset/references
+          mkdir -p framepack-weights/references
           python - <<'PY'
           import urllib.request
           url='https://cdn.openart.ai/openart-uploads/production/attachment-transfers/20f4695a631aec334010eacc4c21c17cc0be959070b4d2c5eeafdce55c564573.png'
           req=urllib.request.Request(url,headers={'User-Agent':'Mozilla/5.0'})
           try:
-              with urllib.request.urlopen(req,timeout=60) as r, open('framepack-dataset/marion-framepack-anchor.png','wb') as f:
+              with urllib.request.urlopen(req,timeout=60) as r, open('framepack-weights/marion-framepack-anchor.png','wb') as f:
                   f.write(r.read())
           except Exception as e:
               raise SystemExit(f'Marion anchor bootstrap failed; keep previous dataset version and retry from a durable source: {e}')
           PY
-          test -s framepack-dataset/marion-framepack-anchor.png
+          test -s framepack-weights/marion-framepack-anchor.png
 
       - name: Prepare private Kaggle dataset metadata
         run: |
@@ -91,19 +91,9 @@ jobs:
           set -euo pipefail
           FILES=""
           for attempt in $(seq 1 30); do
-            FILES="$(kaggle datasets files marionbolomey/monia-framepack-f1-weights 2>&1 || true)"
-            if echo "$FILES" | grep -q 'HunyuanVideo.zip' && echo "$FILES" | grep -q 'flux_redux_bfl.zip' && echo "$FILES" | grep -q 'FramePack_F1_I2V_HY_20250503.zip'; then
-              echo "Persistent dataset version is visible after $attempt checks"
-              break
-            fi
-            echo "[$attempt/30] waiting for Kaggle dataset version propagation"
-            sleep 20
-          done
-          echo "$FILES" | head -100
-          echo "$FILES" | grep -q 'HunyuanVideo.zip'
-          echo "$FILES" | grep -q 'flux_redux_bfl.zip'
-          echo "$FILES" | grep -q 'FramePack_F1_I2V_HY_20250503.zip'; then
-              echo "Persistent dataset version is visible after $attempt checks"
+            FILES="$(kaggle datasets files marionbolomey/monia-framepack-f1-weights --page-size 1000 2>&1 || true)"
+            if echo "$FILES" | grep -q 'HunyuanVideo/' && echo "$FILES" | grep -q 'flux_redux_bfl/' && echo "$FILES" | grep -q 'FramePack_F1_I2V_HY_20250503/' && echo "$FILES" | grep -q 'marion-framepack-anchor.png'; then
+              echo "Persistent dataset version is complete after $attempt checks"
               break
             fi
             echo "[$attempt/30] waiting for Kaggle dataset version propagation"
@@ -113,6 +103,7 @@ jobs:
           echo "$FILES" | grep -q 'HunyuanVideo/'
           echo "$FILES" | grep -q 'flux_redux_bfl/'
           echo "$FILES" | grep -q 'FramePack_F1_I2V_HY_20250503/'
+          echo "$FILES" | grep -q 'marion-framepack-anchor.png'
 
       - name: Persist dataset build status
         if: always()
@@ -122,7 +113,7 @@ jobs:
         run: |
           set +e
           mkdir -p status
-          FILES="$(kaggle datasets files marionbolomey/monia-framepack-f1-weights 2>&1)"
+          FILES="$(kaggle datasets files marionbolomey/monia-framepack-f1-weights --page-size 1000 2>&1)"
           export DATASET_FILES="$FILES"
           python - <<'PY'
           import json, os
@@ -135,9 +126,10 @@ jobs:
             "githubRunId":os.environ.get("GITHUB_RUN_ID"),
             "githubSha":os.environ.get("GITHUB_SHA"),
             "dataset":"marionbolomey/monia-framepack-f1-weights",
-            "hasFramePack":"FramePack_F1_I2V_HY_20250503.zip" in files,
-            "hasHunyuan":"HunyuanVideo.zip" in files,
-            "hasFluxRedux":"flux_redux_bfl.zip" in files,
+            "hasFramePack":"FramePack_F1_I2V_HY_20250503/" in files,
+            "hasHunyuan":"HunyuanVideo/" in files,
+            "hasFluxRedux":"flux_redux_bfl/" in files,
+            "hasMarionAnchor":"marion-framepack-anchor.png" in files,
             "filesTail":files[-12000:],
           }
           with open("status/monia-framepack-dataset-latest.json","w",encoding="utf-8") as fh:
