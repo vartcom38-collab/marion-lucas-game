@@ -4,6 +4,7 @@ import {applyDirectorDecision,buildVideoRequest,directNextBeat} from './monia-di
 import {handleVideoRequest} from './monia-video-orchestrator';
 import {installVideoV3Executor} from './monia/video-v3-executor';
 import {installCinematicSequenceRuntime} from './monia/cinematic-sequence-runtime';
+import {installCinematicSequencePlayer} from './monia/cinematic-sequence-player';
 
 type Tool='phone'|'agenda'|'memories'|null;
 type PhotoMemory={photoId:string,sceneId:string,mediaId:string|null,title:string,storyDate:string,src?:string,source:string};
@@ -18,6 +19,7 @@ const freshUI=():DemoState=>({tool:null,phoneView:'home',selected:null,place:'Ch
 const state=load();
 const worldState=bridgeLegacyState(loadWorldState(),state);saveWorldState(worldState);installVideoV3Executor();
 installCinematicSequenceRuntime();
+installCinematicSequencePlayer();
 state.gallery=Array.isArray(state.gallery)?state.gallery:[];state.messages=Array.isArray(state.messages)?state.messages:[];state.appointmentStates=state.appointmentStates||{};state.invitations=Array.isArray(state.invitations)?state.invitations:[];state.calendarEvents=Array.isArray(state.calendarEvents)?state.calendarEvents:[]; const persist=()=>localStorage.setItem(UI,JSON.stringify(state));
 const resetNewGameState=()=>{localStorage.removeItem(UI);localStorage.removeItem(SAVE);localStorage.removeItem('monia-world-state-v2');Object.keys(state).forEach(k=>delete (state as any)[k]);Object.assign(state,freshUI());persist()};
 function mount(){
