@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "workflow": "monia-framepack-weights-dataset",
+  "updatedAt": "2026-09-23T12:56:59.998173+00:00",
+  "githubRunId": "35857221049",
+  "githubSha": "e463cc62f6b399d0f21ffb53b81d35086af61752",
+  "dataset": "marionbolomey/monia-framepack-f1-weights",
+  "hasFramePack": false,
+  "hasHunyuan": false,
+  "hasFluxRedux": false,
+  "filesTail": "name                                                      size  creationDate                \n--------------------------------------------------  ----------  --------------------------  \n.gitattributes                                            1519  2026-09-23 08:35:32.938000  \nREADME.md                                                  145  2026-09-23 08:37:29.625000  \nconfig.json                                                658  2026-09-23 08:28:04.747000  \ndiffusion_pytorch_model-00001-of-00003.safetensors  9972080992  2026-09-23 08:39:37.935000  \ndiffusion_pytorch_model-00002-of-00003.safetensors  9987115584  2026-09-23 08:36:05.396000  \ndiffusion_pytorch_model-00003-of-00003.safetensors  5789584816  2026-09-23 08:39:48.124000  \ndiffusion_pytorch_model.safetensors.index.json          134006  2026-09-23 08:28:04.804000  "
+}
