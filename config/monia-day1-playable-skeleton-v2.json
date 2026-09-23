@@ -4,7 +4,7 @@
   "dateContext": "May 1998 · Nîmes",
   "startTime": "09:12",
   "endRule": "Day 1 ends only after Marion reaches a night/sleep resolution.",
-  "design": "Every block is lived as video beats. Times are windows, not forced cuts. The director advances clock according to actual actions.",
+  "design": "Every block is lived as edited cinematic micro-shots. Times are windows, not forced cuts. The director advances clock according to actual actions.",
   "invariants": [
     "Dominic is unknown at 09:12.",
     "Dominic cannot be contacted before the encounter establishes a plausible contact path.",
@@ -209,7 +209,7 @@
     "freeform": "Supported in conversations/calls when runtime can resolve it safely."
   },
   "videoPlan": {
-    "sceneBeatSeconds": "4-12",
+    "sceneBeatSeconds": "2-5",
     "prefetchDepth": 3,
     "continuityToken": [
       "character identities",
@@ -219,10 +219,22 @@
       "props",
       "body positions",
       "emotional temperature",
-      "previous final frame"
+      "previous final frame",
+      "shot axis / screen direction",
+      "approved scene anchor"
     ],
-    "branchRule": "At a decision beat, freeze narrative progression rather than visibly freezing a face; use a natural hold/cutaway/ambient loop while choice UI appears.",
-    "candidatePolicy": "Generate multiple candidates when needed; only approved/cached media can enter the player."
+    "branchRule": "At a decision beat, cut on a natural settled pose, reaction, detail or ambient insert; choice UI appears over a visually stable editorial hold. Resume from a continuity-compatible approved shot.",
+    "candidatePolicy": "Generate multiple candidates when needed; only approved/cached media can enter the player.",
+    "editingUnit": "cinematic-micro-shot",
+    "shotRule": "One clip carries one principal action, reaction, look, gesture or spoken intention. A lived scene is assembled from successive shot sizes/angles rather than generated as one long performance.",
+    "defaultCoverage": [
+      "closeup-reaction",
+      "medium-closeup",
+      "medium",
+      "medium-wide",
+      "over-shoulder/reverse when conversational",
+      "environment/detail insert when useful"
+    ]
   },
   "day2Handoff": {
     "id": "D2_MORNING",
