@@ -175,9 +175,9 @@
     "afterEncounter": "Ordinary life continues. Dominic becomes an autonomous world actor; future contact depends on what actually happened."
   },
   "videoRuntime": {
-    "unit": "beat",
-    "beatLengthTargetSeconds": "4-12",
-    "scene": "A scene is a continuity chain of beats sharing location/time/wardrobe/emotional context.",
+    "unit": "micro-shot",
+    "beatLengthTargetSeconds": "2-5",
+    "scene": "A scene is a cinematic edit of short micro-shots sharing location/time/wardrobe/emotional continuity. Each micro-shot carries one principal action, reaction, look, gesture or spoken intention; cuts are deliberate and are part of the storytelling.",
     "directorInput": [
       "worldState snapshot",
       "eligible event",
@@ -189,24 +189,34 @@
       "camera grammar"
     ],
     "directorOutput": [
-      "shot plan",
+      "micro-shot plan",
+      "shot size and angle",
       "character blocking",
-      "dialogue",
+      "single principal action/reaction",
+      "dialogue when needed",
       "emotion constraints",
       "camera",
-      "duration",
+      "duration 2-5 seconds",
+      "cut intent",
       "branch beat",
       "continuity contract"
     ],
     "cameraGrammars": [
+      "extreme-closeup-reaction",
+      "closeup-face",
+      "medium-closeup",
+      "medium-shot",
+      "medium-wide",
+      "wide-establishing",
+      "over-shoulder",
+      "profile",
       "cinematic-two-character",
       "cinematic-single-character",
       "POV-Marion",
-      "over-shoulder",
       "environmental",
       "front-camera-visio"
     ],
-    "prefetch": "While beat A plays, generate/cache the most plausible continuations B/C/D. Choice selects an already-ready continuation when possible; unused clips can be retained only if continuity-compatible.",
+    "prefetch": "While the current micro-shot plays, prepare the most plausible next shots/branch openings. Prefer changing shot size or angle at a natural cut instead of forcing several actions into one generation.",
     "qualityGate": [
       "canonical face identity",
       "eyes/iris/pupils",
@@ -230,6 +240,16 @@
       "approved",
       "cached",
       "live"
+    ],
+    "microShotRules": [
+      "One generated clip = one principal visual intention.",
+      "Default duration is 2-5 seconds; never ask a single clip to perform a whole scene.",
+      "A dialogue scene is edited from speaker, listener/reaction, two-shot and detail shots as appropriate.",
+      "Preserve identity, wardrobe, hair, location, lighting, props, spatial orientation and emotional state across cuts.",
+      "The end state of one approved shot becomes continuity input for the next compatible shot, but a new angle may use a canonical scene anchor rather than blindly extending the previous frame.",
+      "Use cuts to hide model limitations and reduce temporal identity/body drift.",
+      "Do not generate montage-like action inside one shot.",
+      "Camera variation is intentional: face close-up, chest/medium, wider body/environment, reaction and reverse angle may alternate while continuity remains locked."
     ]
   },
   "uiContract": {
