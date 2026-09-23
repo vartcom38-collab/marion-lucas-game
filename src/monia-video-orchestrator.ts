@@ -74,6 +74,27 @@ export const buildVideoJob=(r:VideoRequestV3,w:MoniaWorldState):VideoJob=>{
  };
 };
 
+export type CinematicMicroShot={shotSize:NonNullable<VideoRequestV3['shotGrammar']>['shotSize'];angle:string;principalIntent:string;cutIntent:string};
+
+export const planCinematicCoverage=(intent:string,characters:string[]):CinematicMicroShot[]=>{
+ const conversation=characters.length>1;
+ const shots:CinematicMicroShot[]=[
+  {shotSize:'medium',angle:'external observer, stable establishing angle',principalIntent:intent,cutIntent:'cut after the principal action settles'},
+  {shotSize:'closeup',angle:'clean reaction angle',principalIntent:'one subtle facial reaction to the immediately preceding beat',cutIntent:'cut on settled gaze or breath'}
+ ];
+ if(conversation)shots.push(
+  {shotSize:'medium-closeup',angle:'over-shoulder on the current speaker, preserve screen direction',principalIntent:'one short spoken or listening intention only',cutIntent:'cut at the end of the line or listening reaction'},
+  {shotSize:'closeup',angle:'reverse reaction angle across the same axis',principalIntent:'listener reaction only; no extra action',cutIntent:'cut on eyes, breath or restrained expression'}
+ );
+ shots.push({shotSize:'medium-wide',angle:'external observer, same scene axis',principalIntent:'one restrained body movement or environmental interaction',cutIntent:'clean movement completion for editorial transition'});
+ return shots;
+};
+
+export const buildMicroShotSequence=(r:VideoRequestV3,w:MoniaWorldState,intent:string)=>{
+ const coverage=planCinematicCoverage(intent,r.characters.map(c=>c.name));
+ return coverage.map((shot,i)=>buildVideoJob({...r,beatId:`${r.beatId}-shot-${i+1}`,durationTargetSeconds:[2,5],shotGrammar:{...shot,sequenceIndex:i,sequenceLength:coverage.length}},w));
+};
+
 export const queueVideoJob=(job:VideoJob)=>{
  const detail={job,dispatchType:'monia_video_v3',jobId:job.id,candidateOnly:true};
  window.dispatchEvent(new CustomEvent('monia:video-job-ready',{detail}));
