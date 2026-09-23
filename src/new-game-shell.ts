@@ -3,6 +3,7 @@ import {bridgeLegacyState,loadWorldState,saveWorldState,syncLegacyFromWorld,writ
 import {applyDirectorDecision,buildVideoRequest,directNextBeat} from './monia-director';
 import {handleVideoRequest} from './monia-video-orchestrator';
 import {installVideoV3Executor} from './monia/video-v3-executor';
+import {installCinematicSequenceRuntime} from './monia/cinematic-sequence-runtime';
 
 type Tool='phone'|'agenda'|'memories'|null;
 type PhotoMemory={photoId:string,sceneId:string,mediaId:string|null,title:string,storyDate:string,src?:string,source:string};
@@ -16,6 +17,7 @@ const load=():DemoState=>{try{return {...{tool:null,phoneView:'home',selected:nu
 const freshUI=():DemoState=>({tool:null,phoneView:'home',selected:null,place:'Chez Marion',time:'09:12',memories:[],beat:'morning',metDominic:false,year:1998,hasDominicNumber:false,contactStage:0,day:1,marineUnread:1,marineReplies:[],gallery:[],messages:[],appointmentStates:{},invitations:[],currentOutfitId:null,calendarEvents:[]});
 const state=load();
 const worldState=bridgeLegacyState(loadWorldState(),state);saveWorldState(worldState);installVideoV3Executor();
+installCinematicSequenceRuntime();
 state.gallery=Array.isArray(state.gallery)?state.gallery:[];state.messages=Array.isArray(state.messages)?state.messages:[];state.appointmentStates=state.appointmentStates||{};state.invitations=Array.isArray(state.invitations)?state.invitations:[];state.calendarEvents=Array.isArray(state.calendarEvents)?state.calendarEvents:[]; const persist=()=>localStorage.setItem(UI,JSON.stringify(state));
 const resetNewGameState=()=>{localStorage.removeItem(UI);localStorage.removeItem(SAVE);localStorage.removeItem('monia-world-state-v2');Object.keys(state).forEach(k=>delete (state as any)[k]);Object.assign(state,freshUI());persist()};
 function mount(){
