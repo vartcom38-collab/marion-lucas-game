@@ -1,4 +1,3 @@
 xformers-t4-fp16-attention
-commit=d6133c0d35e5cf3c7ff493b6bc6c34a6a8ec766f
-workflow=f180bcefd2729a165c9d5f4d7bd9ad519f55d49c
-reason=cast-xformers-qkv-bf16-to-fp16-on-t4
+commit=81352cae5aea6d2dd4fc68940ce438241795cfc1
+reason=t4-sm75-does-not-support-xformers-bf16-cast-attention-only-to-fp16
