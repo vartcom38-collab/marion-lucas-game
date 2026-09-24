@@ -1,3 +1,4 @@
-xformers-fp16-t4
-commit=39b7797e91f3be6c030ae711d159e58d65b09189
-reason=cast-attention-only-to-fp16-for-t4-xformers-compatibility
+framepack-t4-media-validation
+commit=118e923fb5101a00f851c4bfa68f8917953d2e72
+workflow=96096935a02abf774dc92cc850bcb3c6a44b84c6
+reason=verify-real-mp4-and-private-anchor-only
