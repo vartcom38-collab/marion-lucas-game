@@ -4,9 +4,12 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - 'notebooks/monia_framepack_kaggle.ipynb'
-      - '.github/workflows/monia-framepack-probe.yml'
       - '.framepack-probe-trigger'
+      - '.github/workflows/monia-framepack-probe.yml'
+
+concurrency:
+  group: monia-framepack-kaggle-probe
+  cancel-in-progress: true
 
 permissions:
   contents: write
