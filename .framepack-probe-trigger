@@ -1,3 +1,3 @@
-xformers-clean-subprocess
-commit=c581468cbab1159539af6310be61b3cf73c25c7d
-reason=avoid-stale-notebook-numpy-and-import-xformers-in-fresh-python
+xformers-t4-fp16-attention
+commit=4cccc8de93634ce86809586dfcce50f68170c196
+reason=cast-only-xformers-qkv-bf16-to-fp16-on-t4
