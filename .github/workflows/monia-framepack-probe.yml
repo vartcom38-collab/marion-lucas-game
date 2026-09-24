@@ -19,7 +19,7 @@ permissions:
 jobs:
   probe:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 65
     steps:
       - uses: actions/checkout@v5
       - name: Prepare isolated FramePack kernel
@@ -62,9 +62,9 @@ jobs:
         run: |
           set -euo pipefail
           KERNEL="marionbolomey/monia-framepack-probe"
-          for attempt in $(seq 1 25); do
+          for attempt in $(seq 1 55); do
             STATUS="$(kaggle kernels status "$KERNEL" 2>&1 || true)"
-            echo "[$attempt/25] $STATUS"
+            echo "[$attempt/55] $STATUS"
             if echo "$STATUS" | grep -Eqi 'complete|completed'; then exit 0; fi
             if echo "$STATUS" | grep -Eqi 'error|failed|cancelled|canceled'; then
               kaggle kernels logs "$KERNEL" || true
@@ -95,6 +95,7 @@ jobs:
           name: monia-framepack-diagnostics-${{ github.run_id }}
           path: .framepack-output
           if-no-files-found: warn
+          include-hidden-files: true
       - name: Persist FramePack probe status
         if: always()
         env:
