@@ -1,3 +1,4 @@
-xformers-t4-fp16
-commit=223b8d8092e9eac611c57f490d6ae20775645b11
-reason=force-framepack-fp16-for-sm75-xformers
+xformers-t4-fp16-attention
+commit=d6133c0d35e5cf3c7ff493b6bc6c34a6a8ec766f
+workflow=f180bcefd2729a165c9d5f4d7bd9ad519f55d49c
+reason=cast-xformers-qkv-bf16-to-fp16-on-t4
