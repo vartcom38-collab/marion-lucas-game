@@ -1,3 +1,3 @@
-xformers-t4-post-requirements
-commit=3284b3487c0beee20f8ae870d656351bc67dcd5e
-reason=avoid-native-sdpa-31gb-oom-and-preserve-numpy-scipy
+xformers-clean-subprocess
+commit=c581468cbab1159539af6310be61b3cf73c25c7d
+reason=avoid-stale-notebook-numpy-and-import-xformers-in-fresh-python
