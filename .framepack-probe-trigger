@@ -1,3 +1,3 @@
-xformers-t4-fp16-single-patch
-commit=42e4128e0711ac5476356fd100bde7e7f8869c76
-reason=remove-duplicate-fp16-attention-patch-and-test-real-inference
+xformers-t4-fp16-attention
+commit=d4b9a848858b387fb9a31eab63569b7fc9133295
+reason=cast-bf16-attention-qkv-to-fp16-for-t4-xformers
