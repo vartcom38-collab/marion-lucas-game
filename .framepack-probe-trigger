@@ -1,3 +1,3 @@
-xformers-t4-fp16-attention
-commit=d4b9a848858b387fb9a31eab63569b7fc9133295
-reason=cast-bf16-attention-qkv-to-fp16-for-t4-xformers
+t4-xformers-single-fp16-adapter
+commit=f23704878d1f3c54bcfb7eb45f53ca2fb220593c
+reason=remove-duplicate-fp16-patch-and-test-single-adapter
