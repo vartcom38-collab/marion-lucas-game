@@ -15,9 +15,6 @@ concurrency:
 permissions:
   contents: write
 
-concurrency:
-  group: monia-framepack-gpu-probe
-  cancel-in-progress: true
 
 jobs:
   probe:
