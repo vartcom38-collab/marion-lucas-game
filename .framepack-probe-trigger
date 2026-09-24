@@ -1,3 +1,3 @@
-framepack-t4-indent-fixed
-commit=29698efd74f73d0339329f4d539b6a1dc982c0a3
-reason=exact-source-block-replacement-plus-pycompile-check
+framepack-t4-native-dtype-attention-only-fp16
+commit=72adee325f8634ac808ae11dc9c9f85c216bb2cc
+reason=eliminate-nan-black-video-and-fix-post-validation-output-path
