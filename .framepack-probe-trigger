@@ -1,2 +1,3 @@
-native-sdp-t4
-commit=a18991770e140ba95130939ad1e420571673a507
+native-sdpa-t4
+commit=fbb85d7fd2a50225f2552b210cbbb22dc9095eed
+reason=remove-xformers-and-force-pytorch-sdpa
