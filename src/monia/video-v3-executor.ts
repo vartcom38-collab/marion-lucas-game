@@ -1,4 +1,5 @@
 import {registerCandidateResult,selectBestReviewCandidate,type VideoJob,type VideoCandidate} from '../monia-video-orchestrator';
+import {generateFreeCanonVideo} from './free-video';
 
 const API='/api/monia-kaggle-dispatch.php';
 const ACTIVE='monia-video-v3-active';
@@ -28,6 +29,39 @@ function gpuPayload(job:VideoJob,c:VideoCandidate,attempt=0,previousReasons:stri
    seed:Number(job.generation.seed||0)+attempt*7919,
    previousValidatedFrameUrl:job.continuity?.previousValidatedFrameUrl||null},
   candidateOnly:true,narrativeAuthority:false};
+}
+
+
+function zerogpuCell(job:VideoJob){
+ const ids=job.characters.map((c:any)=>String(c.id||'').toLowerCase());
+ if(ids.includes('marion')&&ids.includes('lucas'))return'duo-i-1';
+ if(ids.includes('marion'))return'marion-4';
+ return'lucas-1';
+}
+
+async function dispatchZeroGpu(job:VideoJob,c:VideoCandidate,attempt=0,previousReasons:string[]=[]){
+ c.state='queued';emit({jobId:job.id,candidateId:c.id,state:'dispatching',detail:'ZeroGPU',updatedAt:Date.now()});
+ const repairs=repairDirectives(previousReasons);
+ const result=await generateFreeCanonVideo({
+  cellId:zerogpuCell(job),
+  prompt:[job.prompt,...repairs].filter(Boolean).join(' '),
+  onState:(state,detail)=>emit({
+   jobId:job.id,
+   candidateId:c.id,
+   state:state==='ready'?'candidate-ready':state==='error'?'failed':'generating',
+   detail,
+   updatedAt:Date.now()
+  })
+ });
+ if(result.state!=='ready'||!result.videoUrl)throw new Error(result.error||'ZeroGPU generation failed');
+ registerCandidateResult(job,{candidateId:c.id,url:result.videoUrl,technicalPass:true,qualityPass:undefined,rejections:[]});
+ const review=selectBestReviewCandidate(job);
+ emit({jobId:job.id,candidateId:c.id,state:'review',detail:result.videoUrl,updatedAt:Date.now()});
+ window.dispatchEvent(new CustomEvent('monia:video-review-required',{detail:{
+  job,candidate:review||c,clips:[result.videoUrl],qualityPolicy:job.qualityGate,
+  provider:result.provider,attempts:result.attempts||[]
+ }}));
+ return {ok:true,state:'candidate',clips:[result.videoUrl],provider:result.provider,candidateOnly:true,narrativeAuthorityDisabled:true};
 }
 
 const sleep=(ms:number)=>new Promise(r=>setTimeout(r,ms));
@@ -65,6 +99,7 @@ async function waitForCandidate(job:VideoJob,c:VideoCandidate){
 }
 
 async function dispatch(job:VideoJob,c:VideoCandidate,attempt=0,previousReasons:string[]=[]){
+ if(c.backend==='hf-zerogpu')return dispatchZeroGpu(job,c,attempt,previousReasons);
  c.state='queued';emit({jobId:job.id,candidateId:c.id,state:'dispatching',updatedAt:Date.now()});
  const res=await fetch(API,{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json'},body:JSON.stringify({job:gpuPayload(job,c,attempt,previousReasons)})});
  const body=await res.json().catch(()=>({}));
