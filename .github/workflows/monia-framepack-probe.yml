@@ -1,4 +1,5 @@
 name: MonIA FramePack GPU Probe
+# probe-revision: t4-xformers-fp16-indent-fix
 
 on:
   workflow_dispatch:
