@@ -1,3 +1,3 @@
-native-sdpa-t4
-commit=af046a21409bf947a303f98091f0777ba25c31fc
-reason=execute-native-sdpa-patch-with-real-newlines
+xformers-t4-post-requirements
+commit=3284b3487c0beee20f8ae870d656351bc67dcd5e
+reason=avoid-native-sdpa-31gb-oom-and-preserve-numpy-scipy
