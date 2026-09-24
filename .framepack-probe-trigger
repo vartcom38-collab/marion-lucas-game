@@ -1,3 +1,3 @@
-framepack-t4-clean-adapter-private-anchor
-commit=c5277b951036ff358ae8842719c146977d298ff4
-reason=single-idempotent-xformers-fp16-adapter-and-private-anchor-only
+framepack-t4-indent-fixed
+commit=29698efd74f73d0339329f4d539b6a1dc982c0a3
+reason=exact-source-block-replacement-plus-pycompile-check
