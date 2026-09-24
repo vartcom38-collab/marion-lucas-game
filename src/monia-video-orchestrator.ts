@@ -12,7 +12,7 @@ export type VideoRequestV3={
  prefetch:string[];
 };
 
-export type VideoBackend='validated-cache'|'kaggle-ltx'|'future-reference-video-backend';
+export type VideoBackend='validated-cache'|'hf-zerogpu'|'kaggle-ltx'|'future-reference-video-backend';
 export type CandidateState='planned'|'queued'|'generating'|'technical-rejected'|'quality-rejected'|'human-review'|'approved'|'cached'|'live';
 
 export type VideoCandidate={
@@ -39,7 +39,8 @@ export const chooseVideoBackends=(r:VideoRequestV3):VideoBackend[]=>{
  // Approved cache wins when continuity/context match. Generation remains replaceable behind this router.
  const order:VideoBackend[]=['validated-cache'];
  const front=r.cameraCandidates.some(x=>/front|visio|selfie/i.test(x));
- // Current free compute path. Front-camera requests remain subject to the stricter visio media-type gate.
+ // Primary free compute path: public ZeroGPU image-to-video providers. Kaggle remains a fallback.
+ order.push('hf-zerogpu');
  order.push('kaggle-ltx');
  if(!front)order.push('future-reference-video-backend');
  return order;
