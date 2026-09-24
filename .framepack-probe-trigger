@@ -1,3 +1,3 @@
-xformers-t4-fp16-clean
-commit=85edbd81a9501ea47634779b37d2eeb58ad2ae85
-reason=run-single-clean-fp16-attention-patch-on-t4
+xformers-t4-fp16-single-line
+commit=b4b04d8073ca28a79e1c6dc5e756668367547c80
+reason=fix-indentation-and-keep-attention-fp16-on-sm75
