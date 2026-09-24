@@ -1,3 +1,3 @@
 native-sdpa-t4
-commit=fbb85d7fd2a50225f2552b210cbbb22dc9095eed
-reason=remove-xformers-and-force-pytorch-sdpa
+commit=fb6ad589efb785f24755e0d130f97418ed60fcd8
+reason=remove-xformers-from-correct-notebook-cells
