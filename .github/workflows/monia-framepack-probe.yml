@@ -6,6 +6,7 @@ on:
     paths:
       - 'notebooks/monia_framepack_kaggle.ipynb'
       - '.github/workflows/monia-framepack-probe.yml'
+      - '.framepack-probe-trigger'
 
 permissions:
   contents: write
