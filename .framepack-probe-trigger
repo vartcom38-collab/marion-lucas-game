@@ -1,3 +1,3 @@
 native-sdpa-t4
-commit=fb6ad589efb785f24755e0d130f97418ed60fcd8
-reason=remove-xformers-from-correct-notebook-cells
+commit=af046a21409bf947a303f98091f0777ba25c31fc
+reason=execute-native-sdpa-patch-with-real-newlines
