@@ -1,3 +1,3 @@
-t4-xformers-fp16-robust
-commit=6376af2946f9b0d26509d3c7de4a925362f0b7b1
-reason=robust-line-detection-for-fp16-xformers-on-t4
+xformers-t4-fp16
+commit=223b8d8092e9eac611c57f490d6ae20775645b11
+reason=force-framepack-fp16-for-sm75-xformers
