@@ -13,8 +13,8 @@ import scripts.monia_intro_worker as worker
 OUT = Path(".monia-dominic-microshots")
 OUT.mkdir(exist_ok=True)
 
-WAN_C_SPACE = "Kpkp21/wan2-video-generation"
-WAN_C_LABEL = "Wan 2.2 ZeroGPU C"
+WAN_C_SPACE = "OpenKing/wan2-video-generation"
+WAN_C_LABEL = "Wan 2.2 ZeroGPU C (180s)"
 
 SHOTS: list[dict[str, Any]] = [
     {
