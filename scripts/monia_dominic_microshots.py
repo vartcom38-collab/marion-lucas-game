@@ -26,7 +26,7 @@ SHOTS: list[dict[str, Any]] = [
             "Photorealistic live-action cinematic medium shot of Dominic, strict identity preservation, exact same man as the canonical reference. "
             "Dominic is seated alone in a refined realistic interior, white open-collar shirt, black trousers, canonical neck and chest tattoos visible. "
             "He looks slightly downward for a moment, breathes naturally, then raises his eyes just a little toward something off-screen. "
-            "One natural blink, tiny shoulder movement, restrained tension, neutral mouth, no smile. "
+            "One natural blink only, nearly still body, restrained tension, neutral mouth, no smile. Preserve the exact source-image composition, pose, clothing, tattoos, background, camera position and crop. Do not reframe or redesign the scene. "
             "Frame from around waist to above head, comfortable headroom, external stable camera, warm natural daylight, premium short-drama realism. "
             "No extreme close-up, no zoom, no morphing, no identity drift, no eye drift, no jaw drift, no beard drift, no tattoo drift, no text, no subtitles, no UI."
         ),
@@ -39,7 +39,7 @@ SHOTS: list[dict[str, Any]] = [
             "Photorealistic live-action cinematic waist-up shot of Dominic, strict identity preservation, exact same man as the canonical reference. "
             "Dominic stands alone near a large window in a refined realistic interior, white open-collar shirt, black trousers, canonical tattoos visible. "
             "Soft golden side light. He looks out of the window, breathes naturally, blinks once, then makes a very small head turn back toward the room under 10 degrees. "
-            "Calm controlled masculine presence, neutral mouth, subtle body weight shift only. "
+            "Calm controlled masculine presence, neutral mouth, almost no body movement. Preserve the exact source-image composition, pose, clothing, tattoos, background, camera position and crop. Do not reframe or redesign the scene. "
             "Stable external camera, comfortable headroom, premium short-drama realism. "
             "No extreme close-up, no zoom, no morphing, no identity drift, no eye drift, no jaw drift, no beard drift, no tattoo drift, no text, no subtitles, no UI."
         ),
@@ -52,7 +52,7 @@ SHOTS: list[dict[str, Any]] = [
             "Photorealistic live-action cinematic medium-close shot of Dominic, strict identity preservation, exact same man as the canonical reference. "
             "Dominic is alone in a refined warm interior, white open-collar shirt, canonical neck and chest tattoos visible. "
             "At first he looks slightly to one side, then reacts to a quiet off-screen sound with only a tiny eye shift and subtle brow tension, followed by a small head turn under 8 degrees. "
-            "One natural blink, subtle breathing, neutral mouth, no smile, no exaggerated expression. "
+            "One natural blink and subtle breathing only, neutral mouth, no smile, no exaggerated expression. Preserve the exact source-image composition, pose, clothing, tattoos, background, camera position and crop. Do not reframe or redesign the scene. "
             "Frame from upper chest to head with comfortable headroom, external stable camera, warm realistic light, premium short-drama realism. "
             "No extreme close-up, no zoom, no morphing, no identity drift, no eye drift, no jaw drift, no beard drift, no tattoo drift, no text, no subtitles, no UI."
         ),
