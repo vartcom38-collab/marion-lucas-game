@@ -247,15 +247,15 @@ def _wan_child(space: str, label: str, source: str, prompt: str, target: str, qu
         print(f"MONIA provider={label} connect", flush=True)
         token = os.environ.get("HF_TOKEN", "").strip() or None
         client = Client(space, token=token, verbose=False)
-        print(f"MONIA provider={label} api={WAN_API_NAME} generate frames=33 steps=20", flush=True)
+        print(f"MONIA provider={label} api={WAN_API_NAME} generate size=480x832 frames=17 steps=12", flush=True)
         result = client.predict(
             prompt,
             handle_file(source),
-            576,
-            1024,
-            33,
-            20,
-            5,
+            480,
+            832,
+            17,
+            12,
+            4,
             -1,
             api_name=WAN_API_NAME,
         )
