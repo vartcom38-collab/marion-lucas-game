@@ -246,7 +246,7 @@ def _wan_child(space: str, label: str, source: str, prompt: str, target: str, qu
         print(f"MONIA provider={label} connect", flush=True)
         token = os.environ.get("HF_TOKEN", "").strip() or None
         client = Client(space, token=token, verbose=False)
-        width, height, frames, steps = 512, 896, 25, 4
+        width, height, frames, steps = 512, 896, 25, 20
         print(f"MONIA provider={label} api={WAN_API_NAME} generate size={width}x{height} frames={frames} steps={steps}", flush=True)
         result = client.predict(
             prompt,
@@ -462,6 +462,9 @@ def generate(source: Path, prompt: str, target: Path) -> tuple[str, list[str]]:
             msg = f"{label}: {exc}"
             attempts.append(msg)
             print(f"MONIA failed {msg}", flush=True)
+
+    if os.environ.get("MONIA_WAN_ONLY", "").strip() == "1":
+        raise RuntimeError("WAN_ONLY failed: " + " | ".join(attempts))
 
     try:
         run_ltx(source, prompt, target)
