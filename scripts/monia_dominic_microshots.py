@@ -2,6 +2,8 @@ from __future__ import annotations
 
 # micro-wan trigger v2
 
+import base64
+import io
 import json
 import os
 from pathlib import Path
@@ -21,7 +23,7 @@ SHOTS: list[dict[str, Any]] = [
     {
         "id": "dominic-seated-thought",
         "label": "Dominic assis",
-        "referencePath": "private-reference-bootstrap/dominic/dominic-seated-ref.jpg",
+        "referenceB64Path": "private-reference-bootstrap/dominic/dominic-seated-validated.b64",
         "prompt": (
             "Photorealistic live-action cinematic medium shot of Dominic, strict identity preservation, exact same man as the canonical reference. "
             "Dominic is seated alone in a refined realistic interior, white open-collar shirt, black trousers, canonical neck and chest tattoos visible. "
@@ -34,7 +36,7 @@ SHOTS: list[dict[str, Any]] = [
     {
         "id": "dominic-window",
         "label": "Dominic fenêtre",
-        "referencePath": "private-reference-bootstrap/dominic/dominic-window-ref.jpg",
+        "referenceB64Path": "private-reference-bootstrap/dominic/dominic-window-validated.b64",
         "prompt": (
             "Photorealistic live-action cinematic waist-up shot of Dominic, strict identity preservation, exact same man as the canonical reference. "
             "Dominic stands alone near a large window in a refined realistic interior, white open-collar shirt, black trousers, canonical tattoos visible. "
@@ -47,7 +49,7 @@ SHOTS: list[dict[str, Any]] = [
     {
         "id": "dominic-offscreen-reaction",
         "label": "Dominic réaction",
-        "referencePath": "private-reference-bootstrap/dominic/dominic-reaction-ref.jpg",
+        "referenceB64Path": "private-reference-bootstrap/dominic/dominic-reaction-validated.b64",
         "prompt": (
             "Photorealistic live-action cinematic medium-close shot of Dominic, strict identity preservation, exact same man as the canonical reference. "
             "Dominic is alone in a refined warm interior, white open-collar shirt, canonical neck and chest tattoos visible. "
@@ -61,13 +63,14 @@ SHOTS: list[dict[str, Any]] = [
 
 def prepare_reference(shot: dict[str, Any]) -> Path:
     target = OUT / f"{shot['id']}-reference.png"
-    source = Path(shot["referencePath"])
+    source = Path(shot["referenceB64Path"])
     if not source.exists():
-        raise FileNotFoundError(f"missing scene reference: {source}")
-    img = Image.open(source)
+        raise FileNotFoundError(f"missing validated scene reference: {source}")
+    raw = base64.b64decode(source.read_text(encoding="utf-8").strip())
+    img = Image.open(io.BytesIO(raw))
     img.load()
     worker.fit_portrait(img, target)
-    print(f"MONIA_SCENE_REFERENCE {shot['id']} {source}", flush=True)
+    print(f"MONIA_VALIDATED_SCENE_REFERENCE {shot['id']} {source} bytes={len(raw)}", flush=True)
     return target
 
 def upload_nested(ftp, root: str, local: Path, remote_name: str) -> str:
