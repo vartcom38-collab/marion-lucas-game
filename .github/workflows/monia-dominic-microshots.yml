@@ -40,7 +40,7 @@ jobs:
           python -m pip install --disable-pip-version-check gradio_client pillow requests
 
       - name: Generate Dominic microshots
-        run: python scripts/monia_dominic_microshots.py
+        run: python -m scripts.monia_dominic_microshots
 
       - name: Upload Dominic microshot diagnostics
         if: always()
