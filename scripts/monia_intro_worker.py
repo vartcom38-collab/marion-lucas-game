@@ -44,7 +44,6 @@ SHOTS = [
 
 WAN_PROVIDERS = [
     ("Kpkp21/wan2-video-generation", "Wan 2.2 ZeroGPU C"),
-    ("OpenKing/wan2-video-generation", "Wan 2.2 ZeroGPU A"),
 ]
 WAN_API_NAME = "/generate_video"
 LTX_SPACE = "https://rioshiina-ltx-2-5.hf.space"
