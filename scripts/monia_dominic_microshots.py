@@ -13,13 +13,11 @@ import scripts.monia_intro_worker as worker
 SITE = worker.SITE
 OUT = Path(".monia-dominic-microshots")
 OUT.mkdir(exist_ok=True)
-RAW = "https://raw.githubusercontent.com/vartcom38-collab/marion-lucas-game/main"
-
 SHOTS: list[dict[str, Any]] = [
     {
         "id": "dominic-seated-thought",
         "label": "Dominic assis",
-        "referenceUrl": f"{RAW}/private-reference-bootstrap/dominic/dominic-seated-ref.jpg",
+        "referencePath": "private-reference-bootstrap/dominic/dominic-seated-ref.jpg",
         "prompt": (
             "Photorealistic live-action cinematic medium shot of Dominic, strict identity preservation, exact same man as the canonical reference. "
             "Dominic is seated alone in a refined realistic interior, white open-collar shirt, black trousers, canonical neck and chest tattoos visible. "
@@ -32,7 +30,7 @@ SHOTS: list[dict[str, Any]] = [
     {
         "id": "dominic-window",
         "label": "Dominic fenêtre",
-        "referenceUrl": f"{RAW}/private-reference-bootstrap/dominic/dominic-window-ref.jpg",
+        "referencePath": "private-reference-bootstrap/dominic/dominic-window-ref.jpg",
         "prompt": (
             "Photorealistic live-action cinematic waist-up shot of Dominic, strict identity preservation, exact same man as the canonical reference. "
             "Dominic stands alone near a large window in a refined realistic interior, white open-collar shirt, black trousers, canonical tattoos visible. "
@@ -45,7 +43,7 @@ SHOTS: list[dict[str, Any]] = [
     {
         "id": "dominic-offscreen-reaction",
         "label": "Dominic réaction",
-        "referenceUrl": f"{RAW}/private-reference-bootstrap/dominic/dominic-reaction-ref.jpg",
+        "referencePath": "private-reference-bootstrap/dominic/dominic-reaction-ref.jpg",
         "prompt": (
             "Photorealistic live-action cinematic medium-close shot of Dominic, strict identity preservation, exact same man as the canonical reference. "
             "Dominic is alone in a refined warm interior, white open-collar shirt, canonical neck and chest tattoos visible. "
@@ -59,11 +57,13 @@ SHOTS: list[dict[str, Any]] = [
 
 def prepare_reference(shot: dict[str, Any]) -> Path:
     target = OUT / f"{shot['id']}-reference.png"
-    r = requests.get(shot["referenceUrl"], timeout=30, headers={"Cache-Control": "no-cache"})
-    r.raise_for_status()
-    source = OUT / f"{shot['id']}-reference.jpg"
-    source.write_bytes(r.content)
-    worker.fit_portrait(Image.open(source), target)
+    source = Path(shot["referencePath"])
+    if not source.exists():
+        raise FileNotFoundError(f"missing scene reference: {source}")
+    img = Image.open(source)
+    img.load()
+    worker.fit_portrait(img, target)
+    print(f"MONIA_SCENE_REFERENCE {shot['id']} {source}", flush=True)
     return target
 
 def upload_nested(ftp, root: str, local: Path, remote_name: str) -> str:
