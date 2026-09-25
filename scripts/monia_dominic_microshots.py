@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+# micro-wan trigger v2
+
 import json
 import os
 from pathlib import Path
