@@ -43,8 +43,8 @@ SHOTS = [
 ]
 
 WAN_PROVIDERS = [
-    ("OpenKing/wan2-video-generation", "Wan 2.2 ZeroGPU A"),
     ("Kpkp21/wan2-video-generation", "Wan 2.2 ZeroGPU C"),
+    ("OpenKing/wan2-video-generation", "Wan 2.2 ZeroGPU A"),
 ]
 WAN_API_NAME = "/generate_video"
 LTX_SPACE = "https://rioshiina-ltx-2-5.hf.space"
@@ -247,14 +247,15 @@ def _wan_child(space: str, label: str, source: str, prompt: str, target: str, qu
         print(f"MONIA provider={label} connect", flush=True)
         token = os.environ.get("HF_TOKEN", "").strip() or None
         client = Client(space, token=token, verbose=False)
-        print(f"MONIA provider={label} api={WAN_API_NAME} generate size=384x672 frames=9 steps=6", flush=True)
+        width, height, frames, steps = 512, 896, 5, 4
+        print(f"MONIA provider={label} api={WAN_API_NAME} generate size={width}x{height} frames={frames} steps={steps}", flush=True)
         result = client.predict(
             prompt,
             handle_file(source),
-            384,
-            672,
-            9,
-            6,
+            width,
+            height,
+            frames,
+            steps,
             3,
             -1,
             api_name=WAN_API_NAME,
