@@ -19,7 +19,7 @@ from gradio_client import Client, handle_file
 SITE = "https://marion-lucas.marionbolomey.fr"
 OUT_DIR = Path(".monia-intro-worker")
 OUT_DIR.mkdir(exist_ok=True)
-WAN_TIMEOUT_SECONDS = 420
+WAN_TIMEOUT_SECONDS = 180
 LTX_TIMEOUT_SECONDS = 420
 DOWNLOAD_TIMEOUT_SECONDS = 120
 
@@ -247,15 +247,15 @@ def _wan_child(space: str, label: str, source: str, prompt: str, target: str, qu
         print(f"MONIA provider={label} connect", flush=True)
         token = os.environ.get("HF_TOKEN", "").strip() or None
         client = Client(space, token=token, verbose=False)
-        print(f"MONIA provider={label} api={WAN_API_NAME} generate size=480x832 frames=17 steps=12", flush=True)
+        print(f"MONIA provider={label} api={WAN_API_NAME} generate size=384x672 frames=9 steps=6", flush=True)
         result = client.predict(
             prompt,
             handle_file(source),
-            480,
-            832,
-            17,
-            12,
-            4,
+            384,
+            672,
+            9,
+            6,
+            3,
             -1,
             api_name=WAN_API_NAME,
         )
@@ -403,7 +403,7 @@ def validate_video_candidate(path: Path, shot_id: str) -> dict[str, Any]:
     qa_dir = OUT_DIR / "qa" / shot_id
     qa_dir.mkdir(parents=True, exist_ok=True)
     samples: list[dict[str, Any]] = []
-    positions = [("first", 0.0), ("middle", duration / 2), ("last", max(0.0, duration - 0.05))]
+    positions = [("first", min(0.20, max(0.0, duration * 0.08))), ("middle", duration / 2), ("last", max(0.0, duration - 0.05))]
     gray_images: list[Image.Image] = []
     for label, sec in positions:
         png = qa_dir / f"{label}.png"
