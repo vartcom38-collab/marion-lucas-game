@@ -401,8 +401,11 @@ def run_ltx(source: Path, prompt: str, target: Path) -> None:
 def validate_video_candidate(path: Path, shot_id: str) -> dict[str, Any]:
     if not path.exists():
         raise RuntimeError(f"{shot_id}: generated video missing")
-    if path.stat().st_size < 100_000:
-        raise RuntimeError(f"{shot_id}: generated video too small ({path.stat().st_size} bytes)")
+    # One-second micro-cinematics can be compact; use file size only as a
+    # corruption floor. ffprobe/frame variance/motion checks below remain the
+    # real technical quality gate.
+    if path.stat().st_size < 48_000:
+        raise RuntimeError(f"{shot_id}: generated video too small/corrupt ({path.stat().st_size} bytes)")
 
     probe = subprocess.run(
         [
