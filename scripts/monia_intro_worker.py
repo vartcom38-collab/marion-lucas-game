@@ -46,6 +46,9 @@ WAN_PROVIDERS = [
     ("zerogpu-aoti/wan2-2-fp8da-aoti-faster", "Wan 2.2 ZeroGPU AOT Lightning"),
 ]
 WAN_API_NAME = "/generate_video"
+WAN_FAST_SPACE = "ysharma/wan2-1-fast"
+WAN_FAST_LABEL = "Wan 2.1 Fast ZeroGPU"
+WAN_FAST_API_NAME = "/generate-video"
 LTX_SPACE = "https://rioshiina-ltx-2-5.hf.space"
 LTX_LABEL = "LTX 2.5 ZeroGPU B"
 
@@ -301,6 +304,48 @@ def _wan_child(space: str, label: str, source: str, prompt: str, target: str, qu
         queue.put((False, str(exc)))
 
 
+def run_wan_fast(source: Path, prompt: str, target: Path) -> None:
+    print(f"MONIA provider={WAN_FAST_LABEL} connect", flush=True)
+    token = os.environ.get("HF_TOKEN", "").strip() or None
+    client = Client(WAN_FAST_SPACE, token=token, verbose=False)
+    negative_prompt = (
+        "identity drift, different person, face change, eye change, jaw change, beard change, "
+        "tattoo change, clothing change, background change, camera movement, zoom, reframing, "
+        "warped face, deformed hands, extra fingers, artifacts, blur"
+    )
+    print(
+        f"MONIA provider={WAN_FAST_LABEL} api={WAN_FAST_API_NAME} "
+        "generate size=896x512 duration=1.2s steps=4",
+        flush=True,
+    )
+    result = client.predict(
+        handle_file(str(source)),
+        prompt,
+        512,
+        896,
+        negative_prompt,
+        1.2,
+        1.0,
+        4,
+        42,
+        False,
+        api_name=WAN_FAST_API_NAME,
+    )
+    candidates = deep_candidates(result)
+    if not candidates:
+        raise RuntimeError(f"job terminé sans fichier vidéo: {type(result).__name__}")
+    errors: list[str] = []
+    for candidate in candidates:
+        try:
+            materialize(candidate, target)
+            if looks_like_video(target):
+                print(f"MONIA provider={WAN_FAST_LABEL} true-video ready bytes={target.stat().st_size}", flush=True)
+                return
+        except Exception as exc:
+            errors.append(str(exc))
+    raise RuntimeError("aucune sortie vidéo Wan Fast récupérable: " + " | ".join(errors[-3:]))
+
+
 def run_wan_with_timeout(space: str, label: str, source: Path, prompt: str, target: Path) -> None:
     ctx = mp.get_context("spawn")
     queue = ctx.Queue()
@@ -480,6 +525,16 @@ def validate_video_candidate(path: Path, shot_id: str) -> dict[str, Any]:
 def generate(source: Path, prompt: str, target: Path) -> tuple[str, list[str]]:
     attempts: list[str] = []
     target.unlink(missing_ok=True)
+
+    try:
+        run_wan_fast(source, prompt, target)
+        return WAN_FAST_LABEL, attempts
+    except Exception as exc:
+        target.unlink(missing_ok=True)
+        msg = f"{WAN_FAST_LABEL}: {exc}"
+        attempts.append(msg)
+        print(f"MONIA failed {msg}", flush=True)
+
     for space, label in WAN_PROVIDERS:
         try:
             run_wan_with_timeout(space, label, source, prompt, target)
