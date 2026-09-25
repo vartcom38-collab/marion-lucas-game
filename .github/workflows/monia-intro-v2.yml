@@ -173,11 +173,12 @@ jobs:
           for shot in worker.SHOTS:
               if shot.get('id')=='lucas-presence':
                   shot['prompt']=(
-                    'Photorealistic live-action cinematic portrait video of Lucas, the same man as the canonical reference extracted from the user-provided video, with stable identity. '
+                    'Photorealistic live-action cinematic medium-close portrait of Lucas, the exact same man as the canonical reference extracted from the user-provided video, with strict identity preservation across every frame. '
+                    'Frame from upper chest to head with comfortable headroom; never extreme close-up, never crop through eyes, nose, mouth or chin. '
                     'Preserve his angular masculine face, strong jaw and cheekbones, dark swept-back hair, light grey-green eyes, short dark stubble, tanned olive skin, and black tattoos visible across his neck and upper chest whenever clothing allows. '
-                    'Calm confident controlled presence, intense direct gaze, restrained half-smile, subtle brow reactions, realistic blinking, small eye shifts, natural breathing, slow precise head turns and understated body movement. '
-                    'Neutral realistic interior, soft cinematic daylight, premium short-drama realism, restrained camera movement. Lucas alone in frame. '
-                    'No woman, no second person, no dialogue, no text, no subtitles, no watermark, no UI, no morphing, no identity drift, no tattoo drift.'
+                    'Calm controlled presence, neutral mouth with only a tiny restrained change in expression, one natural blink, very small eye shift, subtle breathing, minimal head movement under 10 degrees, no broad smile, no exaggerated eyebrow movement. '
+                    'Stable external cinematic camera, neutral realistic interior, soft daylight, premium short-drama realism. Lucas alone in frame. '
+                    'No woman, no second person, no dialogue, no text, no subtitles, no watermark, no UI, no zoom-in, no face enlargement, no morphing, no identity drift, no eye drift, no jaw drift, no beard drift, no tattoo drift.'
                   )
           print('MonIA V2 source=Infomaniak canon; provider order=LTX then Wan fallback',flush=True)
           raise SystemExit(worker.main())
