@@ -373,6 +373,82 @@ def run_ltx(source: Path, prompt: str, target: Path) -> None:
     raise RuntimeError("réponse LTX incomplète ou file GPU expirée")
 
 
+def validate_video_candidate(path: Path, shot_id: str) -> dict[str, Any]:
+    if not path.exists():
+        raise RuntimeError(f"{shot_id}: generated video missing")
+    if path.stat().st_size < 100_000:
+        raise RuntimeError(f"{shot_id}: generated video too small ({path.stat().st_size} bytes)")
+
+    probe = subprocess.run(
+        [
+            "ffprobe", "-v", "error",
+            "-show_entries", "format=duration,size:stream=codec_name,width,height,nb_frames",
+            "-of", "json", str(path),
+        ],
+        text=True, capture_output=True, timeout=30, check=True,
+    )
+    media = json.loads(probe.stdout)
+    streams = media.get("streams") or []
+    if not streams:
+        raise RuntimeError(f"{shot_id}: no video stream")
+    fmt = media.get("format") or {}
+    duration = float(fmt.get("duration") or 0)
+    size = int(fmt.get("size") or path.stat().st_size)
+    if duration < 0.8:
+        raise RuntimeError(f"{shot_id}: video too short ({duration:.3f}s)")
+    nb = streams[0].get("nb_frames")
+    if nb not in (None, "", "N/A") and int(nb) < 12:
+        raise RuntimeError(f"{shot_id}: too few frames ({nb})")
+
+    qa_dir = OUT_DIR / "qa" / shot_id
+    qa_dir.mkdir(parents=True, exist_ok=True)
+    samples: list[dict[str, Any]] = []
+    positions = [("first", 0.0), ("middle", duration / 2), ("last", max(0.0, duration - 0.05))]
+    gray_images: list[Image.Image] = []
+    for label, sec in positions:
+        png = qa_dir / f"{label}.png"
+        subprocess.run(
+            ["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-ss", f"{sec:.3f}", "-i", str(path), "-frames:v", "1", str(png)],
+            check=True, timeout=45,
+        )
+        img = Image.open(png).convert("L")
+        pixels = list(img.getdata())
+        mean = sum(pixels) / max(1, len(pixels))
+        variance = sum((p - mean) ** 2 for p in pixels) / max(1, len(pixels))
+        std = variance ** 0.5
+        if mean <= 3.0 or std <= 1.0:
+            raise RuntimeError(f"{shot_id}: black/flat frame {label} mean={mean:.3f} std={std:.3f}")
+        gray_images.append(img)
+        samples.append({"label": label, "time": round(sec, 3), "mean": round(mean, 3), "std": round(std, 3), "file": str(png)})
+
+    def mean_abs_diff(a: Image.Image, b: Image.Image) -> float:
+        if a.size != b.size:
+            b = b.resize(a.size)
+        ap = list(a.getdata()); bp = list(b.getdata())
+        return sum(abs(x - y) for x, y in zip(ap, bp)) / max(1, len(ap))
+
+    motion = {
+        "first_middle": round(mean_abs_diff(gray_images[0], gray_images[1]), 4),
+        "middle_last": round(mean_abs_diff(gray_images[1], gray_images[2]), 4),
+        "first_last": round(mean_abs_diff(gray_images[0], gray_images[2]), 4),
+    }
+    if max(motion.values()) < 0.5:
+        raise RuntimeError(f"{shot_id}: candidate appears frozen/static ({motion})")
+
+    report = {
+        "shotId": shot_id,
+        "technicalPass": True,
+        "duration": duration,
+        "size": size,
+        "stream": streams[0],
+        "samples": samples,
+        "motion": motion,
+    }
+    (qa_dir / "qa.json").write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(f"MONIA_QA_PASS {shot_id} duration={duration:.3f}s size={size} motion={motion}", flush=True)
+    return report
+
+
 def generate(source: Path, prompt: str, target: Path) -> tuple[str, list[str]]:
     attempts: list[str] = []
     target.unlink(missing_ok=True)
@@ -479,7 +555,8 @@ def main() -> int:
         target = OUT_DIR / shot["output"]
         prepare_source(shot, source)
         provider, attempts = generate(source, shot["prompt"], target)
-        generated.append({"id": shot["id"], "label": shot["label"], "file": target, "provider": provider, "attempts": attempts})
+        qa = validate_video_candidate(target, shot["id"])
+        generated.append({"id": shot["id"], "label": shot["label"], "file": target, "provider": provider, "attempts": attempts, "qa": qa})
 
     ftp = ftp_connect()
     try:
@@ -487,7 +564,7 @@ def main() -> int:
         manifest_shots = []
         for item in generated:
             url = upload_file(ftp, root, item["file"], item["file"].name)
-            manifest_shots.append({"id": item["id"], "label": item["label"], "videoUrl": url, "provider": item["provider"]})
+            manifest_shots.append({"id": item["id"], "label": item["label"], "videoUrl": url, "provider": item["provider"], "technicalQa": item["qa"]})
         manifest = {"version": 1, "generatedBy": "MonIA GitHub worker", "shots": manifest_shots}
         manifest_path = OUT_DIR / "intro-manifest.json"
         manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
