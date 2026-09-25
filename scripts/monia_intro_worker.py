@@ -484,6 +484,15 @@ def validate_video_candidate(path: Path, shot_id: str) -> dict[str, Any]:
             ["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-ss", f"{sec:.3f}", "-i", str(path), "-frames:v", "1", str(png)],
             check=True, timeout=45,
         )
+        if not png.exists() and label == "last":
+            fallback_sec = max(0.0, duration * 0.90)
+            subprocess.run(
+                ["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-ss", f"{fallback_sec:.3f}", "-i", str(path), "-frames:v", "1", str(png)],
+                check=True, timeout=45,
+            )
+            sec = fallback_sec
+        if not png.exists():
+            raise RuntimeError(f"{shot_id}: failed to extract QA frame {label} at {sec:.3f}s")
         img = Image.open(png).convert("L")
         pixels = list(img.getdata())
         mean = sum(pixels) / max(1, len(pixels))
