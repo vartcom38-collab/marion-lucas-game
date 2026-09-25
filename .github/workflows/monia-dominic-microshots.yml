@@ -25,6 +25,7 @@ jobs:
       INFOMANIAK_FTP_USER: ${{ secrets.INFOMANIAK_FTP_USER }}
       INFOMANIAK_FTP_PASSWORD: ${{ secrets.INFOMANIAK_FTP_PASSWORD }}
       HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      MONIA_WAN_ONLY: "1"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
