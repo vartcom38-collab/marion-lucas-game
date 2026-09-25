@@ -43,7 +43,7 @@ SHOTS = [
 ]
 
 WAN_PROVIDERS = [
-    ("Kpkp21/wan2-video-generation", "Wan 2.2 ZeroGPU C"),
+    ("zerogpu-aoti/wan2-2-fp8da-aoti-faster", "Wan 2.2 ZeroGPU AOT Lightning"),
 ]
 WAN_API_NAME = "/generate_video"
 LTX_SPACE = "https://rioshiina-ltx-2-5.hf.space"
@@ -246,19 +246,44 @@ def _wan_child(space: str, label: str, source: str, prompt: str, target: str, qu
         print(f"MONIA provider={label} connect", flush=True)
         token = os.environ.get("HF_TOKEN", "").strip() or None
         client = Client(space, token=token, verbose=False)
-        width, height, frames, steps = 512, 896, 25, 20
-        print(f"MONIA provider={label} api={WAN_API_NAME} generate size={width}x{height} frames={frames} steps={steps}", flush=True)
-        result = client.predict(
-            prompt,
-            handle_file(source),
-            width,
-            height,
-            frames,
-            steps,
-            3,
-            -1,
-            api_name=WAN_API_NAME,
-        )
+        if space == "zerogpu-aoti/wan2-2-fp8da-aoti-faster":
+            steps = 4
+            duration_seconds = 1.0
+            negative_prompt = (
+                "identity drift, different person, face change, jaw change, eye change, beard change, "
+                "tattoo change, clothing change, camera movement, zoom, reframing, background change, "
+                "deformed face, distorted anatomy, text, watermark"
+            )
+            print(
+                f"MONIA provider={label} api={WAN_API_NAME} generate duration={duration_seconds}s steps={steps}",
+                flush=True,
+            )
+            result = client.predict(
+                handle_file(source),
+                prompt,
+                steps,
+                negative_prompt,
+                duration_seconds,
+                1.0,
+                1.0,
+                42,
+                False,
+                api_name=WAN_API_NAME,
+            )
+        else:
+            width, height, frames, steps = 512, 896, 25, 20
+            print(f"MONIA provider={label} api={WAN_API_NAME} generate size={width}x{height} frames={frames} steps={steps}", flush=True)
+            result = client.predict(
+                prompt,
+                handle_file(source),
+                width,
+                height,
+                frames,
+                steps,
+                3,
+                -1,
+                api_name=WAN_API_NAME,
+            )
         candidates = deep_candidates(result)
         if not candidates:
             raise RuntimeError(f"job terminé sans fichier vidéo: {type(result).__name__}")
