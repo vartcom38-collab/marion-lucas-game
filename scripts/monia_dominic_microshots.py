@@ -291,3 +291,5 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
+# wan-c rerun trigger: 180s-compatible provider
