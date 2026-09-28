@@ -7,9 +7,11 @@ import subprocess
 from pathlib import Path
 
 import torch
-from PIL import Image, ImageChops, ImageStat
+from PIL import Image, ImageChops, ImageStat, ImageFile
 from diffusers import DiffusionPipeline
 from diffusers.utils import export_to_video
+
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 MODEL_ID = "Wan-AI/Wan2.2-TI2V-5B-Diffusers"
 WIDTH = 512
