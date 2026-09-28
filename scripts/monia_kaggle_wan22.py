@@ -43,8 +43,10 @@ PROMPTS = {
     ),
 }
 
+CANON_ONLY = True
+
 REFERENCES = {
-    "dominic-seated-thought": "private-reference-bootstrap/dominic/dominic-seated-ref.jpg",
+    "dominic-seated-thought": "private-reference-canon/dominic/dominic-seated-master.jpg",
     "dominic-window": "private-reference-bootstrap/dominic/dominic-window-ref.jpg",
     "dominic-offscreen-reaction": "private-reference-bootstrap/dominic/dominic-reaction-ref.jpg",
 }
@@ -187,6 +189,12 @@ def main() -> int:
     ref_path = Path(REFERENCES[args.shot])
     if not ref_path.exists():
         raise FileNotFoundError(ref_path)
+    if CANON_ONLY and "private-reference-bootstrap" in str(ref_path):
+        raise RuntimeError(
+            f"BOOTSTRAP_REFERENCE_BLOCKED: {ref_path}. "
+            "Dominic generation must use canonical visual references only."
+        )
+    print("REFERENCE:", ref_path, flush=True)
 
     image = prepare_image(ref_path)
     prepared_ref = out_dir / f"{args.shot}-reference.png"
@@ -249,6 +257,7 @@ def main() -> int:
         "provider": "Kaggle free GPU / Wan2.2-TI2V-5B",
         "model": MODEL_ID,
         "shot": args.shot,
+        "reference": str(ref_path),
         "video": str(video),
         "wanContract": {
             "width": WIDTH,
