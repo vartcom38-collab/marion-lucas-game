@@ -132,7 +132,7 @@ def strict_identity_gate(video: Path, reference: Image.Image, out_dir: Path) -> 
                 f"STRICT_IDENTITY_REJECT {label}: mean_abs={mean_abs:.2f}, dhash={hdist}/64"
             )
 
-    return {"strictIdentityPass": True, "samples": checks}
+    return {"structuralSimilarityPass": True, "identityVerified": False, "humanApprovalRequired": True, "samples": checks}
 
 
 def load_pipeline():
