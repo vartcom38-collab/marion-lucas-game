@@ -8,7 +8,7 @@ from pathlib import Path
 
 import torch
 from PIL import Image, ImageChops, ImageStat, ImageFile
-from diffusers import DiffusionPipeline
+from diffusers import WanImageToVideoPipeline, AutoencoderKLWan
 from diffusers.utils import export_to_video
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
@@ -118,8 +118,15 @@ def strict_identity_gate(video: Path, reference: Image.Image, out_dir: Path) -> 
 
 def load_pipeline():
     dtype = torch.float16
-    pipe = DiffusionPipeline.from_pretrained(
+    vae = AutoencoderKLWan.from_pretrained(
         MODEL_ID,
+        subfolder="vae",
+        torch_dtype=torch.float32,
+        low_cpu_mem_usage=True,
+    )
+    pipe = WanImageToVideoPipeline.from_pretrained(
+        MODEL_ID,
+        vae=vae,
         torch_dtype=dtype,
         low_cpu_mem_usage=True,
     )
