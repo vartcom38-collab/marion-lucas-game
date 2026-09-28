@@ -101,9 +101,15 @@ def strict_identity_gate(video: Path, reference: Image.Image, out_dir: Path) -> 
     )
     duration = float(json.loads(probe.stdout)["format"]["duration"])
     checks = []
-    for label, sec in [("first", min(0.12, duration * 0.08)), ("middle", duration / 2), ("last", max(0.0, duration - 0.05))]:
+    for label, sec in [("first", min(0.12, duration * 0.08)), ("middle", duration / 2), ("last", max(0.0, duration - max(0.20, 2.0 / FPS)))]:
         png = out_dir / f"identity-{label}.png"
         extract_frame(video, sec, png)
+        if not png.exists():
+            # Some short MP4s cannot seek to the exact tail timestamp.
+            fallback_sec = max(0.0, min(sec, duration * 0.90))
+            extract_frame(video, fallback_sec, png)
+        if not png.exists():
+            raise RuntimeError(f"QA_FRAME_EXTRACTION_FAILED {label}: t={sec:.3f}s duration={duration:.3f}s")
         frame = Image.open(png).convert("RGB").resize((WIDTH, HEIGHT), Image.Resampling.LANCZOS)
         crop = identity_crop(frame).resize((192, 192), Image.Resampling.LANCZOS)
         diff = ImageChops.difference(ref_crop, crop)
