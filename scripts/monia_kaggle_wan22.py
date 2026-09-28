@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
 import subprocess
 from pathlib import Path
 
@@ -121,7 +122,7 @@ def load_pipeline():
     vae = AutoencoderKLWan.from_pretrained(
         MODEL_ID,
         subfolder="vae",
-        torch_dtype=torch.float32,
+        torch_dtype=torch.float16,
         low_cpu_mem_usage=True,
     )
     pipe = WanImageToVideoPipeline.from_pretrained(
@@ -131,14 +132,20 @@ def load_pipeline():
         low_cpu_mem_usage=True,
     )
 
-    # Kaggle T4 = 16 GB VRAM. Keep only active modules on GPU.
-    if hasattr(pipe, "enable_model_cpu_offload"):
+    # Kaggle T4 = ~15 GB VRAM. Sequential offload is slower than model
+    # offload but releases submodules much more aggressively and prevents
+    # the VAE + transformer from co-residing on GPU 0.
+    if hasattr(pipe, "enable_sequential_cpu_offload"):
+        pipe.enable_sequential_cpu_offload(gpu_id=0)
+    elif hasattr(pipe, "enable_model_cpu_offload"):
         pipe.enable_model_cpu_offload(gpu_id=0)
+
     if hasattr(pipe, "enable_vae_tiling"):
         pipe.enable_vae_tiling()
     if hasattr(pipe, "enable_vae_slicing"):
         pipe.enable_vae_slicing()
 
+    torch.cuda.empty_cache()
     return pipe
 
 
@@ -168,6 +175,10 @@ def main() -> int:
 
     pipe = load_pipeline()
     generator = torch.Generator(device="cpu").manual_seed(args.seed)
+
+    torch.cuda.empty_cache()
+    free_bytes, total_bytes = torch.cuda.mem_get_info(0)
+    print(f"CUDA free before generation: {free_bytes / 1024**3:.2f} / {total_bytes / 1024**3:.2f} GiB", flush=True)
 
     output = pipe(
         image=image,
