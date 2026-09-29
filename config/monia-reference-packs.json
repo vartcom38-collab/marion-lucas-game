@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 5,
   "policy": {
     "identitySourceRequired": true,
     "allowPromptOnlyCharacterGeneration": false,
@@ -17,18 +17,23 @@
         "storage": "infomaniak-private",
         "remotePath": "/private/monia/lucas/source.mp4",
         "primarySecond": 26,
-        "referenceSeconds": [22, 26, 30]
+        "referenceSeconds": [
+          22,
+          26,
+          30
+        ]
       },
       "fallbackImage": "https://marion-lucas.marionbolomey.fr/resources/monia/canon/lucas/reference.jpg",
       "rules": [
         "The two priority images are the primary face and appearance authority for Lucas.",
         "The latest Lucas video remains the motion, presence and micro-expression authority.",
         "Never substitute Lucas with another man.",
-        "Preserve face geometry, eyes, nose, mouth, jaw, hair, stubble, skin tone, natural ears and the canon absence of tattoos and facial scars.",
-        "Do not invent tattoos, facial scars, piercings or other permanent distinguishing marks that are not in the locked canon.",
+        "Preserve face geometry, eyes, nose, mouth, jaw, hair, stubble, skin tone, natural ears and the current Dominic canon and validated permanent marks.",
         "Do not copy text, logos or graphic overlays visible in reference media.",
         "Full-body, medium and close-up shots are allowed when the reference pack supports them."
-      ]
+      ],
+      "legacyAliasOf": "dominic",
+      "deprecated": true
     },
     "marion": {
       "referenceMode": "image-pack",
@@ -39,6 +44,34 @@
         "Never substitute Marion with another woman.",
         "Preserve her recognizable facial proportions, eyes, smile, hair and natural appearance.",
         "Full-body, medium and close-up shots are allowed when the reference pack supports them."
+      ]
+    },
+    "dominic": {
+      "referenceMode": "hybrid-canonical-library",
+      "canonicalImage": "private-reference-canon/dominic/dominic-seated-master.jpg",
+      "legacyPriorityImages": [
+        "assets/monia-atlas/lucas-priority-01.jpg.b64",
+        "assets/monia-atlas/lucas-priority-02.jpg.b64"
+      ],
+      "video": {
+        "storage": "infomaniak-private",
+        "remotePath": "/private/monia/lucas/source.mp4",
+        "primarySecond": 26,
+        "referenceSeconds": [
+          22,
+          26,
+          30
+        ]
+      },
+      "rules": [
+        "Dominic is the current canonical character name; Lucas is a legacy label only.",
+        "The full MonIA Dominic visual library is identity authority, not a single prompt-generated face.",
+        "Use original validated images and video frames as primary visual references.",
+        "Never substitute Dominic with another man.",
+        "Preserve face geometry, eyes, nose, mouth, jaw, hair, stubble, skin tone and the canonical tattoos visible in validated references.",
+        "Do not erase canonical tattoos and do not invent new permanent marks.",
+        "Choose a reference matching the intended camera angle and expression before video generation.",
+        "A generated candidate must remain quarantined until human visual approval."
       ]
     }
   }
