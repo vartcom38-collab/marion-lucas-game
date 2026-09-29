@@ -57,6 +57,31 @@ jobs:
           fi
 
           python - <<'PY'
+          import json
+          from pathlib import Path
+          jobp=Path('.kaggle-worker/job.json')
+          cfgp=Path('config/monia-reference-packs.json')
+          job=json.loads(jobp.read_text(encoding='utf-8'))
+          cfg=json.loads(cfgp.read_text(encoding='utf-8'))
+          chars=cfg.get('characters',{})
+          raw_base='https://raw.githubusercontent.com/vartcom38-collab/marion-lucas-game/main/'
+          for ch in job.get('characters',[]):
+              cid=str(ch.get('id','')).lower()
+              pack=chars.get(cid)
+              if not pack and cid=='lucas': pack=chars.get('dominic')
+              if not pack: continue
+              canon=pack.get('canonicalImage')
+              if canon: ch['canonRef']=raw_base+canon
+              legacy=pack.get('legacyPriorityImages') or pack.get('priorityImages') or []
+              ch['priorityImages']=[raw_base+p for p in legacy]
+              ch['moniaLibraryRules']=pack.get('rules') or []
+              ch['moniaLibraryVideo']=pack.get('video') or None
+              ch['referenceMode']=pack.get('referenceMode')
+          jobp.write_text(json.dumps(job,ensure_ascii=False,indent=2),encoding='utf-8')
+          print('✅ Enrich job from MonIA canonical library:', [c.get('id') for c in job.get('characters',[])])
+          PY
+
+          python - <<'PY'
           import base64, json
           from pathlib import Path
           nb_path=Path('.kaggle-worker/monia_kaggle_oneclick.ipynb')
