@@ -50,8 +50,8 @@
       "referenceMode": "hybrid-canonical-library",
       "canonicalImage": "private-reference-canon/dominic/dominic-seated-master.jpg",
       "legacyPriorityImages": [
-        "assets/monia-atlas/lucas-priority-01.jpg.b64",
-        "assets/monia-atlas/lucas-priority-02.jpg.b64"
+        "assets/lucas-reference-compact.b64",
+        "assets/lucas-reference-from-user-video.jpg.b64"
       ],
       "video": {
         "storage": "infomaniak-private",
@@ -64,6 +64,7 @@
         ]
       },
       "rules": [
+        "Use the validated MonIA compact/user-video identity anchors before any generated or convenience image.",
         "Dominic is the current canonical character name; Lucas is a legacy label only.",
         "The full MonIA Dominic visual library is identity authority, not a single prompt-generated face.",
         "Use original validated images and video frames as primary visual references.",
