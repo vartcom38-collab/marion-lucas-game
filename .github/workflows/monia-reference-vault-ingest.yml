@@ -1,0 +1,85 @@
+name: MonIA Reference Vault Ingest
+
+on:
+  workflow_dispatch:
+    inputs:
+      repo_path:
+        description: Repository path of the source binary to ingest
+        required: true
+        type: string
+      character:
+        description: Canonical character id (dominic, marion)
+        required: true
+        type: string
+      ref_id:
+        description: Stable MonIA reference id
+        required: true
+        type: string
+      roles:
+        description: Comma-separated semantic roles
+        required: false
+        default: identity
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate source
+        shell: bash
+        env:
+          SOURCE: ${{ inputs.repo_path }}
+        run: |
+          set -euo pipefail
+          test -f "$SOURCE"
+          test -s "$SOURCE"
+          file "$SOURCE"
+
+      - name: Derive vault token
+        shell: bash
+        env:
+          INFOMANIAK_FTP_PASSWORD: ${{ secrets.INFOMANIAK_FTP_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test -n "$INFOMANIAK_FTP_PASSWORD"
+          token="$(printf '%s' "$INFOMANIAK_FTP_PASSWORD" | openssl dgst -sha256 -hmac 'monia-reference-bridge-v1' -binary | base64 -w0)"
+          echo "::add-mask::$token"
+          printf '%s' "$token" > /tmp/monia-vault-token
+
+      - name: Upload to single MonIA vault
+        shell: bash
+        env:
+          SOURCE: ${{ inputs.repo_path }}
+          CHARACTER: ${{ inputs.character }}
+          REF_ID: ${{ inputs.ref_id }}
+          ROLES: ${{ inputs.roles }}
+        run: |
+          set -euo pipefail
+          token="$(cat /tmp/monia-vault-token)"
+          echo "::add-mask::$token"
+          response="$(curl -fsS --retry 3 --connect-timeout 15 --max-time 300             -X POST             -H "Authorization: Bearer $token"             -F "character=$CHARACTER"             -F "ref_id=$REF_ID"             -F "roles=$ROLES"             -F "source_name=$(basename "$SOURCE")"             -F "file=@$SOURCE"             https://marion-lucas.marionbolomey.fr/api/monia-reference-vault.php)"
+          echo "$response" | tee /tmp/vault-response.json
+          python - <<'PY'
+          import json
+          d=json.load(open('/tmp/vault-response.json'))
+          assert d.get('ok') is True, d
+          assert d.get('ref_id')
+          assert int(d.get('bytes',0))>255
+          print('Vault ingest OK:',d['character'],d['ref_id'],d['mime'],d['bytes'])
+          PY
+
+      - name: Verify private retrieval
+        shell: bash
+        env:
+          CHARACTER: ${{ inputs.character }}
+          REF_ID: ${{ inputs.ref_id }}
+        run: |
+          set -euo pipefail
+          token="$(cat /tmp/monia-vault-token)"
+          echo "::add-mask::$token"
+          curl -fsS --retry 3             -H "Authorization: Bearer $token"             "https://marion-lucas.marionbolomey.fr/api/monia-reference-vault.php?character=$CHARACTER&ref_id=$REF_ID&mode=meta"             | python -m json.tool
