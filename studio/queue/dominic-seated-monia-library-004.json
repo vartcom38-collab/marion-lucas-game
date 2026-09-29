@@ -1,0 +1,76 @@
+{
+  "id": "dominic-seated-monia-library-004",
+  "state": "queued",
+  "createdAt": "2026-09-29T13:45:00+02:00",
+  "source": "monia-video-orchestrator-v3",
+  "candidateOnly": true,
+  "narrativeAuthority": false,
+  "sceneFamily": "dominic-seated-thought-real-video",
+  "signature": "MONIA_DOMINIC_FULL_LIBRARY_004",
+  "primaryCharacter": "dominic",
+  "prompt": "Create a brand-new live-action cinematic shot of Dominic. MonIA's canonical reference library is the sole identity authority. Use the canonical close-face identity reference for the face and the MonIA video/reference banks only for posture, gaze, breathing and micro-expression vocabulary. Dominic sits naturally, breathes, blinks once, and shifts his gaze slightly upward. Do not invent or redesign his face. Stable camera, no dialogue.",
+  "negativePrompt": "different person, identity drift, face redesign, generic man, ethnicity change, age change, face morphing, facial jitter, camera movement, zoom, subtitles, watermark, UI",
+  "characters": [
+    {
+      "id": "dominic",
+      "identityMode": "canonical-image-strict",
+      "canonRef": "https://raw.githubusercontent.com/vartcom38-collab/marion-lucas-game/main/public/resources/monia/canon/lucas/priority-01.jpg",
+      "wardrobe": "preserve supplied canonical reference exactly",
+      "referenceMode": "monia-library-router",
+      "libraryRouter": "config/monia-reference-library-router-v1.json",
+      "referenceBanks": [
+        "config/lucas-reference-bank.json",
+        "config/lucas-video-bank.json",
+        "config/dominic-multiview-canon-v2.json",
+        "config/dominic-direct-reference-pack-v3.json",
+        "config/motion-reference-bank.json"
+      ]
+    }
+  ],
+  "motion": {
+    "referenceId": "dominic-canon-seated-2026-09-28",
+    "tags": [
+      "natural-breathing",
+      "blink",
+      "micro-expression",
+      "eye-shift",
+      "identity-stability"
+    ],
+    "copyIdentity": true
+  },
+  "generation": {
+    "provider": "kaggle",
+    "router": "wan2.2-ti2v-5b",
+    "backend": "wan2.2-ti2v-5b",
+    "width": 512,
+    "height": 896,
+    "frames": 25,
+    "steps": 20,
+    "guidance": 4,
+    "fps": 16,
+    "seed": 45,
+    "shotCount": 1,
+    "shotCharacters": [
+      "dominic"
+    ],
+    "shotReferenceIndex": [
+      0
+    ],
+    "shotImages": [
+      null
+    ],
+    "shotPrompts": [
+      "Photorealistic live-action medium shot. Dominic must remain the exact same recognizable man as the canonical reference. Natural breathing, one blink, tiny upward eye shift and subtle facial tension. Keep composition stable. No camera movement, no morphing, no generic replacement face."
+    ],
+    "lockLastImage": false,
+    "identityRestore": true
+  },
+  "qualityPolicy": {
+    "failClosed": true,
+    "humanApprovalBeforeLive": true,
+    "requireTrueVideo": true
+  },
+  "output": {
+    "candidatePath": "public/resources/monia/candidates/dominic-seated-monia-library-004/"
+  }
+}
