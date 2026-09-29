@@ -1,0 +1,60 @@
+{
+  "version": 1,
+  "status": "active",
+  "name": "MonIA Reference Vault",
+  "purpose": "Single persistent binary store for all canonical user-supplied character references used by MonIA.",
+  "master": {
+    "provider": "Infomaniak",
+    "root": "/private/monia/reference-vault/",
+    "access": "authenticated-api-only",
+    "endpoint": "/api/monia-reference-vault.php"
+  },
+  "layout": {
+    "pattern": "{character}/{ref_id}/source.{ext}",
+    "metadata": "{character}/{ref_id}/metadata.json"
+  },
+  "characters": {
+    "dominic": {
+      "aliases": [
+        "lucas",
+        "lucas-castellano",
+        "dominic-castellano"
+      ]
+    },
+    "marion": {
+      "aliases": [
+        "marion"
+      ]
+    }
+  },
+  "rules": [
+    "Every durable photo, video or audio reference must have one vault ref_id.",
+    "Reference banks store vault ids and semantic roles, not expiring chat URLs.",
+    "GPU workers receive only selected vault binaries for the current shot.",
+    "Vault binaries never become narrative output and are never copied shot-for-shot.",
+    "If a required vault asset is missing, generation fails closed."
+  ],
+  "ingest": {
+    "accepted": [
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+      "video/mp4",
+      "video/webm",
+      "audio/wav",
+      "audio/mpeg",
+      "audio/ogg"
+    ],
+    "deduplicateBy": "sha256",
+    "metadataFields": [
+      "character",
+      "ref_id",
+      "source_name",
+      "roles",
+      "mime",
+      "bytes",
+      "sha256",
+      "created_at"
+    ]
+  }
+}
