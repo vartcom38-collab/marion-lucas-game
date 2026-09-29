@@ -83,6 +83,19 @@ jobs:
               legacy=pack.get('legacyPriorityImages') or pack.get('priorityImages') or []
               ch['priorityImages']=[raw_base+p for p in legacy]
               embedded=[]
+              for p in (pack.get('embeddedIdentityFiles') or []):
+                  fp=Path(p)
+                  if not fp.exists():
+                      print('⚠️ Missing binary MonIA identity anchor:', p); continue
+                  try:
+                      raw=fp.read_bytes()
+                      if raw[:2] == b'\\xff\\xd8' and raw[-2:] == b'\\xff\\xd9':
+                          embedded.append(__import__('base64').b64encode(raw).decode('ascii'))
+                          print('✅ Embedded binary MonIA identity anchor:', p, len(raw), 'bytes')
+                      else:
+                          print('⚠️ Skipped invalid binary MonIA identity anchor:', p)
+                  except Exception as exc:
+                      print('⚠️ Could not embed binary MonIA identity anchor:', p, repr(exc))
               for p in legacy:
                   fp=Path(p)
                   if not fp.exists():
