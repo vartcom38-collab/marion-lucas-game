@@ -133,14 +133,25 @@ jobs:
             STATUS="$(kaggle kernels status "$KERNEL" 2>&1 || true)"
             echo "[$attempt/60] $STATUS"
             if echo "$STATUS" | grep -Eqi 'complete|completed'; then
-              echo "Kaggle worker completed."
-              exit 0
+              CHECK="/tmp/monia-kaggle-id-check"
+              rm -rf "$CHECK"; mkdir -p "$CHECK"
+              kaggle kernels output "$KERNEL" -p "$CHECK" -o >/dev/null 2>&1 || true
+              ACTUAL=""
+              if [ -f "$CHECK/job.json" ]; then
+                ACTUAL="$(python -c "import json; print(json.load(open('$CHECK/job.json')).get('id',''))" 2>/dev/null || true)"
+              fi
+              echo "Completed output job id: ${ACTUAL:-missing}; requested: $MONIA_JOB_ID"
+              if [ "$ACTUAL" = "$MONIA_JOB_ID" ]; then
+                echo "Kaggle worker completed for the requested MonIA job."
+                exit 0
+              fi
+              echo "Ignoring stale completed output and waiting for the new Kaggle run."
             fi
             if echo "$STATUS" | grep -Eqi 'error|failed|cancelled|canceled'; then
               echo "Kaggle worker failed: $STATUS"
               exit 1
             fi
-            sleep 60
+            sleep 30
           done
           echo "Timed out waiting for Kaggle worker."
           exit 1
