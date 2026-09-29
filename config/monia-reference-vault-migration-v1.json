@@ -37,5 +37,67 @@
     "ScreenRecording_09-17-2026 22-20-48_1.mp4",
     "ScreenRecording_09-19-2026 11-14-02_1.mp4",
     "ScreenRecording_09-19-2026 11-17-12_1.mp4"
+  ],
+  "recoveredConversationFiles": [
+    {
+      "source_name": "ScreenRecording_09-16-2026 12-08-36_1(6).mp4",
+      "file_id": "file_0000000067e8820a81e5d52d2c7fb420",
+      "canonical_ref_id": "lucas-2026-09-16-120836",
+      "status": "binary-recovered-current-project",
+      "roles": [
+        "identity",
+        "presence",
+        "gaze",
+        "general_motion",
+        "wardrobe_context"
+      ]
+    },
+    {
+      "source_name": "ChatGPT Image 31 août 2026, 16_01_35(4).png",
+      "file_id": "file_000000005cb881f4b04a76bd9ba1f4f6",
+      "canonical_ref_id": "dominic-face-board-01",
+      "status": "binary-recovered-current-project",
+      "roles": [
+        "identity",
+        "face",
+        "multiview"
+      ]
+    },
+    {
+      "source_name": "ChatGPT Image 31 août 2026, 15_59_49 (1)(4).png",
+      "file_id": "file_000000007d20820aa1984e0de5363be3",
+      "canonical_ref_id": "dominic-face-board-02",
+      "status": "binary-recovered-current-project",
+      "roles": [
+        "identity",
+        "face",
+        "multiview"
+      ]
+    },
+    {
+      "source_name": "Capture d'écran 2026-09-28 093726.png",
+      "file_id": "file_000000007968820aaf825a06be92901f",
+      "canonical_ref_id": "dominic-capture-2026-09-28-093726",
+      "status": "binary-recovered-current-project",
+      "roles": [
+        "identity_support",
+        "visual_reference"
+      ]
+    },
+    {
+      "source_name": "Capture d'écran 2026-09-28 093907.png",
+      "file_id": "file_0000000091bc820a8cb3099e6aa6d692",
+      "canonical_ref_id": "dominic-capture-2026-09-28-093907",
+      "status": "binary-recovered-current-project",
+      "roles": [
+        "identity_support",
+        "visual_reference"
+      ]
+    }
+  ],
+  "notes": [
+    "Repo/canon assets are recoverable directly from GitHub.",
+    "The five conversation files above have real binary backing and were materialized for ingestion.",
+    "Older video-bank entries that remain metadata-only are kept pending until their binary is rediscovered; they are not silently replaced."
   ]
 }
