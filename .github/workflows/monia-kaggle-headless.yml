@@ -8,6 +8,7 @@ on:
       - 'notebooks/monia_kaggle_oneclick.ipynb'
       - 'kaggle/monia-worker/kernel-metadata.json'
       - 'studio/queue/test-kaggle-marion-001.json'
+      - 'studio/queue/dominic-seated-wan22-live-001.json'
       - 'config/monia-reference-packs.json'
       - 'assets/monia-atlas/chunks/marion-*.b64'
       - 'assets/monia-atlas/lucas-priority-*.jpg.b64'
@@ -22,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 70
     env:
-      MONIA_JOB_ID: ${{ github.event.client_payload.job_id || 'test-kaggle-marion-001' }}
+      MONIA_JOB_ID: ${{ github.event.client_payload.job_id || 'dominic-seated-wan22-live-001' }}
       MONIA_JOB_B64: ${{ github.event.client_payload.job_b64 || '' }}
     steps:
       - name: Checkout
@@ -48,8 +49,10 @@ jobs:
           print('Dynamic MonIA job prepared:', job['id'])
           PY
           else
-            cp studio/queue/test-kaggle-marion-001.json .kaggle-worker/job.json
-            echo "Using repository test job."
+            JOB_PATH="studio/queue/${MONIA_JOB_ID}.json"
+            test -f "$JOB_PATH"
+            cp "$JOB_PATH" .kaggle-worker/job.json
+            echo "Using repository job: $JOB_PATH"
           fi
 
           python - <<'PY'
