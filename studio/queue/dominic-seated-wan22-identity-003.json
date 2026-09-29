@@ -1,0 +1,67 @@
+{
+  "id": "dominic-seated-wan22-identity-003",
+  "state": "queued",
+  "createdAt": "2026-09-29T10:55:00+02:00",
+  "source": "monia-video-orchestrator-v3",
+  "candidateOnly": true,
+  "narrativeAuthority": false,
+  "sceneFamily": "dominic-seated-thought-real-video",
+  "signature": "MONIA_WAN22_DOMINIC_LIBRARY_IDENTITY_RESTORE",
+  "primaryCharacter": "dominic",
+  "prompt": "Generate a new photorealistic live-action seated Dominic scene. The canonical Dominic library is the visual authority. Keep his pose calm and natural with breathing, one blink and a subtle eye movement. Do not redesign the face. The MonIA identity restoration stage will enforce the canonical identity after motion generation. Stable camera, no dialogue.",
+  "negativePrompt": "different person, identity drift, face redesign, generic man, ethnicity change, age change, face morphing, facial jitter, camera movement, zoom, subtitles, watermark, UI",
+  "characters": [
+    {
+      "id": "dominic",
+      "identityMode": "canonical-image-strict",
+      "canonRef": "https://raw.githubusercontent.com/vartcom38-collab/marion-lucas-game/main/private-reference-canon/dominic/dominic-seated-master.jpg",
+      "wardrobe": "preserve supplied canonical reference exactly"
+    }
+  ],
+  "motion": {
+    "referenceId": "dominic-canon-seated-2026-09-28",
+    "tags": [
+      "natural-breathing",
+      "blink",
+      "micro-expression",
+      "eye-shift",
+      "identity-stability"
+    ],
+    "copyIdentity": true
+  },
+  "generation": {
+    "provider": "kaggle",
+    "router": "wan2.2-ti2v-5b",
+    "backend": "wan2.2-ti2v-5b",
+    "width": 512,
+    "height": 896,
+    "frames": 25,
+    "steps": 20,
+    "guidance": 4,
+    "fps": 16,
+    "seed": 44,
+    "shotCount": 1,
+    "shotCharacters": [
+      "dominic"
+    ],
+    "shotReferenceIndex": [
+      0
+    ],
+    "shotImages": [
+      null
+    ],
+    "shotPrompts": [
+      "Photorealistic live-action medium shot. Dominic must remain the exact same recognizable man as the canonical reference. Natural breathing, one blink, tiny upward eye shift and subtle facial tension. Keep composition stable. No camera movement, no morphing, no generic replacement face."
+    ],
+    "lockLastImage": false,
+    "identityRestore": true
+  },
+  "qualityPolicy": {
+    "failClosed": true,
+    "humanApprovalBeforeLive": true,
+    "requireTrueVideo": true
+  },
+  "output": {
+    "candidatePath": "public/resources/monia/candidates/dominic-seated-wan22-identity-003/"
+  }
+}
