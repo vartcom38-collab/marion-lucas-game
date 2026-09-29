@@ -80,7 +80,13 @@
         "https://raw.githubusercontent.com/vartcom38-collab/marion-lucas-game/main/public/resources/monia/canon/lucas/reference-from-user-video.jpg",
         "https://raw.githubusercontent.com/vartcom38-collab/marion-lucas-game/main/public/resources/monia/canon/lucas/reference-compact.jpg"
       ],
-      "identityRestorePolicy": "Try canonical MonIA identity candidates in order; use the first source with a detectable face. Never fall back to a generated face."
+      "identityRestorePolicy": "Try canonical MonIA identity candidates in order; use the first source with a detectable face. Never fall back to a generated face.",
+      "embeddedIdentityFiles": [
+        "public/resources/monia/canon/lucas/priority-01.jpg",
+        "public/resources/monia/canon/lucas/priority-02.jpg",
+        "public/resources/monia/canon/lucas/reference-from-user-video.jpg",
+        "public/resources/monia/canon/lucas/reference-compact.jpg"
+      ]
     }
   }
 }
