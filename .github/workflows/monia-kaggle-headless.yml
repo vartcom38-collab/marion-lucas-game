@@ -82,6 +82,22 @@ jobs:
               if canon and not ch.get('canonRef'): ch['canonRef']=raw_base+canon
               legacy=pack.get('legacyPriorityImages') or pack.get('priorityImages') or []
               ch['priorityImages']=[raw_base+p for p in legacy]
+              embedded=[]
+              for p in legacy:
+                  fp=Path(p)
+                  if not fp.exists():
+                      continue
+                  try:
+                      payload=''.join(fp.read_text(encoding='utf-8').split())
+                      raw=__import__('base64').b64decode(payload + '=' * (-len(payload) % 4))
+                      if raw[:2] == b'\\xff\\xd8' and raw[-2:] == b'\\xff\\xd9':
+                          embedded.append(payload)
+                          print('✅ Embedded valid MonIA identity anchor:', p, len(raw), 'bytes')
+                      else:
+                          print('⚠️ Skipped malformed MonIA identity anchor:', p)
+                  except Exception as exc:
+                      print('⚠️ Could not embed MonIA identity anchor:', p, repr(exc))
+              ch['embeddedPriorityImagesB64']=embedded
               ch['moniaLibraryRules']=pack.get('rules') or []
               ch['moniaLibraryVideo']=pack.get('video') or None
               ch['referenceMode']=pack.get('referenceMode')
