@@ -72,7 +72,14 @@
         "Do not erase canonical tattoos and do not invent new permanent marks.",
         "Choose a reference matching the intended camera angle and expression before video generation.",
         "A generated candidate must remain quarantined until human visual approval."
-      ]
+      ],
+      "identityCandidates": [
+        "https://raw.githubusercontent.com/vartcom38-collab/marion-lucas-game/main/public/resources/monia/canon/lucas/priority-01.jpg",
+        "https://raw.githubusercontent.com/vartcom38-collab/marion-lucas-game/main/public/resources/monia/canon/lucas/priority-02.jpg",
+        "https://raw.githubusercontent.com/vartcom38-collab/marion-lucas-game/main/public/resources/monia/canon/lucas/reference-from-user-video.jpg",
+        "https://raw.githubusercontent.com/vartcom38-collab/marion-lucas-game/main/public/resources/monia/canon/lucas/reference-compact.jpg"
+      ],
+      "identityRestorePolicy": "Try canonical MonIA identity candidates in order; use the first source with a detectable face. Never fall back to a generated face."
     }
   }
 }
