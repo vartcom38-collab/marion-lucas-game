@@ -14,7 +14,7 @@
     {
       "id": "dominic",
       "identityMode": "canonical-image-strict",
-      "canonRef": "https://raw.githubusercontent.com/vartcom38-collab/marion-lucas-game/main/public/resources/monia/canon/lucas/atlas-canon.webp",
+      "canonRef": "https://raw.githubusercontent.com/vartcom38-collab/marion-lucas-game/main/public/resources/monia/canon/dominic/dominic-face-front-anchor.jpg",
       "wardrobe": "preserve supplied canonical reference exactly",
       "referenceMode": "monia-library-router",
       "libraryRouter": "config/monia-reference-library-router-v1.json",
