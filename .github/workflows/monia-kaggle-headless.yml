@@ -11,6 +11,7 @@ on:
       - 'studio/queue/dominic-seated-wan22-live-001.json'
       - 'studio/queue/dominic-seated-wan22-lock-002.json'
       - 'studio/queue/dominic-seated-wan22-identity-003.json'
+      - 'studio/queue/dominic-seated-monia-library-004.json'
       - 'config/monia-reference-packs.json'
       - 'assets/monia-atlas/chunks/marion-*.b64'
       - 'assets/monia-atlas/lucas-priority-*.jpg.b64'
@@ -25,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 70
     env:
-      MONIA_JOB_ID: ${{ github.event.client_payload.job_id || 'dominic-seated-wan22-identity-003' }}
+      MONIA_JOB_ID: ${{ github.event.client_payload.job_id || 'dominic-seated-monia-library-004' }}
       MONIA_JOB_B64: ${{ github.event.client_payload.job_b64 || '' }}
     steps:
       - name: Checkout
