@@ -13,6 +13,12 @@ on:
       - 'studio/queue/dominic-seated-wan22-identity-003.json'
       - 'studio/queue/dominic-seated-monia-library-004.json'
       - 'config/monia-reference-packs.json'
+      - 'config/monia-reference-library-router-v1.json'
+      - 'config/lucas-reference-bank.json'
+      - 'config/lucas-video-bank.json'
+      - 'config/dominic-multiview-canon-v2.json'
+      - 'config/dominic-direct-reference-pack-v3.json'
+      - 'config/motion-reference-bank.json'
       - 'assets/monia-atlas/chunks/marion-*.b64'
       - 'assets/monia-atlas/lucas-priority-*.jpg.b64'
   repository_dispatch:
