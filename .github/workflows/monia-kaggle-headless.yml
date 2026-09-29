@@ -89,7 +89,7 @@ jobs:
                       print('⚠️ Missing binary MonIA identity anchor:', p); continue
                   try:
                       raw=fp.read_bytes()
-                      if raw[:2] == b'\\xff\\xd8' and raw[-2:] == b'\\xff\\xd9':
+                      if raw.startswith(bytes.fromhex('ffd8')) and raw.endswith(bytes.fromhex('ffd9')):
                           embedded.append(__import__('base64').b64encode(raw).decode('ascii'))
                           print('✅ Embedded binary MonIA identity anchor:', p, len(raw), 'bytes')
                       else:
@@ -103,7 +103,7 @@ jobs:
                   try:
                       payload=''.join(fp.read_text(encoding='utf-8').split())
                       raw=__import__('base64').b64decode(payload + '=' * (-len(payload) % 4))
-                      if raw[:2] == b'\\xff\\xd8' and raw[-2:] == b'\\xff\\xd9':
+                      if raw.startswith(bytes.fromhex('ffd8')) and raw.endswith(bytes.fromhex('ffd9')):
                           embedded.append(payload)
                           print('✅ Embedded valid MonIA identity anchor:', p, len(raw), 'bytes')
                       else:
