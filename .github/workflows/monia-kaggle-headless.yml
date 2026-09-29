@@ -73,7 +73,7 @@ jobs:
               if not pack and cid=='lucas': pack=chars.get('dominic')
               if not pack: continue
               canon=pack.get('canonicalImage')
-              if canon: ch['canonRef']=raw_base+canon
+              if canon and not ch.get('canonRef'): ch['canonRef']=raw_base+canon
               legacy=pack.get('legacyPriorityImages') or pack.get('priorityImages') or []
               ch['priorityImages']=[raw_base+p for p in legacy]
               ch['moniaLibraryRules']=pack.get('rules') or []
