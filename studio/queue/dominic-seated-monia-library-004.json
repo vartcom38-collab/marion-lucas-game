@@ -14,7 +14,7 @@
     {
       "id": "dominic",
       "identityMode": "canonical-image-strict",
-      "canonRef": "https://raw.githubusercontent.com/vartcom38-collab/marion-lucas-game/main/public/resources/monia/canon/lucas/priority-01.jpg",
+      "canonRef": "https://raw.githubusercontent.com/vartcom38-collab/marion-lucas-game/main/public/resources/monia/canon/lucas/atlas-canon.webp",
       "wardrobe": "preserve supplied canonical reference exactly",
       "referenceMode": "monia-library-router",
       "libraryRouter": "config/monia-reference-library-router-v1.json",
@@ -24,7 +24,8 @@
         "config/dominic-multiview-canon-v2.json",
         "config/dominic-direct-reference-pack-v3.json",
         "config/motion-reference-bank.json"
-      ]
+      ],
+      "preferCanonRefFirst": true
     }
   ],
   "motion": {
