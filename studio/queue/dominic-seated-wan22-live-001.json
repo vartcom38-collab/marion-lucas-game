@@ -1,0 +1,65 @@
+{
+  "id": "dominic-seated-wan22-live-001",
+  "state": "queued",
+  "createdAt": "2026-09-29T09:36:00+02:00",
+  "source": "monia-video-orchestrator-v3",
+  "candidateOnly": true,
+  "narrativeAuthority": false,
+  "sceneFamily": "dominic-seated-thought-real-video",
+  "signature": "MONIA_WAN22_DOMINIC_CANON",
+  "primaryCharacter": "dominic",
+  "prompt": "Photorealistic live-action cinematic medium shot of Dominic, exact same man as the supplied canonical reference. Preserve his exact facial identity, hair, beard, skin tone, body proportions, clothing and background. Dominic is seated and alive: natural breathing, one blink, a subtle eye movement upward, a tiny change in facial tension. Real human micro-movement, not an animated still. No dialogue. No camera movement.",
+  "negativePrompt": "different person, identity drift, face change, generic man, beard change, hair change, age change, face morphing, facial jitter, plastic skin, deformed eyes, deformed mouth, camera movement, zoom, reframing, subtitles, watermark, UI",
+  "characters": [
+    {
+      "id": "dominic",
+      "identityMode": "canonical-image-strict",
+      "canonRef": "https://raw.githubusercontent.com/vartcom38-collab/marion-lucas-game/main/private-reference-canon/dominic/dominic-seated-master.jpg",
+      "wardrobe": "preserve supplied canonical reference exactly"
+    }
+  ],
+  "motion": {
+    "referenceId": "dominic-canon-seated-2026-09-28",
+    "tags": [
+      "natural-breathing",
+      "blink",
+      "micro-expression",
+      "eye-shift",
+      "identity-stability"
+    ],
+    "copyIdentity": true
+  },
+  "generation": {
+    "provider": "kaggle",
+    "router": "wan2.2-ti2v-5b",
+    "backend": "wan2.2-ti2v-5b",
+    "width": 512,
+    "height": 896,
+    "frames": 25,
+    "steps": 20,
+    "guidance": 3,
+    "fps": 16,
+    "seed": 42,
+    "shotCount": 1,
+    "shotCharacters": [
+      "dominic"
+    ],
+    "shotReferenceIndex": [
+      0
+    ],
+    "shotImages": [
+      null
+    ],
+    "shotPrompts": [
+      "Photorealistic live-action medium shot. Dominic must remain the exact same recognizable man as the canonical reference. Natural breathing, one blink, tiny upward eye shift and subtle facial tension. Keep composition stable. No camera movement, no morphing, no generic replacement face."
+    ]
+  },
+  "qualityPolicy": {
+    "failClosed": true,
+    "humanApprovalBeforeLive": true,
+    "requireTrueVideo": true
+  },
+  "output": {
+    "candidatePath": "public/resources/monia/candidates/dominic-seated-wan22-live-001/"
+  }
+}
