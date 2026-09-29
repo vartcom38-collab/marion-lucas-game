@@ -11,8 +11,14 @@
   ],
   "characters": {
     "Marion": {
-      "banks": ["config/marion-multiview-canon.json", "config/marion-video-identity-qa.json"],
-      "requiredForIdentity": ["identity-board-A", "identity-board-B"],
+      "banks": [
+        "config/marion-multiview-canon.json",
+        "config/marion-video-identity-qa.json"
+      ],
+      "requiredForIdentity": [
+        "identity-board-A",
+        "identity-board-B"
+      ],
       "workerPolicy": {
         "multiReferencePreferred": true,
         "singleImageAllowedOnlyForMotionProbe": true,
@@ -20,18 +26,49 @@
       }
     },
     "Dominic": {
-      "aliases": ["Lucas", "Lucas Castellano", "Dominic Castellano"],
+      "aliases": [
+        "Lucas",
+        "Lucas Castellano",
+        "Dominic Castellano"
+      ],
       "banks": [
         "config/lucas-reference-bank.json",
+        "config/lucas-video-bank.json",
         "config/dominic-multiview-canon-v2.json",
         "config/dominic-direct-reference-pack-v3.json",
         "config/motion-reference-bank.json"
       ],
       "roles": {
-        "identity": ["canonical_identity", "identity-high", "face", "three-quarter", "front", "profile"],
-        "motion": ["canonical_motion", "canonical_full_body_motion", "body_movement", "walking", "gait", "gesture", "posture"],
-        "performance": ["canonical_performance", "speech_presence", "speech_rhythm", "gaze", "micro_expression"],
-        "privateHome": ["private_home", "relaxed_posture", "tattoos", "off_duty_wardrobe"]
+        "identity": [
+          "canonical_identity",
+          "identity-high",
+          "face",
+          "three-quarter",
+          "front",
+          "profile"
+        ],
+        "motion": [
+          "canonical_motion",
+          "canonical_full_body_motion",
+          "body_movement",
+          "walking",
+          "gait",
+          "gesture",
+          "posture"
+        ],
+        "performance": [
+          "canonical_performance",
+          "speech_presence",
+          "speech_rhythm",
+          "gaze",
+          "micro_expression"
+        ],
+        "privateHome": [
+          "private_home",
+          "relaxed_posture",
+          "tattoos",
+          "off_duty_wardrobe"
+        ]
       },
       "workerPolicy": {
         "multiReferencePreferred": true,
@@ -58,6 +95,10 @@
     "master": "Infomaniak private MonIA reference storage",
     "kaggle": "private versioned execution dataset/cache",
     "colab": "Google Drive execution cache when used",
-    "forbiddenRuntimeDependency": ["temporary OpenArt URLs", "expiring attachment URLs", "prompt-only identity"]
+    "forbiddenRuntimeDependency": [
+      "temporary OpenArt URLs",
+      "expiring attachment URLs",
+      "prompt-only identity"
+    ]
   }
 }
