@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "status": "migration-started",
+  "target": "config/monia-reference-vault-v1.json",
+  "policy": "Move every recoverable canonical binary into the private vault; preserve metadata-only entries for old chat sources until a real binary is recovered.",
+  "migratedFromRepo": [
+    "public/resources/monia/canon/dominic/dominic-face-front-clean.jpg",
+    "public/resources/monia/canon/dominic/dominic-face-front-anchor.jpg",
+    "public/resources/monia/canon/lucas/atlas-canon.webp",
+    "public/resources/monia/canon/lucas/priority-01.jpg",
+    "public/resources/monia/canon/lucas/priority-02.jpg",
+    "public/resources/monia/canon/lucas/reference-compact.jpg",
+    "public/resources/monia/canon/lucas/reference-from-user-video.jpg",
+    "resources/monia/canon/lucas/visio-layout-reference.jpg",
+    "assets/lucas-reference-compact.b64",
+    "assets/lucas-reference-from-user-video.jpg.b64",
+    "resources/voice/lucas-reference-real-18s.ogg.b64"
+  ],
+  "pendingChatBinaryRecovery": [
+    "ScreenRecording_09-15-2026 19-56-16_1(1).mp4",
+    "ScreenRecording_09-15-2026 20-17-30_1.mp4",
+    "ScreenRecording_09-15-2026 20-29-03_1.mp4",
+    "ScreenRecording_09-15-2026 20-32-16_1.mp4",
+    "ScreenRecording_09-15-2026 20-37-58_1.mp4",
+    "ScreenRecording_09-15-2026 21-02-54_1.mp4",
+    "ScreenRecording_09-15-2026 21-06-34_1.mp4",
+    "ScreenRecording_09-15-2026 21-09-53_1.mp4",
+    "ScreenRecording_09-15-2026 21-45-11_1.mp4",
+    "ScreenRecording_09-15-2026 21-48-28_1.mp4",
+    "ScreenRecording_09-15-2026 21-52-05_1.mp4",
+    "ScreenRecording_09-16-2026 12-08-36_1(1).mp4",
+    "ScreenRecording_09-16-2026 17-19-05_1(1).mp4",
+    "ScreenRecording_09-17-2026 22-11-09_1.mp4",
+    "ScreenRecording_09-17-2026 22-13-49_1.mp4",
+    "ScreenRecording_09-17-2026 22-16-40_1.mp4",
+    "ScreenRecording_09-17-2026 22-18-46_1.mp4",
+    "ScreenRecording_09-17-2026 22-20-48_1.mp4",
+    "ScreenRecording_09-19-2026 11-14-02_1.mp4",
+    "ScreenRecording_09-19-2026 11-17-12_1.mp4"
+  ]
+}
