@@ -43,7 +43,10 @@
       "source_name": "ScreenRecording_09-16-2026 12-08-36_1(6).mp4",
       "file_id": "file_0000000067e8820a81e5d52d2c7fb420",
       "canonical_ref_id": "lucas-2026-09-16-120836",
-      "status": "binary-recovered-current-project",
+      "sha256": "452b04879a4f147c878da6637bde1027936847339a5508632ab87dc88e0c957b",
+      "bytes": 19814209,
+      "mime": "video/mp4",
+      "status": "binary-recovered-and-validated",
       "roles": [
         "identity",
         "presence",
@@ -56,7 +59,10 @@
       "source_name": "ChatGPT Image 31 août 2026, 16_01_35(4).png",
       "file_id": "file_000000005cb881f4b04a76bd9ba1f4f6",
       "canonical_ref_id": "dominic-face-board-01",
-      "status": "binary-recovered-current-project",
+      "sha256": "4bc6c60c43e9678e7d26e3757a057c8cab4f04f19e655f5f7f22030f502958a4",
+      "bytes": 2868861,
+      "mime": "image/png",
+      "status": "binary-recovered-and-validated",
       "roles": [
         "identity",
         "face",
@@ -67,7 +73,10 @@
       "source_name": "ChatGPT Image 31 août 2026, 15_59_49 (1)(4).png",
       "file_id": "file_000000007d20820aa1984e0de5363be3",
       "canonical_ref_id": "dominic-face-board-02",
-      "status": "binary-recovered-current-project",
+      "sha256": "8b1c0f418e577ddd7dd535abf7c80ebf8dacc3890f2ddc1af1d377bf685e27e9",
+      "bytes": 3044341,
+      "mime": "image/png",
+      "status": "binary-recovered-and-validated",
       "roles": [
         "identity",
         "face",
@@ -78,7 +87,10 @@
       "source_name": "Capture d'écran 2026-09-28 093726.png",
       "file_id": "file_000000007968820aaf825a06be92901f",
       "canonical_ref_id": "dominic-capture-2026-09-28-093726",
-      "status": "binary-recovered-current-project",
+      "sha256": "c973fcee8444c2e0e58148601559cec27aa7fa7c58e9f37919eda21897d05571",
+      "bytes": 188724,
+      "mime": "image/png",
+      "status": "binary-recovered-and-validated",
       "roles": [
         "identity_support",
         "visual_reference"
@@ -88,7 +100,49 @@
       "source_name": "Capture d'écran 2026-09-28 093907.png",
       "file_id": "file_0000000091bc820a8cb3099e6aa6d692",
       "canonical_ref_id": "dominic-capture-2026-09-28-093907",
-      "status": "binary-recovered-current-project",
+      "sha256": "cf2e751775c690c07733b6e62c0c423901eed9b465c590b34cbea6e2676c1ef7",
+      "bytes": 238561,
+      "mime": "image/png",
+      "status": "binary-recovered-and-validated",
+      "roles": [
+        "identity_support",
+        "visual_reference"
+      ]
+    },
+    {
+      "source_name": "Capture d'écran 2026-09-28 094041.png",
+      "file_id": "file_00000000ed48820a81688cd9748995b9",
+      "canonical_ref_id": "dominic-capture-2026-09-28-094041",
+      "sha256": "74ac8e8f50304b91d3c24b8533afcc3b179ce4294d4da431cd7a8a1218121310",
+      "bytes": 149271,
+      "mime": "image/png",
+      "status": "binary-recovered-and-validated",
+      "roles": [
+        "identity_support",
+        "visual_reference"
+      ]
+    },
+    {
+      "source_name": "Capture d'écran 2026-09-28 094203.png",
+      "file_id": "file_000000004b04820abbba6bcd4e4bd1a0",
+      "canonical_ref_id": "dominic-capture-2026-09-28-094203",
+      "sha256": "15f047401c34a7d3d1075957862af305a52f2e6cbdfe40284e9fa1281371fe78",
+      "bytes": 156786,
+      "mime": "image/png",
+      "status": "binary-recovered-and-validated",
+      "roles": [
+        "identity_support",
+        "visual_reference"
+      ]
+    },
+    {
+      "source_name": "Capture d'écran 2026-09-28 094352.png",
+      "file_id": "file_0000000006ec820a8779612a1731247d",
+      "canonical_ref_id": "dominic-capture-2026-09-28-094352",
+      "sha256": "25c98e9771d88876105afcdfe3259aa0ed475cdc8ddeba29cba148de0411a883",
+      "bytes": 93133,
+      "mime": "image/png",
+      "status": "binary-recovered-and-validated",
       "roles": [
         "identity_support",
         "visual_reference"
@@ -99,5 +153,12 @@
     "Repo/canon assets are recoverable directly from GitHub.",
     "The five conversation files above have real binary backing and were materialized for ingestion.",
     "Older video-bank entries that remain metadata-only are kept pending until their binary is rediscovered; they are not silently replaced."
-  ]
+  ],
+  "migration_state": {
+    "recovered_binary_count": 8,
+    "recovered_binary_bytes": 26553886,
+    "validated_with_magic_or_container_probe": true,
+    "vault_upload_status": "pending-transport",
+    "note": "All listed conversation assets have real binary backing and SHA-256 fingerprints. Next step is transport into the private vault; do not treat metadata-only historical entries as migrated."
+  }
 }
