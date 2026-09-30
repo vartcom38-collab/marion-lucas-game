@@ -121,6 +121,19 @@ jobs:
               ch['moniaLibraryRules']=pack.get('rules') or []
               ch['moniaLibraryVideo']=pack.get('video') or None
               ch['referenceMode']=pack.get('referenceMode')
+          # Hard provenance gate for Dominic: real user-supplied/user-video-derived refs only.
+          for ch in job.get('characters',[]):
+              if str(ch.get('id','')).lower()!='dominic':
+                  continue
+              if ch.get('requireRealUserIdentity'):
+                  forbidden=(chars.get('dominic') or {}).get('forbiddenGeneratedIdentityFiles') or []
+                  canon=str(ch.get('canonRef') or '')
+                  if canon and any(x in canon for x in forbidden):
+                      raise RuntimeError('DOMINIC_FORBIDDEN_GENERATED_IDENTITY_SOURCE: '+canon)
+                  real_count=len(ch.get('embeddedPriorityImagesB64') or []) + len(ch.get('priorityImages') or [])
+                  if real_count < 2:
+                      raise RuntimeError('DOMINIC_REAL_IDENTITY_PACK_INCOMPLETE')
+                  print('🔐 Dominic provenance gate: real-reference pack only, refs=',real_count)
           jobp.write_text(json.dumps(job,ensure_ascii=False,indent=2),encoding='utf-8')
           print('✅ Enrich job from MonIA canonical library:', [c.get('id') for c in job.get('characters',[])])
           PY
