@@ -12,6 +12,7 @@ on:
       - 'studio/queue/dominic-seated-wan22-lock-002.json'
       - 'studio/queue/dominic-seated-wan22-identity-003.json'
       - 'studio/queue/dominic-seated-monia-library-004.json'
+      - 'studio/queue/dominic-seated-monia-library-005.json'
       - 'config/monia-reference-packs.json'
       - 'config/monia-reference-library-router-v1.json'
       - 'config/lucas-reference-bank.json'
@@ -32,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 70
     env:
-      MONIA_JOB_ID: ${{ github.event.client_payload.job_id || 'dominic-seated-monia-library-004' }}
+      MONIA_JOB_ID: ${{ github.event.client_payload.job_id || 'dominic-seated-monia-library-005' }}
       MONIA_JOB_B64: ${{ github.event.client_payload.job_b64 || '' }}
     steps:
       - name: Checkout
