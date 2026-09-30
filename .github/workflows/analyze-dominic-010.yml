@@ -1,0 +1,32 @@
+name: Analyze Dominic 010 Frames
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/analyze-dominic-010.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  frames:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ffmpeg
+        run: sudo apt-get update -qq && sudo apt-get install -y ffmpeg
+      - name: Extract review frames
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p review-010
+          SRC='public/resources/monia/candidates/dominic-seated-monia-library-010/shot-01.mp4'
+          ffmpeg -y -v error -i "$SRC" -vf "select='eq(n,0)+eq(n,6)+eq(n,12)+eq(n,18)+eq(n,24)'" -vsync 0 review-010/frame-%02d.jpg
+          ffmpeg -y -v error -i "$SRC" -vf "fps=8,scale=256:-1,tile=4x3" -frames:v 1 review-010/contact-sheet.jpg
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dominic-010-review
+          path: review-010/
+          if-no-files-found: error
