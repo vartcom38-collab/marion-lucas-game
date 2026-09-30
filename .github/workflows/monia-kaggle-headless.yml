@@ -14,6 +14,7 @@ on:
       - 'studio/queue/dominic-seated-monia-library-004.json'
       - 'studio/queue/dominic-seated-monia-library-005.json'
       - 'studio/queue/dominic-seated-monia-library-006.json'
+      - 'studio/queue/dominic-seated-monia-library-007.json'
       - 'config/monia-reference-packs.json'
       - 'config/monia-reference-library-router-v1.json'
       - 'config/lucas-reference-bank.json'
@@ -34,7 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 70
     env:
-      MONIA_JOB_ID: ${{ github.event.client_payload.job_id || 'dominic-seated-monia-library-006' }}
+      MONIA_JOB_ID: ${{ github.event.client_payload.job_id || 'dominic-seated-monia-library-007' }}
       MONIA_JOB_B64: ${{ github.event.client_payload.job_b64 || '' }}
     steps:
       - name: Checkout
@@ -81,7 +82,11 @@ jobs:
               if not pack and cid=='lucas': pack=chars.get('dominic')
               if not pack: continue
               canon=pack.get('canonicalImage')
-              if canon and not ch.get('canonRef'): ch['canonRef']=raw_base+canon
+              if cid=='dominic' and pack.get('referenceMode')=='real-user-reference-pack-strict':
+                  ch.pop('canonRef',None)
+                  ch['preferCanonRefFirst']=False
+              elif canon and not ch.get('canonRef'):
+                  ch['canonRef']=raw_base+canon
               legacy=pack.get('legacyPriorityImages') or pack.get('priorityImages') or []
               ch['priorityImages']=[raw_base+p for p in legacy]
               embedded=[]
