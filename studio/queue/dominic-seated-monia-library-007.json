@@ -1,21 +1,21 @@
 {
   "id": "dominic-seated-monia-library-007",
   "state": "queued",
-  "createdAt": "2026-09-30T11:15:00+02:00",
+  "createdAt": "2026-09-30T11:20:00+02:00",
   "source": "monia-video-orchestrator-v3",
   "candidateOnly": true,
   "narrativeAuthority": false,
-  "sceneFamily": "dominic-real-reference-identity-proof",
-  "signature": "MONIA_DOMINIC_REAL_PACK_007",
+  "sceneFamily": "dominic-real-pack-identity-proof",
+  "signature": "MONIA_DOMINIC_REAL_PACK_ONLY_007",
   "primaryCharacter": "dominic",
-  "prompt": "Animate the REAL user-supplied Dominic identity reference selected from MonIA's real-photo pack. Preserve the exact same recognizable face and appearance. Only minimal natural life: breathing, one blink and a tiny gaze shift. No redesign, no replacement face.",
-  "negativePrompt": "different person, identity drift, face redesign, generic man, ethnicity change, age change, face morphing, different jaw, different brows, different eyes, different nose, different mouth, hair change, stubble removal, skin tone drift, camera movement, zoom, subtitles, watermark, UI",
+  "prompt": "Animate Dominic only from the real user-supplied identity pack. Preserve the exact same recognizable face and appearance from those real references. Minimal natural breathing, one blink, tiny gaze shift. No redesign, no synthetic reinterpretation.",
+  "negativePrompt": "different person, identity drift, generic man, synthetic face, generated portrait, face redesign, smooth-shaven, different jaw, different brows, different eyes, different nose, different mouth, different hairline, different skin tone, camera movement, zoom, subtitles, watermark, UI",
   "characters": [
     {
       "id": "dominic",
-      "identityMode": "real-user-reference-strict",
+      "identityMode": "real-user-reference-pack-strict",
       "wardrobe": "preserve supplied canonical reference exactly",
-      "referenceMode": "real-user-reference-pack-strict",
+      "referenceMode": "monia-library-router",
       "libraryRouter": "config/monia-reference-library-router-v1.json",
       "referenceBanks": [
         "config/lucas-reference-bank.json",
@@ -25,7 +25,9 @@
         "config/motion-reference-bank.json"
       ],
       "preferCanonRefFirst": false,
-      "identityContract": "config/dominic-identity-contract-v1.json"
+      "identityContract": "config/dominic-identity-contract-v1.json",
+      "requireRealUserIdentity": true,
+      "forbidGeneratedIdentity": true
     }
   ],
   "motion": {
@@ -49,7 +51,7 @@
     "steps": 20,
     "guidance": 3,
     "fps": 7,
-    "seed": 307,
+    "seed": 314,
     "shotCount": 1,
     "shotCharacters": [
       "dominic"
@@ -61,17 +63,20 @@
       null
     ],
     "shotPrompts": [
-      "Identity proof shot: animate the canonical Dominic image minimally. Exact same recognizable face throughout. One blink, subtle breathing, tiny gaze shift. No camera motion, no facial redesign."
+      "Identity proof only. Animate the selected real-user Dominic identity reference with tiny natural breathing, one blink, and a very small gaze shift. Keep facial geometry, hair, brows, eyes, nose, mouth, jaw, stubble and skin tone unchanged."
     ],
     "lockLastImage": false,
     "identityRestore": false,
     "motionBucketId": 12,
-    "noiseAugStrength": 0.001
+    "noiseAugStrength": 0.002
   },
   "qualityPolicy": {
     "failClosed": true,
     "humanApprovalBeforeLive": true,
-    "requireTrueVideo": true
+    "requireTrueVideo": true,
+    "requireRealUserIdentitySource": true,
+    "rejectGeneratedIdentitySource": true,
+    "identityContract": "config/dominic-identity-contract-v1.json"
   },
   "output": {
     "candidatePath": "public/resources/monia/candidates/dominic-seated-monia-library-007/"
