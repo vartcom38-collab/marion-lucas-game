@@ -1,0 +1,79 @@
+{
+  "id": "dominic-seated-monia-library-006",
+  "state": "queued",
+  "createdAt": "2026-09-30T09:45:00+02:00",
+  "source": "monia-video-orchestrator-v3",
+  "candidateOnly": true,
+  "narrativeAuthority": false,
+  "sceneFamily": "dominic-identity-proof-svd",
+  "signature": "MONIA_DOMINIC_SVD_IDENTITY_006",
+  "primaryCharacter": "dominic",
+  "prompt": "Animate the supplied canonical Dominic image with only subtle natural life. Preserve the exact same face, hair, skin tone, stubble, brows, eyes, nose, mouth, jaw and facial proportions. Tiny breathing, one blink, very small gaze change. No redesign.",
+  "negativePrompt": "different person, identity drift, face redesign, generic man, smooth-shaven, pale skin, rounder face, softer jaw, different brows, different eyes, different nose, different mouth, hair change, camera movement, zoom, subtitles, watermark, UI",
+  "characters": [
+    {
+      "id": "dominic",
+      "identityMode": "canonical-image-strict",
+      "canonRef": "https://raw.githubusercontent.com/vartcom38-collab/marion-lucas-game/main/public/resources/monia/canon/dominic/dominic-face-front-clean.jpg",
+      "wardrobe": "preserve supplied canonical reference exactly",
+      "referenceMode": "monia-library-router",
+      "libraryRouter": "config/monia-reference-library-router-v1.json",
+      "referenceBanks": [
+        "config/lucas-reference-bank.json",
+        "config/lucas-video-bank.json",
+        "config/dominic-multiview-canon-v2.json",
+        "config/dominic-direct-reference-pack-v3.json",
+        "config/motion-reference-bank.json"
+      ],
+      "preferCanonRefFirst": true
+    }
+  ],
+  "motion": {
+    "referenceId": "dominic-canon-seated-2026-09-28",
+    "tags": [
+      "natural-breathing",
+      "blink",
+      "micro-expression",
+      "eye-shift",
+      "identity-stability"
+    ],
+    "copyIdentity": true
+  },
+  "generation": {
+    "provider": "kaggle",
+    "router": "svd-img2vid",
+    "backend": "svd-img2vid",
+    "width": 512,
+    "height": 896,
+    "frames": 14,
+    "steps": 20,
+    "guidance": 3,
+    "fps": 7,
+    "seed": 221,
+    "shotCount": 1,
+    "shotCharacters": [
+      "dominic"
+    ],
+    "shotReferenceIndex": [
+      0
+    ],
+    "shotImages": [
+      null
+    ],
+    "shotPrompts": [
+      "Identity proof shot: animate the canonical Dominic image minimally. Exact same recognizable face throughout. One blink, subtle breathing, tiny gaze shift. No camera motion, no facial redesign."
+    ],
+    "lockLastImage": false,
+    "identityRestore": false,
+    "motionBucketId": 18,
+    "noiseAugStrength": 0.005
+  },
+  "qualityPolicy": {
+    "failClosed": true,
+    "humanApprovalBeforeLive": true,
+    "requireTrueVideo": true
+  },
+  "output": {
+    "candidatePath": "public/resources/monia/candidates/dominic-seated-monia-library-006/"
+  }
+}
