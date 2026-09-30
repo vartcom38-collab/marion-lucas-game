@@ -1,0 +1,85 @@
+{
+  "id": "dominic-seated-monia-library-011",
+  "state": "queued",
+  "createdAt": "2026-09-30T16:55:00+02:00",
+  "source": "monia-video-orchestrator-v3",
+  "candidateOnly": true,
+  "narrativeAuthority": false,
+  "sceneFamily": "dominic-identity-safe-motion-step",
+  "signature": "MONIA_DOMINIC_IDENTITY_SAFE_MOTION_011",
+  "primaryCharacter": "dominic",
+  "prompt": "Animate only the real-user Dominic reference with strict identity preservation. Keep the exact same real face and appearance. Add a little more natural life than the identity proof: subtle breathing, one blink, a small eye movement and a slight head shift. No redesign and no scene reconstruction.",
+  "negativePrompt": "different person, identity drift, face redesign, synthetic face, generic man, different jaw, different eyes, different nose, different mouth, different hairline, stubble loss, source UI, second person, camera move, zoom",
+  "characters": [
+    {
+      "id": "dominic",
+      "identityMode": "real-user-reference-pack-strict",
+      "wardrobe": "preserve supplied canonical reference exactly",
+      "referenceMode": "monia-library-router",
+      "libraryRouter": "config/monia-reference-library-router-v1.json",
+      "referenceBanks": [
+        "config/lucas-reference-bank.json",
+        "config/lucas-video-bank.json",
+        "config/dominic-multiview-canon-v2.json",
+        "config/dominic-direct-reference-pack-v3.json",
+        "config/motion-reference-bank.json"
+      ],
+      "preferCanonRefFirst": false,
+      "identityContract": "config/dominic-identity-contract-v1.json",
+      "requireRealUserIdentity": true,
+      "forbidGeneratedIdentity": true
+    }
+  ],
+  "motion": {
+    "referenceId": "dominic-canon-seated-2026-09-28",
+    "tags": [
+      "natural-breathing",
+      "blink",
+      "micro-expression",
+      "eye-shift",
+      "identity-stability"
+    ],
+    "copyIdentity": true
+  },
+  "generation": {
+    "provider": "kaggle",
+    "router": "svd-img2vid",
+    "backend": "svd-img2vid",
+    "width": 512,
+    "height": 896,
+    "frames": 18,
+    "steps": 20,
+    "guidance": 3,
+    "fps": 9,
+    "seed": 711,
+    "shotCount": 1,
+    "shotCharacters": [
+      "dominic"
+    ],
+    "shotReferenceIndex": [
+      0
+    ],
+    "shotImages": [
+      null
+    ],
+    "shotPrompts": [
+      "Identity-safe progression test. Preserve the exact real Dominic face while adding tiny breathing, a blink, micro gaze shift and slight head movement. Do not reconstruct or redesign the scene."
+    ],
+    "lockLastImage": false,
+    "identityRestore": false,
+    "motionBucketId": 10,
+    "noiseAugStrength": 0.001
+  },
+  "qualityPolicy": {
+    "failClosed": true,
+    "humanApprovalBeforeLive": true,
+    "requireTrueVideo": true,
+    "requireRealUserIdentitySource": true,
+    "rejectGeneratedIdentitySource": true,
+    "identityContract": "config/dominic-identity-contract-v1.json"
+  },
+  "output": {
+    "candidatePath": "public/resources/monia/candidates/dominic-seated-monia-library-011/"
+  },
+  "retryNote": "Candidate 010 was visually rejected for identity drift after switching back to Wan. Candidate 011 returns to the identity-safe SVD path and increases motion only slightly from the clean real-user anchor."
+}
