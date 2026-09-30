@@ -1,0 +1,30 @@
+name: Analyze Dominic 005 Frames
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/analyze-dominic-005.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  frames:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract review frames
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p review-005
+          SRC='public/resources/monia/candidates/dominic-seated-monia-library-005/shot-01.mp4'
+          ffmpeg -y -v error -i "$SRC" -vf "select='eq(n,0)+eq(n,6)+eq(n,12)+eq(n,18)+eq(n,24)'" -vsync 0 review-005/frame-%02d.jpg
+          ffmpeg -y -v error -i "$SRC" -vf "fps=5,scale=256:-1,tile=5x2" -frames:v 1 review-005/contact-sheet.jpg
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dominic-005-review
+          path: review-005/
+          if-no-files-found: error
