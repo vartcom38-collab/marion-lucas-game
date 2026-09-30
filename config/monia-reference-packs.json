@@ -47,8 +47,7 @@
       ]
     },
     "dominic": {
-      "referenceMode": "hybrid-canonical-library",
-      "canonicalImage": "private-reference-canon/dominic/dominic-seated-master.jpg",
+      "referenceMode": "real-user-reference-pack-strict",
       "legacyPriorityImages": [
         "assets/lucas-reference-compact.b64",
         "assets/lucas-reference-from-user-video.jpg.b64"
@@ -64,15 +63,15 @@
         ]
       },
       "rules": [
-        "Use the validated MonIA compact/user-video identity anchors before any generated or convenience image.",
+        "Dominic identity authority is ONLY the user's real supplied photos and real user-video-derived frames.",
+        "Never use a generated or synthetic portrait as Dominic identity authority.",
+        "Use the real-photo and user-video identity pack before any scene or motion reference.",
         "Dominic is the current canonical character name; Lucas is a legacy label only.",
-        "The full MonIA Dominic visual library is identity authority, not a single prompt-generated face.",
-        "Use original validated images and video frames as primary visual references.",
         "Never substitute Dominic with another man.",
-        "Preserve face geometry, eyes, nose, mouth, jaw, hair, stubble, skin tone and the canonical tattoos visible in validated references.",
-        "Do not erase canonical tattoos and do not invent new permanent marks.",
-        "Choose a reference matching the intended camera angle and expression before video generation.",
-        "A generated candidate must remain quarantined until human visual approval."
+        "Preserve face geometry, eyes, nose, mouth, jaw, hair, stubble and skin tone from the real references.",
+        "Motion and performance references control movement only and must not redefine the face.",
+        "Fail closed if no allowed real identity source can be materialized.",
+        "A generated candidate stays quarantined until human visual approval."
       ],
       "identityCandidates": [
         "https://raw.githubusercontent.com/vartcom38-collab/marion-lucas-game/main/public/resources/monia/canon/lucas/priority-01.jpg",
@@ -86,6 +85,18 @@
         "public/resources/monia/canon/lucas/priority-02.jpg",
         "public/resources/monia/canon/lucas/reference-from-user-video.jpg",
         "public/resources/monia/canon/lucas/reference-compact.jpg"
+      ],
+      "identityContract": "config/dominic-identity-contract-v1.json",
+      "primaryIdentityFiles": [
+        "public/resources/monia/canon/lucas/priority-01.jpg",
+        "public/resources/monia/canon/lucas/priority-02.jpg",
+        "public/resources/monia/canon/lucas/reference-from-user-video.jpg",
+        "public/resources/monia/canon/lucas/reference-compact.jpg"
+      ],
+      "forbiddenGeneratedIdentityFiles": [
+        "private-reference-canon/dominic/dominic-seated-master.jpg",
+        "public/resources/monia/canon/dominic/dominic-face-front-clean.jpg",
+        "public/resources/monia/canon/dominic/dominic-face-front-anchor.jpg"
       ]
     }
   }
