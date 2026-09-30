@@ -1,0 +1,83 @@
+{
+  "id": "dominic-seated-monia-library-010",
+  "state": "queued",
+  "createdAt": "2026-09-30T15:12:00+02:00",
+  "source": "monia-video-orchestrator-v3",
+  "candidateOnly": true,
+  "narrativeAuthority": false,
+  "sceneFamily": "dominic-new-seated-cinematic-proof",
+  "signature": "MONIA_DOMINIC_NEW_SCENE_010",
+  "primaryCharacter": "dominic",
+  "prompt": "Create a genuinely new cinematic shot of Dominic, using the real-user Dominic identity pack as absolute facial authority. He is seated alone in a warm quiet interior, medium-close vertical framing, natural window light, subtle breathing and a small gaze shift. Preserve the exact same recognizable face, hair, brows, eyes, nose, mouth, jaw, stubble and skin tone. This must be a new scene, not a copy of the source video.",
+  "negativePrompt": "different person, identity drift, source-video copy, phone UI, second person, generic man, synthetic face, face redesign, different jaw, different eyes, different nose, different mouth, different hairline, stubble loss, watermark, subtitles",
+  "characters": [
+    {
+      "id": "dominic",
+      "identityMode": "real-user-reference-pack-strict",
+      "wardrobe": "preserve supplied canonical reference exactly",
+      "referenceMode": "monia-library-router",
+      "libraryRouter": "config/monia-reference-library-router-v1.json",
+      "referenceBanks": [
+        "config/lucas-reference-bank.json",
+        "config/lucas-video-bank.json",
+        "config/dominic-multiview-canon-v2.json",
+        "config/dominic-direct-reference-pack-v3.json",
+        "config/motion-reference-bank.json"
+      ],
+      "preferCanonRefFirst": false,
+      "identityContract": "config/dominic-identity-contract-v1.json",
+      "requireRealUserIdentity": true,
+      "forbidGeneratedIdentity": true
+    }
+  ],
+  "motion": {
+    "referenceId": "dominic-canon-seated-2026-09-28",
+    "tags": [
+      "natural-breathing",
+      "blink",
+      "micro-expression",
+      "eye-shift",
+      "identity-stability"
+    ],
+    "copyIdentity": true
+  },
+  "generation": {
+    "provider": "kaggle",
+    "router": "wan2.2-ti2v-5b",
+    "backend": "wan2.2-ti2v-5b",
+    "width": 512,
+    "height": 896,
+    "frames": 25,
+    "steps": 20,
+    "guidance": 3,
+    "fps": 16,
+    "seed": 610,
+    "shotCount": 1,
+    "shotCharacters": [
+      "dominic"
+    ],
+    "shotReferenceIndex": [
+      0
+    ],
+    "shotImages": [
+      null
+    ],
+    "shotPrompts": [
+      "New scene proof: Dominic seated alone in a warm quiet room, medium-close vertical shot, natural light, tiny breathing and gaze movement. Use the real-user Dominic face as absolute identity authority. Do not reproduce the original phone video scene."
+    ],
+    "lockLastImage": false,
+    "identityRestore": true
+  },
+  "qualityPolicy": {
+    "failClosed": true,
+    "humanApprovalBeforeLive": true,
+    "requireTrueVideo": true,
+    "requireRealUserIdentitySource": true,
+    "rejectGeneratedIdentitySource": true,
+    "identityContract": "config/dominic-identity-contract-v1.json"
+  },
+  "output": {
+    "candidatePath": "public/resources/monia/candidates/dominic-seated-monia-library-010/"
+  },
+  "retryNote": "Candidate 010 is the first genuinely new scene after 009 established a clean, stable identity base. Real-user references remain the only identity authority and identity restore is enabled."
+}
