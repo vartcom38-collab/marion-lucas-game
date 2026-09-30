@@ -3,6 +3,7 @@
   "status": "active",
   "purpose": "Single routing registry for MonIA's existing character reference library. This does not replace the banks; it tells GPU workers which canonical banks to consult and which assets must be materialized into worker-local storage.",
   "principles": [
+    "For Dominic, real user-supplied photos or real user-video-derived frames are the only identity authority; generated portraits are forbidden as identity anchors.",
     "Never reduce a character to one convenience image when canonical multi-reference material exists.",
     "GitHub metadata selects references; private/persistent storage carries binaries.",
     "Identity, motion, performance, wardrobe and scene anchors are separate reference roles.",
@@ -73,7 +74,11 @@
       "workerPolicy": {
         "multiReferencePreferred": true,
         "identityAndMotionMustBeSeparateWhenUseful": true,
-        "textOnlyReconstructionForbidden": true
+        "textOnlyReconstructionForbidden": true,
+        "identityContract": "config/dominic-identity-contract-v1.json",
+        "realUserIdentityOnly": true,
+        "generatedIdentityAuthorityForbidden": true,
+        "failClosedWithoutRealIdentityBinary": true
       }
     }
   },
