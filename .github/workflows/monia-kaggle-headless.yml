@@ -16,6 +16,7 @@ on:
       - 'studio/queue/dominic-seated-monia-library-006.json'
       - 'studio/queue/dominic-seated-monia-library-007.json'
       - 'studio/queue/dominic-seated-monia-library-008.json'
+      - 'studio/queue/dominic-seated-monia-library-009.json'
       - 'config/monia-reference-packs.json'
       - 'config/monia-reference-library-router-v1.json'
       - 'config/lucas-reference-bank.json'
@@ -36,14 +37,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 70
     env:
-      MONIA_JOB_ID: ${{ github.event.client_payload.job_id || 'dominic-seated-monia-library-008' }}
+      MONIA_JOB_ID: ${{ github.event.client_payload.job_id || 'dominic-seated-monia-library-009' }}
       MONIA_JOB_B64: ${{ github.event.client_payload.job_b64 || '' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
 
       - name: Materialize private real Dominic references
-        if: ${{ env.MONIA_JOB_ID == 'dominic-seated-monia-library-007' || env.MONIA_JOB_ID == 'dominic-seated-monia-library-008' }}
+        if: ${{ env.MONIA_JOB_ID == 'dominic-seated-monia-library-007' || env.MONIA_JOB_ID == 'dominic-seated-monia-library-008' || env.MONIA_JOB_ID == 'dominic-seated-monia-library-009' }}
         env:
           INFOMANIAK_FTP_HOST: ${{ secrets.INFOMANIAK_FTP_HOST }}
           INFOMANIAK_FTP_USER: ${{ secrets.INFOMANIAK_FTP_USER }}
@@ -105,7 +106,7 @@ jobs:
             done
             # Clean identity crop: remove phone UI bars and the second person.
             ffmpeg -y -v error -ss 26 -i .private-monia/dominic/source.mp4 -frames:v 1 \
-              -vf "crop=iw*0.72:ih*0.78:iw*0.23:ih*0.08,scale=512:896:force_original_aspect_ratio=decrease,pad=512:896:(ow-iw)/2:(oh-ih)/2" \
+              -vf "crop=iw*0.56:ih*0.76:iw*0.31:ih*0.08,scale=512:896:force_original_aspect_ratio=decrease,pad=512:896:(ow-iw)/2:(oh-ih)/2" \
               -q:v 2 ".private-monia/dominic/00-dominic-clean-real-anchor.jpg" || true
           fi
 
