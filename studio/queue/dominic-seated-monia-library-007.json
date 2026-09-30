@@ -80,5 +80,6 @@
   },
   "output": {
     "candidatePath": "public/resources/monia/candidates/dominic-seated-monia-library-007/"
-  }
+  },
+  "retryNote": "Retry with recovered private real-user video frames and repository-local lightweight validation support."
 }
