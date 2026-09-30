@@ -1,0 +1,85 @@
+{
+  "id": "dominic-seated-monia-library-009",
+  "state": "queued",
+  "createdAt": "2026-09-30T15:10:00+02:00",
+  "source": "monia-video-orchestrator-v3",
+  "candidateOnly": true,
+  "narrativeAuthority": false,
+  "sceneFamily": "dominic-tight-clean-real-identity-proof",
+  "signature": "MONIA_DOMINIC_TIGHT_CLEAN_REAL_009",
+  "primaryCharacter": "dominic",
+  "prompt": "Animate only the tightly cropped real-user Dominic reference. Preserve the exact real face and appearance. Minimal natural motion only. No other person, no phone UI, no redesign.",
+  "negativePrompt": "different person, identity drift, second person, phone UI, status bar, cropped stranger, face redesign, synthetic face, different jaw, different eyes, different nose, different mouth, different hairline, stubble loss",
+  "characters": [
+    {
+      "id": "dominic",
+      "identityMode": "real-user-reference-pack-strict",
+      "wardrobe": "preserve supplied canonical reference exactly",
+      "referenceMode": "monia-library-router",
+      "libraryRouter": "config/monia-reference-library-router-v1.json",
+      "referenceBanks": [
+        "config/lucas-reference-bank.json",
+        "config/lucas-video-bank.json",
+        "config/dominic-multiview-canon-v2.json",
+        "config/dominic-direct-reference-pack-v3.json",
+        "config/motion-reference-bank.json"
+      ],
+      "preferCanonRefFirst": false,
+      "identityContract": "config/dominic-identity-contract-v1.json",
+      "requireRealUserIdentity": true,
+      "forbidGeneratedIdentity": true
+    }
+  ],
+  "motion": {
+    "referenceId": "dominic-canon-seated-2026-09-28",
+    "tags": [
+      "natural-breathing",
+      "blink",
+      "micro-expression",
+      "eye-shift",
+      "identity-stability"
+    ],
+    "copyIdentity": true
+  },
+  "generation": {
+    "provider": "kaggle",
+    "router": "svd-img2vid",
+    "backend": "svd-img2vid",
+    "width": 512,
+    "height": 896,
+    "frames": 14,
+    "steps": 20,
+    "guidance": 3,
+    "fps": 7,
+    "seed": 509,
+    "shotCount": 1,
+    "shotCharacters": [
+      "dominic"
+    ],
+    "shotReferenceIndex": [
+      0
+    ],
+    "shotImages": [
+      null
+    ],
+    "shotPrompts": [
+      "Tightly cropped real Dominic identity proof. Keep the exact face, hair, brows, eyes, nose, mouth, jaw, stubble and skin tone. Tiny breathing, one blink, micro gaze shift. No second person, no UI, no camera movement."
+    ],
+    "lockLastImage": false,
+    "identityRestore": false,
+    "motionBucketId": 6,
+    "noiseAugStrength": 0.0005
+  },
+  "qualityPolicy": {
+    "failClosed": true,
+    "humanApprovalBeforeLive": true,
+    "requireTrueVideo": true,
+    "requireRealUserIdentitySource": true,
+    "rejectGeneratedIdentitySource": true,
+    "identityContract": "config/dominic-identity-contract-v1.json"
+  },
+  "output": {
+    "candidatePath": "public/resources/monia/candidates/dominic-seated-monia-library-009/"
+  },
+  "retryNote": "Candidate 009 tightens the real-user crop after visual review of 008 found residual second-person edge and UI remnants."
+}
