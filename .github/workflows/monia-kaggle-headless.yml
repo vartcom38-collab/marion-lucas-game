@@ -41,6 +41,88 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      - name: Materialize private real Dominic references
+        if: ${{ env.MONIA_JOB_ID == 'dominic-seated-monia-library-007' }}
+        env:
+          INFOMANIAK_FTP_HOST: ${{ secrets.INFOMANIAK_FTP_HOST }}
+          INFOMANIAK_FTP_USER: ${{ secrets.INFOMANIAK_FTP_USER }}
+          INFOMANIAK_FTP_PASSWORD: ${{ secrets.INFOMANIAK_FTP_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg
+          mkdir -p .private-monia/dominic
+          python3 <<'PY'
+          import ftplib, os
+          from pathlib import Path
+
+          host=os.environ['INFOMANIAK_FTP_HOST'].strip().replace('ftpes://','').replace('ftps://','').replace('ftp://','').rstrip('/')
+          user=os.environ['INFOMANIAK_FTP_USER'].strip()
+          password=os.environ['INFOMANIAK_FTP_PASSWORD'].rstrip('\r\n')
+          if not host or not user or not password:
+              raise RuntimeError('Infomaniak FTP credentials missing')
+
+          ftp=ftplib.FTP_TLS(timeout=45)
+          ftp.connect(host,21); ftp.login(user,password); ftp.prot_p(); ftp.set_pasv(True)
+          out=Path('.private-monia/dominic')
+          originals=['IMG_4468(1).jpeg','IMG_4467(1).jpeg','IMG_4466(1).jpeg','IMG_4465(1).jpeg','IMG_4425(1).jpeg','IMG_3772(3).jpeg','IMG_3771(2).jpeg','IMG_3770(1).jpeg']
+          roots=['/private/monia/lucas','/private/monia/lucas/reference-bank','/private/monia/reference-vault/dominic']
+          found=0
+          for root in roots:
+              for name in originals:
+                  target=out/name
+                  if target.exists():
+                      continue
+                  try:
+                      with target.open('wb') as fh:
+                          ftp.retrbinary(f'RETR {root}/{name}', fh.write, blocksize=1024*1024)
+                      if target.stat().st_size > 1000:
+                          found += 1
+                      else:
+                          target.unlink(missing_ok=True)
+                  except Exception:
+                      target.unlink(missing_ok=True)
+
+          # Guaranteed legacy real-user video authority if present.
+          video=out/'source.mp4'
+          try:
+              with video.open('wb') as fh:
+                  ftp.retrbinary('RETR /private/monia/lucas/source.mp4', fh.write, blocksize=1024*1024)
+              if video.stat().st_size < 10000:
+                  video.unlink(missing_ok=True)
+          except Exception:
+              video.unlink(missing_ok=True)
+          ftp.quit()
+          print('Private real Dominic originals recovered:', found)
+          print('Private real Dominic source video recovered:', video.exists())
+          PY
+
+          if [ -f .private-monia/dominic/source.mp4 ]; then
+            for sec in 22 26 30; do
+              ffmpeg -y -v error -ss "$sec" -i .private-monia/dominic/source.mp4 -frames:v 1 -q:v 2 ".private-monia/dominic/video-frame-$sec.jpg" || true
+            done
+          fi
+
+          python3 <<'PY'
+          from pathlib import Path
+          from PIL import Image
+          root=Path('.private-monia/dominic')
+          valid=[]
+          for p in sorted(root.iterdir()):
+              if p.suffix.lower() not in {'.jpg','.jpeg','.png','.webp'}:
+                  continue
+              try:
+                  with Image.open(p) as im:
+                      im.verify()
+                  valid.append(p)
+              except Exception:
+                  p.unlink(missing_ok=True)
+          if not valid:
+              raise RuntimeError('DOMINIC_PRIVATE_REAL_REFERENCE_RECOVERY_EMPTY')
+          print('Validated private real Dominic identity refs:', len(valid))
+          PY
+
       - name: Prepare Kaggle worker bundle
         shell: bash
         run: |
@@ -117,6 +199,18 @@ jobs:
                           print('⚠️ Skipped malformed MonIA identity anchor:', p)
                   except Exception as exc:
                       print('⚠️ Could not embed MonIA identity anchor:', p, repr(exc))
+              # Private real-user refs recovered on the runner have highest authority.
+              if cid=='dominic':
+                  import base64 as _b64
+                  private_root=Path('.private-monia/dominic')
+                  if private_root.exists():
+                      private_files=sorted([p for p in private_root.iterdir() if p.suffix.lower() in {'.jpg','.jpeg','.png','.webp'}])
+                      private_payloads=[]
+                      for fp in private_files:
+                          raw=fp.read_bytes()
+                          private_payloads.append(_b64.b64encode(raw).decode('ascii'))
+                          print('🔐 Embedded PRIVATE REAL Dominic reference:', fp.name, len(raw), 'bytes')
+                      embedded=private_payloads + embedded
               ch['embeddedPriorityImagesB64']=embedded
               ch['moniaLibraryRules']=pack.get('rules') or []
               ch['moniaLibraryVideo']=pack.get('video') or None
