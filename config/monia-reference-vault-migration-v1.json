@@ -159,7 +159,9 @@
     "recovered_binary_bytes": 26553886,
     "validated_with_magic_or_container_probe": true,
     "vault_upload_status": "pending-transport",
-    "note": "All listed conversation assets have real binary backing and SHA-256 fingerprints. Next step is transport into the private vault; do not treat metadata-only historical entries as migrated."
+    "note": "All listed conversation assets have real binary backing and SHA-256 fingerprints. Next step is transport into the private vault; do not treat metadata-only historical entries as migrated.",
+    "git_history_audited": true,
+    "private_storage_scan_needed": true
   },
   "githubDiscovery": {
     "discoveredAt": "2026-09-30",
@@ -1203,6 +1205,55 @@
           "pending-ingest"
         ]
       }
+    ]
+  },
+  "gitHistoryAudit": {
+    "auditedAt": "2026-09-30",
+    "conclusion": "The historical Git repository preserves the reference indexes and some derived/materialized canon files, but not the eight original IMG_* binaries or the old ScreenRecording_* binaries themselves.",
+    "evidence": [
+      {
+        "commit": "987de3c642b1d4e982159b52a248955e804cc1e3",
+        "message": "monia: register new direct Dominic reference pack",
+        "filesAdded": [
+          "config/dominic-direct-reference-pack-v3.json"
+        ],
+        "finding": "The eight IMG_* originals were registered by filename only; they were not committed as binary files in this commit."
+      },
+      {
+        "commit": "a8f77f27a23151758ff873f0e3d6c2e23bf47d52",
+        "message": "Add user-confirmed Dominic multiview reference pack",
+        "filesAdded": [
+          "config/dominic-multiview-canon-v2.json"
+        ],
+        "finding": "The multiview pack is metadata/config only."
+      },
+      {
+        "commit": "70ee779449632529202de14db39918ea445c1224",
+        "message": "monia: materialize Dominic canonical images",
+        "filesAdded": [
+          "public/resources/monia/canon/lucas/priority-01.jpg",
+          "public/resources/monia/canon/lucas/priority-02.jpg",
+          "public/resources/monia/canon/lucas/reference-compact.jpg",
+          "public/resources/monia/canon/lucas/reference-from-user-video.jpg"
+        ],
+        "finding": "These are the durable derived/materialized canon binaries still recoverable from Git."
+      },
+      {
+        "commit": "5070cc01076d5798e17a6490a8f82fcd073d42b8",
+        "message": "monia: materialize Dominic atlas canon image",
+        "filesAdded": [
+          "public/resources/monia/canon/lucas/atlas-canon.webp"
+        ],
+        "finding": "Atlas binary is durable in Git."
+      }
+    ],
+    "legacyPrivateStorageHints": [
+      "/private/monia/lucas/source.mp4"
+    ],
+    "nextRecoveryPriority": [
+      "Scan legacy Infomaniak private storage for /private/monia/lucas/** and other historical MonIA media.",
+      "Recover any old ScreenRecording_* binaries from private storage before asking the user to resend them.",
+      "Keep the eight IMG_* names in the vault migration index and bind them when/if their binaries are recovered."
     ]
   }
 }
