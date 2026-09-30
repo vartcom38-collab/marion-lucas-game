@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "status": "active",
+  "character": "Dominic",
+  "purpose": "Hard generation contract: Dominic identity must come only from user-supplied real photos or real user-video frames. Generated or synthetic faces can never be identity authority.",
+  "authorityOrder": [
+    "user_supplied_original_photo",
+    "user_supplied_video_frame",
+    "user_confirmed_video_identity_reference"
+  ],
+  "allowedIdentitySources": [
+    "config/dominic-direct-reference-pack-v3.json",
+    "config/dominic-multiview-canon-v2.json",
+    "public/resources/monia/canon/lucas/priority-01.jpg",
+    "public/resources/monia/canon/lucas/priority-02.jpg",
+    "public/resources/monia/canon/lucas/reference-from-user-video.jpg",
+    "public/resources/monia/canon/lucas/reference-compact.jpg"
+  ],
+  "forbiddenIdentitySources": [
+    "private-reference-canon/dominic/dominic-seated-master.jpg",
+    "public/resources/monia/canon/dominic/dominic-face-front-clean.jpg",
+    "public/resources/monia/canon/dominic/dominic-face-front-anchor.jpg",
+    "any generated candidate frame",
+    "any prompt-only reconstruction"
+  ],
+  "generationRules": [
+    "Never prefer a synthetic canon image over the real-photo identity pack.",
+    "For Dominic shots, materialize real-photo/user-video identity binaries before model loading.",
+    "If no allowed real identity binary is available, fail closed and do not generate.",
+    "Motion/performance references may influence movement only; they cannot redefine Dominic's face.",
+    "A generated frame can be used for temporal continuity only after human approval and never as identity authority.",
+    "Identity must remain recognizable at first, middle and final review frames."
+  ],
+  "qa": {
+    "mandatoryHumanReviewFrames": [
+      "first_clear_frame",
+      "middle_frame",
+      "last_clear_frame"
+    ],
+    "technicalPassNeverImpliesIdentityPass": true,
+    "identityPassRequiresHumanApproval": true
+  }
+}
