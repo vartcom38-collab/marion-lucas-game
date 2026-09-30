@@ -160,5 +160,1049 @@
     "validated_with_magic_or_container_probe": true,
     "vault_upload_status": "pending-transport",
     "note": "All listed conversation assets have real binary backing and SHA-256 fingerprints. Next step is transport into the private vault; do not treat metadata-only historical entries as migrated."
+  },
+  "githubDiscovery": {
+    "discoveredAt": "2026-09-30",
+    "legacyPrivateBinaryHint": "/private/monia/lucas/source.mp4",
+    "indexedUniqueSourceFiles": 47,
+    "indexedVideos": 39,
+    "indexedImages": 8,
+    "note": "GitHub contains a much larger historical index than the currently materialized chat files. These entries must be searched in legacy private storage and old Git history before asking the user to resend anything.",
+    "sources": [
+      "config/lucas-reference-bank.json",
+      "config/lucas-video-bank.json",
+      "config/motion-reference-bank.json",
+      "config/dominic-direct-reference-pack-v3.json",
+      "config/monia-reference-packs.json"
+    ],
+    "files": [
+      {
+        "kind": "image",
+        "id": "img_3770-1-",
+        "file": "IMG_3770(1).jpeg",
+        "roles": [
+          "identity-support"
+        ],
+        "status": "indexed-in-direct-reference-pack",
+        "ids": [
+          "img_3770-1-"
+        ],
+        "sources": [
+          "indexed-in-direct-reference-pack"
+        ]
+      },
+      {
+        "kind": "image",
+        "id": "img_3771-2-",
+        "file": "IMG_3771(2).jpeg",
+        "roles": [
+          "identity-support"
+        ],
+        "status": "indexed-in-direct-reference-pack",
+        "ids": [
+          "img_3771-2-"
+        ],
+        "sources": [
+          "indexed-in-direct-reference-pack"
+        ]
+      },
+      {
+        "kind": "image",
+        "id": "img_3772-3-",
+        "file": "IMG_3772(3).jpeg",
+        "roles": [
+          "identity-support"
+        ],
+        "status": "indexed-in-direct-reference-pack",
+        "ids": [
+          "img_3772-3-"
+        ],
+        "sources": [
+          "indexed-in-direct-reference-pack"
+        ]
+      },
+      {
+        "kind": "image",
+        "id": "img_4425-1-",
+        "file": "IMG_4425(1).jpeg",
+        "roles": [
+          "identity-support"
+        ],
+        "status": "indexed-in-direct-reference-pack",
+        "ids": [
+          "img_4425-1-"
+        ],
+        "sources": [
+          "indexed-in-direct-reference-pack"
+        ]
+      },
+      {
+        "kind": "image",
+        "id": "img_4465-1-",
+        "file": "IMG_4465(1).jpeg",
+        "roles": [
+          "identity-high"
+        ],
+        "status": "indexed-in-direct-reference-pack",
+        "ids": [
+          "img_4465-1-"
+        ],
+        "sources": [
+          "indexed-in-direct-reference-pack"
+        ]
+      },
+      {
+        "kind": "image",
+        "id": "img_4466-1-",
+        "file": "IMG_4466(1).jpeg",
+        "roles": [
+          "identity-high"
+        ],
+        "status": "indexed-in-direct-reference-pack",
+        "ids": [
+          "img_4466-1-"
+        ],
+        "sources": [
+          "indexed-in-direct-reference-pack"
+        ]
+      },
+      {
+        "kind": "image",
+        "id": "img_4467-1-",
+        "file": "IMG_4467(1).jpeg",
+        "roles": [
+          "identity-high"
+        ],
+        "status": "indexed-in-direct-reference-pack",
+        "ids": [
+          "img_4467-1-"
+        ],
+        "sources": [
+          "indexed-in-direct-reference-pack"
+        ]
+      },
+      {
+        "kind": "image",
+        "id": "img_4468-1-",
+        "file": "IMG_4468(1).jpeg",
+        "roles": [
+          "identity-high"
+        ],
+        "status": "indexed-in-direct-reference-pack",
+        "ids": [
+          "img_4468-1-"
+        ],
+        "sources": [
+          "indexed-in-direct-reference-pack"
+        ]
+      },
+      {
+        "kind": "video",
+        "id": "motion-user-20260906-a",
+        "file": "ScreenRecording_09-06-2026 22-34-28_1.mp4",
+        "roles": [
+          "motion_reference",
+          "male_body_reference",
+          "blocking",
+          "walking",
+          "body_movement",
+          "camera_timing",
+          "do_not_copy_identity"
+        ],
+        "status": "pending-ingest",
+        "ids": [
+          "motion-user-20260906-a"
+        ],
+        "sources": [
+          "pending-ingest"
+        ]
+      },
+      {
+        "kind": "video",
+        "id": "motion-user-20260906-b",
+        "file": "ScreenRecording_09-06-2026 22-35-51_1.mp4",
+        "roles": [
+          "motion_reference",
+          "male_body_reference",
+          "parent_child_interaction",
+          "carrying_child",
+          "protective_posture",
+          "walking_with_child",
+          "family_blocking_reference",
+          "do_not_copy_identity"
+        ],
+        "status": "pending-ingest",
+        "ids": [
+          "motion-user-20260906-b"
+        ],
+        "sources": [
+          "pending-ingest"
+        ]
+      },
+      {
+        "kind": "video",
+        "id": "motion-user-20260910-a",
+        "file": "ScreenRecording_09-10-2026 18-45-33_1.mp4",
+        "roles": [
+          "motion_reference",
+          "male_body_reference",
+          "protective",
+          "close_proximity",
+          "controlled_tension",
+          "gaze",
+          "small_hand_movement",
+          "natural_breathing",
+          "do_not_copy_identity",
+          "ignore_female_identity"
+        ],
+        "status": "motion-profile-extracted",
+        "ids": [
+          "motion-user-20260910-a"
+        ],
+        "sources": [
+          "motion-profile-extracted"
+        ]
+      },
+      {
+        "kind": "video",
+        "id": "motion-user-20260910-b",
+        "file": "ScreenRecording_09-10-2026 18-46-40_1.mp4",
+        "roles": [
+          "motion_reference",
+          "face_similarity_secondary",
+          "male_body_reference",
+          "listening",
+          "reaction",
+          "micro_expression",
+          "restrained_smile",
+          "head_turn",
+          "gaze_shift",
+          "do_not_copy_identity",
+          "ignore_female_identity"
+        ],
+        "status": "motion-profile-extracted",
+        "ids": [
+          "motion-user-20260910-b"
+        ],
+        "sources": [
+          "motion-profile-extracted"
+        ]
+      },
+      {
+        "kind": "video",
+        "id": "motion-user-20260910-c",
+        "file": "ScreenRecording_09-10-2026 18-47-57_1.mp4",
+        "roles": [
+          "motion_reference",
+          "male_body_reference",
+          "formal_presence",
+          "standing",
+          "social_scene",
+          "measured_eye_contact",
+          "economical_motion",
+          "do_not_copy_identity",
+          "ignore_female_identity"
+        ],
+        "status": "motion-profile-extracted",
+        "ids": [
+          "motion-user-20260910-c"
+        ],
+        "sources": [
+          "motion-profile-extracted"
+        ]
+      },
+      {
+        "kind": "video",
+        "id": "motion-user-20260910-d",
+        "file": "ScreenRecording_09-10-2026 18-48-55_1.mp4",
+        "roles": [
+          "motion_reference",
+          "male_body_reference",
+          "everyday",
+          "table",
+          "object_interaction",
+          "eating",
+          "natural_action_overlap",
+          "do_not_copy_identity",
+          "ignore_female_identity"
+        ],
+        "status": "motion-profile-extracted",
+        "ids": [
+          "motion-user-20260910-d"
+        ],
+        "sources": [
+          "motion-profile-extracted"
+        ]
+      },
+      {
+        "kind": "video",
+        "id": "motion-user-20260910-e",
+        "file": "ScreenRecording_09-10-2026 18-49-25_1.mp4",
+        "roles": [
+          "motion_reference",
+          "face_similarity_secondary",
+          "male_body_reference",
+          "dialogue_reaction",
+          "closeup",
+          "eye_change",
+          "pause_before_speech",
+          "stillness",
+          "do_not_copy_identity",
+          "ignore_female_identity"
+        ],
+        "status": "motion-profile-extracted",
+        "ids": [
+          "motion-user-20260910-e"
+        ],
+        "sources": [
+          "motion-profile-extracted"
+        ]
+      },
+      {
+        "kind": "video",
+        "id": "motion-user-20260910-f",
+        "file": "ScreenRecording_09-10-2026 18-50-03_1.mp4",
+        "roles": [
+          "motion_reference",
+          "male_body_reference",
+          "care",
+          "gentle_hand_contact",
+          "quiet_emotion",
+          "slow_approach",
+          "gaze_to_contact_point",
+          "do_not_copy_identity",
+          "ignore_female_identity"
+        ],
+        "status": "motion-profile-extracted",
+        "ids": [
+          "motion-user-20260910-f"
+        ],
+        "sources": [
+          "motion-profile-extracted"
+        ]
+      },
+      {
+        "kind": "video",
+        "id": "motion-user-20260910-g",
+        "file": "ScreenRecording_09-10-2026 18-51-01_1.mp4",
+        "roles": [
+          "motion_reference",
+          "male_body_reference",
+          "romantic_proximity",
+          "lean_in",
+          "micro_pause",
+          "gentle_hand_placement",
+          "chemistry",
+          "non_explicit",
+          "do_not_copy_identity",
+          "ignore_female_identity"
+        ],
+        "status": "motion-profile-extracted",
+        "ids": [
+          "motion-user-20260910-g"
+        ],
+        "sources": [
+          "motion-profile-extracted"
+        ]
+      },
+      {
+        "kind": "video",
+        "id": "motion-user-20260910-h",
+        "file": "ScreenRecording_09-10-2026 18-54-56_1.mp4",
+        "roles": [
+          "motion_reference",
+          "male_body_reference",
+          "formal_scene",
+          "standing_presence",
+          "focused_gaze",
+          "measured_head_turn",
+          "controlled_reaction",
+          "prop_or_letter_attention",
+          "do_not_copy_identity",
+          "ignore_female_identity"
+        ],
+        "status": "motion-profile-extracted",
+        "ids": [
+          "motion-user-20260910-h"
+        ],
+        "sources": [
+          "motion-profile-extracted"
+        ]
+      },
+      {
+        "kind": "video",
+        "id": "motion-user-20260910-i",
+        "file": "ScreenRecording_09-10-2026 18-55-27_1.mp4",
+        "roles": [
+          "motion_reference",
+          "face_similarity_secondary",
+          "male_body_reference",
+          "romantic_proximity",
+          "face_touch",
+          "lean_in",
+          "kiss_timing_reference",
+          "breath_pause",
+          "gentle_contact",
+          "non_explicit",
+          "do_not_copy_identity",
+          "ignore_female_identity"
+        ],
+        "status": "motion-profile-extracted",
+        "ids": [
+          "motion-user-20260910-i"
+        ],
+        "sources": [
+          "motion-profile-extracted"
+        ]
+      },
+      {
+        "kind": "video",
+        "id": "motion-user-20260910-j",
+        "file": "ScreenRecording_09-10-2026 18-58-40_1.mp4",
+        "roles": [
+          "motion_reference",
+          "male_body_reference",
+          "parent_child_interaction",
+          "child_on_lap",
+          "protective_hold",
+          "soft_smile",
+          "gaze_to_child",
+          "gentle_reassurance",
+          "family_blocking_reference",
+          "do_not_copy_identity",
+          "ignore_female_identity"
+        ],
+        "status": "motion-profile-extracted",
+        "ids": [
+          "motion-user-20260910-j"
+        ],
+        "sources": [
+          "motion-profile-extracted"
+        ]
+      },
+      {
+        "kind": "video",
+        "id": "motion-user-20260910-k",
+        "file": "ScreenRecording_09-10-2026 19-00-15_1.mp4",
+        "roles": [
+          "motion_reference",
+          "face_similarity_secondary",
+          "male_body_reference",
+          "closeup",
+          "emotional_reaction",
+          "gaze_drop",
+          "prop_interaction",
+          "flower_or_gift_handling",
+          "pause_before_reaction",
+          "subtle_breathing",
+          "do_not_copy_identity",
+          "ignore_female_identity"
+        ],
+        "status": "motion-profile-extracted",
+        "ids": [
+          "motion-user-20260910-k"
+        ],
+        "sources": [
+          "motion-profile-extracted"
+        ]
+      },
+      {
+        "kind": "video",
+        "id": "motion-user-20260911-a",
+        "file": "ScreenRecording_09-11-2026 15-57-51_1.mp4",
+        "roles": [
+          "motion_reference",
+          "face_similarity_secondary",
+          "male_body_reference",
+          "romantic_proximity",
+          "two_person_blocking",
+          "face_cradle",
+          "kiss_timing_reference",
+          "protective_lean",
+          "post_kiss_reaction",
+          "controlled_intensity",
+          "non_explicit",
+          "do_not_copy_identity",
+          "ignore_female_identity"
+        ],
+        "status": "motion-profile-extracted",
+        "ids": [
+          "motion-user-20260911-a"
+        ],
+        "sources": [
+          "motion-profile-extracted"
+        ]
+      },
+      {
+        "kind": "video",
+        "id": "motion-user-20260911-b",
+        "file": "ScreenRecording_09-11-2026 15-58-24_1.mp4",
+        "roles": [
+          "motion_reference",
+          "face_similarity_secondary",
+          "male_body_reference",
+          "close_dialogue",
+          "reclined_blocking",
+          "lean_over",
+          "eye_contact",
+          "micro_smile",
+          "pause_before_speech",
+          "near_kiss_tension",
+          "natural_breathing",
+          "non_explicit",
+          "do_not_copy_identity",
+          "ignore_female_identity"
+        ],
+        "status": "motion-profile-extracted",
+        "ids": [
+          "motion-user-20260911-b"
+        ],
+        "sources": [
+          "motion-profile-extracted"
+        ]
+      },
+      {
+        "kind": "video",
+        "id": "motion-user-20260911-c",
+        "file": "ScreenRecording_09-11-2026 15-59-56_1.mp4",
+        "roles": [
+          "motion_reference",
+          "face_similarity_secondary",
+          "male_body_reference",
+          "public_scene",
+          "standing_close",
+          "approach_from_side",
+          "playful_eye_contact",
+          "restrained_smile",
+          "social_tension",
+          "elegant_blocking",
+          "do_not_copy_identity",
+          "ignore_female_identity"
+        ],
+        "status": "motion-profile-extracted",
+        "ids": [
+          "motion-user-20260911-c"
+        ],
+        "sources": [
+          "motion-profile-extracted"
+        ]
+      },
+      {
+        "kind": "video",
+        "id": "motion-user-20260911-d",
+        "file": "ScreenRecording_09-11-2026 16-03-51_1.mp4",
+        "roles": [
+          "motion_reference",
+          "male_body_reference",
+          "formal_romance",
+          "hand_kiss",
+          "gentle_hand_support",
+          "bowing_motion",
+          "measured_approach",
+          "ceremonial_presence",
+          "elegant_posture",
+          "closeup_hand_contact",
+          "non_explicit",
+          "do_not_copy_identity",
+          "ignore_female_identity"
+        ],
+        "status": "motion-profile-extracted",
+        "ids": [
+          "motion-user-20260911-d"
+        ],
+        "sources": [
+          "motion-profile-extracted"
+        ]
+      },
+      {
+        "kind": "video",
+        "id": "motion-user-20260911-e",
+        "file": "ScreenRecording_09-11-2026 17-09-50_1.mp4",
+        "roles": [
+          "motion_reference",
+          "face_similarity_secondary",
+          "male_body_reference",
+          "couple_travel",
+          "outdoor_blocking",
+          "walking_hand_in_hand",
+          "embrace",
+          "playful_snow_reaction",
+          "table_conversation",
+          "shared_gaze",
+          "soft_face_touch",
+          "environment_transition",
+          "wide_to_close_rhythm",
+          "do_not_copy_identity",
+          "ignore_female_identity"
+        ],
+        "status": "motion-profile-extracted",
+        "ids": [
+          "motion-user-20260911-e"
+        ],
+        "sources": [
+          "motion-profile-extracted"
+        ]
+      },
+      {
+        "kind": "video",
+        "id": "motion-user-20260911-f",
+        "file": "ScreenRecording_09-11-2026 20-09-50_1.mp4",
+        "roles": [
+          "motion_reference",
+          "face_similarity_secondary",
+          "male_body_reference",
+          "domestic_scene",
+          "seated_dialogue",
+          "standing_dialogue",
+          "side_by_side_blocking",
+          "closeup_reaction",
+          "measured_head_turn",
+          "contained_tension",
+          "listening_before_reply",
+          "subtle_lean",
+          "warm_interior",
+          "do_not_copy_identity",
+          "ignore_female_identity",
+          "ignore_tattoos"
+        ],
+        "status": "motion-profile-extracted",
+        "ids": [
+          "motion-user-20260911-f"
+        ],
+        "sources": [
+          "motion-profile-extracted"
+        ]
+      },
+      {
+        "kind": "video",
+        "id": "lucas-2026-09-15-195616",
+        "file": "ScreenRecording_09-15-2026 19-56-16_1(1).mp4",
+        "roles": [
+          "identity",
+          "face",
+          "gaze",
+          "micro_expression",
+          "movement"
+        ],
+        "status": "indexed-in-lucas-reference-bank",
+        "ids": [
+          "lucas-2026-09-15-195616"
+        ],
+        "sources": [
+          "indexed-in-lucas-reference-bank",
+          "indexed-in-lucas-video-bank"
+        ]
+      },
+      {
+        "kind": "video",
+        "id": "lucas-2026-09-15-201730",
+        "file": "ScreenRecording_09-15-2026 20-17-30_1.mp4",
+        "roles": [
+          "identity",
+          "face",
+          "gaze",
+          "micro_expression",
+          "movement"
+        ],
+        "status": "indexed-in-lucas-reference-bank",
+        "ids": [
+          "lucas-2026-09-15-201730"
+        ],
+        "sources": [
+          "indexed-in-lucas-reference-bank",
+          "indexed-in-lucas-video-bank"
+        ]
+      },
+      {
+        "kind": "video",
+        "id": "lucas-2026-09-15-202903",
+        "file": "ScreenRecording_09-15-2026 20-29-03_1.mp4",
+        "roles": [
+          "identity",
+          "face",
+          "gesture",
+          "movement"
+        ],
+        "status": "indexed-in-lucas-reference-bank",
+        "ids": [
+          "lucas-2026-09-15-202903"
+        ],
+        "sources": [
+          "indexed-in-lucas-reference-bank",
+          "indexed-in-lucas-video-bank"
+        ]
+      },
+      {
+        "kind": "video",
+        "id": "lucas-2026-09-15-203216",
+        "file": "ScreenRecording_09-15-2026 20-32-16_1.mp4",
+        "roles": [
+          "identity",
+          "posture",
+          "gaze",
+          "movement"
+        ],
+        "status": "indexed-in-lucas-reference-bank",
+        "ids": [
+          "lucas-2026-09-15-203216"
+        ],
+        "sources": [
+          "indexed-in-lucas-reference-bank",
+          "indexed-in-lucas-video-bank"
+        ]
+      },
+      {
+        "kind": "video",
+        "id": "lucas-private-home-2026-09-15-203758",
+        "file": "ScreenRecording_09-15-2026 20-37-58_1.mp4",
+        "roles": [
+          "identity",
+          "full_body",
+          "private_home",
+          "relaxed_posture",
+          "body_movement",
+          "gesture_rhythm",
+          "tattoos",
+          "off_duty_wardrobe"
+        ],
+        "status": "indexed-in-lucas-reference-bank",
+        "ids": [
+          "lucas-private-home-2026-09-15-203758",
+          "lucas-home-private-44s"
+        ],
+        "sources": [
+          "indexed-in-lucas-reference-bank",
+          "indexed-in-lucas-video-bank"
+        ]
+      },
+      {
+        "kind": "video",
+        "id": "lucas-2026-09-15-210254",
+        "file": "ScreenRecording_09-15-2026 21-02-54_1.mp4",
+        "roles": [
+          "identity",
+          "face",
+          "micro_expression",
+          "movement"
+        ],
+        "status": "indexed-in-lucas-reference-bank",
+        "ids": [
+          "lucas-2026-09-15-210254"
+        ],
+        "sources": [
+          "indexed-in-lucas-reference-bank",
+          "indexed-in-lucas-video-bank"
+        ]
+      },
+      {
+        "kind": "video",
+        "id": "lucas-2026-09-15-210634",
+        "file": "ScreenRecording_09-15-2026 21-06-34_1.mp4",
+        "roles": [
+          "identity",
+          "face",
+          "gaze",
+          "gesture",
+          "movement"
+        ],
+        "status": "indexed-in-lucas-reference-bank",
+        "ids": [
+          "lucas-2026-09-15-210634"
+        ],
+        "sources": [
+          "indexed-in-lucas-reference-bank",
+          "indexed-in-lucas-video-bank"
+        ]
+      },
+      {
+        "kind": "video",
+        "id": "lucas-2026-09-15-210953",
+        "file": "ScreenRecording_09-15-2026 21-09-53_1.mp4",
+        "roles": [
+          "identity",
+          "face",
+          "posture",
+          "gesture",
+          "movement"
+        ],
+        "status": "indexed-in-lucas-reference-bank",
+        "ids": [
+          "lucas-2026-09-15-210953"
+        ],
+        "sources": [
+          "indexed-in-lucas-reference-bank",
+          "indexed-in-lucas-video-bank"
+        ]
+      },
+      {
+        "kind": "video",
+        "id": "lucas-2026-09-15-214511",
+        "file": "ScreenRecording_09-15-2026 21-45-11_1.mp4",
+        "roles": [
+          "identity",
+          "face",
+          "gaze",
+          "micro_expression"
+        ],
+        "status": "indexed-in-lucas-reference-bank",
+        "ids": [
+          "lucas-2026-09-15-214511"
+        ],
+        "sources": [
+          "indexed-in-lucas-reference-bank",
+          "indexed-in-lucas-video-bank"
+        ]
+      },
+      {
+        "kind": "video",
+        "id": "lucas-2026-09-15-214828",
+        "file": "ScreenRecording_09-15-2026 21-48-28_1.mp4",
+        "roles": [
+          "identity",
+          "face",
+          "gaze",
+          "micro_expression",
+          "movement"
+        ],
+        "status": "indexed-in-lucas-reference-bank",
+        "ids": [
+          "lucas-2026-09-15-214828"
+        ],
+        "sources": [
+          "indexed-in-lucas-reference-bank",
+          "indexed-in-lucas-video-bank"
+        ]
+      },
+      {
+        "kind": "video",
+        "id": "lucas-2026-09-15-215205",
+        "file": "ScreenRecording_09-15-2026 21-52-05_1.mp4",
+        "roles": [
+          "identity",
+          "face",
+          "posture",
+          "gesture",
+          "movement"
+        ],
+        "status": "indexed-in-lucas-reference-bank",
+        "ids": [
+          "lucas-2026-09-15-215205"
+        ],
+        "sources": [
+          "indexed-in-lucas-reference-bank",
+          "indexed-in-lucas-video-bank"
+        ]
+      },
+      {
+        "kind": "video",
+        "id": "lucas-2026-09-16-120836",
+        "file": "ScreenRecording_09-16-2026 12-08-36_1(1).mp4",
+        "roles": [
+          "identity",
+          "face",
+          "movement",
+          "performance"
+        ],
+        "status": "indexed-in-lucas-reference-bank",
+        "ids": [
+          "lucas-2026-09-16-120836"
+        ],
+        "sources": [
+          "indexed-in-lucas-reference-bank",
+          "indexed-in-lucas-video-bank"
+        ]
+      },
+      {
+        "kind": "video",
+        "id": "lucas-voice-performance-2026-09-16-171905",
+        "file": "ScreenRecording_09-16-2026 17-19-05_1(1).mp4",
+        "roles": [
+          "identity",
+          "face",
+          "speech_presence",
+          "speech_rhythm",
+          "performance",
+          "gaze"
+        ],
+        "status": "indexed-in-lucas-reference-bank",
+        "ids": [
+          "lucas-voice-performance-2026-09-16-171905",
+          "lucas-presence-rhythm-2026-09-16"
+        ],
+        "sources": [
+          "indexed-in-lucas-reference-bank",
+          "indexed-in-lucas-video-bank"
+        ]
+      },
+      {
+        "kind": "video",
+        "id": "lucas-daily-close-proximity-2026-09-17-221109",
+        "file": "ScreenRecording_09-17-2026 22-11-09_1.mp4",
+        "roles": [
+          "identity",
+          "domestic",
+          "close_proximity",
+          "protective_intimate_body_language",
+          "serious_conversation",
+          "face_close",
+          "gentle_face_guidance",
+          "sustained_touch",
+          "expression_shift",
+          "speaking_face"
+        ],
+        "status": "indexed-in-lucas-video-bank",
+        "ids": [
+          "lucas-daily-close-proximity-2026-09-17-221109"
+        ],
+        "sources": [
+          "indexed-in-lucas-video-bank"
+        ]
+      },
+      {
+        "kind": "video",
+        "id": "tenderness-motion-2026-09-17-221349",
+        "file": "ScreenRecording_09-17-2026 22-13-49_1.mp4",
+        "roles": [
+          "tender_embrace",
+          "face_close",
+          "hand_on_neck_head",
+          "sustained_contact",
+          "comforting_touch",
+          "quiet_intimacy",
+          "hand_repositioning"
+        ],
+        "status": "indexed-in-lucas-video-bank",
+        "ids": [
+          "tenderness-motion-2026-09-17-221349"
+        ],
+        "sources": [
+          "indexed-in-lucas-video-bank"
+        ]
+      },
+      {
+        "kind": "video",
+        "id": "lucas-family-baby-2026-09-17-221640",
+        "file": "ScreenRecording_09-17-2026 22-16-40_1.mp4",
+        "roles": [
+          "identity",
+          "father_baby",
+          "domestic_family",
+          "baby_arrival_reaction",
+          "gentle_handling",
+          "caregiving_gesture",
+          "careful_posture",
+          "parental_smile",
+          "couple_to_parent_attention_shift"
+        ],
+        "status": "indexed-in-lucas-video-bank",
+        "ids": [
+          "lucas-family-baby-2026-09-17-221640"
+        ],
+        "sources": [
+          "indexed-in-lucas-video-bank"
+        ]
+      },
+      {
+        "kind": "video",
+        "id": "lucas-close-couple-2026-09-17-221846",
+        "file": "ScreenRecording_09-17-2026 22-18-46_1.mp4",
+        "roles": [
+          "identity",
+          "close_behind_partner",
+          "protective_embrace",
+          "face_near_temple",
+          "waist_arm_contact",
+          "sustained_touch",
+          "tender_intensity",
+          "close_couple_body_language",
+          "expression_shift_while_touching"
+        ],
+        "status": "indexed-in-lucas-video-bank",
+        "ids": [
+          "lucas-close-couple-2026-09-17-221846"
+        ],
+        "sources": [
+          "indexed-in-lucas-video-bank"
+        ]
+      },
+      {
+        "kind": "video",
+        "id": "lucas-face-authority-2026-09-17-222048",
+        "file": "ScreenRecording_09-17-2026 22-20-48_1.mp4",
+        "roles": [
+          "identity",
+          "face_geometry",
+          "expression_range",
+          "speaking_face",
+          "three_quarter_face",
+          "intense_gaze",
+          "hair",
+          "eyes",
+          "stubble",
+          "tattoo_continuity"
+        ],
+        "status": "indexed-in-lucas-video-bank",
+        "ids": [
+          "lucas-face-authority-2026-09-17-222048"
+        ],
+        "sources": [
+          "indexed-in-lucas-video-bank"
+        ]
+      },
+      {
+        "kind": "video",
+        "id": "dominic-voice-full-presence-2026-09-19-111402",
+        "file": "ScreenRecording_09-19-2026 11-14-02_1.mp4",
+        "roles": [
+          "identity",
+          "face",
+          "full_body",
+          "speech_presence",
+          "speech_rhythm",
+          "performance",
+          "gaze",
+          "gesture",
+          "movement",
+          "voice_color_reference"
+        ],
+        "status": "indexed-in-lucas-reference-bank",
+        "ids": [
+          "dominic-voice-full-presence-2026-09-19-111402",
+          "motion-dominic-20260919-speaking"
+        ],
+        "sources": [
+          "indexed-in-lucas-reference-bank",
+          "indexed-in-lucas-video-bank",
+          "pending-ingest"
+        ]
+      },
+      {
+        "kind": "video",
+        "id": "dominic-full-body-motion-2026-09-19-111712",
+        "file": "ScreenRecording_09-19-2026 11-17-12_1.mp4",
+        "roles": [
+          "identity",
+          "full_body",
+          "silhouette",
+          "body_proportions",
+          "posture",
+          "walking",
+          "gait",
+          "weight_shift",
+          "movement",
+          "wide_shot"
+        ],
+        "status": "indexed-in-lucas-reference-bank",
+        "ids": [
+          "dominic-full-body-motion-2026-09-19-111712",
+          "motion-dominic-20260919-fullbody"
+        ],
+        "sources": [
+          "indexed-in-lucas-reference-bank",
+          "indexed-in-lucas-video-bank",
+          "pending-ingest"
+        ]
+      }
+    ]
   }
 }
