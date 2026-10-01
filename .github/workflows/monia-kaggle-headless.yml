@@ -19,6 +19,7 @@ on:
       - 'studio/queue/dominic-seated-monia-library-009.json'
       - 'studio/queue/dominic-seated-monia-library-010.json'
       - 'studio/queue/dominic-seated-monia-library-011.json'
+      - 'studio/queue/dominic-seated-monia-library-012.json'
       - 'config/monia-reference-packs.json'
       - 'config/monia-reference-library-router-v1.json'
       - 'config/lucas-reference-bank.json'
@@ -39,14 +40,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 70
     env:
-      MONIA_JOB_ID: ${{ github.event.client_payload.job_id || 'dominic-seated-monia-library-011' }}
+      MONIA_JOB_ID: ${{ github.event.client_payload.job_id || 'dominic-seated-monia-library-012' }}
       MONIA_JOB_B64: ${{ github.event.client_payload.job_b64 || '' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
 
       - name: Materialize private real Dominic references
-        if: ${{ env.MONIA_JOB_ID == 'dominic-seated-monia-library-007' || env.MONIA_JOB_ID == 'dominic-seated-monia-library-008' || env.MONIA_JOB_ID == 'dominic-seated-monia-library-009' || env.MONIA_JOB_ID == 'dominic-seated-monia-library-010' || env.MONIA_JOB_ID == 'dominic-seated-monia-library-011' }}
+        if: ${{ env.MONIA_JOB_ID == 'dominic-seated-monia-library-007' || env.MONIA_JOB_ID == 'dominic-seated-monia-library-008' || env.MONIA_JOB_ID == 'dominic-seated-monia-library-009' || env.MONIA_JOB_ID == 'dominic-seated-monia-library-010' || env.MONIA_JOB_ID == 'dominic-seated-monia-library-011' || env.MONIA_JOB_ID == 'dominic-seated-monia-library-012' }}
         env:
           INFOMANIAK_FTP_HOST: ${{ secrets.INFOMANIAK_FTP_HOST }}
           INFOMANIAK_FTP_USER: ${{ secrets.INFOMANIAK_FTP_USER }}
