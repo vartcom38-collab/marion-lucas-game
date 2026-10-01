@@ -1,0 +1,84 @@
+{
+  "id": "dominic-seated-monia-library-013",
+  "state": "queued",
+  "createdAt": "2026-10-01T15:55:00+02:00",
+  "source": "monia-video-orchestrator-v3",
+  "candidateOnly": true,
+  "narrativeAuthority": false,
+  "sceneFamily": "dominic-hybrid-new-scene-identity-lock",
+  "signature": "MONIA_HYBRID_NEW_SCENE_IDLOCK_013",
+  "primaryCharacter": "dominic",
+  "prompt": "Create a genuinely new cinematic shot for the game: Dominic alone in a warm quiet interior after a long day, medium-close vertical framing, natural window light, subtle breathing, one blink and a small gaze shift. The scene engine may invent environment, framing and motion, but Dominic's face must not be treated as creative content. His real-user reference pack is the sole identity authority and will be applied by MonIA's temporal identity-lock stage after scene generation.",
+  "negativePrompt": "different person, identity drift, generic man, synthetic face, face redesign, source-video copy, phone UI, second person, watermark, subtitles, deformed face, morphing",
+  "characters": [
+    {
+      "id": "dominic",
+      "identityMode": "real-user-reference-pack-strict",
+      "wardrobe": "preserve supplied canonical reference exactly",
+      "referenceMode": "monia-library-router",
+      "libraryRouter": "config/monia-reference-library-router-v1.json",
+      "referenceBanks": [
+        "config/lucas-reference-bank.json",
+        "config/lucas-video-bank.json",
+        "config/dominic-multiview-canon-v2.json",
+        "config/dominic-direct-reference-pack-v3.json",
+        "config/motion-reference-bank.json"
+      ],
+      "preferCanonRefFirst": false,
+      "identityContract": "config/dominic-identity-contract-v1.json",
+      "requireRealUserIdentity": true,
+      "forbidGeneratedIdentity": true
+    }
+  ],
+  "motion": {
+    "referenceId": "dominic-canon-seated-2026-09-28",
+    "tags": [
+      "natural-breathing",
+      "blink",
+      "micro-expression",
+      "eye-shift",
+      "identity-stability"
+    ],
+    "copyIdentity": true
+  },
+  "generation": {
+    "provider": "kaggle",
+    "router": "wan2.2-ti2v-5b",
+    "backend": "wan2.2-ti2v-5b",
+    "width": 512,
+    "height": 896,
+    "frames": 25,
+    "steps": 20,
+    "guidance": 3,
+    "fps": 16,
+    "seed": 913,
+    "shotCount": 1,
+    "shotCharacters": [
+      "dominic"
+    ],
+    "shotReferenceIndex": [
+      0
+    ],
+    "shotImages": [
+      null
+    ],
+    "shotPrompts": [
+      "Hybrid pipeline proof: generate a new warm interior and natural subtle motion. Do not use the model's invented face as final identity. MonIA will apply Dominic's real-user multi-reference temporal identity lock after scene generation."
+    ],
+    "lockLastImage": false,
+    "identityRestore": true
+  },
+  "qualityPolicy": {
+    "failClosed": true,
+    "humanApprovalBeforeLive": true,
+    "requireTrueVideo": true,
+    "requireRealUserIdentitySource": true,
+    "rejectGeneratedIdentitySource": true,
+    "identityContract": "config/dominic-identity-contract-v1.json"
+  },
+  "output": {
+    "candidatePath": "public/resources/monia/candidates/dominic-seated-monia-library-013/"
+  },
+  "retryNote": "Candidate 013 is the first architecture-level hybrid test: Wan handles scene creativity; MonIA temporal multi-reference identity lock handles Dominic on the resulting frames.",
+  "pipeline": "config/monia-hybrid-video-pipeline-v1.json"
+}
