@@ -365,6 +365,10 @@ jobs:
               assert name.startswith('shot-') and name.endswith('.mp4') and '/' not in name
               assert (src/name).is_file(), name
               shutil.copy2(src/name,dest/name)
+          lock_report=src/'identity-lock-report.json'
+          if lock_report.is_file():
+              shutil.copy2(lock_report,dest/'identity-lock-report.json')
+              print('Collected identity lock report:', lock_report)
           print('Collected clips:', clips)
           PY
 
