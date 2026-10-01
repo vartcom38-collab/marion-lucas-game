@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "id": "monia-hybrid-video-pipeline-v1",
+  "purpose": "Generate genuinely new gameplay cinematics while keeping Dominic's real identity separate from scene creativity.",
+  "stages": [
+    {
+      "id": "director",
+      "role": "scene planning",
+      "output": "shot prompt, framing, wardrobe, lighting, motion intent"
+    },
+    {
+      "id": "scene-engine",
+      "role": "creative video generation",
+      "backend": "wan2.2-ti2v-5b",
+      "identityAuthority": false
+    },
+    {
+      "id": "identity-engine",
+      "role": "multi-reference real-user identity lock",
+      "backend": "insightface-inswapper-temporal-v2",
+      "identityAuthority": true
+    },
+    {
+      "id": "motion-engine",
+      "role": "motion/performance vocabulary from MonIA reference banks",
+      "identityAuthority": false
+    },
+    {
+      "id": "temporal-qa",
+      "role": "measure face presence, lock coverage and post-lock similarity on every detectable frame",
+      "autoPublish": false
+    }
+  ],
+  "dominicIdentityPolicy": {
+    "contract": "config/dominic-identity-contract-v1.json",
+    "allowed": [
+      "real user photo",
+      "real user video-derived frame",
+      "verified crop derived from real user video"
+    ],
+    "forbidden": [
+      "generated portrait as identity authority",
+      "candidate frame as identity authority",
+      "prompt-only face reconstruction"
+    ],
+    "failClosedWhenNoRealReference": true
+  },
+  "acceptance": {
+    "technicalPassRequired": true,
+    "temporalIdentityLockRequired": true,
+    "humanApprovalRequired": true,
+    "rejectOnVisibleIdentityDrift": true,
+    "targetUse": "new scenes for game content generation"
+  }
+}
