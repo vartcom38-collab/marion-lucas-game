@@ -81,5 +81,5 @@
   "output": {
     "candidatePath": "public/resources/monia/candidates/dominic-seated-monia-library-012/"
   },
-  "retryNote": "Candidate 011 passed visual stability review. Candidate 012 increases motion one controlled step while staying on the identity-safe SVD route."
+  "retryNote": "Candidate 011 passed visual stability review. Candidate 012 increases motion one controlled step while staying on the identity-safe SVD route. Retry after removing obsolete local PIL shim that shadowed real Pillow in persistence workflow."
 }
