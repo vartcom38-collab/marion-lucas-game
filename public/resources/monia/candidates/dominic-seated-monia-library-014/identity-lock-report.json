@@ -1,0 +1,19 @@
+{
+  "version": 2,
+  "reports": [
+    {
+      "shot": "shot-01.mp4",
+      "available": true,
+      "backend": "insightface-inswapper-temporal-v2",
+      "frames": 49,
+      "lockedFrames": 17,
+      "missingFaceFrames": 32,
+      "lockRate": 0.3469,
+      "meanSimilarity": 0.8836,
+      "minSimilarity": 0.8332,
+      "sourceReferencesDetected": 4,
+      "humanApprovalRequired": true
+    }
+  ],
+  "humanApprovalRequired": true
+}

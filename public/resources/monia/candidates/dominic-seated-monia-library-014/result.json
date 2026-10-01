@@ -1,0 +1,15 @@
+{
+  "jobId": "dominic-seated-monia-library-014",
+  "state": "candidate",
+  "candidateOnly": true,
+  "narrativeAuthority": false,
+  "router": "wan2.2-ti2v-5b",
+  "selectionMode": "surprise-auto",
+  "continuity": [
+    "canonical-priority-pack+monia-temporal-identity-lock"
+  ],
+  "clips": [
+    "shot-01.mp4"
+  ],
+  "shotCount": 1
+}
