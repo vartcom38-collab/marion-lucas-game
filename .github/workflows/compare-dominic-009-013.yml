@@ -1,0 +1,40 @@
+name: Compare Dominic 009 vs 013
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/compare-dominic-009-013.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install ffmpeg
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg
+      - name: Build comparison
+        shell: bash
+        run: |
+          set -euo pipefail
+          A="public/resources/monia/candidates/dominic-seated-monia-library-009/shot-01.mp4"
+          B="public/resources/monia/candidates/dominic-seated-monia-library-013/shot-01.mp4"
+          test -f "$A"; test -f "$B"
+          mkdir -p compare-009-013
+          for spec in "00:0:0" "mid:7:12" "last:13:24"; do
+            IFS=: read -r label na nb <<< "$spec"
+            ffmpeg -y -v error -i "$A" -vf "select=eq(n\,$na),scale=512:896" -vsync vfr -frames:v 1 "compare-009-013/009-$label.jpg"
+            ffmpeg -y -v error -i "$B" -vf "select=eq(n\,$nb),scale=512:896" -vsync vfr -frames:v 1 "compare-009-013/013-$label.jpg"
+            ffmpeg -y -v error -i "compare-009-013/009-$label.jpg" -i "compare-009-013/013-$label.jpg" -filter_complex "hstack=inputs=2" -frames:v 1 "compare-009-013/pair-$label.jpg"
+          done
+          ffmpeg -y -v error             -i compare-009-013/pair-00.jpg             -i compare-009-013/pair-mid.jpg             -i compare-009-013/pair-last.jpg             -filter_complex "vstack=inputs=3" -frames:v 1 compare-009-013/contact-sheet.jpg
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dominic-009-013-compare
+          path: compare-009-013
+          if-no-files-found: error
