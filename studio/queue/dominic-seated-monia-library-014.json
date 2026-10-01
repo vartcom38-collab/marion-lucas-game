@@ -1,0 +1,84 @@
+{
+  "id": "dominic-seated-monia-library-014",
+  "state": "queued",
+  "createdAt": "2026-10-01T17:04:00+02:00",
+  "source": "monia-video-orchestrator-v3",
+  "candidateOnly": true,
+  "narrativeAuthority": false,
+  "sceneFamily": "dominic-hybrid-game-scene-medium-shot",
+  "signature": "MONIA_HYBRID_GAME_SCENE_014",
+  "primaryCharacter": "dominic",
+  "prompt": "Generate a genuinely new gameplay cinematic, not a portrait test. Dominic enters a warm modern living room after a long day, loosens his shirt collar, sits on the edge of a sofa, exhales, then looks toward someone off-camera. Vertical 9:16 medium shot showing head, torso, hands, sofa and enough room context to prove the environment is newly generated. Natural body movement, realistic weight shift, subtle breathing, one blink, small gaze change. Scene creativity belongs to Wan; Dominic's final facial identity belongs only to MonIA's real-user multi-reference temporal identity lock.",
+  "negativePrompt": "portrait-only close-up, same source framing, static headshot, copied source background, phone UI, second person, different person, identity drift, generic man, synthetic face, face redesign, missing beard, changed hairline, deformed hands, morphing, camera warp, subtitles, watermark",
+  "characters": [
+    {
+      "id": "dominic",
+      "identityMode": "real-user-reference-pack-strict",
+      "wardrobe": "preserve supplied canonical reference exactly",
+      "referenceMode": "monia-library-router",
+      "libraryRouter": "config/monia-reference-library-router-v1.json",
+      "referenceBanks": [
+        "config/lucas-reference-bank.json",
+        "config/lucas-video-bank.json",
+        "config/dominic-multiview-canon-v2.json",
+        "config/dominic-direct-reference-pack-v3.json",
+        "config/motion-reference-bank.json"
+      ],
+      "preferCanonRefFirst": false,
+      "identityContract": "config/dominic-identity-contract-v1.json",
+      "requireRealUserIdentity": true,
+      "forbidGeneratedIdentity": true
+    }
+  ],
+  "motion": {
+    "referenceId": "dominic-canon-seated-2026-09-28",
+    "tags": [
+      "natural-breathing",
+      "blink",
+      "micro-expression",
+      "eye-shift",
+      "identity-stability"
+    ],
+    "copyIdentity": true
+  },
+  "generation": {
+    "provider": "kaggle",
+    "router": "wan2.2-ti2v-5b",
+    "backend": "wan2.2-ti2v-5b",
+    "width": 512,
+    "height": 896,
+    "frames": 49,
+    "steps": 24,
+    "guidance": 3.2,
+    "fps": 16,
+    "seed": 1014,
+    "shotCount": 1,
+    "shotCharacters": [
+      "dominic"
+    ],
+    "shotReferenceIndex": [
+      0
+    ],
+    "shotImages": [
+      null
+    ],
+    "shotPrompts": [
+      "Gameplay-proof shot: medium vertical framing in a newly generated warm living room. Dominic walks the last step into frame, loosens his collar, sits on the edge of a sofa, exhales and looks off-camera. Keep face large enough for robust temporal identity lock while clearly showing torso, hands and environment. Do not replicate the source photo/video composition."
+    ],
+    "lockLastImage": false,
+    "identityRestore": true
+  },
+  "qualityPolicy": {
+    "failClosed": true,
+    "humanApprovalBeforeLive": true,
+    "requireTrueVideo": true,
+    "requireRealUserIdentitySource": true,
+    "rejectGeneratedIdentitySource": true,
+    "identityContract": "config/dominic-identity-contract-v1.json"
+  },
+  "output": {
+    "candidatePath": "public/resources/monia/candidates/dominic-seated-monia-library-014/"
+  },
+  "retryNote": "013 validated the architecture-level temporal identity lock, but remained too close to portrait testing. 014 is the first game-oriented medium-shot proof with environment, body action and longer duration.",
+  "pipeline": "config/monia-hybrid-video-pipeline-v1.json"
+}
