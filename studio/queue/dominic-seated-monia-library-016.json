@@ -1,0 +1,92 @@
+{
+  "id": "dominic-seated-monia-library-016",
+  "state": "queued",
+  "createdAt": "2026-10-06T08:36:00+02:00",
+  "source": "monia-video-orchestrator-v3",
+  "candidateOnly": true,
+  "narrativeAuthority": false,
+  "sceneFamily": "dominic-scene-first-dual-identity-lock",
+  "signature": "MONIA_SCENE_FIRST_PRELOCK_POSTLOCK_016",
+  "primaryCharacter": "dominic",
+  "prompt": "New gameplay cinematic in a genuinely new warm modern living room. Dominic sits on the edge of a sofa, adjusts his collar once, exhales, then looks off-camera. Stable vertical medium shot showing head, torso, hands and environment. Preserve the newly generated scene and body composition. Dominic identity must be prelocked into the scene-first still from real-user references, then temporally relocked after Wan animation.",
+  "negativePrompt": "close-up portrait, copied source framing, copied source background, generic man, older man, short slicked hair, receding hairline, different person, identity drift, synthetic face, face redesign, missing beard, missing dark wavy hair, face leaving frame, second person, camera pan, camera zoom, morphing, deformed hands, subtitles, watermark",
+  "characters": [
+    {
+      "id": "dominic",
+      "identityMode": "real-user-reference-pack-strict",
+      "wardrobe": "preserve supplied canonical reference exactly",
+      "referenceMode": "monia-library-router",
+      "libraryRouter": "config/monia-reference-library-router-v1.json",
+      "referenceBanks": [
+        "config/lucas-reference-bank.json",
+        "config/lucas-video-bank.json",
+        "config/dominic-multiview-canon-v2.json",
+        "config/dominic-direct-reference-pack-v3.json",
+        "config/motion-reference-bank.json"
+      ],
+      "preferCanonRefFirst": false,
+      "identityContract": "config/dominic-identity-contract-v1.json",
+      "requireRealUserIdentity": true,
+      "forbidGeneratedIdentity": true
+    }
+  ],
+  "motion": {
+    "referenceId": "dominic-canon-seated-2026-09-28",
+    "tags": [
+      "natural-breathing",
+      "blink",
+      "micro-expression",
+      "eye-shift",
+      "identity-stability"
+    ],
+    "copyIdentity": true
+  },
+  "generation": {
+    "provider": "kaggle",
+    "router": "wan2.2-ti2v-5b",
+    "backend": "wan2.2-ti2v-5b",
+    "width": 512,
+    "height": 896,
+    "frames": 33,
+    "steps": 22,
+    "guidance": 3,
+    "fps": 16,
+    "seed": 1216,
+    "shotCount": 1,
+    "shotCharacters": [
+      "dominic"
+    ],
+    "shotReferenceIndex": [
+      0
+    ],
+    "shotImages": [
+      null
+    ],
+    "shotPrompts": [
+      "Stable waist-up medium shot. Dominic adjusts his open collar once, exhales and shifts his gaze slightly off-camera. Keep his face visible and large enough in every frame. Preserve the living-room composition. No camera movement. Final identity is relocked by MonIA after video generation."
+    ],
+    "lockLastImage": false,
+    "identityRestore": true,
+    "sceneFirstFrame": true,
+    "sceneImageModel": "stabilityai/sdxl-turbo",
+    "sceneImagePrompt": "Cinematic vertical 9:16 medium shot, waist-up younger Mediterranean man seated on the edge of a modern sofa in a warm elegant living room at dusk, thick dark wavy hair with loose strands toward forehead, strong eyebrows, olive skin, short dark beard, white open-collar shirt, visible torso and hands, realistic natural proportions, stable camera, premium drama lighting, no phone UI, no text",
+    "sceneImageNegativePrompt": "older man, receding hairline, slicked short hair, close-up headshot, cropped face, profile only, second person, extra limbs, deformed hands, text, watermark, phone UI",
+    "sceneImageSeed": 1016,
+    "sceneImageSteps": 4,
+    "sceneImageGuidance": 0,
+    "sceneIdentityPrelock": true
+  },
+  "qualityPolicy": {
+    "failClosed": true,
+    "humanApprovalBeforeLive": true,
+    "requireTrueVideo": true,
+    "requireRealUserIdentitySource": true,
+    "rejectGeneratedIdentitySource": true,
+    "identityContract": "config/dominic-identity-contract-v1.json"
+  },
+  "output": {
+    "candidatePath": "public/resources/monia/candidates/dominic-seated-monia-library-016/"
+  },
+  "retryNote": "015 proves scene-first novelty and 100% temporal face detection/locking, but visual review still shows a generic head/hair structure. 016 adds a real-reference identity prelock to the fresh scene still before Wan, then retains post-animation temporal relock.",
+  "pipeline": "config/monia-hybrid-video-pipeline-v1.json"
+}
