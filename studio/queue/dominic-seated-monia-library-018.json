@@ -1,0 +1,94 @@
+{
+  "id": "dominic-seated-monia-library-018",
+  "state": "queued",
+  "createdAt": "2026-10-06T09:34:00+02:00",
+  "source": "monia-video-orchestrator-v3",
+  "candidateOnly": true,
+  "narrativeAuthority": false,
+  "sceneFamily": "dominic-scene-first-original-photo-authority",
+  "signature": "MONIA_ORIGINAL_PHOTO_AUTHORITY_018",
+  "primaryCharacter": "dominic",
+  "prompt": "New gameplay cinematic in a genuinely new warm modern living room. Dominic is seated on the edge of a sofa in a stable vertical medium shot. His exact facial identity, facial proportions, hairline, thick dark wavy hair, eyebrows, eyes, nose, mouth, jaw and beard must come only from MonIA's recovered real user photos and real video frames. Scene composition is generated, identity is not invented. Prelock identity before SVD and temporally relock after animation.",
+  "negativePrompt": "generic handsome man, approximate lookalike, different person, older man, altered skull, altered jaw, altered eyes, altered nose, altered lips, altered beard, altered hairline, short slicked hair, receding hairline, synthetic face, face redesign, identity drift, close-up portrait, copied source background, camera pan, camera zoom, second person, morphing, subtitles, watermark",
+  "characters": [
+    {
+      "id": "dominic",
+      "identityMode": "real-user-reference-pack-strict",
+      "wardrobe": "preserve supplied canonical reference exactly",
+      "referenceMode": "monia-library-router",
+      "libraryRouter": "config/monia-reference-library-router-v1.json",
+      "referenceBanks": [
+        "config/lucas-reference-bank.json",
+        "config/lucas-video-bank.json",
+        "config/dominic-multiview-canon-v2.json",
+        "config/dominic-direct-reference-pack-v3.json",
+        "config/motion-reference-bank.json"
+      ],
+      "preferCanonRefFirst": false,
+      "identityContract": "config/dominic-identity-contract-v1.json",
+      "requireRealUserIdentity": true,
+      "forbidGeneratedIdentity": true
+    }
+  ],
+  "motion": {
+    "referenceId": "dominic-canon-seated-2026-09-28",
+    "tags": [
+      "natural-breathing",
+      "blink",
+      "micro-expression",
+      "eye-shift",
+      "identity-stability"
+    ],
+    "copyIdentity": true
+  },
+  "generation": {
+    "provider": "kaggle",
+    "router": "svd-img2vid-xt",
+    "backend": "svd-img2vid-xt",
+    "width": 512,
+    "height": 896,
+    "frames": 25,
+    "steps": 22,
+    "guidance": 3,
+    "fps": 12,
+    "seed": 1418,
+    "shotCount": 1,
+    "shotCharacters": [
+      "dominic"
+    ],
+    "shotReferenceIndex": [
+      0
+    ],
+    "shotImages": [
+      null
+    ],
+    "shotPrompts": [
+      "Stable waist-up medium gameplay shot. Dominic makes a small natural collar adjustment, exhales, then shifts his gaze slightly off-camera. Preserve the freshly generated living-room composition and Dominic appearance from the prelocked scene still. No camera travel."
+    ],
+    "lockLastImage": false,
+    "identityRestore": true,
+    "sceneFirstFrame": true,
+    "sceneImageModel": "stabilityai/sdxl-turbo",
+    "sceneImagePrompt": "Cinematic vertical 9:16 medium shot, waist-up younger Mediterranean man seated on the edge of a modern sofa in a warm elegant living room at dusk, thick dark wavy hair with loose strands toward forehead, strong eyebrows, olive skin, short dark beard, white open-collar shirt, visible torso and hands, realistic natural proportions, stable camera, premium drama lighting, no phone UI, no text",
+    "sceneImageNegativePrompt": "older man, receding hairline, slicked short hair, close-up headshot, cropped face, profile only, second person, extra limbs, deformed hands, text, watermark, phone UI",
+    "sceneImageSeed": 1018,
+    "sceneImageSteps": 4,
+    "sceneImageGuidance": 0,
+    "sceneIdentityPrelock": true,
+    "motionBucketId": 18,
+    "noiseAugStrength": 0.0015
+  },
+  "qualityPolicy": {
+    "failClosed": true,
+    "humanApprovalBeforeLive": true,
+    "requireTrueVideo": true,
+    "requireRealUserIdentitySource": true,
+    "rejectGeneratedIdentitySource": true,
+    "identityContract": "config/dominic-identity-contract-v1.json"
+  },
+  "output": {
+    "candidatePath": "public/resources/monia/candidates/dominic-seated-monia-library-018/"
+  },
+  "retryNote": "017 is stable and materially closer, but still not exact enough against the real references. 018 keeps the successful fresh-scene + SVD dual-lock architecture and upgrades source authority by recovering original user-photo filename variants from private storage before generation.",
+  "pipeline": "config/monia-hybrid-video-pipeline-v1.json"
+}
