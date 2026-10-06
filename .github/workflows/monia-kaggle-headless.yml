@@ -27,6 +27,7 @@ on:
       - 'studio/queue/dominic-seated-monia-library-017.json'
       - 'studio/queue/dominic-seated-monia-library-018.json'
       - 'studio/queue/dominic-seated-monia-library-019.json'
+      - 'studio/queue/dominic-seated-monia-library-020.json'
       - 'config/monia-reference-packs.json'
       - 'config/monia-reference-library-router-v1.json'
       - 'config/lucas-reference-bank.json'
@@ -47,14 +48,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 70
     env:
-      MONIA_JOB_ID: ${{ github.event.client_payload.job_id || 'dominic-seated-monia-library-019' }}
+      MONIA_JOB_ID: ${{ github.event.client_payload.job_id || 'dominic-seated-monia-library-020' }}
       MONIA_JOB_B64: ${{ github.event.client_payload.job_b64 || '' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
 
       - name: Materialize private real Dominic references
-        if: ${{ env.MONIA_JOB_ID == 'dominic-seated-monia-library-007' || env.MONIA_JOB_ID == 'dominic-seated-monia-library-008' || env.MONIA_JOB_ID == 'dominic-seated-monia-library-009' || env.MONIA_JOB_ID == 'dominic-seated-monia-library-010' || env.MONIA_JOB_ID == 'dominic-seated-monia-library-011' || env.MONIA_JOB_ID == 'dominic-seated-monia-library-012' || env.MONIA_JOB_ID == 'dominic-seated-monia-library-013' || env.MONIA_JOB_ID == 'dominic-seated-monia-library-014' || env.MONIA_JOB_ID == 'dominic-seated-monia-library-015' || env.MONIA_JOB_ID == 'dominic-seated-monia-library-016' || env.MONIA_JOB_ID == 'dominic-seated-monia-library-017' || env.MONIA_JOB_ID == 'dominic-seated-monia-library-018' || env.MONIA_JOB_ID == 'dominic-seated-monia-library-019' }}
+        if: ${{ env.MONIA_JOB_ID == 'dominic-seated-monia-library-007' || env.MONIA_JOB_ID == 'dominic-seated-monia-library-008' || env.MONIA_JOB_ID == 'dominic-seated-monia-library-009' || env.MONIA_JOB_ID == 'dominic-seated-monia-library-010' || env.MONIA_JOB_ID == 'dominic-seated-monia-library-011' || env.MONIA_JOB_ID == 'dominic-seated-monia-library-012' || env.MONIA_JOB_ID == 'dominic-seated-monia-library-013' || env.MONIA_JOB_ID == 'dominic-seated-monia-library-014' || env.MONIA_JOB_ID == 'dominic-seated-monia-library-015' || env.MONIA_JOB_ID == 'dominic-seated-monia-library-016' || env.MONIA_JOB_ID == 'dominic-seated-monia-library-017' || env.MONIA_JOB_ID == 'dominic-seated-monia-library-018' || env.MONIA_JOB_ID == 'dominic-seated-monia-library-019' || env.MONIA_JOB_ID == 'dominic-seated-monia-library-020' }}
         env:
           INFOMANIAK_FTP_HOST: ${{ secrets.INFOMANIAK_FTP_HOST }}
           INFOMANIAK_FTP_USER: ${{ secrets.INFOMANIAK_FTP_USER }}
