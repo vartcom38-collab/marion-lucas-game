@@ -80,10 +80,64 @@ jobs:
           out=Path('.private-monia/dominic')
           originals=['IMG_4468(1).jpeg','IMG_4467(1).jpeg','IMG_4466(1).jpeg','IMG_4465(1).jpeg','IMG_4425(1).jpeg','IMG_3772(3).jpeg','IMG_3771(2).jpeg','IMG_3770(1).jpeg']
           roots=['/private/monia/lucas','/private/monia/lucas/reference-bank','/private/monia/reference-vault/dominic']
-          import re
-          def norm_name(name):
-              stem, dot, ext=name.rpartition('.')
-              stem=re.sub(r'\(\d+\)
+
+          def normalize_filename(name):
+              lower=name.lower()
+              if '.' in lower:
+                  stem, ext=lower.rsplit('.',1)
+                  if stem.endswith(')') and '(' in stem:
+                      prefix, suffix=stem.rsplit('(',1)
+                      if suffix[:-1].isdigit():
+                          stem=prefix
+                  return stem+'.'+ext
+              return lower
+
+          wanted={normalize_filename(x) for x in originals}
+          found=0
+          for root in roots:
+              try:
+                  names=ftp.nlst(root)
+              except Exception:
+                  names=[]
+              for remote in names:
+                  base=remote.rsplit('/',1)[-1]
+                  if normalize_filename(base) not in wanted:
+                      continue
+                  target=out/base
+                  if target.exists():
+                      continue
+                  try:
+                      with target.open('wb') as fh:
+                          ftp.retrbinary('RETR '+remote, fh.write, blocksize=1024*1024)
+                      if target.stat().st_size > 1000:
+                          found += 1
+                          print('Recovered Dominic original:', remote, '->', target.name)
+                      else:
+                          target.unlink(missing_ok=True)
+                  except Exception:
+                      target.unlink(missing_ok=True)
+
+              for name in originals:
+                  variants={name}
+                  if '(' in name and ')' in name:
+                      left=name.rsplit('(',1)[0]
+                      ext='.'+name.rsplit('.',1)[1] if '.' in name else ''
+                      variants.add(left+ext)
+                  for variant in variants:
+                      target=out/variant
+                      if target.exists():
+                          continue
+                      try:
+                          with target.open('wb') as fh:
+                              ftp.retrbinary('RETR '+root+'/'+variant, fh.write, blocksize=1024*1024)
+                          if target.stat().st_size > 1000:
+                              found += 1
+                              print('Recovered Dominic original:', root+'/'+variant, '->', target.name)
+                          else:
+                              target.unlink(missing_ok=True)
+                      except Exception:
+                          target.unlink(missing_ok=True)
+
           # Guaranteed legacy real-user video authority if present.
           video=out/'source.mp4'
           try:
