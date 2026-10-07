@@ -1,6 +1,6 @@
 {
-  "version": 1,
-  "status": "active",
+  "version": 2,
+  "status": "active-exact-master",
   "character": "Dominic",
   "aliases": [
     "Lucas",
@@ -58,16 +58,19 @@
     "When a real identity source cannot be materialized, generation must stop instead of substituting another face."
   ],
   "generationRules": [
-    "For image-to-video, initialize from an allowed real identity source.",
-    "Prefer minimal animation until identity stability is proven.",
-    "Never use a generated portrait as first frame, last frame or identity restore source.",
-    "Never approve a candidate from technical QA alone."
+    "For exactIdentityAuthority jobs, use one fixed validated real-user master identity for prelock and every video frame.",
+    "Never switch identity source because another reference matches the target pose better.",
+    "The generated scene, camera and motion must adapt to Dominic; Dominic must not adapt into a generated lookalike.",
+    "Prefer minimal animation until exact visual identity is proven.",
+    "Never use a generated portrait as first frame, last frame or identity restore authority.",
+    "Never approve a candidate from technical QA or similarity score alone."
   ],
   "rejectRules": [
-    "Reject if the face is not unmistakably the same Dominic as the real reference pack.",
-    "Reject if jaw, eye spacing, brows, nose, mouth, hairline, stubble or skin tone visibly drift.",
-    "Reject if any sampled frame becomes another man.",
-    "Reject if start or end frames contain gray/blank/partial-face artifacts.",
+    "Reject if the face is not unmistakably the exact same Dominic as the fixed real master.",
+    "Reject any generic-handsome-man or model-like reinterpretation even when similarity score is high.",
+    "Reject if jaw width/shape, eye color/spacing, brows, nose, mouth, hairline, hair texture, stubble or skin tone visibly drift.",
+    "Reject if any sampled frame becomes another man or visibly changes identity.",
+    "Reject any duplicate mouth, jaw, chin, neck seam, halo, UI or clothing copied into an identity patch.",
     "Reject if identity source provenance is not real-user-supplied or real-user-video-derived."
   ],
   "validationFrames": [
@@ -75,5 +78,20 @@
     "middle",
     "last"
   ],
-  "humanApprovalRequired": true
+  "humanApprovalRequired": true,
+  "exactIdentityPolicy": {
+    "mode": "single-fixed-real-master",
+    "masterSelection": "first validated real-user reference embedded by the worker; current runner prioritizes 00-dominic-clean-real-anchor.jpg derived from /private/monia/lucas/source.mp4 at second 26",
+    "sourceSwitching": false,
+    "secondaryReferences": "QA, motion, pose understanding and continuity support only; they may never redefine Dominic facial identity",
+    "priorityOrder": [
+      "exact Dominic identity",
+      "no facial/head/neck artifacts",
+      "temporal stability",
+      "scene novelty",
+      "motion",
+      "complexity"
+    ],
+    "failClosed": true
+  }
 }
