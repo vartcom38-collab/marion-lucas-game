@@ -1,0 +1,21 @@
+{
+  "version": 2,
+  "reports": [
+    {
+      "shot": "shot-01.mp4",
+      "available": true,
+      "backend": "monia-exact-head-temporal-v3",
+      "frames": 25,
+      "lockedFrames": 25,
+      "missingFaceFrames": 0,
+      "lockRate": 1.0,
+      "meanSimilarity": 0.8995,
+      "minSimilarity": 0.8938,
+      "sourceReferencesDetected": 4,
+      "exactHeadPatch": true,
+      "sourceAuthority": "real-user-photo-or-video-frame-only",
+      "humanApprovalRequired": true
+    }
+  ],
+  "humanApprovalRequired": true
+}
