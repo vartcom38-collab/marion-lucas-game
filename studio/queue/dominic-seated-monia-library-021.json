@@ -1,0 +1,96 @@
+{
+  "id": "dominic-seated-monia-library-021",
+  "state": "queued",
+  "createdAt": "2026-10-07T08:31:00+02:00",
+  "source": "monia-video-orchestrator-v3",
+  "candidateOnly": true,
+  "narrativeAuthority": false,
+  "sceneFamily": "dominic-approved-look-clean-video",
+  "signature": "MONIA_APPROVED_DOMINIC_LOOK_021",
+  "primaryCharacter": "dominic",
+  "prompt": "Cinematic vertical medium close shot of Dominic in the exact user-approved visual look: thick dark wavy hair with loose strands on the forehead, strong dark eyebrows, olive warm skin, intense hazel-brown eyes, straight defined nose, short natural dark beard, marked angular jaw, black open-collar shirt, warm golden evening interior, shallow depth of field. Dominic looks directly toward camera, then gives the smallest natural half-smile and shifts his gaze slightly. The room is newly generated; identity remains grounded in MonIA real-user references.",
+  "negativePrompt": "different man, generic handsome man, older man, short slicked hair, receding hairline, altered jaw, altered nose, altered eyes, altered lips, heavy beard, face morph, warped neck, scarf, collar artifact, floating patch, copied phone UI, black bars, second person, camera pan, camera zoom, subtitles, watermark",
+  "characters": [
+    {
+      "id": "dominic",
+      "identityMode": "real-user-reference-pack-strict",
+      "wardrobe": "preserve supplied canonical reference exactly",
+      "referenceMode": "monia-library-router",
+      "libraryRouter": "config/monia-reference-library-router-v1.json",
+      "referenceBanks": [
+        "config/lucas-reference-bank.json",
+        "config/lucas-video-bank.json",
+        "config/dominic-multiview-canon-v2.json",
+        "config/dominic-direct-reference-pack-v3.json",
+        "config/motion-reference-bank.json"
+      ],
+      "preferCanonRefFirst": false,
+      "identityContract": "config/dominic-identity-contract-v1.json",
+      "requireRealUserIdentity": true,
+      "forbidGeneratedIdentity": true
+    }
+  ],
+  "motion": {
+    "referenceId": "dominic-canon-seated-2026-09-28",
+    "tags": [
+      "natural-breathing",
+      "blink",
+      "micro-expression",
+      "eye-shift",
+      "identity-stability"
+    ],
+    "copyIdentity": true
+  },
+  "generation": {
+    "provider": "kaggle",
+    "router": "svd-img2vid-xt",
+    "backend": "svd-img2vid-xt",
+    "width": 512,
+    "height": 896,
+    "frames": 25,
+    "steps": 22,
+    "guidance": 3,
+    "fps": 12,
+    "seed": 1721,
+    "shotCount": 1,
+    "shotCharacters": [
+      "dominic"
+    ],
+    "shotReferenceIndex": [
+      0
+    ],
+    "shotImages": [
+      null
+    ],
+    "shotPrompts": [
+      "Stable waist-up medium gameplay shot. Dominic makes a small natural collar adjustment, exhales, then shifts his gaze slightly off-camera. Preserve the freshly generated living-room composition and Dominic appearance from the prelocked scene still. No camera travel."
+    ],
+    "lockLastImage": false,
+    "identityRestore": true,
+    "sceneFirstFrame": true,
+    "sceneImageModel": "stabilityai/sdxl-turbo",
+    "sceneImagePrompt": "Photorealistic vertical cinematic portrait, Mediterranean man age early 30s seated indoors at night, thick dark wavy hair with loose strands falling toward forehead, strong dark eyebrows, olive warm skin, intense hazel-brown eyes, straight defined nose, short dark stubble beard, sharp angular jaw, black open-collar shirt, warm luxurious golden bokeh lights, close medium framing showing head chest shoulders, direct confident gaze, subtle restrained expression, realistic skin texture, 50mm lens, shallow depth of field, no jewelry, no text, no UI.",
+    "sceneImageNegativePrompt": "generic model face, older, boyish, blond, blue eyes, receding hairline, slicked hair, long beard, smiling teeth, exaggerated muscles, tattoos dominating frame, scarf, tie, suit jacket, phone, app UI, borders, text, watermark, second person",
+    "sceneImageSeed": 1121,
+    "sceneImageSteps": 4,
+    "sceneImageGuidance": 0,
+    "sceneIdentityPrelock": true,
+    "motionBucketId": 10,
+    "noiseAugStrength": 0.0005,
+    "identityPatchMode": "inner-face"
+  },
+  "qualityPolicy": {
+    "failClosed": true,
+    "humanApprovalBeforeLive": true,
+    "requireTrueVideo": true,
+    "requireRealUserIdentitySource": true,
+    "rejectGeneratedIdentitySource": true,
+    "identityContract": "config/dominic-identity-contract-v1.json"
+  },
+  "output": {
+    "candidatePath": "public/resources/monia/candidates/dominic-seated-monia-library-021/"
+  },
+  "retryNote": "020 exact-head patch introduced visible collar/neck compositing artifacts. The user then explicitly approved the 10-scene Dominic board as the visual target. 021 returns to the clean inner-face lock architecture, generates a scene that matches that approved black-shirt/golden-light look, keeps real-user refs as identity authority, and uses very low-motion SVD for video stability.",
+  "pipeline": "config/monia-hybrid-video-pipeline-v1.json",
+  "retryTrigger": "2026-10-06T09:48:00+02:00"
+}
