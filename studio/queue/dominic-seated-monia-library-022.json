@@ -1,0 +1,95 @@
+{
+  "id": "dominic-seated-monia-library-022",
+  "state": "queued",
+  "createdAt": "2026-10-07T12:34:00+02:00",
+  "source": "monia-video-orchestrator-v3",
+  "candidateOnly": true,
+  "narrativeAuthority": false,
+  "sceneFamily": "dominic-approved-look-exact-head-jaw-safe",
+  "signature": "MONIA_APPROVED_DOMINIC_EXACT_HEAD_022",
+  "primaryCharacter": "dominic",
+  "prompt": "Cinematic vertical medium close shot of Dominic in the exact user-approved visual look. Keep the real-user Dominic head identity: thick dark wavy hair with loose strands toward the forehead, strong dark eyebrows, olive warm skin, intense hazel-brown eyes, straight defined nose, short natural dark beard, marked broad angular jaw, youthful early-20s appearance, black open-collar shirt, warm golden evening interior, shallow depth of field. Dominic looks toward camera, breathes naturally, blinks once and shifts his gaze slightly. The room is newly generated. Head, hairline, skull outline, facial geometry and jaw remain grounded in real-user references.",
+  "negativePrompt": "different man, generic handsome man, fashion model face, older man, thirty-year-old man, long narrow face, elongated neck, pale blue eyes, slicked-back hair, short slicked hair, receding hairline, altered hairline, altered skull, altered jaw, altered nose, altered eyes, altered lips, heavy beard, face morph, warped neck, neck patch, collar artifact, floating patch, copied background, copied clothing, copied phone UI, black bars, second person, camera pan, camera zoom, subtitles, watermark",
+  "characters": [
+    {
+      "id": "dominic",
+      "identityMode": "real-user-reference-pack-strict",
+      "wardrobe": "preserve supplied canonical reference exactly",
+      "referenceMode": "monia-library-router",
+      "libraryRouter": "config/monia-reference-library-router-v1.json",
+      "referenceBanks": [
+        "config/lucas-reference-bank.json",
+        "config/lucas-video-bank.json",
+        "config/dominic-multiview-canon-v2.json",
+        "config/dominic-direct-reference-pack-v3.json",
+        "config/motion-reference-bank.json"
+      ],
+      "preferCanonRefFirst": false,
+      "identityContract": "config/dominic-identity-contract-v1.json",
+      "requireRealUserIdentity": true,
+      "forbidGeneratedIdentity": true
+    }
+  ],
+  "motion": {
+    "referenceId": "dominic-canon-seated-2026-09-28",
+    "tags": [
+      "natural-breathing",
+      "blink",
+      "micro-expression",
+      "eye-shift",
+      "identity-stability"
+    ],
+    "copyIdentity": true
+  },
+  "generation": {
+    "provider": "kaggle",
+    "router": "svd-img2vid-xt",
+    "backend": "svd-img2vid-xt",
+    "width": 512,
+    "height": 896,
+    "frames": 25,
+    "steps": 22,
+    "guidance": 3,
+    "fps": 12,
+    "seed": 1822,
+    "shotCount": 1,
+    "shotCharacters": [
+      "dominic"
+    ],
+    "shotReferenceIndex": [
+      0
+    ],
+    "shotImages": [
+      null
+    ],
+    "shotPrompts": [
+      "Stable medium close shot. Dominic breathes naturally, blinks once and shifts his gaze slightly off-camera. Preserve the freshly generated golden interior and the exact real-user-grounded Dominic head identity. No camera travel."
+    ],
+    "lockLastImage": false,
+    "identityRestore": true,
+    "sceneFirstFrame": true,
+    "sceneImageModel": "stabilityai/sdxl-turbo",
+    "sceneImagePrompt": "Photorealistic vertical cinematic medium close portrait of a youthful Mediterranean man in his early 20s seated indoors at night, thick dark wavy hair with loose strands naturally falling toward the forehead rather than slicked back, strong dark eyebrows, olive warm skin, intense dark hazel-brown eyes, straight defined nose, short natural dark beard, broad marked angular jaw, balanced youthful facial proportions, black open-collar shirt, warm luxurious golden bokeh interior, head chest and shoulders visible, direct intense gaze, restrained expression, realistic skin texture, 50mm lens, shallow depth of field, no jewelry, no text, no UI.",
+    "sceneImageNegativePrompt": "generic male model, older man, thirty-year-old man, long narrow face, elongated neck, pale eyes, blue eyes, slicked-back hair, receding hairline, short slicked hair, long beard, smiling teeth, exaggerated muscles, scarf, tie, suit jacket, phone, app UI, borders, text, watermark, second person",
+    "sceneImageSeed": 1222,
+    "sceneImageSteps": 4,
+    "sceneImageGuidance": 0,
+    "sceneIdentityPrelock": true,
+    "motionBucketId": 8,
+    "noiseAugStrength": 0.00035
+  },
+  "qualityPolicy": {
+    "failClosed": true,
+    "humanApprovalBeforeLive": true,
+    "requireTrueVideo": true,
+    "requireRealUserIdentitySource": true,
+    "rejectGeneratedIdentitySource": true,
+    "identityContract": "config/dominic-identity-contract-v1.json"
+  },
+  "output": {
+    "candidatePath": "public/resources/monia/candidates/dominic-seated-monia-library-022/"
+  },
+  "retryNote": "021 was temporally stable but visually rejected: generic-model facial proportions, hair too slicked back, eyes too pale and head/neck not matching the user-approved Dominic. 022 removes the inner-face-only override so the corrected exact-head path can preserve real hairline/skull/jaw while using the post-020 jaw-safe crop. Scene prompt is corrected from early-30s to youthful early-20s and motion/noise are reduced further.",
+  "pipeline": "config/monia-hybrid-video-pipeline-v1.json",
+  "retryTrigger": "2026-10-07T12:34:00+02:00"
+}
