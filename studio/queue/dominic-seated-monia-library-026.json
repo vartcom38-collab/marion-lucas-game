@@ -1,0 +1,102 @@
+{
+  "id": "dominic-seated-monia-library-026",
+  "state": "queued",
+  "createdAt": "2026-10-09T09:06:00+02:00",
+  "source": "monia-video-orchestrator-v3",
+  "candidateOnly": true,
+  "narrativeAuthority": false,
+  "sceneFamily": "dominic-exact-master-direct-animation",
+  "signature": "MONIA_DOMINIC_EXACT_MASTER_DIRECT_026",
+  "primaryCharacter": "dominic",
+  "prompt": "Identity proof only. Animate the exact real-user Dominic master image directly. Do not synthesize or reinterpret his face. Preserve the exact eyes, brows, nose, lips, jaw, hairline, hair texture, stubble, skin tone and facial proportions from the source image. Only minimal natural breathing, one blink and a tiny eye shift. No head turn. No smile. No camera motion.",
+  "negativePrompt": "new face, reinterpreted face, lookalike, generic handsome man, fashion model, beautified face, changed eye color, changed jaw, changed nose, changed lips, changed hairline, slicked hair, age change, morphing, head turn, smile, camera movement, duplicate mouth, duplicate jaw, neck seam, UI, subtitles, watermark",
+  "characters": [
+    {
+      "id": "dominic",
+      "identityMode": "real-user-reference-pack-strict",
+      "wardrobe": "preserve supplied canonical reference exactly",
+      "referenceMode": "monia-library-router",
+      "libraryRouter": "config/monia-reference-library-router-v1.json",
+      "referenceBanks": [
+        "config/lucas-reference-bank.json",
+        "config/lucas-video-bank.json",
+        "config/dominic-multiview-canon-v2.json",
+        "config/dominic-direct-reference-pack-v3.json",
+        "config/motion-reference-bank.json"
+      ],
+      "preferCanonRefFirst": false,
+      "identityContract": "config/dominic-identity-contract-v1.json",
+      "requireRealUserIdentity": true,
+      "forbidGeneratedIdentity": true
+    }
+  ],
+  "motion": {
+    "referenceId": "dominic-canon-seated-2026-09-28",
+    "tags": [
+      "natural-breathing",
+      "blink",
+      "micro-expression",
+      "eye-shift",
+      "identity-stability"
+    ],
+    "copyIdentity": true
+  },
+  "generation": {
+    "provider": "kaggle",
+    "router": "svd-img2vid-xt",
+    "backend": "svd-img2vid-xt",
+    "width": 512,
+    "height": 896,
+    "frames": 25,
+    "steps": 22,
+    "guidance": 3,
+    "fps": 12,
+    "seed": 2226,
+    "shotCount": 1,
+    "shotCharacters": [
+      "dominic"
+    ],
+    "shotReferenceIndex": [
+      0
+    ],
+    "shotImages": [
+      null
+    ],
+    "shotPrompts": [
+      "Animate the supplied exact Dominic master image itself. Keep facial geometry and hair unchanged. Only breathing, one blink and a tiny eye movement. No head rotation, no smile, no camera movement."
+    ],
+    "lockLastImage": false,
+    "identityRestore": true,
+    "sceneFirstFrame": false,
+    "sceneImageModel": null,
+    "sceneImagePrompt": null,
+    "sceneImageNegativePrompt": null,
+    "sceneImageSeed": null,
+    "sceneImageSteps": 4,
+    "sceneImageGuidance": 0,
+    "sceneIdentityPrelock": false,
+    "motionBucketId": 4,
+    "noiseAugStrength": 0.0001,
+    "identityPatchMode": "inner-face-hair",
+    "exactIdentityAuthority": true
+  },
+  "qualityPolicy": {
+    "failClosed": true,
+    "humanApprovalBeforeLive": true,
+    "requireTrueVideo": true,
+    "requireRealUserIdentitySource": true,
+    "rejectGeneratedIdentitySource": true,
+    "identityContract": "config/dominic-identity-contract-v1.json",
+    "exactIdentityOnly": true,
+    "rejectGenericLookalike": true,
+    "rejectIdentitySourceSwitching": true,
+    "requireDirectRealMasterFirstFrame": true,
+    "rejectSyntheticFirstFrame": true
+  },
+  "output": {
+    "candidatePath": "public/resources/monia/candidates/dominic-seated-monia-library-026/"
+  },
+  "retryNote": "025 proved that a fixed identity source is stable but still started from a synthetic scene face, producing a stable lookalike. 026 removes synthetic scene-first generation entirely. The first frame is the real-user master reference itself, then SVD performs only minimal motion, followed by exact-master temporal restore. This isolates whether MonIA can animate exact Dominic before reintroducing new-scene composition.",
+  "pipeline": "config/monia-hybrid-video-pipeline-v1.json",
+  "retryTrigger": "2026-10-07T12:34:00+02:00"
+}
