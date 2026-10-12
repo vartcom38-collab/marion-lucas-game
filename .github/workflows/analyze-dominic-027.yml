@@ -34,3 +34,5 @@ jobs:
           name: dominic-027-review
           path: review-027
           if-no-files-found: error
+
+# rerun-027-after-package
