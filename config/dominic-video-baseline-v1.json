@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "status": "approved-identity-baseline",
+  "character": "Dominic",
+  "baselineCandidate": "dominic-seated-monia-library-026",
+  "candidateCommit": "c30e6f689ee1e9638680baa9358e951478403639",
+  "architecture": {
+    "firstFrame": "direct real-user master reference",
+    "sceneFirstFrameGeneration": false,
+    "exactIdentityAuthority": true,
+    "identitySourceSwitchingAllowed": false,
+    "identityPatchMode": "inner-face-hair",
+    "backend": "svd-img2vid-xt",
+    "temporalLock": "monia-exact-head-temporal-v3"
+  },
+  "validatedProperties": {
+    "technicalPass": true,
+    "lockedFrames": "25/25",
+    "meanSimilarity": 0.9324,
+    "minSimilarity": 0.9273,
+    "humanVisualReview": "identity stable across sampled frames; no generic-model substitution, no duplicate jaw/neck artifact"
+  },
+  "rule": "Do not reintroduce synthetic face generation before animation. New scenes must preserve the direct real-user Dominic identity and adapt scene/background/motion around him.",
+  "nextTests": [
+    "slightly stronger natural motion with the same direct real master",
+    "controlled head micro-turn without identity source switching",
+    "new-scene/background composition around locked Dominic without regenerating his face"
+  ]
+}
