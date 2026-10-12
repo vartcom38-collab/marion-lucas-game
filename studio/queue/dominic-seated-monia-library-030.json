@@ -1,0 +1,102 @@
+{
+  "id": "dominic-seated-monia-library-030",
+  "state": "queued",
+  "createdAt": "2026-10-12T14:20:00+02:00",
+  "source": "monia-video-orchestrator-v3",
+  "candidateOnly": true,
+  "narrativeAuthority": false,
+  "sceneFamily": "dominic-exact-master-ltx-controlled-turn",
+  "signature": "MONIA_DOMINIC_EXACT_MASTER_LTX_TURN_030",
+  "primaryCharacter": "dominic",
+  "prompt": "Exact Dominic identity motion test using a more controllable image-to-video backend. Start from the fixed real-user Dominic master image itself. Preserve his identity exactly. Perform one clearly visible but restrained head turn of about 8 degrees, hold briefly, then return toward center. Natural breathing and one blink only. No smile. No camera movement. No synthetic face generation. The exact Dominic face geometry, hairline, hair texture, jaw, eyes, nose, mouth, stubble, skin tone and age must remain unchanged.",
+  "negativePrompt": "new face, lookalike, generic handsome man, model face, altered jaw, altered nose, altered lips, pale eyes, altered eye spacing, altered hairline, slicked hair, age change, morphing, full profile, large turn, smile, camera pan, zoom, duplicate mouth, duplicate jaw, neck seam, UI, subtitles, watermark",
+  "characters": [
+    {
+      "id": "dominic",
+      "identityMode": "real-user-reference-pack-strict",
+      "wardrobe": "preserve supplied canonical reference exactly",
+      "referenceMode": "monia-library-router",
+      "libraryRouter": "config/monia-reference-library-router-v1.json",
+      "referenceBanks": [
+        "config/lucas-reference-bank.json",
+        "config/lucas-video-bank.json",
+        "config/dominic-multiview-canon-v2.json",
+        "config/dominic-direct-reference-pack-v3.json",
+        "config/motion-reference-bank.json"
+      ],
+      "preferCanonRefFirst": false,
+      "identityContract": "config/dominic-identity-contract-v1.json",
+      "requireRealUserIdentity": true,
+      "forbidGeneratedIdentity": true
+    }
+  ],
+  "motion": {
+    "referenceId": "dominic-canon-seated-2026-09-28",
+    "tags": [
+      "natural-breathing",
+      "blink",
+      "micro-expression",
+      "eye-shift",
+      "identity-stability"
+    ],
+    "copyIdentity": true
+  },
+  "generation": {
+    "provider": "kaggle",
+    "router": "ltx",
+    "backend": "ltx",
+    "width": 512,
+    "height": 896,
+    "frames": 25,
+    "steps": 24,
+    "guidance": 3.2,
+    "fps": 12,
+    "seed": 2630,
+    "shotCount": 1,
+    "shotCharacters": [
+      "dominic"
+    ],
+    "shotReferenceIndex": [
+      0
+    ],
+    "shotImages": [
+      null
+    ],
+    "shotPrompts": [
+      "Animate the exact supplied Dominic master image. Preserve identity exactly. Turn the head about 8 degrees to one side, hold briefly, then return toward center. Natural breathing and one blink. No smile, no camera motion, no face redesign."
+    ],
+    "lockLastImage": false,
+    "identityRestore": true,
+    "sceneFirstFrame": false,
+    "sceneImageModel": null,
+    "sceneImagePrompt": null,
+    "sceneImageNegativePrompt": null,
+    "sceneImageSeed": null,
+    "sceneImageSteps": 4,
+    "sceneImageGuidance": 0,
+    "sceneIdentityPrelock": false,
+    "motionBucketId": 0,
+    "noiseAugStrength": 0,
+    "identityPatchMode": "inner-face-hair",
+    "exactIdentityAuthority": true
+  },
+  "qualityPolicy": {
+    "failClosed": true,
+    "humanApprovalBeforeLive": true,
+    "requireTrueVideo": true,
+    "requireRealUserIdentitySource": true,
+    "rejectGeneratedIdentitySource": true,
+    "identityContract": "config/dominic-identity-contract-v1.json",
+    "exactIdentityOnly": true,
+    "rejectGenericLookalike": true,
+    "rejectIdentitySourceSwitching": true,
+    "requireDirectRealMasterFirstFrame": true,
+    "rejectSyntheticFirstFrame": true
+  },
+  "output": {
+    "candidatePath": "public/resources/monia/candidates/dominic-seated-monia-library-030/"
+  },
+  "retryNote": "029 preserved Dominic identity but SVD still produced only a tiny visual angle change. 030 keeps the exact same real-user master and temporal identity lock, but switches only the video backend to LTX to test whether prompt-driven head rotation can become visibly controllable without sacrificing exact identity.",
+  "pipeline": "config/monia-hybrid-video-pipeline-v1.json",
+  "retryTrigger": "2026-10-07T12:34:00+02:00"
+}
