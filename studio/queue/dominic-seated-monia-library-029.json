@@ -1,0 +1,102 @@
+{
+  "id": "dominic-seated-monia-library-029",
+  "state": "queued",
+  "createdAt": "2026-10-12T14:08:00+02:00",
+  "source": "monia-video-orchestrator-v3",
+  "candidateOnly": true,
+  "narrativeAuthority": false,
+  "sceneFamily": "dominic-exact-master-controlled-head-turn-step2",
+  "signature": "MONIA_DOMINIC_EXACT_MASTER_TURN_029",
+  "primaryCharacter": "dominic",
+  "prompt": "Fourth exact-Dominic motion proof. Animate the same fixed real-user Dominic master image directly. Preserve identity exactly while allowing a slightly more visible but still restrained head turn, around 6 to 10 degrees, then a subtle return toward center. Add only natural breathing and one blink. No synthetic face generation, no smile, no scene regeneration, no camera travel. The exact Dominic facial geometry, hair, jaw, eyes, nose, mouth, stubble and age must remain unchanged.",
+  "negativePrompt": "new face, lookalike, generic handsome man, altered jaw, altered nose, altered lips, altered eye color, altered hairline, age change, morphing, large head turn, full profile, smile, camera movement, duplicate mouth, duplicate jaw, neck seam, UI, subtitles, watermark",
+  "characters": [
+    {
+      "id": "dominic",
+      "identityMode": "real-user-reference-pack-strict",
+      "wardrobe": "preserve supplied canonical reference exactly",
+      "referenceMode": "monia-library-router",
+      "libraryRouter": "config/monia-reference-library-router-v1.json",
+      "referenceBanks": [
+        "config/lucas-reference-bank.json",
+        "config/lucas-video-bank.json",
+        "config/dominic-multiview-canon-v2.json",
+        "config/dominic-direct-reference-pack-v3.json",
+        "config/motion-reference-bank.json"
+      ],
+      "preferCanonRefFirst": false,
+      "identityContract": "config/dominic-identity-contract-v1.json",
+      "requireRealUserIdentity": true,
+      "forbidGeneratedIdentity": true
+    }
+  ],
+  "motion": {
+    "referenceId": "dominic-canon-seated-2026-09-28",
+    "tags": [
+      "natural-breathing",
+      "blink",
+      "micro-expression",
+      "eye-shift",
+      "identity-stability"
+    ],
+    "copyIdentity": true
+  },
+  "generation": {
+    "provider": "kaggle",
+    "router": "svd-img2vid-xt",
+    "backend": "svd-img2vid-xt",
+    "width": 512,
+    "height": 896,
+    "frames": 25,
+    "steps": 22,
+    "guidance": 3,
+    "fps": 12,
+    "seed": 2529,
+    "shotCount": 1,
+    "shotCharacters": [
+      "dominic"
+    ],
+    "shotReferenceIndex": [
+      0
+    ],
+    "shotImages": [
+      null
+    ],
+    "shotPrompts": [
+      "Animate the exact supplied Dominic master image. Preserve identity exactly. Natural breathing, one blink, tiny gaze shift, and one restrained head turn around 6 to 10 degrees, then subtly return toward center. No smile. No camera motion."
+    ],
+    "lockLastImage": false,
+    "identityRestore": true,
+    "sceneFirstFrame": false,
+    "sceneImageModel": null,
+    "sceneImagePrompt": null,
+    "sceneImageNegativePrompt": null,
+    "sceneImageSeed": null,
+    "sceneImageSteps": 4,
+    "sceneImageGuidance": 0,
+    "sceneIdentityPrelock": false,
+    "motionBucketId": 10,
+    "noiseAugStrength": 0.00026,
+    "identityPatchMode": "inner-face-hair",
+    "exactIdentityAuthority": true
+  },
+  "qualityPolicy": {
+    "failClosed": true,
+    "humanApprovalBeforeLive": true,
+    "requireTrueVideo": true,
+    "requireRealUserIdentitySource": true,
+    "rejectGeneratedIdentitySource": true,
+    "identityContract": "config/dominic-identity-contract-v1.json",
+    "exactIdentityOnly": true,
+    "rejectGenericLookalike": true,
+    "rejectIdentitySourceSwitching": true,
+    "requireDirectRealMasterFirstFrame": true,
+    "rejectSyntheticFirstFrame": true
+  },
+  "output": {
+    "candidatePath": "public/resources/monia/candidates/dominic-seated-monia-library-029/"
+  },
+  "retryNote": "028 visually proved angle stability but the turn was barely perceptible. 029 increases only the angular excursion while preserving the same fixed real-user master, no scene-first synthesis, no identity-source switching, and the same temporal identity lock.",
+  "pipeline": "config/monia-hybrid-video-pipeline-v1.json",
+  "retryTrigger": "2026-10-07T12:34:00+02:00"
+}
