@@ -6,7 +6,7 @@
   "candidateOnly": true,
   "narrativeAuthority": false,
   "sceneFamily": "dominic-exact-master-ltx-tight-turn-return",
-  "signature": "MONIA_DOMINIC_EXACT_MASTER_LTX_TIGHT_031",
+  "signature": "MONIA_DOMINIC_EXACT_MASTER_LTX_TIGHT_031B",
   "primaryCharacter": "dominic",
   "prompt": "Exact Dominic motion test with stricter identity preservation. Start from the fixed real-user Dominic master image itself. Preserve identity exactly. Perform only a restrained head turn around 4 to 6 degrees, hold briefly, then return to the exact starting pose. Natural breathing and one blink only. No smile, no camera movement, no synthetic face generation. Dominic's exact face geometry, hairline, hair texture, jaw, eyes, nose, mouth, stubble, skin tone and age must remain unchanged.",
   "negativePrompt": "new face, lookalike, generic handsome man, model face, altered jaw, altered nose, altered lips, altered eye color, altered eye spacing, altered hairline, slicked hair, age change, morphing, full profile, large turn, smile, camera pan, zoom, duplicate mouth, duplicate jaw, neck seam, UI, subtitles, watermark",
@@ -65,7 +65,7 @@
     "shotPrompts": [
       "Animate the exact supplied Dominic master image. Preserve identity exactly. Turn the head only 4 to 6 degrees, hold briefly, then return to the exact starting pose. Natural breathing and one blink. No smile, no camera motion, no face redesign."
     ],
-    "lockLastImage": true,
+    "lockLastImage": false,
     "identityRestore": true,
     "sceneFirstFrame": false,
     "sceneImageModel": null,
@@ -96,7 +96,7 @@
   "output": {
     "candidatePath": "public/resources/monia/candidates/dominic-seated-monia-library-031/"
   },
-  "retryNote": "030 proved LTX can create visible angular motion but identity softened in some frames (min similarity 0.8014). 031 reduces angular excursion, guidance, steps and frame count, and enables last-image endpoint lock using the same exact real-user master. Goal: retain visibly controlled motion while removing the mid-sequence identity drift.",
+  "retryNote": "Previous 031 attempt failed because LTXImageToVideoPipeline does not support last_image. Keep the same exact real-user Dominic master, same 4-6 degree restrained turn and return-to-center instruction, but remove unsupported endpoint locking. Temporal identity restore remains active after generation.",
   "pipeline": "config/monia-hybrid-video-pipeline-v1.json",
   "retryTrigger": "2026-10-07T12:34:00+02:00"
 }
