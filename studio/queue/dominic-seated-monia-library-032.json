@@ -1,0 +1,102 @@
+{
+  "id": "dominic-seated-monia-library-032",
+  "state": "queued",
+  "createdAt": "2026-10-14T19:20:00+02:00",
+  "source": "monia-video-orchestrator-v3",
+  "candidateOnly": true,
+  "narrativeAuthority": false,
+  "sceneFamily": "dominic-exact-master-ltx-adaptive-hair-turn",
+  "signature": "MONIA_DOMINIC_EXACT_MASTER_LTX_ADAPTIVE_032",
+  "primaryCharacter": "dominic",
+  "prompt": "Exact Dominic motion proof with angle-adaptive identity restoration. Start from the fixed real-user Dominic master image itself. Preserve identity exactly. Perform a clearly visible but restrained 4 to 6 degree head turn with a small gaze shift, then settle naturally. Natural breathing and one blink only. No smile, no camera movement, no synthetic face generation. Dominic's exact facial geometry, hairline, hair texture, jaw, eyes, nose, mouth, stubble, skin tone and age must remain unchanged.",
+  "negativePrompt": "new face, lookalike, generic handsome man, model face, altered jaw, altered nose, altered lips, altered eye color, altered eye spacing, altered hairline, slicked hair, age change, morphing, full profile, large turn, smile, camera pan, zoom, duplicate mouth, duplicate jaw, neck seam, UI, subtitles, watermark",
+  "characters": [
+    {
+      "id": "dominic",
+      "identityMode": "real-user-reference-pack-strict",
+      "wardrobe": "preserve supplied canonical reference exactly",
+      "referenceMode": "monia-library-router",
+      "libraryRouter": "config/monia-reference-library-router-v1.json",
+      "referenceBanks": [
+        "config/lucas-reference-bank.json",
+        "config/lucas-video-bank.json",
+        "config/dominic-multiview-canon-v2.json",
+        "config/dominic-direct-reference-pack-v3.json",
+        "config/motion-reference-bank.json"
+      ],
+      "preferCanonRefFirst": false,
+      "identityContract": "config/dominic-identity-contract-v1.json",
+      "requireRealUserIdentity": true,
+      "forbidGeneratedIdentity": true
+    }
+  ],
+  "motion": {
+    "referenceId": "dominic-canon-seated-2026-09-28",
+    "tags": [
+      "natural-breathing",
+      "blink",
+      "micro-expression",
+      "eye-shift",
+      "identity-stability"
+    ],
+    "copyIdentity": true
+  },
+  "generation": {
+    "provider": "kaggle",
+    "router": "ltx",
+    "backend": "ltx",
+    "width": 512,
+    "height": 896,
+    "frames": 17,
+    "steps": 20,
+    "guidance": 2.4,
+    "fps": 12,
+    "seed": 2832,
+    "shotCount": 1,
+    "shotCharacters": [
+      "dominic"
+    ],
+    "shotReferenceIndex": [
+      0
+    ],
+    "shotImages": [
+      null
+    ],
+    "shotPrompts": [
+      "Animate the exact supplied Dominic master image. Preserve identity exactly. Turn the head only 4 to 6 degrees, hold briefly, then return to the exact starting pose. Natural breathing and one blink. No smile, no camera motion, no face redesign."
+    ],
+    "lockLastImage": false,
+    "identityRestore": true,
+    "sceneFirstFrame": false,
+    "sceneImageModel": null,
+    "sceneImagePrompt": null,
+    "sceneImageNegativePrompt": null,
+    "sceneImageSeed": null,
+    "sceneImageSteps": 4,
+    "sceneImageGuidance": 0,
+    "sceneIdentityPrelock": false,
+    "motionBucketId": 0,
+    "noiseAugStrength": 0,
+    "identityPatchMode": "inner-face-hair-adaptive",
+    "exactIdentityAuthority": true
+  },
+  "qualityPolicy": {
+    "failClosed": true,
+    "humanApprovalBeforeLive": true,
+    "requireTrueVideo": true,
+    "requireRealUserIdentitySource": true,
+    "rejectGeneratedIdentitySource": true,
+    "identityContract": "config/dominic-identity-contract-v1.json",
+    "exactIdentityOnly": true,
+    "rejectGenericLookalike": true,
+    "rejectIdentitySourceSwitching": true,
+    "requireDirectRealMasterFirstFrame": true,
+    "rejectSyntheticFirstFrame": true
+  },
+  "output": {
+    "candidatePath": "public/resources/monia/candidates/dominic-seated-monia-library-032/"
+  },
+  "retryNote": "031B improved LTX identity stability but visual QA showed ghosting/double-face artifacts as the angle changed, caused by forcing the fixed hair/front patch across pose differences. 032 keeps the same exact real-user Dominic master and temporal face lock but uses angle-adaptive hair alpha: strong near source pose, progressively reduced as pose diverges.",
+  "pipeline": "config/monia-hybrid-video-pipeline-v1.json",
+  "retryTrigger": "2026-10-07T12:34:00+02:00"
+}
