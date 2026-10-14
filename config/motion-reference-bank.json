@@ -1,5 +1,5 @@
 {
-  "version": 6,
+  "version": 7,
   "status": "locked",
   "policy": {
     "motion_reference_only": false,
@@ -436,6 +436,85 @@
         "conversational_energy",
         "do_not_copy_source_dialogue",
         "do_not_clone_voice_identity"
+      ]
+    },
+    {
+      "id": "motion-dominic-20260926-225141",
+      "source_file_label": "ScreenRecording_09-26-2026 22-51-41_1.mp4",
+      "asset_status": "pending-ingest",
+      "motion_profile": "dominic-library-rich-presence-20260926",
+      "user_confirmed_dominic": true,
+      "tags": [
+        "motion_reference",
+        "dominic_identity_compatible",
+        "presence",
+        "gaze",
+        "micro_expression",
+        "head_movement",
+        "gesture_rhythm",
+        "body_movement",
+        "pending_binary_review",
+        "do_not_copy_source_shot"
+      ]
+    },
+    {
+      "id": "motion-dominic-20261008-064924",
+      "source_file_label": "ScreenRecording_10-08-2026 06-49-24_1.mp4",
+      "asset_status": "pending-ingest",
+      "motion_profile": "dominic-library-motion-20261008-a",
+      "user_confirmed_dominic": true,
+      "tags": [
+        "motion_reference",
+        "dominic_identity_compatible",
+        "presence",
+        "gaze",
+        "micro_expression",
+        "gesture_rhythm",
+        "body_movement",
+        "pending_binary_review",
+        "do_not_copy_source_shot"
+      ]
+    },
+    {
+      "id": "motion-dominic-20261008-115329",
+      "source_file_label": "ScreenRecording_10-08-2026 11-53-29_1.mp4",
+      "asset_status": "pending-ingest",
+      "motion_profile": "dominic-library-motion-20261008-b",
+      "user_confirmed_dominic": true,
+      "tags": [
+        "motion_reference",
+        "dominic_identity_compatible",
+        "presence",
+        "gaze",
+        "micro_expression",
+        "head_movement",
+        "gesture_rhythm",
+        "body_movement",
+        "pending_binary_review",
+        "do_not_copy_source_shot"
+      ]
+    },
+    {
+      "id": "motion-dominic-20261014-190818",
+      "source_file_label": "ScreenRecording_10-14-2026 19-08-18_1.mp4",
+      "asset_status": "pending-ingest",
+      "motion_profile": "dominic-library-ultra-rich-20261014",
+      "user_confirmed_dominic": true,
+      "tags": [
+        "motion_reference",
+        "dominic_identity_compatible",
+        "high_value_motion_source",
+        "full_presence",
+        "gaze",
+        "micro_expression",
+        "head_movement",
+        "gesture_rhythm",
+        "speaking_face",
+        "jaw_head_coordination",
+        "body_movement",
+        "performance",
+        "pending_binary_review",
+        "do_not_copy_source_shot"
       ]
     }
   ],
