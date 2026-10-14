@@ -1,0 +1,132 @@
+name: Scan Dominic Library Videos
+
+on:
+  push:
+    paths:
+      - '.github/workflows/scan-dominic-library.yml'
+  workflow_dispatch:
+
+jobs:
+  scan-library:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg
+          python3 -m pip install --quiet Pillow
+
+      - name: Find and sample latest Dominic library videos
+        env:
+          INFOMANIAK_FTP_HOST: ${{ secrets.INFOMANIAK_FTP_HOST }}
+          INFOMANIAK_FTP_USER: ${{ secrets.INFOMANIAK_FTP_USER }}
+          INFOMANIAK_FTP_PASSWORD: ${{ secrets.INFOMANIAK_FTP_PASSWORD }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/dominic-library-scan/files /tmp/dominic-library-scan/frames
+          python3 <<'PY'
+          import ftplib, os, posixpath
+          from pathlib import Path
+
+          targets = {
+              'ScreenRecording_09-26-2026 22-51-41_1.mp4',
+              'ScreenRecording_10-08-2026 06-49-24_1.mp4',
+              'ScreenRecording_10-08-2026 11-53-29_1.mp4',
+              'ScreenRecording_10-14-2026 19-08-18_1.mp4',
+          }
+          roots = [
+              '/private/monia/lucas',
+              '/private/monia/reference-vault/dominic',
+              '/private/monia/library',
+              '/private/monia',
+          ]
+
+          host=os.environ['INFOMANIAK_FTP_HOST'].strip().replace('ftpes://','').replace('ftps://','').replace('ftp://','').rstrip('/')
+          user=os.environ['INFOMANIAK_FTP_USER'].strip()
+          password=os.environ['INFOMANIAK_FTP_PASSWORD'].rstrip('\r\n')
+          ftp=ftplib.FTP_TLS(timeout=45)
+          ftp.connect(host,21); ftp.login(user,password); ftp.prot_p(); ftp.set_pasv(True)
+
+          out=Path('/tmp/dominic-library-scan/files')
+          found={}
+          visited=set()
+
+          def list_dir(path):
+              try:
+                  return list(ftp.mlsd(path))
+              except Exception:
+                  try:
+                      names=ftp.nlst(path)
+                  except Exception:
+                      return []
+                  return [(posixpath.basename(x.rstrip('/')), {'type':'unknown','full':x}) for x in names]
+
+          def walk(path, depth=0, max_depth=5):
+              if depth>max_depth or path in visited or len(found)==len(targets):
+                  return
+              visited.add(path)
+              for name, facts in list_dir(path):
+                  if name in ('.','..'): continue
+                  full=facts.get('full') or posixpath.join(path,name)
+                  typ=facts.get('type','unknown')
+                  if name in targets and name not in found:
+                      dest=out/name
+                      try:
+                          with dest.open('wb') as fh:
+                              ftp.retrbinary('RETR '+full, fh.write, blocksize=1024*1024)
+                          if dest.stat().st_size > 10000:
+                              found[name]=full
+                              print('FOUND',name,'AT',full,'BYTES',dest.stat().st_size)
+                          else:
+                              dest.unlink(missing_ok=True)
+                      except Exception as e:
+                          dest.unlink(missing_ok=True)
+                          print('DOWNLOAD_FAIL',full,repr(e))
+                  if typ=='dir':
+                      walk(full,depth+1,max_depth)
+                  elif typ=='unknown' and depth<max_depth:
+                      try:
+                          cur=ftp.pwd(); ftp.cwd(full); ftp.cwd(cur)
+                          walk(full,depth+1,max_depth)
+                      except Exception:
+                          pass
+
+          for root in roots:
+              walk(root)
+              if len(found)==len(targets): break
+          ftp.quit()
+
+          report=Path('/tmp/dominic-library-scan/report.txt')
+          with report.open('w',encoding='utf-8') as fh:
+              for t in sorted(targets):
+                  fh.write(f"{t}\t{found.get(t,'NOT_FOUND')}\n")
+          print(report.read_text())
+          PY
+
+          for f in /tmp/dominic-library-scan/files/*.mp4; do
+            [ -e "$f" ] || continue
+            base="$(basename "$f" .mp4)"
+            dur="$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$f" || echo 0)"
+            python3 - "$f" "$base" "$dur" <<'PY'
+          import subprocess, sys
+          path, base, dur = sys.argv[1], sys.argv[2], float(sys.argv[3] or 0)
+          times=[0.08,0.28,0.50,0.72,0.92]
+          if dur <= 0: times=[0,1,2,3,4]
+          else: times=[max(0,min(dur-0.05,dur*x)) for x in times]
+          for i,t in enumerate(times):
+              out=f"/tmp/dominic-library-scan/frames/{base}__{i:02d}.jpg"
+              subprocess.run(['ffmpeg','-y','-v','error','-ss',str(t),'-i',path,'-frames:v','1','-q:v','2',out],check=False)
+          PY
+          done
+
+      - name: Upload library scan
+        uses: actions/upload-artifact@v4
+        with:
+          name: dominic-library-scan
+          path: |
+            /tmp/dominic-library-scan/report.txt
+            /tmp/dominic-library-scan/frames/*.jpg
+          if-no-files-found: warn
