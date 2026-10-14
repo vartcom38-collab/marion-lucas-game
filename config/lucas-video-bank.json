@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "character": "lucas",
   "status": "active",
   "purpose": "Structured MonIA reference bank built from user-provided Lucas videos. References teach identity, movement, posture, gaze, expressions, daily-life behavior, tenderness, family behavior, camera grammar and performance. They are never output clips and must never be replayed or copied shot-for-shot.",
@@ -393,6 +393,81 @@
       ],
       "storage": "user_chat_source",
       "notes": "Strong full-body Dominic reference. Prefer for wide shots, entrances, walking, standing and body-proportion continuity. Does not replace the canonical close-face authority."
+    },
+    {
+      "id": "dominic-library-2026-09-26-225141",
+      "sourceFile": "ScreenRecording_09-26-2026 22-51-41_1.mp4",
+      "priority": "strong_behavior",
+      "userConfirmedLucas": true,
+      "assetStatus": "pending-ingest",
+      "roles": [
+        "identity_context",
+        "presence",
+        "body_movement",
+        "gaze",
+        "micro_expression",
+        "gesture_rhythm",
+        "general_motion"
+      ],
+      "storage": "user_chat_source",
+      "notes": "User explicitly added this Dominic clip to the project library. Register now; extract detailed motion/performance roles only after binary review. Does not replace the fixed real-user identity master."
+    },
+    {
+      "id": "dominic-library-2026-10-08-064924",
+      "sourceFile": "ScreenRecording_10-08-2026 06-49-24_1.mp4",
+      "priority": "strong_behavior",
+      "userConfirmedLucas": true,
+      "assetStatus": "pending-ingest",
+      "roles": [
+        "identity_context",
+        "presence",
+        "body_movement",
+        "gaze",
+        "micro_expression",
+        "gesture_rhythm",
+        "general_motion"
+      ],
+      "storage": "user_chat_source",
+      "notes": "User explicitly added this Dominic clip to the library. Pending detailed binary analysis; behavior/performance reference only until reviewed."
+    },
+    {
+      "id": "dominic-library-2026-10-08-115329",
+      "sourceFile": "ScreenRecording_10-08-2026 11-53-29_1.mp4",
+      "priority": "strong_behavior",
+      "userConfirmedLucas": true,
+      "assetStatus": "pending-ingest",
+      "roles": [
+        "identity_context",
+        "presence",
+        "body_movement",
+        "gaze",
+        "micro_expression",
+        "gesture_rhythm",
+        "general_motion"
+      ],
+      "storage": "user_chat_source",
+      "notes": "User explicitly added this Dominic clip to the library. Pending detailed binary analysis; behavior/performance reference only until reviewed."
+    },
+    {
+      "id": "dominic-library-2026-10-14-190818",
+      "sourceFile": "ScreenRecording_10-14-2026 19-08-18_1.mp4",
+      "priority": "very_strong_behavior",
+      "userConfirmedLucas": true,
+      "assetStatus": "pending-ingest",
+      "roles": [
+        "identity_context",
+        "full_presence",
+        "body_movement",
+        "gaze",
+        "micro_expression",
+        "head_movement",
+        "gesture_rhythm",
+        "speaking_face",
+        "performance",
+        "general_motion"
+      ],
+      "storage": "user_chat_source",
+      "notes": "User described this as an especially rich Dominic video and requested that all useful behavior/performance information be retained. Pending binary review before assigning precise extracted profiles. Never replace fixed real-user identity master."
     }
   ],
   "hardRules": [
