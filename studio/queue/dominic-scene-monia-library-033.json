@@ -1,0 +1,102 @@
+{
+  "id": "dominic-scene-monia-library-033",
+  "state": "queued",
+  "createdAt": "2026-10-19T15:20:00+02:00",
+  "source": "monia-video-orchestrator-v3",
+  "candidateOnly": true,
+  "narrativeAuthority": false,
+  "sceneFamily": "dominic-exact-master-cinematic-scene-033",
+  "signature": "MONIA_DOMINIC_EXACT_MASTER_CINEMATIC_033",
+  "primaryCharacter": "dominic",
+  "prompt": "Cinematic vertical mini-drama shot featuring the exact fixed real-user Dominic. Dominic is seated naturally in a warm elegant interior at golden hour, black shirt slightly open at the collar, relaxed but intense presence. He looks slightly off-camera, breathes naturally, turns his gaze toward camera, makes one restrained head movement and one subtle hand adjustment near his thigh or armrest. Camera remains mostly still with a very subtle cinematic push-in only if identity remains stable. The room, lighting and composition must feel newly created, not copied from the identity source. Preserve Dominic's exact facial geometry, hairline, dark wavy hair, eyes, nose, mouth, jaw, stubble, skin tone, tattoos and age. No synthetic reinterpretation of his face.",
+  "negativePrompt": "lookalike, generic handsome man, model face, altered jaw, altered nose, altered lips, altered eye color, altered hairline, slick hair, age change, morphing, duplicate face, double eyes, ghost face, neck seam, copied phone UI, source-video background, exaggerated camera movement, large profile turn, smile, subtitles, watermark",
+  "characters": [
+    {
+      "id": "dominic",
+      "identityMode": "real-user-reference-pack-strict",
+      "wardrobe": "preserve supplied canonical reference exactly",
+      "referenceMode": "monia-library-router",
+      "libraryRouter": "config/monia-reference-library-router-v1.json",
+      "referenceBanks": [
+        "config/lucas-reference-bank.json",
+        "config/lucas-video-bank.json",
+        "config/dominic-multiview-canon-v2.json",
+        "config/dominic-direct-reference-pack-v3.json",
+        "config/motion-reference-bank.json"
+      ],
+      "preferCanonRefFirst": false,
+      "identityContract": "config/dominic-identity-contract-v1.json",
+      "requireRealUserIdentity": true,
+      "forbidGeneratedIdentity": true
+    }
+  ],
+  "motion": {
+    "referenceId": "dominic-canon-seated-2026-09-28",
+    "tags": [
+      "natural-breathing",
+      "blink",
+      "micro-expression",
+      "eye-shift",
+      "identity-stability"
+    ],
+    "copyIdentity": true
+  },
+  "generation": {
+    "provider": "kaggle",
+    "router": "ltx",
+    "backend": "ltx",
+    "width": 512,
+    "height": 896,
+    "frames": 25,
+    "steps": 22,
+    "guidance": 2.6,
+    "fps": 12,
+    "seed": 2933,
+    "shotCount": 1,
+    "shotCharacters": [
+      "dominic"
+    ],
+    "shotReferenceIndex": [
+      0
+    ],
+    "shotImages": [
+      null
+    ],
+    "shotPrompts": [
+      "Exact Dominic in a newly created warm elegant interior, seated naturally. Keep the camera nearly still. Natural breathing, gaze shift toward camera, one restrained head movement and one small hand adjustment. Preserve exact identity and tattoos."
+    ],
+    "lockLastImage": false,
+    "identityRestore": true,
+    "sceneFirstFrame": false,
+    "sceneImageModel": null,
+    "sceneImagePrompt": null,
+    "sceneImageNegativePrompt": null,
+    "sceneImageSeed": null,
+    "sceneImageSteps": 4,
+    "sceneImageGuidance": 0,
+    "sceneIdentityPrelock": false,
+    "motionBucketId": 0,
+    "noiseAugStrength": 0,
+    "identityPatchMode": "inner-face-hair-adaptive",
+    "exactIdentityAuthority": true
+  },
+  "qualityPolicy": {
+    "failClosed": true,
+    "humanApprovalBeforeLive": true,
+    "requireTrueVideo": true,
+    "requireRealUserIdentitySource": true,
+    "rejectGeneratedIdentitySource": true,
+    "identityContract": "config/dominic-identity-contract-v1.json",
+    "exactIdentityOnly": true,
+    "rejectGenericLookalike": true,
+    "rejectIdentitySourceSwitching": true,
+    "requireDirectRealMasterFirstFrame": true,
+    "rejectSyntheticFirstFrame": true
+  },
+  "output": {
+    "candidatePath": "public/resources/monia/candidates/dominic-scene-monia-library-033/"
+  },
+  "retryNote": "032 passed visual stability but remained too close to a portrait animation. 033 is the first production-oriented scene test: preserve the fixed real-user Dominic identity while adding a genuinely new cinematic environment and a small body gesture. Do not advance if identity degrades.",
+  "pipeline": "config/monia-hybrid-video-pipeline-v1.json",
+  "retryTrigger": "2026-10-07T12:34:00+02:00"
+}
