@@ -57,6 +57,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: monia-kaggle-single-worker
+  cancel-in-progress: false
+
 jobs:
   submit-kaggle-worker:
     runs-on: ubuntu-latest
@@ -353,9 +357,9 @@ jobs:
         run: |
           set -euo pipefail
           KERNEL="marionbolomey/monia-headless-worker"
-          for attempt in $(seq 1 60); do
+          for attempt in $(seq 1 100); do
             STATUS="$(kaggle kernels status "$KERNEL" 2>&1 || true)"
-            echo "[$attempt/60] $STATUS"
+            echo "[$attempt/100] $STATUS"
             if echo "$STATUS" | grep -Eqi 'complete|completed'; then
               CHECK="/tmp/monia-kaggle-id-check"
               rm -rf "$CHECK"; mkdir -p "$CHECK"
@@ -377,7 +381,7 @@ jobs:
             fi
             sleep 30
           done
-          echo "Timed out waiting for Kaggle worker."
+          echo "Timed out waiting for Kaggle worker after extended queue/runtime window."
           exit 1
 
       - name: Print Kaggle logs on failure
