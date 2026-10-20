@@ -1,0 +1,102 @@
+{
+  "id": "dominic-scene-monia-library-035",
+  "state": "queued",
+  "createdAt": "2026-10-20T17:10:00+02:00",
+  "source": "monia-video-orchestrator-v3",
+  "candidateOnly": true,
+  "narrativeAuthority": false,
+  "sceneFamily": "dominic-scene-first-face-geometry-lock-035",
+  "signature": "MONIA_DOMINIC_SCENE_FIRST_FACE_OVAL_LOCK_035",
+  "primaryCharacter": "dominic",
+  "prompt": "Cinematic vertical mini-drama shot with exact Dominic in a genuinely new environment. Dominic sits in a warm elegant living room at golden hour, black shirt slightly open at the collar, relaxed masculine posture, one arm resting naturally, subtle breathing, gaze shift toward camera and one small hand adjustment. Preserve exact Dominic identity, hair, facial geometry, tattoos and age. The environment, lighting, furniture and framing must be newly created and must not reproduce the source reference background.",
+  "negativePrompt": "generic handsome man, lookalike, altered identity, wrong jaw, wrong nose, wrong lips, wrong eyes, wrong hairline, slick hair, age change, duplicated face, ghost face, double eyes, neck seam, source phone UI, source background, white shirt, copied source clothing, extreme head turn, exaggerated smile, subtitles, watermark",
+  "characters": [
+    {
+      "id": "dominic",
+      "identityMode": "real-user-reference-pack-strict",
+      "wardrobe": "preserve supplied canonical reference exactly",
+      "referenceMode": "monia-library-router",
+      "libraryRouter": "config/monia-reference-library-router-v1.json",
+      "referenceBanks": [
+        "config/lucas-reference-bank.json",
+        "config/lucas-video-bank.json",
+        "config/dominic-multiview-canon-v2.json",
+        "config/dominic-direct-reference-pack-v3.json",
+        "config/motion-reference-bank.json"
+      ],
+      "preferCanonRefFirst": false,
+      "identityContract": "config/dominic-identity-contract-v1.json",
+      "requireRealUserIdentity": true,
+      "forbidGeneratedIdentity": true
+    }
+  ],
+  "motion": {
+    "referenceId": "dominic-canon-seated-2026-09-28",
+    "tags": [
+      "natural-breathing",
+      "blink",
+      "micro-expression",
+      "eye-shift",
+      "identity-stability"
+    ],
+    "copyIdentity": true
+  },
+  "generation": {
+    "provider": "kaggle",
+    "router": "ltx",
+    "backend": "ltx",
+    "width": 512,
+    "height": 896,
+    "frames": 25,
+    "steps": 22,
+    "guidance": 2.4,
+    "fps": 12,
+    "seed": 3135,
+    "shotCount": 1,
+    "shotCharacters": [
+      "dominic"
+    ],
+    "shotReferenceIndex": [
+      0
+    ],
+    "shotImages": [
+      null
+    ],
+    "shotPrompts": [
+      "Exact Dominic, already identity-prelocked into a newly generated warm living-room scene. Animate natural breathing, a small gaze shift toward camera, one restrained head movement and a tiny hand adjustment. Preserve the prelocked identity and the new environment. No source-background regression."
+    ],
+    "lockLastImage": false,
+    "identityRestore": true,
+    "sceneFirstFrame": true,
+    "sceneImageModel": "stabilityai/sdxl-turbo",
+    "sceneImagePrompt": "Vertical cinematic still, warm elegant modern living room at golden hour, a dark-haired athletic Mediterranean man seated naturally in a lounge chair, medium shot from waist/chest up, black shirt slightly open at collar, one arm relaxed, cinematic shallow depth of field, warm lamps and window glow, tasteful masculine interior, realistic skin and fabric, camera at eye level, no phone UI, no text. Keep the face frontal to slight three-quarter and unobstructed so an exact identity can be inserted afterward.",
+    "sceneImageNegativePrompt": "close-up passport portrait, blank wall, white shirt, neck tattoo copied from reference, phone screenshot, UI bars, text, watermark, deformed body, extra hands, hidden face, profile",
+    "sceneImageSeed": 3135,
+    "sceneImageSteps": 6,
+    "sceneImageGuidance": 1.4,
+    "sceneIdentityPrelock": true,
+    "motionBucketId": 0,
+    "noiseAugStrength": 0,
+    "identityPatchMode": "face-oval-hair-adaptive",
+    "exactIdentityAuthority": true
+  },
+  "qualityPolicy": {
+    "failClosed": true,
+    "humanApprovalBeforeLive": true,
+    "requireTrueVideo": true,
+    "requireRealUserIdentitySource": true,
+    "rejectGeneratedIdentitySource": true,
+    "identityContract": "config/dominic-identity-contract-v1.json",
+    "exactIdentityOnly": true,
+    "rejectGenericLookalike": true,
+    "rejectIdentitySourceSwitching": true,
+    "requireDirectRealMasterFirstFrame": true,
+    "rejectSyntheticFirstFrame": true
+  },
+  "output": {
+    "candidatePath": "public/resources/monia/candidates/dominic-scene-monia-library-035/"
+  },
+  "retryNote": "034 achieved a genuinely new cinematic scene but human QA showed Dominic remained too SDXL-shaped (jaw/nose/eyes/hair too model-like). 035 preserves the scene-first architecture and adds a feathered real-user face-oval geometry lock plus adaptive hair lock, explicitly excluding neck, clothing and background.",
+  "pipeline": "config/monia-hybrid-video-pipeline-v1.json",
+  "retryTrigger": "2026-10-07T12:34:00+02:00"
+}
