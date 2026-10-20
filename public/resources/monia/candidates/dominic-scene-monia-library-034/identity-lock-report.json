@@ -1,0 +1,25 @@
+{
+  "version": 2,
+  "reports": [
+    {
+      "shot": "shot-01.mp4",
+      "available": true,
+      "backend": "monia-exact-head-temporal-v3",
+      "frames": 25,
+      "lockedFrames": 25,
+      "missingFaceFrames": 0,
+      "lockRate": 1.0,
+      "meanSimilarity": 0.891,
+      "minSimilarity": 0.8862,
+      "sourceReferencesDetected": 4,
+      "exactIdentityAuthority": true,
+      "masterIdentitySource": "/kaggle/working/monia-studio/dominic-scene-monia-library-034/pack-dominic/embedded-priority-01.jpg",
+      "identitySourceSwitchingAllowed": false,
+      "exactHeadPatch": true,
+      "hairPatch": false,
+      "sourceAuthority": "real-user-photo-or-video-frame-only",
+      "humanApprovalRequired": true
+    }
+  ],
+  "humanApprovalRequired": true
+}
