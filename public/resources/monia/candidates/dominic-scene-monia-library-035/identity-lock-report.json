@@ -4,7 +4,7 @@
     {
       "shot": "shot-01.mp4",
       "available": true,
-      "backend": "monia-temporal-identity-v4",
+      "backend": "monia-temporal-identity-v5",
       "frames": 25,
       "lockedFrames": 25,
       "missingFaceFrames": 0,
